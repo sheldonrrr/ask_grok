@@ -13,7 +13,16 @@ class AskGPTPluginUI(InterfaceAction):
     action_spec = ('Ask GPT', None, 'Ask ChatGPT about this book', None)
 
     def genesis(self):
+        # 定义局部变量，只在该Genesis方法内有效的局部
+        icon = get.icons('images/ask_gpt.png', 'Ask GPT')
+
+        # 实现上面的局部变量，让逻辑生效
+        self.qaction.setIcon(icon)
+
+        # 连接事件
         self.qaction.triggered.connect(self.show_dialog)
+
+        # 初始化 API
         self.api = ChatGPTAPI()
 
     def show_dialog(self):

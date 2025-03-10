@@ -8,10 +8,10 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 
 class AskGPTPlugin(InterfaceActionBase):
-    name = 'Ask GPT'
-    description = '使用 ChatGPT 询问关于当前书籍的问题'
+    name                = 'Ask GPT'
+    description         = '使用 ChatGPT 询问关于当前书籍的问题'
     supported_platforms = ['windows', 'osx', 'linux']
-    author = 'Your Name'
+    author = 'Sheldon'
     version = (1, 0, 0)
     minimum_calibre_version = (0, 7, 53)
 
@@ -26,3 +26,8 @@ class AskGPTPlugin(InterfaceActionBase):
 
     def save_settings(self, config_widget):
         config_widget.save_settings()
+
+        # Apply the changes
+        ac= self.actual_plugin_
+        if ac is not None:
+            ac.apply_settings()
