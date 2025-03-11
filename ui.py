@@ -4,26 +4,37 @@
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
+from PyQt5.QtGui import QIcon
+import os
 
 from calibre.gui2.actions import InterfaceAction
-from calibre_plugins.ask_gpt.api import ChatGPTAPI
+from calibre_plugins.ask_gpt.api import XAIClient
+from calibre_plugins.ask_gpt.config import get_prefs
 
 class AskGPTPluginUI(InterfaceAction):
-    name = 'Ask GPT'
-    action_spec = ('Ask GPT', None, 'Ask ChatGPT about this book', None)
+    name = 'Ask Grok'
+    # 使用相对路径指定图标
+    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', None)
 
+    def __init__(self, parent, site_customization):
+        InterfaceAction.__init__(self, parent, site_customization)
+        self.api = None
+        
     def genesis(self):
-        # 定义局部变量，只在该Genesis方法内有效的局部
-        icon = get.icons('images/ask_gpt.png', 'Ask GPT')
-
-        # 实现上面的局部变量，让逻辑生效
-        self.qaction.setIcon(icon)
-
         # 连接事件
         self.qaction.triggered.connect(self.show_dialog)
-
         # 初始化 API
-        self.api = ChatGPTAPI()
+        self.initialize_api()
+        
+    def initialize_api(self):
+        """Initialize the API client"""
+        try:
+            self.api = XAIClient()
+        except Exception as e:
+            self.api = None
+        
+    def apply_settings(self):
+        self.initialize_api()
 
     def show_dialog(self):
         # 获取当前选中的书籍
@@ -49,7 +60,7 @@ class AskDialog(QDialog):
         self.setup_ui()
     
     def setup_ui(self):
-        self.setWindowTitle('Ask GPT')
+        self.setWindowTitle('Ask Grok')
         layout = QVBoxLayout(self)
         
         # 显示书籍信息
