@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Optional
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
+import openai
 from calibre_plugins.ask_gpt.config import get_prefs
 
 class XAIClient:
@@ -20,10 +19,9 @@ class XAIClient:
         if not self.api_key:
             raise ValueError("X.AI API key not found. Please configure it in plugin settings.")
         
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url=prefs.get('api_base_url', 'https://api.x.ai/v1')
-        )
+        # 设置 API 配置
+        openai.api_key = self.api_key
+        openai.api_base = prefs.get('api_base_url', 'https://api.x.ai/v1')
         self.model = prefs.get('model', 'grok-2-latest')
 
     def ask(self, prompt: str) -> str:
@@ -40,7 +38,7 @@ class XAIClient:
             Exception: If API call fails
         """
         try:
-            completion: ChatCompletion = self.client.chat.completions.create(
+            completion = openai.ChatCompletion.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."},

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt
+from PyQt5.Qt import Qt, QMenu, QAction
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtGui import QIcon
@@ -9,7 +9,7 @@ import os
 
 from calibre.gui2.actions import InterfaceAction
 from calibre_plugins.ask_gpt.api import XAIClient
-from calibre_plugins.ask_gpt.config import get_prefs
+from calibre_plugins.ask_gpt.config import get_prefs, ConfigWidget
 
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
@@ -21,8 +21,37 @@ class AskGPTPluginUI(InterfaceAction):
         self.api = None
         
     def genesis(self):
-        # 连接事件
-        self.qaction.triggered.connect(self.show_dialog)
+
+        # 获取插件版本
+        base = self.interface_action_base_plugin
+        self.version = base.name+"v%d.%d.%d"%base.version
+
+        # 创建菜单
+        self.menu = QMenu()
+        self.menu.setToolTip(self.action_spec[2])
+        self.qaction.setMenu(self.menu)
+        
+        # 添加配置菜单项
+        self.config_action = QAction(
+            QIcon('images/ask_gpt.png'), 
+            '配置插件', 
+            self.menu
+        )
+        self.config_action.triggered.connect(self.show_configuration)
+        self.menu.addAction(self.config_action)
+        
+        # 添加分隔符
+        self.menu.addSeparator()
+        
+        # 添加主要动作
+        self.ask_action = QAction(
+            QIcon('images/ask_gpt.png'),
+            'Ask Grok',
+            self.menu
+        )
+        self.ask_action.triggered.connect(self.show_dialog)
+        self.menu.addAction(self.ask_action)
+        
         # 初始化 API
         self.initialize_api()
         
@@ -35,6 +64,10 @@ class AskGPTPluginUI(InterfaceAction):
         
     def apply_settings(self):
         self.initialize_api()
+
+    def show_configuration(self):
+        """显示配置对话框"""
+        self.interface_action_base_plugin.do_user_config(parent=self.gui)
 
     def show_dialog(self):
         # 获取当前选中的书籍

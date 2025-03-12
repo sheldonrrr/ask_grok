@@ -18,15 +18,15 @@ class AskGPTPlugin(InterfaceActionBase):
     name                = 'Ask Grok'
     description         = '使用 X.AI Grok 询问关于当前书籍的问题'
     supported_platforms = ['windows', 'osx', 'linux']
-    author             = 'Sheldon'
-    version            = (1, 0, 0)
+    author              = 'Sheldon'
+    version             = (1, 0, 0)
     minimum_calibre_version = (0, 7, 53)
     
     # 添加图标相关属性
-    icon               = 'images/ask_gpt.png'
-    priority           = 1
-    can_be_disabled    = True
-    default_state      = True
+    icon                = 'images/ask_gpt.png'
+    priority            = 1
+    can_be_disabled     = True
+    default_state       = True
 
     actual_plugin = 'calibre_plugins.ask_gpt.ui:AskGPTPluginUI'
 

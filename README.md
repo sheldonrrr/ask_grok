@@ -1,4 +1,4 @@
-# Calibre Ask GPT 插件
+# Calibre Ask Grok 插件
 
 一个简单的 Calibre 插件，允许用户使用 ChatGPT 询问关于当前阅读书籍的问题。
 
