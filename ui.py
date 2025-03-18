@@ -6,10 +6,15 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtGui import QIcon
 import os
+import logging
 
 from calibre.gui2.actions import InterfaceAction
 from calibre_plugins.ask_gpt.api import XAIClient
 from calibre_plugins.ask_gpt.config import get_prefs, ConfigWidget
+
+# 配置日志
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
@@ -17,7 +22,10 @@ class AskGPTPluginUI(InterfaceAction):
     action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', None)
 
     def __init__(self, parent, site_customization):
-        InterfaceAction.__init__(self, parent, site_customization)
+        try:
+            InterfaceAction.__init__(self, parent, site_customization)
+        except Exception as e:
+            logger.debug(f"初始化插件时出现非致命错误（可以忽略）：{str(e)}")
         self.api = None
         
     def genesis(self):
@@ -60,6 +68,13 @@ class AskGPTPluginUI(InterfaceAction):
         try:
             self.api = XAIClient()
         except Exception as e:
+            from calibre.gui2 import error_dialog
+            error_dialog(
+                self.gui,
+                'API 初始化失败',
+                f'初始化 X.AI API 客户端失败：{str(e)}\n\n请检查配置中的 Authorization Token 是否正确设置。',
+                show=True
+            )
             self.api = None
         
     def apply_settings(self):
@@ -74,6 +89,12 @@ class AskGPTPluginUI(InterfaceAction):
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
             return
+            
+        # 如果 API 未初始化，尝试重新初始化
+        if self.api is None:
+            self.initialize_api()
+            if self.api is None:
+                return
         
         # 获取书籍信息
         book_id = self.gui.library_view.model().id(rows[0])

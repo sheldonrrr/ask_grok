@@ -11,15 +11,15 @@ from calibre.utils.config import JSONConfig
 prefs = JSONConfig('plugins/ask_gpt')
 
 # 默认配置
-prefs.defaults['api_key'] = os.environ.get('OPENAI_API_KEY', '')
+prefs.defaults['auth_token'] = os.environ.get('XAI_AUTH_TOKEN', '')
 prefs.defaults['template'] = '关于{title}这本书，{query}'
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-2-latest'
 
 def get_prefs():
-    # 如果配置中没有 API key，尝试从环境变量获取
-    if not prefs['api_key'] and os.environ.get('OPENAI_API_KEY'):
-        prefs['api_key'] = os.environ.get('OPENAI_API_KEY')
+    # 如果配置中没有 auth token，尝试从环境变量获取
+    if not prefs['auth_token'] and os.environ.get('XAI_AUTH_TOKEN'):
+        prefs['auth_token'] = os.environ.get('XAI_AUTH_TOKEN')
     return prefs
 
 class ConfigWidget(QWidget):
@@ -28,13 +28,17 @@ class ConfigWidget(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         
-        # X.AI API Key 配置
-        key_label = QLabel('X.AI API Key:')
+        # X.AI Authorization Token 配置
+        key_label = QLabel('X.AI Authorization Token:')
+        key_help = QLabel('格式: Bearer xai-xxx 或直接输入 xai-xxx')
+        key_help.setStyleSheet('color: gray; font-size: 12px;')
         self.layout.addWidget(key_label)
+        self.layout.addWidget(key_help)
         
-        self.api_key_edit = QLineEdit(self)
-        self.api_key_edit.setText(prefs['api_key'])
-        self.layout.addWidget(self.api_key_edit)
+        self.auth_token_edit = QLineEdit(self)
+        self.auth_token_edit.setText(prefs['auth_token'])
+        self.auth_token_edit.setPlaceholderText('Bearer xai-xxx 或 xai-xxx')
+        self.layout.addWidget(self.auth_token_edit)
         
         # API Base URL 配置
         base_url_label = QLabel('API Base URL:')
@@ -67,7 +71,7 @@ class ConfigWidget(QWidget):
     
     def save_settings(self):
         """保存配置到 calibre 配置文件"""
-        prefs['api_key'] = self.api_key_edit.text()
+        prefs['auth_token'] = self.auth_token_edit.text()
         prefs['api_base_url'] = self.base_url_edit.text()
         prefs['model'] = self.model_edit.text()
         prefs['template'] = self.template_edit.text()

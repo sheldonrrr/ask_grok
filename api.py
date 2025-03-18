@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from typing import Optional
-import openai
+import requests
+import json
 from calibre_plugins.ask_gpt.config import get_prefs
 import logging
 
@@ -11,65 +12,118 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class XAIClient:
-    def __init__(self, api_key: Optional[str] = None):
-        """Initialize X.AI client with API key."""
-        prefs = get_prefs()
-        self.api_key = api_key or prefs.get('api_key')
-        if not self.api_key:
-            raise ValueError("X.AI API key not found. Please configure it in plugin settings.")
+    def __init__(self, auth_token: Optional[str] = None):
+        """Initialize X.AI client with authorization token.
         
-        openai.api_key = self.api_key
-        openai.api_base = prefs.get('api_base_url', 'https://api.x.ai/v1')
+        Args:
+            auth_token: Optional authorization token. If not provided, will be read from preferences.
+                      Should be in format "Bearer xai-xxx" or just "xai-xxx"
+        """
+        prefs = get_prefs()
+        self.auth_token = auth_token or prefs.get('auth_token')
+        if not self.auth_token:
+            raise ValueError("X.AI authorization token not found. Please configure it in plugin settings.")
+        
+        # 确保 auth_token 格式正确
+        self.auth_token = self.auth_token.strip()
+        if not self.auth_token.startswith('Bearer '):
+            self.auth_token = f"Bearer {self.auth_token}"
+        
+        self.api_base = prefs.get('api_base_url', 'https://api.x.ai/v1')
         self.model = prefs.get('model', 'grok-2-latest')
-        logger.debug(f"Initialized XAIClient with model: {self.model}, api_base: {openai.api_base}")
+        logger.debug(f"Initialized XAIClient with model: {self.model}, api_base: {self.api_base}")
 
     def ask(self, prompt: str) -> str:
         try:
             logger.debug(f"Sending prompt: {prompt}")
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."},
-                    {"role": "user", "content": prompt}
+            
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": self.auth_token
+            }
+            
+            data = {
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
                 ],
+                "model": self.model,
+                "stream": False,
+                "temperature": 0.7
+            }
+            
+            # 发送请求
+            response = requests.post(
+                f"{self.api_base}/chat/completions",
+                headers=headers,
+                json=data,
+                timeout=30
             )
-
-            # 调试：记录响应类型和内容
-            logger.debug(f"Response type: {type(response)}")
-            logger.debug(f"Raw response: {repr(response)}")
-
-            # 处理不同类型的响应
-            if isinstance(response, str):
-                logger.debug("Received string response")
-                return response.strip()
             
-            elif isinstance(response, dict):
-                logger.debug("Received dict response")
-                choices = response.get('choices', [])
-                if not choices:
-                    logger.warning("No choices in response")
-                    return "No response received"
-                    
-                message = choices[0].get('message', {})
-                return message.get('content', str(message))
+            # 记录响应信息
+            logger.debug(f"Response status: {response.status_code}")
+            logger.debug(f"Response headers: {response.headers}")
+            logger.debug(f"Response text: {response.text}")
             
-            elif hasattr(response, 'choices') and response.choices:
-                logger.debug("Received object response")
-                message = response.choices[0].message
-                return message.content if hasattr(message, 'content') else str(message)
+            if response.status_code != 200:
+                error_text = response.text
+                try:
+                    error_json = response.json()
+                    if isinstance(error_json, dict):
+                        error_text = error_json.get('error', error_text)
+                except:
+                    pass
+                return f"API Error: {error_text}"
             
-            else:
-                logger.error("Unknown response format")
-                return "Invalid response format"
-        
-        except openai.error.APIError as e:
-            logger.error(f"API error: {str(e)}", exc_info=True)
-            logger.debug(f"API error details: {repr(e.http_body)}")
-            return f"API Error:{e.http_body or str(e)}"
-
+            # 解析响应
+            try:
+                result = response.json()
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse JSON response: {str(e)}")
+                return f"API Error: Invalid JSON response - {str(e)}"
+            
+            if not isinstance(result, dict):
+                logger.error(f"Unexpected response format: {result}")
+                return "Unexpected response format from API"
+            
+            choices = result.get('choices', [])
+            if not choices:
+                logger.warning("No choices in response")
+                return "No response received"
+                
+            message = choices[0].get('message', {})
+            content = message.get('content')
+            
+            if not content:
+                logger.warning("No content in response message")
+                return "Empty response from API"
+                
+            return content.strip()
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error: {str(e)}", exc_info=True)
+            error_msg = str(e)
+            
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_data = e.response.json()
+                    if isinstance(error_data, dict):
+                        error_msg = error_data.get('error', str(e))
+                except:
+                    if e.response.text:
+                        error_msg = e.response.text
+            
+            return f"API Error: {error_msg}"
+            
         except Exception as e:
-            logger.error(f"Exception occurred: {str(e)}", exc_info=True)
-            raise Exception(f"Failed to call X.AI API: {str(e)}")
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+            return f"Error: {str(e)}"
 
 def main():
     """Example usage of XAIClient."""
