@@ -6,13 +6,6 @@ __copyright__ = '2024'
 __docformat__ = 'restructuredtext en'
 
 from calibre.customize import InterfaceActionBase
-import os
-import sys
-
-# 添加 lib 目录到 Python 路径
-lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
-if lib_dir not in sys.path:
-    sys.path.insert(0, lib_dir)
 
 class AskGPTPlugin(InterfaceActionBase):
     name                = 'Ask Grok'
