@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from typing import Optional
+from typing import Optional, Generator
 import requests
 import json
 from calibre_plugins.ask_gpt.config import get_prefs
@@ -124,6 +124,67 @@ class XAIClient:
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             return f"Error: {str(e)}"
+
+    def ask_stream(self, prompt: str) -> Generator[str, None, None]:
+        """向 X.AI API 发送问题并获取流式回答
+        
+        Args:
+            prompt: 问题文本
+            
+        Yields:
+            str: API 返回的每个文本片段
+        """
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": self.auth_token
+        }
+        
+        data = {
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are Grok, a chatbot inspired by the Hitchhikers Guide to the Galaxy."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "model": self.model,
+            "stream": True
+        }
+        
+        response = requests.post(
+            f"{self.api_base}/chat/completions",
+            headers=headers,
+            json=data,
+            stream=True
+        )
+        
+        if response.status_code != 200:
+            yield f"API 请求失败：{response.status_code} - {response.text}"
+            return
+            
+        for line in response.iter_lines():
+            if line:
+                try:
+                    # 移除 "data: " 前缀并解析 JSON
+                    line_text = line.decode('utf-8')
+                    if line_text.startswith('data: '):
+                        json_str = line_text[6:]  # 跳过 "data: "
+                        if json_str == '[DONE]':
+                            break
+                            
+                        chunk = json.loads(json_str)
+                        if chunk.get('choices') and len(chunk['choices']) > 0:
+                            delta = chunk['choices'][0].get('delta', {})
+                            if 'content' in delta:
+                                yield delta['content']
+                                
+                except json.JSONDecodeError:
+                    continue
+                except Exception as e:
+                    yield f"\n解析错误：{str(e)}"
 
 def main():
     """Example usage of XAIClient."""
