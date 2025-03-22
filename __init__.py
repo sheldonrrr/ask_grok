@@ -21,6 +21,7 @@ class AskGPTPlugin(InterfaceActionBase):
     author              = 'Sheldon'
     version             = (1, 0, 0)
     minimum_calibre_version = (0, 7, 53)
+    icon                = 'images/ask_gpt.png'
 
     actual_plugin = 'calibre_plugins.ask_gpt.ui:AskGPTPluginUI'
 

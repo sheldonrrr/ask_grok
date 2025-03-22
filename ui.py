@@ -18,7 +18,7 @@ logger.setLevel(logging.INFO)
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
     # 使用相对路径指定图标
-    action_spec = ('Ask Grok', None, 'Ask Grok about this book', None)
+    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', None)
     action_type = 'global'
 
     def __init__(self, parent, site_customization):
