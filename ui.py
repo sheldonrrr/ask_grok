@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence
+from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence, QIcon
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
-from PyQt5.QtGui import QIcon
 import logging
 
 from calibre.gui2.actions import InterfaceAction
@@ -18,7 +17,7 @@ logger.setLevel(logging.INFO)
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
     # 使用相对路径指定图标
-    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', None)
+    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', 'Ctrl+L')
     action_type = 'global'
 
     def __init__(self, parent, site_customization):
@@ -42,32 +41,32 @@ class AskGPTPluginUI(InterfaceAction):
         self.menu.setToolTip(self.action_spec[2])
         self.qaction.setMenu(self.menu)
         
+        # 官方文档指引设置图标
+        icon = get_icons('images/ask_gpt.png', 'Ask Grok')
+        self.qaction.setIcon(icon)
+        self.qaction.triggered.connect(self.show_dialog)
+        self.qaction.shortcut = QKeySequence(self.action_spec[3])
+
         # 添加配置菜单项
-        self.config_action = QAction(
-            QIcon(I('images/config.png')), 
-            '配置插件', 
-            self.menu
+        self.config_action = self.create_menu_action(
+            self.menu,
+            'ask_gpt_config',
+            '配置插件',
+            description='配置 Ask Grok 插件',
+            triggered=self.show_configuration
         )
-        self.config_action.triggered.connect(self.show_configuration)
-        self.menu.addAction(self.config_action)
         
         # 添加分隔符
         self.menu.addSeparator()
         
         # 添加主要动作
-        self.ask_action = QAction(
-            QIcon(I('dialog_question.png')),
+        self.ask_action = self.create_menu_action(
+            self.menu,
+            'ask_gpt_ask',
             'Ask Grok',
-            self.menu
+            description='开启弹窗',
+            triggered=self.show_dialog
         )
-        # 设置快捷键
-        if hasattr(Qt, 'ControlModifier'):  # Windows/Linux
-            shortcut = QKeySequence(Qt.ControlModifier | Qt.Key_L)
-        else:  # macOS
-            shortcut = QKeySequence(Qt.MetaModifier | Qt.Key_L)
-        self.ask_action.setShortcut(shortcut)
-        self.ask_action.triggered.connect(self.show_dialog)
-        self.menu.addAction(self.ask_action)
         
         # 初始化 API
         self.initialize_api()
