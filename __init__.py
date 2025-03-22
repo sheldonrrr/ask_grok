@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__license__ = 'GPL v3'
-__copyright__ = '2024'
+__license__   = 'GPL v3'
+__copyright__ = '2024, Sheldon'
 __docformat__ = 'restructuredtext en'
 
 from calibre.customize import InterfaceActionBase
-from calibre.gui2 import get_icons
 import os
 import sys
 
@@ -22,12 +21,6 @@ class AskGPTPlugin(InterfaceActionBase):
     author              = 'Sheldon'
     version             = (1, 0, 0)
     minimum_calibre_version = (0, 7, 53)
-    
-    # 使用 get_icons 加载图标
-    icon                = get_icons('images/ask_gpt.png', 'Ask Grok')
-    priority            = 1
-    can_be_disabled     = True
-    default_state       = True
 
     actual_plugin = 'calibre_plugins.ask_gpt.ui:AskGPTPluginUI'
 
@@ -41,3 +34,9 @@ class AskGPTPlugin(InterfaceActionBase):
     def save_settings(self, config_widget):
         # 只保存配置，不尝试重新初始化 API
         config_widget.save_settings()
+        # Apply the changes
+        ac = self.actual_plugin_
+        if ac is not None:
+            ac.apply_settings()
+        else:
+            print("Warning: actual_plugin_ is None in save_settings")

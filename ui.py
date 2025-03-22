@@ -5,7 +5,6 @@ from PyQt5.Qt import Qt, QMenu, QAction
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtGui import QIcon
-import os
 import logging
 
 from calibre.gui2.actions import InterfaceAction
@@ -19,7 +18,8 @@ logger.setLevel(logging.INFO)
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
     # 使用相对路径指定图标
-    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', None)
+    action_spec = ('Ask Grok', None, 'Ask Grok about this book', None)
+    action_type = 'global'
 
     def __init__(self, parent, site_customization):
         try:
@@ -27,8 +27,11 @@ class AskGPTPluginUI(InterfaceAction):
         except Exception as e:
             logger.debug(f"初始化插件时出现非致命错误（可以忽略）：{str(e)}")
         self.api = None
-        
+        self.gui = parent
+        logger.info("AskGPTPluginUI initialized")
+
     def genesis(self):
+        logger.info("AskGPTPluginUI genesis called")
 
         # 获取插件版本
         base = self.interface_action_base_plugin
@@ -41,7 +44,7 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 添加配置菜单项
         self.config_action = QAction(
-            QIcon('images/ask_gpt.png'), 
+            QIcon(I('images/config.png')), 
             '配置插件', 
             self.menu
         )
@@ -53,7 +56,7 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 添加主要动作
         self.ask_action = QAction(
-            QIcon('images/ask_gpt.png'),
+            QIcon(I('dialog_question.png')),
             'Ask Grok',
             self.menu
         )
