@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt, QMenu, QAction
+from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtGui import QIcon
@@ -113,6 +113,7 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
+        self.use_stream = True  # 默认开启流式输出
         
         self.setup_ui()
     
@@ -133,18 +134,32 @@ class AskDialog(QDialog):
         # 响应区域
         self.response_area = QTextEdit()
         self.response_area.setReadOnly(True)
-        self.response_area.setPlaceholderText("ChatGPT 的回答将显示在这里...")
+        self.response_area.setPlaceholderText("Grok 的回答将显示在这里...")
         layout.addWidget(self.response_area)
         
         # 按钮区域
         button_layout = QHBoxLayout()
+        
+        # 发送按钮
         self.send_button = QPushButton('发送', self)
         self.send_button.clicked.connect(self.send_question)
         button_layout.addWidget(self.send_button)
         
+        # 流式输出切换按钮
+        self.stream_toggle = QPushButton('流式输出：开', self)  # 默认显示"开"
+        self.stream_toggle.setCheckable(True)  # 使按钮可切换
+        self.stream_toggle.setChecked(True)  # 默认选中
+        self.stream_toggle.clicked.connect(self.toggle_stream)
+        button_layout.addWidget(self.stream_toggle)
+        
         layout.addLayout(button_layout)
         self.setMinimumWidth(400)
         self.setMinimumHeight(500)
+    
+    def toggle_stream(self):
+        """切换流式输出状态"""
+        self.use_stream = not self.use_stream
+        self.stream_toggle.setText(f'流式输出：{"开" if self.use_stream else "关"}')
     
     def send_question(self):
         question = self.input_area.toPlainText()
@@ -154,9 +169,22 @@ class AskDialog(QDialog):
         # 构建提示词
         prompt = f"关于《{self.book_info.title}》这本书，{question}"
         
-        # 调用API
-        try:
-            response = self.api.ask(prompt)
-            self.response_area.setText(response)
-        except Exception as e:
-            self.response_area.setText(f"错误：{str(e)}")
+        # 清空响应区域
+        self.response_area.clear()
+        
+        if self.use_stream:
+            # 使用流式输出
+            for chunk in self.api.ask_stream(prompt):
+                cursor = self.response_area.textCursor()
+                cursor.movePosition(QTextCursor.MoveOperation.End)
+                cursor.insertText(chunk)
+                self.response_area.setTextCursor(cursor)
+                self.response_area.ensureCursorVisible()
+                QApplication.processEvents() #强制处理事件，刷新界面
+        else:
+            # 使用普通输出
+            try:
+                response = self.api.ask(prompt)
+                self.response_area.setText(response)
+            except Exception as e:
+                self.response_area.setText(f"错误：{str(e)}")
