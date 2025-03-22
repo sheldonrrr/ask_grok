@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication
+from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtGui import QIcon
@@ -60,6 +60,12 @@ class AskGPTPluginUI(InterfaceAction):
             'Ask Grok',
             self.menu
         )
+        # 设置快捷键
+        if hasattr(Qt, 'ControlModifier'):  # Windows/Linux
+            shortcut = QKeySequence(Qt.ControlModifier | Qt.Key_L)
+        else:  # macOS
+            shortcut = QKeySequence(Qt.MetaModifier | Qt.Key_L)
+        self.ask_action.setShortcut(shortcut)
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -69,7 +75,13 @@ class AskGPTPluginUI(InterfaceAction):
     def initialize_api(self):
         """Initialize the API client"""
         try:
-            self.api = XAIClient()
+            # 从环境变量或配置中获取认证令牌
+            prefs = get_prefs()
+            auth_token = prefs['auth_token']
+            api_base = prefs['api_base_url']
+            model = prefs['model']
+            
+            self.api = XAIClient(auth_token=auth_token, api_base=api_base, model=model)
         except Exception as e:
             from calibre.gui2 import error_dialog
             error_dialog(
@@ -113,66 +125,108 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
-        self.use_stream = True  # 默认开启流式输出
-        
         self.setup_ui()
     
     def setup_ui(self):
-        self.setWindowTitle('Ask Grok')
-        layout = QVBoxLayout(self)
+        self.setWindowTitle(f'Ask Grok - {self.book_info.title}')
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(800)
         
-        # 显示书籍信息
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        
+        # 创建书籍信息标签
         book_info = QLabel(f"书名：{self.book_info.title}\n作者：{', '.join(self.book_info.authors)}")
         layout.addWidget(book_info)
         
-        # 输入区域
+        # 创建输入区域
         self.input_area = QTextEdit()
-        self.input_area.setPlaceholderText("输入你的问题...")
+        self.input_area.setPlaceholderText("在这里输入你的问题...")
         self.input_area.setMaximumHeight(100)
         layout.addWidget(self.input_area)
         
-        # 响应区域
-        self.response_area = QTextEdit()
-        self.response_area.setReadOnly(True)
-        self.response_area.setPlaceholderText("Grok 的回答将显示在这里...")
-        layout.addWidget(self.response_area)
-        
-        # 按钮区域
+        # 创建按钮区域
         button_layout = QHBoxLayout()
         
-        # 发送按钮
-        self.send_button = QPushButton('发送', self)
-        self.send_button.clicked.connect(self.send_question)
-        button_layout.addWidget(self.send_button)
+        # 创建发送按钮和快捷键提示的容器
+        send_container = QVBoxLayout()
         
-        # 流式输出切换按钮
-        self.stream_toggle = QPushButton('流式输出：开', self)  # 默认显示"开"
-        self.stream_toggle.setCheckable(True)  # 使按钮可切换
-        self.stream_toggle.setChecked(True)  # 默认选中
-        self.stream_toggle.clicked.connect(self.toggle_stream)
-        button_layout.addWidget(self.stream_toggle)
+        self.send_button = QPushButton("发送")
+        self.send_button.clicked.connect(self.send_question)
+        
+        # 设置按钮样式
+        self.send_button.setStyleSheet("""
+            QPushButton {
+                padding: 5px 15px;
+                border: 1px solid #4CAF50;
+                border-radius: 4px;
+                background-color: #4CAF50;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+                border-color: #45a049;
+            }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                border-color: #cccccc;
+                color: #666666;
+            }
+        """)
+        send_container.addWidget(self.send_button)
+        
+        # 添加快捷键提示标签
+        if hasattr(Qt, 'ControlModifier'):
+            shortcut_text = "Ctrl + Enter"
+        else:
+            shortcut_text = "⌘ + Return"
+        shortcut_label = QLabel(shortcut_text)
+        shortcut_label.setStyleSheet("color: gray; font-size: 11px;")
+        shortcut_label.setAlignment(Qt.AlignCenter)
+        send_container.addWidget(shortcut_label)
+        
+        # 将发送按钮容器添加到按钮布局
+        button_layout.addStretch()
+        button_layout.addLayout(send_container)
+        button_layout.addStretch()
         
         layout.addLayout(button_layout)
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(500)
-    
-    def toggle_stream(self):
-        """切换流式输出状态"""
-        self.use_stream = not self.use_stream
-        self.stream_toggle.setText(f'流式输出：{"开" if self.use_stream else "关"}')
+        
+        # 创建响应区域
+        self.response_area = QTextEdit()
+        self.response_area.setReadOnly(True)
+        layout.addWidget(self.response_area)
+        
+        # 设置快捷键
+        if hasattr(Qt, 'ControlModifier'):
+            send_shortcut = QKeySequence(Qt.ControlModifier | Qt.Key_Return)
+        else:
+            send_shortcut = QKeySequence(Qt.MetaModifier | Qt.Key_Return)
+            
+        self.send_shortcut = QAction(self)
+        self.send_shortcut.setShortcut(send_shortcut)
+        self.send_shortcut.triggered.connect(self.send_question)
+        self.addAction(self.send_shortcut)
+        
+        # 设置输入框焦点
+        self.input_area.setFocus()
     
     def send_question(self):
         question = self.input_area.toPlainText()
         if not question:
             return
             
+        # 禁用发送按钮
+        self.send_button.setEnabled(False)
+        
         # 构建提示词
         prompt = f"关于《{self.book_info.title}》这本书，{question}"
         
         # 清空响应区域
         self.response_area.clear()
         
-        if self.use_stream:
+        try:
             # 使用流式输出
             for chunk in self.api.ask_stream(prompt):
                 cursor = self.response_area.textCursor()
@@ -180,11 +234,9 @@ class AskDialog(QDialog):
                 cursor.insertText(chunk)
                 self.response_area.setTextCursor(cursor)
                 self.response_area.ensureCursorVisible()
-                QApplication.processEvents() #强制处理事件，刷新界面
-        else:
-            # 使用普通输出
-            try:
-                response = self.api.ask(prompt)
-                self.response_area.setText(response)
-            except Exception as e:
-                self.response_area.setText(f"错误：{str(e)}")
+                QApplication.processEvents()
+        except Exception as e:
+            self.response_area.setText(f"错误：{str(e)}")
+        finally:
+            # 重新启用发送按钮
+            self.send_button.setEnabled(True)
