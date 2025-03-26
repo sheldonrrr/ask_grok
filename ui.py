@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence, QIcon
+from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence, QMessageBox
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QTextEdit, QLabel)
+from PyQt5.QtCore import Qt
 import logging
 
 from calibre.gui2.actions import InterfaceAction
@@ -67,9 +68,21 @@ class AskGPTPluginUI(InterfaceAction):
             description='开启弹窗',
             triggered=self.show_dialog
         )
-        
+         
         # 初始化 API
         self.initialize_api()
+
+        # 添加分隔符
+        self.menu.addSeparator()
+        
+        # 添加主要动作
+        self.about_action = self.create_menu_action(
+            self.menu,
+            'ask_gpt_about',
+            '关于',
+            description='关于插件',
+            triggered=self.show_dialog2
+        )
         
     def initialize_api(self):
         """Initialize the API client"""
@@ -117,6 +130,34 @@ class AskGPTPluginUI(InterfaceAction):
         # 显示对话框
         d = AskDialog(self.gui, mi, self.api)
         d.exec_()
+    def show_dialog2(self):
+        """显示关于对话框"""
+        msg = QMessageBox()
+        msg.setWindowTitle("关于 Ask Grok")
+        msg.setText("""
+        <div style='text-align: center'>
+            <h3>Ask Grok v1.0.0</h3>
+            <p><a href='https://github.com/sheldonrrr/ask_gpt'>GitHub</a></p>
+        </div>
+        """)
+        msg.setTextFormat(Qt.RichText)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.button(QMessageBox.Ok).setText("确定")
+        msg.setMinimumSize(800, 600)
+        # 设置对话框居中
+        layout = msg.layout()
+        layout.setSizeConstraint(layout.SetMinimumSize)
+        # 通过样式表设置按钮居中
+        msg.setStyleSheet("""
+            QPushButton { 
+                min-width: 80px; 
+                margin: 0 auto;
+            }
+            QDialogButtonBox {
+                alignment: center;
+            }
+        """)
+        msg.exec_()
 
 class AskDialog(QDialog):
     def __init__(self, gui, book_info, api):
