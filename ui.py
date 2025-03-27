@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt, QMenu, QAction, QTextCursor, QApplication, QKeySequence, QMessageBox
+from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
+                     QKeySequence, QMessageBox, QPixmap, QPainter, QSize)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QPushButton, QTextEdit, QLabel)
+                            QPushButton, QTextEdit, QLabel)
 from PyQt5.QtCore import Qt
 import logging
 
 from calibre.gui2.actions import InterfaceAction
 from calibre_plugins.ask_gpt.api import XAIClient
 from calibre_plugins.ask_gpt.config import get_prefs, ConfigWidget
+
+from calibre.utils.resources import get_path as I
+from PyQt5.QtSvg import QSvgRenderer
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -134,38 +138,89 @@ class AskGPTPluginUI(InterfaceAction):
         """显示关于对话框"""
         msg = QMessageBox()
         msg.setWindowTitle("关于 Ask Grok")
+        
+        # 加载并设置图标
+        icon_path = I('images/ask_gpt.png') # 显示插件图标
+        icon_pixmap = QPixmap(icon_path)
+        scaled_pixmap = None  # 初始化变量
+        
+        if not icon_pixmap.isNull():
+            scaled_pixmap = icon_pixmap.scaledToHeight(
+                128,
+                Qt.TransformationMode.SmoothTransformation
+            )
+
+        # 创建标签并设置图标
+        icon_label = QLabel()
+        if scaled_pixmap:  # 检查是否成功创建了缩放图片
+            icon_label.setPixmap(scaled_pixmap)
+            icon_label.setAlignment(Qt.AlignCenter)  # 居中对齐
+            
+            # 将图标标签添加到消息框布局
+            layout = msg.layout()
+            layout.addWidget(icon_label, 0, 0, 1, 1, Qt.AlignCenter)
+        
+        # 设置文本内容
         msg.setText("""
-        <div style='text-align: center'>
-            <h3>Ask Grok v1.0.0</h3>
-            <p><a href='https://github.com/sheldonrrr/ask_gpt'>GitHub</a></p>
+        <div style='text-align: left'>
+            <h3 style='margin:200px 0 0 0'>Ask Grok</h3>
+            <p style='font-weight: normal;'>Grok for reading.</p>
+            <p style='color: #666; font-weight: normal; margin:20px 0 20px 0'>v1.0.0</p>
+            <p style='color: #666; font-weight: normal; margin:0 0 0 0;'>👉 <a href='https://github.com/sheldonrrr/ask_gpt' style='color: #666; text-decoration: none; font-weight: normal; font-style: italic;'>GitHub Repo</a></p>
         </div>
         """)
         msg.setTextFormat(Qt.RichText)
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.button(QMessageBox.Ok).setText("确定")
-        msg.setMinimumSize(800, 600)
+
+        # 设置消息框整体样式
+        msg.setStyleSheet("""
+            QMessageBox {
+                text-align: left;
+                padding: 20px 40px;
+            }
+            QMessageBox QLabel {
+                margin: 0 20px 0 0;
+        """)
+
         # 设置对话框居中
         layout = msg.layout()
         layout.setSizeConstraint(layout.SetMinimumSize)
-        # 通过样式表设置按钮居中
-        msg.setStyleSheet("""
-            QPushButton { 
-                min-width: 80px; 
-                margin: 0 auto;
-            }
-            QDialogButtonBox {
-                alignment: center;
-            }
-        """)
         msg.exec_()
 
 class AskDialog(QDialog):
+    # 语言代码映射
+    LANGUAGE_MAP = {
+        'zho': '中文',
+        'zh': '中文',
+        'eng': '英文',
+        'en': '英文',
+        'jpn': '日文',
+        'ja': '日文',
+        'kor': '韩文',
+        'ko': '韩文',
+        'fra': '法文',
+        'fr': '法文',
+        'deu': '德文',
+        'de': '德文',
+        'spa': '西班牙文',
+        'es': '西班牙文',
+        'rus': '俄文',
+        'ru': '俄文',
+    }
+
     def __init__(self, gui, book_info, api):
         QDialog.__init__(self, gui)
         self.gui = gui
         self.book_info = book_info
         self.api = api
         self.setup_ui()
+    
+    def get_language_name(self, lang_code):
+        """将语言代码转换为易读的语言名称"""
+        if not lang_code:
+            return None
+        # 转换为小写并去除空格
+        lang_code = lang_code.lower().strip()
+        return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
         self.setWindowTitle(f'Ask Grok - {self.book_info.title}')
@@ -177,7 +232,42 @@ class AskDialog(QDialog):
         self.setLayout(layout)
         
         # 创建书籍信息标签
-        book_info = QLabel(f"书名：{self.book_info.title}\n作者：{', '.join(self.book_info.authors)}")
+        metadata_info = []
+        
+        # 使用 HTML 格式化文本，保证每个字段都是一个段落
+        title_text = f"<p><b>书名：</b>{self.book_info.title}</p>"
+        authors_text = f"<p><b>作者：</b>{', '.join(self.book_info.authors)}</p>"
+        metadata_info.extend([title_text, authors_text])
+        
+        if self.book_info.publisher:
+            metadata_info.append(f"<p><b>出版社：</b>{self.book_info.publisher}</p>")
+        if self.book_info.pubdate:
+            metadata_info.append(f"<p><b>出版日期：</b>{self.book_info.pubdate.year}</p>")
+        if self.book_info.language:
+            lang_name = self.get_language_name(self.book_info.language)
+            metadata_info.append(f"<p><b>语言：</b>{lang_name}</p>")
+        if getattr(self.book_info, 'series', None):
+            metadata_info.append(f"<p><b>系列：</b>{self.book_info.series}</p>")
+            
+        book_info = QLabel("".join(metadata_info))
+        book_info.setWordWrap(True)  # 启用自动换行
+        book_info.setTextFormat(Qt.RichText)  # 使用富文本格式
+        book_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                background-color: #f5f5f5;
+                padding: 10px;
+                border-radius: 4px;
+                line-height: 150%;
+            }
+            QLabel p {
+                margin: 0;
+                margin-bottom: 5px;
+            }
+            QLabel p:last-child {
+                margin-bottom: 0;
+            }
+        """)
         layout.addWidget(book_info)
         
         # 创建输入区域
@@ -261,7 +351,18 @@ class AskDialog(QDialog):
         self.send_button.setEnabled(False)
         
         # 构建提示词
-        prompt = f"关于《{self.book_info.title}》这本书，{question}"
+        metadata_info = []
+        if self.book_info.publisher:
+            metadata_info.append(f"出版社：{self.book_info.publisher}")
+        if self.book_info.pubdate:
+            metadata_info.append(f"出版日期：{self.book_info.pubdate.year}")
+        if self.book_info.language:
+            metadata_info.append(f"语言：{self.get_language_name(self.book_info.language)}")
+        if getattr(self.book_info, 'series', None):
+            metadata_info.append(f"系列：{self.book_info.series}")
+            
+        metadata_str = '；'.join(metadata_info)
+        prompt = f"关于《{self.book_info.title}》（作者：{', '.join(self.book_info.authors)}）这本书的信息：\n{metadata_str}\n\n问题：{question}"
         
         # 清空响应区域
         self.response_area.clear()
