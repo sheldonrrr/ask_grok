@@ -343,26 +343,27 @@ class AskDialog(QDialog):
         self.input_area.setFocus()
     
     def send_question(self):
-        question = self.input_area.toPlainText()
-        if not question:
-            return
-            
-        # 禁用发送按钮
         self.send_button.setEnabled(False)
+        question = self.input_area.toPlainText()
         
-        # 构建提示词
-        metadata_info = []
-        if self.book_info.publisher:
-            metadata_info.append(f"出版社：{self.book_info.publisher}")
-        if self.book_info.pubdate:
-            metadata_info.append(f"出版日期：{self.book_info.pubdate.year}")
-        if self.book_info.language:
-            metadata_info.append(f"语言：{self.get_language_name(self.book_info.language)}")
-        if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"系列：{self.book_info.series}")
-            
-        metadata_str = '；'.join(metadata_info)
-        prompt = f"关于《{self.book_info.title}》（作者：{', '.join(self.book_info.authors)}）这本书的信息：\n{metadata_str}\n\n问题：{question}"
+        # 获取配置的模板
+        from calibre_plugins.ask_gpt.config import get_prefs
+        prefs = get_prefs()
+        template = prefs['template']
+        
+        # 准备模板变量
+        template_vars = {
+            'title': self.book_info.title,
+            'author': ', '.join(self.book_info.authors),
+            'publisher': self.book_info.publisher or '',
+            'pubdate': self.book_info.pubdate.year if self.book_info.pubdate else '',
+            'language': self.get_language_name(self.book_info.language) if self.book_info.language else '',
+            'series': getattr(self.book_info, 'series', ''),
+            'query': question
+        }
+        
+        # 使用模板格式化提示词
+        prompt = template.format(**template_vars)
         
         # 清空响应区域
         self.response_area.clear()
