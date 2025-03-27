@@ -3,7 +3,7 @@
 
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
-                           QLineEdit, QPushButton)
+                           QLineEdit, QPushButton, QTextEdit)
 import os
 from calibre.utils.config import JSONConfig
 
@@ -62,9 +62,18 @@ class ConfigWidget(QWidget):
         template_label = QLabel('提示词模板:')
         self.layout.addWidget(template_label)
         
-        self.template_edit = QLineEdit(self)
+        self.template_edit = QTextEdit(self)
         self.template_edit.setText(prefs['template'])
-        self.template_edit.setPlaceholderText('使用 {title} 表示书名，{query} 表示问题')
+        self.template_edit.setPlaceholderText('可用的变量：\n'
+                                            '{title} - 书名\n'
+                                            '{author} - 作者\n'
+                                            '{publisher} - 出版社\n'
+                                            '{pubdate} - 出版年份\n'
+                                            '{language} - 语言\n'
+                                            '{series} - 系列\n'
+                                            '{query} - 问题')
+        # 设置固定高度，显示7行文字
+        self.template_edit.setFixedHeight(140)
         self.layout.addWidget(self.template_edit)
         
         self.layout.addStretch()
@@ -74,4 +83,4 @@ class ConfigWidget(QWidget):
         prefs['auth_token'] = self.auth_token_edit.text()
         prefs['api_base_url'] = self.base_url_edit.text()
         prefs['model'] = self.model_edit.text()
-        prefs['template'] = self.template_edit.text()
+        prefs['template'] = self.template_edit.toPlainText()
