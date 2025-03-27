@@ -4,27 +4,27 @@
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                            QPushButton, QTextEdit, QLabel)
-from PyQt5.QtCore import Qt
+                           QLabel, QTextEdit, QPushButton)
+from calibre.gui2.actions import InterfaceAction
+from calibre.gui2 import info_dialog
+from calibre_plugins.ask_gpt.config import ConfigWidget, get_prefs
+from calibre_plugins.ask_gpt.api import APIClient
+from calibre_plugins.ask_gpt.i18n import get_translation
+from calibre.utils.resources import get_path as I
+import os
+import sys
 import logging
 
-from calibre.gui2.actions import InterfaceAction
-from calibre_plugins.ask_gpt.api import XAIClient
-from calibre_plugins.ask_gpt.config import get_prefs, ConfigWidget
-
-from calibre.utils.resources import get_path as I
-from PyQt5.QtSvg import QSvgRenderer
-
-# 配置日志
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
-    # 使用相对路径指定图标
-    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', 'Ctrl+L')
+    # 根据操作系统设置不同的快捷键
+    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', 
+                  'Ctrl+L')
     action_type = 'global'
-
+    
     def __init__(self, parent, site_customization):
         try:
             InterfaceAction.__init__(self, parent, site_customization)
@@ -32,249 +32,233 @@ class AskGPTPluginUI(InterfaceAction):
             logger.debug(f"初始化插件时出现非致命错误（可以忽略）：{str(e)}")
         self.api = None
         self.gui = parent
+        self.i18n = get_translation(get_prefs()['language'])
         logger.info("AskGPTPluginUI initialized")
-
+        
     def genesis(self):
-        logger.info("AskGPTPluginUI genesis called")
-
-        # 获取插件版本
-        base = self.interface_action_base_plugin
-        self.version = base.name+"v%d.%d.%d"%base.version
-
+        icon = get_icons('images/ask_gpt.png')
+        self.qaction.setIcon(icon)
+        
         # 创建菜单
-        self.menu = QMenu()
-        self.menu.setToolTip(self.action_spec[2])
+        self.menu = QMenu(self.gui)
+        
+        # 添加配置菜单项
+        self.config_action = QAction(self.i18n['config_title'], self)
+        self.config_action.triggered.connect(self.show_configuration)
+        self.menu.addAction(self.config_action)
+        
+        # 添加分隔符
+        self.menu.addSeparator()
+        
+        # 添加主要动作
+        self.ask_action = QAction(self.i18n['plugin_name'], self)
+        self.ask_action.triggered.connect(self.show_dialog)
+        self.menu.addAction(self.ask_action)
+        
+        # 添加分隔符
+        self.menu.addSeparator()
+        
+        # 添加关于菜单项
+        self.about_action = QAction(self.i18n['about'], self)
+        self.about_action.triggered.connect(self.show_about)
+        self.menu.addAction(self.about_action)
+        
+        # 设置菜单更新事件
+        self.menu.aboutToShow.connect(self.about_to_show_menu)
+        
+        # 设置主图标点击和菜单
+        self.qaction.triggered.connect(self.show_dialog)
         self.qaction.setMenu(self.menu)
         
-        # 官方文档指引设置图标
-        icon = get_icons('images/ask_gpt.png', 'Ask Grok')
-        self.qaction.setIcon(icon)
-        self.qaction.triggered.connect(self.show_dialog)
-        self.qaction.shortcut = QKeySequence(self.action_spec[3])
-
-        # 添加配置菜单项
-        self.config_action = self.create_menu_action(
-            self.menu,
-            'ask_gpt_config',
-            '配置插件',
-            description='配置 Ask Grok 插件',
-            triggered=self.show_configuration
-        )
-        
-        # 添加分隔符
-        self.menu.addSeparator()
-        
-        # 添加主要动作
-        self.ask_action = self.create_menu_action(
-            self.menu,
-            'ask_gpt_ask',
-            'Ask Grok',
-            description='开启弹窗',
-            triggered=self.show_dialog
-        )
-         
-        # 初始化 API
-        self.initialize_api()
-
-        # 添加分隔符
-        self.menu.addSeparator()
-        
-        # 添加主要动作
-        self.about_action = self.create_menu_action(
-            self.menu,
-            'ask_gpt_about',
-            '关于',
-            description='关于插件',
-            triggered=self.show_dialog2
-        )
+    def about_to_show_menu(self):
+        # 更新菜单项的文本
+        self.i18n = get_translation(get_prefs()['language'])
+        self.config_action.setText(self.i18n['config_title'])
+        self.ask_action.setText(self.i18n['plugin_name'])
+        self.about_action.setText(self.i18n['about'])
         
     def initialize_api(self):
-        """Initialize the API client"""
-        try:
-            # 从环境变量或配置中获取认证令牌
+        if not self.api:
             prefs = get_prefs()
-            auth_token = prefs['auth_token']
-            api_base = prefs['api_base_url']
-            model = prefs['model']
-            
-            self.api = XAIClient(auth_token=auth_token, api_base=api_base, model=model)
-        except Exception as e:
-            from calibre.gui2 import error_dialog
-            error_dialog(
-                self.gui,
-                'API 初始化失败',
-                f'初始化 X.AI API 客户端失败：{str(e)}\n\n请检查配置中的 Authorization Token 是否正确设置。',
-                show=True
+            self.api = APIClient(
+                auth_token=prefs['auth_token'],
+                api_base=prefs['api_base_url'],
+                model=prefs['model']
             )
-            self.api = None
-        
+    
     def apply_settings(self):
+        prefs = get_prefs()
+        self.i18n = get_translation(prefs['language'])
         self.initialize_api()
-
+    
     def show_configuration(self):
-        """显示配置对话框"""
-        self.interface_action_base_plugin.do_user_config(parent=self.gui)
-
+        self.interface_action_base_plugin.do_user_config(self.gui)
+    
     def show_dialog(self):
-        # 获取当前选中的书籍
+        self.initialize_api()
+        
+        # 获取选中的书籍
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
             return
-            
-        # 如果 API 未初始化，尝试重新初始化
-        if self.api is None:
-            self.initialize_api()
-            if self.api is None:
-                return
         
         # 获取书籍信息
+        db = self.gui.current_db
         book_id = self.gui.library_view.model().id(rows[0])
-        mi = self.gui.current_db.new_api.get_metadata(book_id)
+        mi = db.get_metadata(book_id, index_is_id=True)
         
         # 显示对话框
         d = AskDialog(self.gui, mi, self.api)
         d.exec_()
-    def show_dialog2(self):
+    
+    def show_about(self):
         """显示关于对话框"""
-        msg = QMessageBox()
-        msg.setWindowTitle("关于 Ask Grok")
+        msg = QMessageBox(self.gui)
+        msg.setWindowTitle(self.i18n['about_title'])
         
         # 加载并设置图标
-        icon_path = I('images/ask_gpt.png') # 显示插件图标
+        icon_path = I('images/ask_gpt.png')
         icon_pixmap = QPixmap(icon_path)
-        scaled_pixmap = None  # 初始化变量
-        
         if not icon_pixmap.isNull():
             scaled_pixmap = icon_pixmap.scaledToHeight(
                 128,
                 Qt.TransformationMode.SmoothTransformation
             )
-
-        # 创建标签并设置图标
-        icon_label = QLabel()
-        if scaled_pixmap:  # 检查是否成功创建了缩放图片
-            icon_label.setPixmap(scaled_pixmap)
-            icon_label.setAlignment(Qt.AlignCenter)  # 居中对齐
-            
-            # 将图标标签添加到消息框布局
-            layout = msg.layout()
-            layout.addWidget(icon_label, 0, 0, 1, 1, Qt.AlignCenter)
+            msg.setIconPixmap(scaled_pixmap)
         
         # 设置文本内容
-        msg.setText("""
-        <div style='text-align: left'>
-            <h3 style='margin:200px 0 0 0'>Ask Grok</h3>
-            <p style='font-weight: normal;'>Grok for reading.</p>
-            <p style='color: #666; font-weight: normal; margin:20px 0 20px 0'>v1.0.0</p>
-            <p style='color: #666; font-weight: normal; margin:0 0 0 0;'>👉 <a href='https://github.com/sheldonrrr/ask_gpt' style='color: #666; text-decoration: none; font-weight: normal; font-style: italic;'>GitHub Repo</a></p>
+        msg.setText(f"""
+        <div style='text-align: center'>
+            <h3 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h3>
+            <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
+            <p style='color: #666; font-weight: normal; margin: 20px 0;'>v1.0.0</p>
+            <p style='color: #666;'>
+                <a href='https://github.com/sheldonrrr/ask_gpt' 
+                   style='color: #666; text-decoration: none;'>
+                   GitHub
+                </a>
+            </p>
         </div>
         """)
         msg.setTextFormat(Qt.RichText)
-
-        # 设置消息框整体样式
+        
+        # 设置消息框样式
         msg.setStyleSheet("""
             QMessageBox {
-                text-align: left;
-                padding: 20px 40px;
+                text-align: center;
+                padding: 20px;
             }
-            QMessageBox QLabel {
-                margin: 0 20px 0 0;
         """)
-
-        # 设置对话框居中
-        layout = msg.layout()
-        layout.setSizeConstraint(layout.SetMinimumSize)
+        
         msg.exec_()
-
+        
 class AskDialog(QDialog):
-    # 语言代码映射
     LANGUAGE_MAP = {
-        'zho': '中文',
-        'zh': '中文',
-        'eng': '英文',
-        'en': '英文',
-        'jpn': '日文',
-        'ja': '日文',
-        'kor': '韩文',
-        'ko': '韩文',
-        'fra': '法文',
-        'fr': '法文',
-        'deu': '德文',
-        'de': '德文',
-        'spa': '西班牙文',
-        'es': '西班牙文',
-        'rus': '俄文',
-        'ru': '俄文',
+        # 中文变体
+        'zho': '简体中文',  # 简体中文
+        'zh': '简体中文',
+        'zht': '繁體中文',  # 繁体中文
+        'zh-tw': '繁體中文',
+        'zh-hk': '繁體中文',
+        'yue': '粵語',      # 粤语
+        'zh-yue': '粵語',
+        
+        # 日语
+        'jpn': '日本語',
+        'ja': '日本語',
+        
+        # 欧洲语系
+        'fra': 'Français',   # 法语
+        'fr': 'Français',
+        'deu': 'Deutsch',    # 德语
+        'de': 'Deutsch',
+        'spa': 'Español',    # 西班牙语
+        'es': 'Español',
+        'rus': 'Русский',    # 俄语
+        'ru': 'Русский',
+        'por': 'Português',  # 葡萄牙语
+        'pt': 'Português',
+        'swe': 'Svenska',    # 瑞典语
+        'sv': 'Svenska',
+        'dan': 'Dansk',      # 丹麦语
+        'da': 'Dansk',
+        'nld': 'Nederlands', # 荷兰语
+        'nl': 'Nederlands',
+        'nor': 'Norsk',      # 挪威语
+        'no': 'Norsk',
+        'fin': 'Suomi',      # 芬兰语
+        'fi': 'Suomi',
+        
+        # 英语（保留作为默认语言）
+        'eng': 'English',
+        'en': 'English',
     }
-
+    
     def __init__(self, gui, book_info, api):
         QDialog.__init__(self, gui)
         self.gui = gui
         self.book_info = book_info
         self.api = api
+        self.i18n = get_translation(get_prefs()['language'])
         self.setup_ui()
     
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
             return None
-        # 转换为小写并去除空格
         lang_code = lang_code.lower().strip()
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
-        self.setWindowTitle(f'Ask Grok - {self.book_info.title}')
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(800)
+        self.setWindowTitle(f"{self.i18n['plugin_name']} - {self.book_info.title}")
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(400)
         
-        # 创建主布局
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建书籍信息标签
+        # 创建书籍信息显示区域
+        info_area = QLabel()
+        info_area.setWordWrap(True)
+        info_area.setTextFormat(Qt.RichText)
+        info_area.setStyleSheet("""
+            QLabel {
+                background-color: #f5f5f5;
+                padding: 10px;
+                border-radius: 5px;
+                line-height: 150%;
+            }
+        """)
+        
+        # 构建书籍信息HTML
         metadata_info = []
-        
-        # 使用 HTML 格式化文本，保证每个字段都是一个段落
-        title_text = f"<p><b>书名：</b>{self.book_info.title}</p>"
-        authors_text = f"<p><b>作者：</b>{', '.join(self.book_info.authors)}</p>"
-        metadata_info.extend([title_text, authors_text])
-        
+        if self.book_info.title:
+            metadata_info.append(f"<p><b>书名：</b>{self.book_info.title}</p>")
+        if self.book_info.authors:
+            metadata_info.append(f"<p><b>作者：</b>{', '.join(self.book_info.authors)}</p>")
         if self.book_info.publisher:
             metadata_info.append(f"<p><b>出版社：</b>{self.book_info.publisher}</p>")
         if self.book_info.pubdate:
             metadata_info.append(f"<p><b>出版日期：</b>{self.book_info.pubdate.year}</p>")
         if self.book_info.language:
-            lang_name = self.get_language_name(self.book_info.language)
-            metadata_info.append(f"<p><b>语言：</b>{lang_name}</p>")
+            metadata_info.append(f"<p><b>语言：</b>{self.get_language_name(self.book_info.language)}</p>")
         if getattr(self.book_info, 'series', None):
             metadata_info.append(f"<p><b>系列：</b>{self.book_info.series}</p>")
-            
-        book_info = QLabel("".join(metadata_info))
-        book_info.setWordWrap(True)  # 启用自动换行
-        book_info.setTextFormat(Qt.RichText)  # 使用富文本格式
-        book_info.setStyleSheet("""
-            QLabel {
-                color: #666666;
-                background-color: #f5f5f5;
-                padding: 10px;
-                border-radius: 4px;
-                line-height: 150%;
-            }
-            QLabel p {
-                margin: 0;
-                margin-bottom: 5px;
-            }
-            QLabel p:last-child {
-                margin-bottom: 0;
-            }
-        """)
-        layout.addWidget(book_info)
+        
+        info_area.setText("".join(metadata_info))
+        layout.addWidget(info_area)
         
         # 创建输入区域
         self.input_area = QTextEdit()
         self.input_area.setPlaceholderText("在这里输入你的问题...")
-        self.input_area.setMaximumHeight(100)
+        self.input_area.setMinimumHeight(100)
         layout.addWidget(self.input_area)
+        
+        # 创建响应区域
+        self.response_area = QTextEdit()
+        self.response_area.setReadOnly(True)
+        self.response_area.setMinimumHeight(150)
+        layout.addWidget(self.response_area)
         
         # 创建按钮区域
         button_layout = QHBoxLayout()
@@ -282,7 +266,7 @@ class AskDialog(QDialog):
         # 创建发送按钮和快捷键提示的容器
         send_container = QVBoxLayout()
         
-        self.send_button = QPushButton("发送")
+        self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
         
         # 设置按钮样式
@@ -308,9 +292,9 @@ class AskDialog(QDialog):
         
         # 添加快捷键提示标签
         if hasattr(Qt, 'ControlModifier'):
-            shortcut_text = "Ctrl + Enter"
+            shortcut_text = self.i18n['shortcut_enter']
         else:
-            shortcut_text = "⌘ + Return"
+            shortcut_text = self.i18n['shortcut_return']
         shortcut_label = QLabel(shortcut_text)
         shortcut_label.setStyleSheet("color: gray; font-size: 11px;")
         shortcut_label.setAlignment(Qt.AlignCenter)
@@ -319,27 +303,13 @@ class AskDialog(QDialog):
         # 将发送按钮容器添加到按钮布局
         button_layout.addStretch()
         button_layout.addLayout(send_container)
-        button_layout.addStretch()
         
         layout.addLayout(button_layout)
         
-        # 创建响应区域
-        self.response_area = QTextEdit()
-        self.response_area.setReadOnly(True)
-        layout.addWidget(self.response_area)
-        
         # 设置快捷键
-        if hasattr(Qt, 'ControlModifier'):
-            send_shortcut = QKeySequence(Qt.ControlModifier | Qt.Key_Return)
-        else:
-            send_shortcut = QKeySequence(Qt.MetaModifier | Qt.Key_Return)
-            
-        self.send_shortcut = QAction(self)
-        self.send_shortcut.setShortcut(send_shortcut)
-        self.send_shortcut.triggered.connect(self.send_question)
-        self.addAction(self.send_shortcut)
+        QApplication.instance().installEventFilter(self)
         
-        # 设置输入框焦点
+        # 设置初始焦点
         self.input_area.setFocus()
     
     def send_question(self):
@@ -378,7 +348,17 @@ class AskDialog(QDialog):
                 self.response_area.ensureCursorVisible()
                 QApplication.processEvents()
         except Exception as e:
-            self.response_area.setText(f"错误：{str(e)}")
+            self.response_area.setText(f"{self.i18n['error_prefix']}{str(e)}")
         finally:
             # 重新启用发送按钮
             self.send_button.setEnabled(True)
+    
+    def eventFilter(self, obj, event):
+        """事件过滤器，用于处理快捷键"""
+        if event.type() == event.KeyPress:
+            # 检查是否按下了 Ctrl+Enter 或 Cmd+Return
+            if ((event.modifiers() & Qt.ControlModifier or event.modifiers() & Qt.MetaModifier) and 
+                (event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter)):
+                self.send_question()
+                return True
+        return False
