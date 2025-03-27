@@ -12,7 +12,7 @@ prefs = JSONConfig('plugins/ask_gpt')
 
 # 默认配置
 prefs.defaults['auth_token'] = os.environ.get('XAI_AUTH_TOKEN', '')
-prefs.defaults['template'] = '关于{title}这本书，{query}'
+prefs.defaults['template'] = '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}'
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-2-latest'
 
@@ -64,16 +64,17 @@ class ConfigWidget(QWidget):
         
         self.template_edit = QTextEdit(self)
         self.template_edit.setText(prefs['template'])
-        self.template_edit.setPlaceholderText('可用的变量：\n'
-                                            '{title} - 书名\n'
-                                            '{author} - 作者\n'
-                                            '{publisher} - 出版社\n'
-                                            '{pubdate} - 出版年份\n'
-                                            '{language} - 语言\n'
-                                            '{series} - 系列\n'
-                                            '{query} - 问题')
-        # 设置固定高度，显示7行文字
-        self.template_edit.setFixedHeight(140)
+        self.template_edit.setPlaceholderText('示例模板：\n'
+                                            '关于《{title}》这本书的信息：\n'
+                                            '作者：{author}\n'
+                                            '出版社：{publisher}\n'
+                                            '出版日期：{pubdate}\n'
+                                            '语言：{language}\n'
+                                            '系列：{series}\n'
+                                            '\n'
+                                            '问题：{query}')
+        # 设置固定高度，显示更多行文字以适应新的模板
+        self.template_edit.setFixedHeight(180)
         self.layout.addWidget(self.template_edit)
         
         self.layout.addStretch()
