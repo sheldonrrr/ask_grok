@@ -41,3 +41,6 @@ class AskGPTPlugin(InterfaceActionBase):
             ac.apply_settings()
         else:
             print("Warning: actual_plugin_ is None in save_settings")
+
+# 添加阅读器插件
+from calibre_plugins.ask_gpt.viewer_plugin import AskGPTViewerPlugin
