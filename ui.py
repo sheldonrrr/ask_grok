@@ -9,7 +9,7 @@ from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_gpt.api import APIClient
-from calibre_plugins.ask_gpt.i18n import get_translation
+from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
 from calibre.utils.resources import get_path as I
 import os
 import sys
@@ -17,6 +17,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+def get_suggestion_template(lang_code):
+    """获取指定语言的建议提示词模板"""
+    return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
 
 class AskGPTPluginUI(InterfaceAction):
     name = 'Ask Grok'
@@ -364,6 +368,55 @@ class AskDialog(QDialog):
         """)
         layout.addWidget(self.input_area)
         
+        # 创建操作区域
+        action_layout = QHBoxLayout()
+        
+        # 创建建议按钮
+        self.suggest_button = QPushButton(self.i18n['suggest_button'])
+        self.suggest_button.clicked.connect(self.generate_suggestion)
+        self.suggest_button.setFixedWidth(80)  # 设置固定宽度
+        self.suggest_button.setFixedHeight(24)  # 设置固定高度
+        
+        # 创建建议动作和快捷键
+        self.suggest_action = QAction(self.i18n['suggest_button'], self)
+        self.suggest_action.setShortcut(QKeySequence("Ctrl+Shift+S" if not sys.platform == 'darwin' else "Cmd+Shift+S"))
+        self.suggest_action.triggered.connect(self.generate_suggestion)
+        self.addAction(self.suggest_action)
+        
+        # 设置按钮样式
+        self.suggest_button.setStyleSheet("""
+            QPushButton {
+                font-size: 12px;
+                padding: 2px 8px;
+            }
+            QPushButton:hover:enabled {
+                background-color: #f5f5f5;
+            }
+        """)
+        action_layout.addWidget(self.suggest_button)
+        
+        # 添加弹性空间
+        action_layout.addStretch()
+        
+        # 创建发送按钮
+        self.send_button = QPushButton(self.i18n['send_button'])
+        self.send_button.clicked.connect(self.send_question)
+        self.send_button.setFixedWidth(80)  # 设置固定宽度
+        self.send_button.setFixedHeight(24)  # 设置固定高度
+        # 设置按钮样式
+        self.send_button.setStyleSheet("""
+            QPushButton {
+                font-size: 12px;
+                padding: 2px 8px;
+            }
+            QPushButton:hover:enabled {
+                background-color: #f5f5f5;
+            }
+        """)
+        action_layout.addWidget(self.send_button)
+        
+        layout.addLayout(action_layout)
+        
         # 创建响应区域
         self.response_area = QTextEdit()
         self.response_area.setReadOnly(True)
@@ -376,53 +429,83 @@ class AskDialog(QDialog):
                 background-color: #fafafa;
             }
         """)
-        # 设置占位符文字，使用当前语言
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
         layout.addWidget(self.response_area)
-        
-        # 创建按钮区域
-        button_layout = QHBoxLayout()
-        
-        # 创建发送按钮和快捷键提示的容器
-        send_container = QVBoxLayout()
-        
-        self.send_button = QPushButton(self.i18n['send_button'])
-        self.send_button.clicked.connect(self.send_question)
-        self.send_button.setFixedWidth(80)  # 设置固定宽度
-        self.send_button.setFixedHeight(24)  # 设置固定高度
-        
-        # 设置按钮样式
-        self.send_button.setStyleSheet("""
+    
+    def generate_suggestion(self):
+        """生成问题建议
+        点击"建议？"按钮后，使用 AI 生成一个关于当前书籍的问题建议，
+        并将这个建议直接填入输入框中，作为用户的问题。
+        """
+        if not self.api:
+            return
+            
+        # 禁用建议按钮，显示加载状态
+        self.suggest_button.setEnabled(False)
+        original_text = self.suggest_button.text()
+        self.suggest_button.setText(self.i18n['loading'])
+        self.suggest_button.setStyleSheet("""
             QPushButton {
                 font-size: 12px;
-            }
-            QPushButton:hover:enabled {
-                background-color: #f5f5f5;
+                color: #666;
+                padding: 2px 8px;
             }
         """)
-        send_container.addWidget(self.send_button)
         
-        # 添加快捷键提示标签
-        if hasattr(Qt, 'ControlModifier'):
-            shortcut_text = self.i18n['shortcut_enter']
-        else:
-            shortcut_text = self.i18n['shortcut_return']
-        shortcut_label = QLabel(shortcut_text)
-        shortcut_label.setStyleSheet("color: gray; font-size: 11px;")
-        shortcut_label.setAlignment(Qt.AlignCenter)
-        send_container.addWidget(shortcut_label)
+        # 清空输入框，显示加载状态
+        original_input = self.input_area.toPlainText()
+        self.input_area.clear()
+        self.input_area.setPlaceholderText(self.i18n['loading'])
         
-        # 将发送按钮容器添加到按钮布局
-        button_layout.addStretch()
-        button_layout.addLayout(send_container)
+        # 确保 UI 更新
+        QApplication.processEvents()
         
-        layout.addLayout(button_layout)
+        # 延迟执行 API 调用，确保 UI 状态已更新
+        QTimer.singleShot(100, lambda: self._do_generate_suggestion(original_text, original_input))
         
-        # 设置快捷键
-        QApplication.instance().installEventFilter(self)
+    def _do_generate_suggestion(self, original_button_text, original_input):
+        """实际执行生成建议的逻辑"""
+        try:
+            # 准备提示词
+            template = get_suggestion_template(get_prefs()['language'])
+            prompt = template.format(
+                title=self.book_info.title,
+                author=', '.join(self.book_info.authors) if self.book_info.authors else 'Unknown'
+            )
+            
+            # 调用 API 获取建议
+            suggestion = ""
+            for chunk in self.api.ask_stream(prompt):
+                suggestion += chunk
+            
+            # 将建议设置到输入框
+            if suggestion:
+                self.input_area.setText(suggestion)
+            else:
+                # 如果没有得到建议，恢复原来的输入
+                self.input_area.setText(original_input)
+            
+        except Exception as e:
+            logger.error(f"生成建议时出错：{str(e)}")
+            # 发生错误时恢复原来的输入
+            self.input_area.setText(original_input)
         
-        # 设置初始焦点
-        self.input_area.setFocus()
+        finally:
+            # 恢复输入框占位符
+            self.input_area.setPlaceholderText(self.i18n['input_placeholder'])
+            
+            # 恢复按钮状态
+            self.suggest_button.setText(original_button_text)
+            self.suggest_button.setEnabled(True)
+            self.suggest_button.setStyleSheet("""
+                QPushButton {
+                    font-size: 12px;
+                    padding: 2px 8px;
+                }
+                QPushButton:hover:enabled {
+                    background-color: #f5f5f5;
+                }
+            """)
     
     def send_question(self):
         self.send_button.setEnabled(False)
