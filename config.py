@@ -4,7 +4,7 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                            QLineEdit, QTextEdit, QComboBox, QPushButton,
-                           QDialog, QHBoxLayout)
+                           QHBoxLayout)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 
@@ -80,7 +80,7 @@ def get_prefs():
     
     return prefs
 
-class ConfigDialog(QDialog):
+class ConfigDialog(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         
@@ -88,10 +88,7 @@ class ConfigDialog(QDialog):
         self.i18n = TRANSLATIONS.get(prefs['language'], TRANSLATIONS['en'])
         
         # 设置窗口属性
-        self.setWindowTitle(self.i18n['config_title'])
-        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         self.setMinimumWidth(400)
-        self.setModal(True)
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -198,6 +195,15 @@ class ConfigDialog(QDialog):
             'template': self.template_edit.toPlainText()
         }
     
+    def reset_to_initial_values(self):
+        """重置所有字段到初始值"""
+        self.lang_combo.setCurrentIndex(self.lang_combo.findData(self.initial_values['language']))
+        self.auth_token_edit.setText(self.initial_values['auth_token'])
+        self.base_url_edit.setText(self.initial_values['api_base_url'])
+        self.model_edit.setText(self.initial_values['model'])
+        self.template_edit.setText(self.initial_values['template'])
+        self.save_button.setEnabled(False)
+    
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
         current_values = {
@@ -254,7 +260,6 @@ class ConfigDialog(QDialog):
         
         # 更新界面语言
         self.i18n = TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
-        self.setWindowTitle(self.i18n['config_title'])
         
         # 更新所有标签文本
         self.lang_label.setText(self.i18n['language_label'])
@@ -279,10 +284,5 @@ class ConfigDialog(QDialog):
         # 更新模板内容
         self.template_edit.setText(get_default_template(lang_code))
     
-    def accept(self):
-        """保存配置并关闭对话框"""
-        self.save_settings()
-        super().accept()
-
     # 添加自定义信号
     settings_saved = pyqtSignal()
