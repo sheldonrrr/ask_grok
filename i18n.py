@@ -83,6 +83,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Skriv dit spørgsmål her...',
         'menu_title': 'Spørg',
         'menu_ask_grok': 'Spørg Grok',
+        'ok_button': 'OK',
+        'save_button': 'Gem',
+        'save_success': 'Indstillinger gemt',
     },
     
     # 德语 (de)
@@ -115,6 +118,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Geben Sie hier Ihre Frage ein...',
         'menu_title': 'Fragen',
         'menu_ask_grok': 'Grok fragen',
+        'ok_button': 'OK',
+        'save_button': 'Speichern',
+        'save_success': 'Einstellungen gespeichert',
     },
     
     # 英语 (en)
@@ -147,6 +153,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Enter your question here...',
         'menu_title': 'Ask',
         'menu_ask_grok': 'Ask Grok',
+        'ok_button': 'OK',
+        'save_button': 'Save',
+        'save_success': 'Settings saved',
     },
     
     # 西班牙语 (es)
@@ -179,6 +188,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Escriba su pregunta aquí...',
         'menu_title': 'Preguntar',
         'menu_ask_grok': 'Preguntar a Grok',
+        'ok_button': 'OK',
+        'save_button': 'Guardar',
+        'save_success': 'Configuración guardada',
     },
     
     # 芬兰语 (fi)
@@ -211,6 +223,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Kirjoita kysymyksesi tähän...',
         'menu_title': 'Kysy',
         'menu_ask_grok': 'Kysy Grok',
+        'ok_button': 'OK',
+        'save_button': 'Tallenna',
+        'save_success': 'Asetukset tallennettu',
     },
     
     # 法语 (fr)
@@ -243,6 +258,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Saisissez votre question ici...',
         'menu_title': 'Demander',
         'menu_ask_grok': 'Poser une question à Grok',
+        'ok_button': 'OK',
+        'save_button': 'Enregistrer',
+        'save_success': 'Paramètres enregistrés',
     },
     
     # 日语 (ja)
@@ -275,6 +293,9 @@ TRANSLATIONS = {
         'input_placeholder': 'ここに質問を入力してください...',
         'menu_title': '質問',
         'menu_ask_grok': 'Grok に質問する',
+        'ok_button': 'OK',
+        'save_button': '保存',
+        'save_success': '設定を保存しました',
     },
     
     # 荷兰语 (nl)
@@ -307,6 +328,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Voer hier uw vraag in...',
         'menu_title': 'Vraag',
         'menu_ask_grok': 'Vraag aan Grok',
+        'ok_button': 'OK',
+        'save_button': 'Opslaan',
+        'save_success': 'Instellingen opgeslagen',
     },
     
     # 挪威语 (no)
@@ -339,6 +363,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Skriv spørsmålet ditt her...',
         'menu_title': 'Spør',
         'menu_ask_grok': 'Spør Grok',
+        'ok_button': 'OK',
+        'save_button': 'Lagre',
+        'save_success': 'Innstillinger lagret',
     },
     
     # 葡萄牙语 (pt)
@@ -371,6 +398,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Digite sua pergunta aqui...',
         'menu_title': 'Perguntar',
         'menu_ask_grok': 'Perguntar ao Grok',
+        'ok_button': 'OK',
+        'save_button': 'Salvar',
+        'save_success': 'Configurações salvas',
     },
     
     # 俄语 (ru)
@@ -403,6 +433,9 @@ TRANSLATIONS = {
         'input_placeholder': 'Введите ваш вопрос здесь...',
         'menu_title': 'Спросить',
         'menu_ask_grok': 'Спросить у Grok',
+        'ok_button': 'OK',
+        'save_button': 'Сохранить',
+        'save_success': 'Настройки сохранены',
     },
     
     # 瑞典语 (sv)
@@ -435,18 +468,21 @@ TRANSLATIONS = {
         'input_placeholder': 'Skriv din fråga här...',
         'menu_title': 'Fråga',
         'menu_ask_grok': 'Fråga Grok',
+        'ok_button': 'OK',
+        'save_button': 'Spara',
+        'save_success': 'Inställningar sparade',
     },
     
     # 简体中文 (zh)
     'zh': {
         'plugin_name': 'Ask Grok',
-        'plugin_desc': '用Grok询问关于一本书的问题',
+        'plugin_desc': '使用 Grok 询问关于书籍的问题',
         'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
         'config_title': '配置',
-        'token_label': 'X.AI Authorization Token:',
-        'token_help': '格式: Bearer xai-xxx 或直接输入 xai-xxx',
-        'model_label': 'Model:',
-        'model_placeholder': 'Default: grok-2-latest',
+        'token_label': 'X.AI 授权令牌:',
+        'token_help': '格式：Bearer xai-xxx 或直接 xai-xxx',
+        'model_label': '模型:',
+        'model_placeholder': '默认：grok-2-latest',
         'template_label': '提示词模板:',
         'template_placeholder': '示例模板：\n关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
         'language_label': '界面语言:',
@@ -456,9 +492,9 @@ TRANSLATIONS = {
         'error_prefix': '错误：',
         'about': '关于',
         'about_title': '关于',
-        'base_url_label': 'API Base URL:',
-        'base_url_placeholder': 'Default: https://api.x.ai/v1',
-        'metadata_title': '书名',
+        'base_url_label': 'API 基础 URL:',
+        'base_url_placeholder': '默认：https://api.x.ai/v1',
+        'metadata_title': '标题',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
         'metadata_pubdate': '出版日期',
@@ -467,6 +503,11 @@ TRANSLATIONS = {
         'input_placeholder': '在这里输入你的问题...',
         'menu_title': '询问',
         'menu_ask_grok': '询问 Grok',
+        'ok_button': '确定',
+        'save_button': '保存',
+        'save_success': '设置已保存',
+        'response_placeholder': 'Grok 的回答将显示在这里',
+        'loading_text': '正在询问',
     },
     
     # 繁体中文 (zht)
@@ -499,6 +540,9 @@ TRANSLATIONS = {
         'input_placeholder': '在此輸入你的問題...',
         'menu_title': '詢問',
         'menu_ask_grok': '詢問 Grok',
+        'ok_button': '確定',
+        'save_button': '儲存',
+        'save_success': '設定已儲存',
     },
     
     # 粤语 (yue)
@@ -531,6 +575,9 @@ TRANSLATIONS = {
         'input_placeholder': '喺呢度輸入你嘅問題...',
         'menu_title': '問嘢',
         'menu_ask_grok': '問 Grok',
+        'ok_button': '確定',
+        'save_button': '保存',
+        'save_success': '設定已保存',
     }
 }
 

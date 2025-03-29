@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
-                     QKeySequence, QMessageBox, QPixmap, QPainter, QSize)
+                     QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget)
+                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox)
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
@@ -177,32 +177,38 @@ class TabDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
-        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
         self.setMinimumWidth(500)
-        self.setModal(True)
-        
-        # 创建主布局
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        self.setMinimumHeight(500)
         
         # 创建标签页
         self.tab_widget = QTabWidget()
-        layout.addWidget(self.tab_widget)
         
-        # 添加配置标签页
+        # 创建配置页面
         self.config_widget = AskGPTConfigWidget(self.gui)
         self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
         
-        # 添加关于标签页
-        self.about_widget = AboutWidget(self)
+        # 创建关于页面
+        self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about_title'])
         
-        # 设置合适的窗口大小
-        self.resize(600, 500)
-
-        # 连接 ConfigDialog 的信号
-        self.config_widget.config_dialog.accepted.connect(self.accept)
-        self.config_widget.config_dialog.rejected.connect(self.reject)
+        # 创建主布局
+        layout = QVBoxLayout()
+        layout.addWidget(self.tab_widget)
+        
+        # 创建按钮布局
+        button_box = QDialogButtonBox(QDialogButtonBox.Close)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+        
+        self.setLayout(layout)
+        
+        # 连接配置对话框的信号
+        self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
+    
+    def on_settings_saved(self):
+        """当设置保存时的处理函数"""
+        # 这里可以添加任何需要在设置保存后执行的操作
+        pass
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -325,13 +331,34 @@ class AskDialog(QDialog):
         # 创建输入区域
         self.input_area = QTextEdit()
         self.input_area.setPlaceholderText(self.i18n['input_placeholder'])
-        self.input_area.setMinimumHeight(100)
+        self.input_area.setFixedHeight(72)  # 设置为三行文字的高度
+        self.input_area.setStyleSheet("""
+            QTextEdit {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QTextEdit:focus {
+                border: 1px solid #4a90e2;
+                outline: none;
+            }
+        """)
         layout.addWidget(self.input_area)
         
         # 创建响应区域
         self.response_area = QTextEdit()
         self.response_area.setReadOnly(True)
         self.response_area.setMinimumHeight(150)
+        self.response_area.setStyleSheet("""
+            QTextEdit {
+                border: 1px dashed #999;
+                border-radius: 4px;
+                padding: 5px;
+                background-color: #fafafa;
+            }
+        """)
+        # 设置占位符文字，使用当前语言
+        self.response_area.setPlaceholderText(self.i18n.get('response_placeholder', 'Grok的回答将显示在这里'))
         layout.addWidget(self.response_area)
         
         # 创建按钮区域
@@ -342,24 +369,16 @@ class AskDialog(QDialog):
         
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
+        self.send_button.setFixedWidth(80)  # 设置固定宽度
+        self.send_button.setFixedHeight(24)  # 设置固定高度
         
         # 设置按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
-                padding: 5px 15px;
-                border: 1px solid #4CAF50;
-                border-radius: 4px;
-                background-color: #4CAF50;
-                color: white;
+                font-size: 12px;
             }
-            QPushButton:hover {
-                background-color: #45a049;
-                border-color: #45a049;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-                border-color: #cccccc;
-                color: #666666;
+            QPushButton:hover:enabled {
+                background-color: #f5f5f5;
             }
         """)
         send_container.addWidget(self.send_button)
@@ -390,6 +409,29 @@ class AskDialog(QDialog):
         self.send_button.setEnabled(False)
         question = self.input_area.toPlainText()
         
+        # 设置加载动画
+        loading_text = self.i18n['loading_text'] if 'loading_text' in self.i18n else 'Loading'
+        dots = ['', '.', '..', '...']
+        current_dot = 0
+        self._response_text = ''  # 初始化响应文本
+        
+        def update_loading():
+            nonlocal current_dot
+            if not self._response_text:  # 只有在没有响应时才显示加载动画
+                self.response_area.setText(f"{loading_text}{dots[current_dot]}")
+                current_dot = (current_dot + 1) % len(dots)
+            else:  # 如果有响应，显示响应内容
+                timer.stop()
+                self.response_area.setText(self._response_text)
+        
+        # 创建定时器
+        timer = QTimer()
+        timer.timeout.connect(update_loading)
+        timer.start(250)  # 每250毫秒更新一次，这样1秒会循环一遍
+        
+        # 1秒后停止加载动画
+        QTimer.singleShot(1000, timer.stop)
+        
         # 获取配置的模板
         from calibre_plugins.ask_gpt.config import get_prefs
         prefs = get_prefs()
@@ -406,15 +448,18 @@ class AskDialog(QDialog):
             'query': question
         }
         
-        # 使用模板格式化提示词
-        prompt = template.format(**template_vars)
-        
-        # 清空响应区域
-        self.response_area.clear()
-        
+        # 格式化提示词
         try:
-            # 使用流式输出
+            prompt = template.format(**template_vars)
+        except KeyError as e:
+            self.response_area.setText(f"{self.i18n['error_prefix']}Template error: {str(e)}")
+            self.send_button.setEnabled(True)
+            return
+        
+        # 发送请求并处理流式响应
+        try:
             for chunk in self.api.ask_stream(prompt):
+                self._response_text += chunk  # 累积响应文本
                 cursor = self.response_area.textCursor()
                 cursor.movePosition(QTextCursor.MoveOperation.End)
                 cursor.insertText(chunk)

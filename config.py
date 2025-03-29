@@ -4,8 +4,8 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                            QLineEdit, QTextEdit, QComboBox, QPushButton,
-                           QDialog, QDialogButtonBox, QHBoxLayout)
-from PyQt5.QtCore import Qt
+                           QDialog, QHBoxLayout)
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 
 from .i18n import TRANSLATIONS, get_default_template, get_translation
@@ -98,8 +98,8 @@ class ConfigDialog(QDialog):
         self.setLayout(layout)
         
         # 语言选择
-        lang_label = QLabel(self.i18n['language_label'])
-        layout.addWidget(lang_label)
+        self.lang_label = QLabel(self.i18n['language_label'])
+        layout.addWidget(self.lang_label)
         
         self.lang_combo = QComboBox(self)
         for code, name in SUPPORTED_LANGUAGES:
@@ -110,19 +110,19 @@ class ConfigDialog(QDialog):
         layout.addWidget(self.lang_combo)
         
         # X.AI Authorization Token 配置
-        key_label = QLabel(self.i18n['token_label'])
-        key_help = QLabel(self.i18n['token_help'])
-        key_help.setStyleSheet('color: gray; font-size: 11px;')
-        layout.addWidget(key_label)
-        layout.addWidget(key_help)
+        self.key_label = QLabel(self.i18n['token_label'])
+        self.key_help = QLabel(self.i18n['token_help'])
+        self.key_help.setStyleSheet('color: gray; font-size: 11px;')
+        layout.addWidget(self.key_label)
+        layout.addWidget(self.key_help)
         
         self.auth_token_edit = QLineEdit(self)
         self.auth_token_edit.setText(prefs['auth_token'])
         layout.addWidget(self.auth_token_edit)
         
         # API Base URL 配置
-        base_url_label = QLabel(self.i18n['base_url_label'])
-        layout.addWidget(base_url_label)
+        self.base_url_label = QLabel(self.i18n['base_url_label'])
+        layout.addWidget(self.base_url_label)
         
         self.base_url_edit = QLineEdit(self)
         self.base_url_edit.setText(prefs['api_base_url'])
@@ -130,8 +130,8 @@ class ConfigDialog(QDialog):
         layout.addWidget(self.base_url_edit)
         
         # Model 配置
-        model_label = QLabel(self.i18n['model_label'])
-        layout.addWidget(model_label)
+        self.model_label = QLabel(self.i18n['model_label'])
+        layout.addWidget(self.model_label)
         
         self.model_edit = QLineEdit(self)
         self.model_edit.setText(prefs['model'])
@@ -139,8 +139,8 @@ class ConfigDialog(QDialog):
         layout.addWidget(self.model_edit)
         
         # 提示词模板配置
-        template_label = QLabel(self.i18n['template_label'])
-        layout.addWidget(template_label)
+        self.template_label = QLabel(self.i18n['template_label'])
+        layout.addWidget(self.template_label)
         
         self.template_edit = QTextEdit(self)
         self.template_edit.setText(prefs['template'])
@@ -152,68 +152,137 @@ class ConfigDialog(QDialog):
         layout.addStretch()
         
         # 按钮布局
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        )
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        
-        # 自定义按钮样式
-        for button in button_box.buttons():
-            if button.text() == 'OK':
-                button.setText(self.i18n.get('ok_button', 'OK'))
-            elif button.text() == 'Cancel':
-                button.setText(self.i18n.get('cancel_button', 'Cancel'))
-            button.setFixedWidth(100)
-            button.setFixedHeight(32)
-        
         button_layout = QHBoxLayout()
+        
+        # 创建保存成功提示标签
+        self.save_success_label = QLabel('')
+        self.save_success_label.setStyleSheet('color: #2ecc71; font-size: 12px;')  # 使用绿色
+        self.save_success_label.hide()  # 初始时隐藏
+        button_layout.addWidget(self.save_success_label)
+        
         button_layout.addStretch()
-        button_layout.addWidget(button_box)
+        
+        # 创建保存按钮
+        self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
+        self.save_button.clicked.connect(self.save_settings)
+        self.save_button.setFixedWidth(80)  # 调整为标准按钮宽度
+        self.save_button.setFixedHeight(24)  # 调整为标准按钮高度
+        self.save_button.setEnabled(False)  # 初始状态设为不可点击
+        
+        # 设置按钮样式
+        self.save_button.setStyleSheet("""
+            QPushButton {
+                font-size: 12px;
+            }
+            QPushButton:hover:enabled {
+                background-color: #f5f5f5;
+            }
+        """)
+        button_layout.addWidget(self.save_button)
+        
         layout.addLayout(button_layout)
+        
+        # 连接所有输入控件的信号
+        self.lang_combo.currentIndexChanged.connect(self.on_config_changed)
+        self.auth_token_edit.textChanged.connect(self.on_config_changed)
+        self.base_url_edit.textChanged.connect(self.on_config_changed)
+        self.model_edit.textChanged.connect(self.on_config_changed)
+        self.template_edit.textChanged.connect(self.on_config_changed)
+        
+        # 保存初始配置值
+        self.initial_values = {
+            'language': self.lang_combo.currentData(),
+            'auth_token': self.auth_token_edit.text(),
+            'api_base_url': self.base_url_edit.text(),
+            'model': self.model_edit.text(),
+            'template': self.template_edit.toPlainText()
+        }
+    
+    def on_config_changed(self):
+        """当任何配置发生改变时检查是否需要启用保存按钮"""
+        current_values = {
+            'language': self.lang_combo.currentData(),
+            'auth_token': self.auth_token_edit.text(),
+            'api_base_url': self.base_url_edit.text(),
+            'model': self.model_edit.text(),
+            'template': self.template_edit.toPlainText()
+        }
+        
+        # 比较当前值和初始值
+        has_changes = any(
+            current_values[key] != self.initial_values[key]
+            for key in self.initial_values
+        )
+        
+        # 根据是否有改变来设置保存按钮状态
+        self.save_button.setEnabled(has_changes)
+    
+    def save_settings(self):
+        """保存设置但不关闭窗口"""
+        # 保存所有设置
+        prefs['auth_token'] = self.auth_token_edit.text()
+        prefs['api_base_url'] = self.base_url_edit.text()
+        prefs['model'] = self.model_edit.text()
+        prefs['template'] = self.template_edit.toPlainText()
+        prefs['language'] = self.lang_combo.currentData()
+        
+        # 更新初始值为当前值
+        self.initial_values = {
+            'language': self.lang_combo.currentData(),
+            'auth_token': self.auth_token_edit.text(),
+            'api_base_url': self.base_url_edit.text(),
+            'model': self.model_edit.text(),
+            'template': self.template_edit.toPlainText()
+        }
+        
+        # 禁用保存按钮
+        self.save_button.setEnabled(False)
+        
+        # 显示保存成功提示
+        self.save_success_label.setText(self.i18n.get('save_success', 'Settings saved'))
+        self.save_success_label.show()
+        
+        # 2秒后隐藏提示
+        QTimer.singleShot(2000, self.save_success_label.hide)
+        
+        # 发送 settings_saved 信号
+        self.settings_saved.emit()
     
     def on_language_changed(self, index):
         """语言改变时更新模板和界面语言"""
         lang_code = self.lang_combo.currentData()
-        self.template_edit.setText(get_default_template(lang_code))
         
         # 更新界面语言
         self.i18n = TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
         self.setWindowTitle(self.i18n['config_title'])
         
         # 更新所有标签文本
-        for widget in self.findChildren(QLabel):
-            if widget.text() == self.i18n['language_label']:
-                widget.setText(self.i18n['language_label'])
-            elif widget.text() == self.i18n['token_label']:
-                widget.setText(self.i18n['token_label'])
-            elif widget.text() == self.i18n['token_help']:
-                widget.setText(self.i18n['token_help'])
-            elif widget.text() == self.i18n['base_url_label']:
-                widget.setText(self.i18n['base_url_label'])
-            elif widget.text() == self.i18n['model_label']:
-                widget.setText(self.i18n['model_label'])
-            elif widget.text() == self.i18n['template_label']:
-                widget.setText(self.i18n['template_label'])
+        self.lang_label.setText(self.i18n['language_label'])
+        self.key_label.setText(self.i18n['token_label'])
+        self.key_help.setText(self.i18n['token_help'])
+        self.base_url_label.setText(self.i18n['base_url_label'])
+        self.model_label.setText(self.i18n['model_label'])
+        self.template_label.setText(self.i18n['template_label'])
+        
+        # 更新输入框占位符
+        self.base_url_edit.setPlaceholderText(self.i18n['base_url_placeholder'])
+        self.model_edit.setPlaceholderText(self.i18n['model_placeholder'])
+        self.template_edit.setPlaceholderText(self.i18n['template_placeholder'])
         
         # 更新按钮文本
-        button_box = self.findChild(QDialogButtonBox)
-        if button_box:
-            for button in button_box.buttons():
-                if button.text() == 'OK':
-                    button.setText(self.i18n.get('ok_button', 'OK'))
-                elif button.text() == 'Cancel':
-                    button.setText(self.i18n.get('cancel_button', 'Cancel'))
+        self.save_button.setText(self.i18n.get('save_button', 'Save'))
+        
+        # 如果保存成功提示正在显示，也更新它的文本
+        if not self.save_success_label.isHidden():
+            self.save_success_label.setText(self.i18n.get('save_success', 'Settings saved'))
+        
+        # 更新模板内容
+        self.template_edit.setText(get_default_template(lang_code))
     
     def accept(self):
         """保存配置并关闭对话框"""
         self.save_settings()
         super().accept()
-    
-    def save_settings(self):
-        """保存配置到 calibre 配置文件"""
-        prefs['auth_token'] = self.auth_token_edit.text()
-        prefs['api_base_url'] = self.base_url_edit.text()
-        prefs['model'] = self.model_edit.text()
-        prefs['template'] = self.template_edit.toPlainText()
-        prefs['language'] = self.lang_combo.currentData()
+
+    # 添加自定义信号
+    settings_saved = pyqtSignal()
