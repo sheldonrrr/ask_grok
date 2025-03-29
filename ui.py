@@ -4,7 +4,7 @@
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QLabel, QTextEdit, QPushButton)
+                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget)
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
@@ -93,9 +93,8 @@ class AskGPTPluginUI(InterfaceAction):
 
     def show_configuration(self):
         """显示配置对话框"""
-        # 直接创建并显示配置对话框
-        from calibre_plugins.ask_gpt.config import ConfigDialog
-        dlg = ConfigDialog(self.gui)
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(0)  # 默认显示配置标签页
         dlg.exec_()
     
     def show_dialog(self):
@@ -117,14 +116,41 @@ class AskGPTPluginUI(InterfaceAction):
     
     def show_about(self):
         """显示关于对话框"""
-        msg = QMessageBox(self.gui)
-        msg.setWindowTitle(self.i18n['about_title'])
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(1)  # 默认显示关于标签页
+        dlg.exec_()
+
+class AskGPTConfigWidget(QWidget):
+    """配置页面组件"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.gui = parent
+        self.i18n = get_translation(get_prefs()['language'])
+        
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        
+        # 复用现有的 ConfigDialog
+        self.config_dialog = ConfigDialog(self.gui)
+        layout.addWidget(self.config_dialog)
+
+class AboutWidget(QWidget):
+    """关于页面组件"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.i18n = get_translation(get_prefs()['language'])
+        
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
         
         # 加载图标
         icon_path = I('images/ask_gpt.png')
         
-        # 设置文本内容，将图标嵌入到HTML中
-        msg.setText(f"""
+        # 创建关于内容
+        about_label = QLabel()
+        about_label.setText(f"""
         <div style='text-align: center'>
             <img src='{icon_path}' height='128' style='margin-bottom: 20px'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
@@ -132,24 +158,52 @@ class AskGPTPluginUI(InterfaceAction):
             <p style='color: #666; font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
             <p style='color: #666; font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_gpt' 
-                   style='color: #666; text-decoration: none;'>
+                   style='color: #666;'>
                    GitHub
                 </a>
             </p>
         </div>
         """)
-        msg.setTextFormat(Qt.RichText)
+        about_label.setTextFormat(Qt.RichText)
+        about_label.setAlignment(Qt.AlignCenter)
+        about_label.setOpenExternalLinks(True)
+        layout.addWidget(about_label)
+
+class TabDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.gui = parent
+        self.i18n = get_translation(get_prefs()['language'])
         
-        # 设置消息框样式
-        msg.setStyleSheet("""
-            QMessageBox {
-                text-align: center;
-                padding: 20px;
-            }
-        """)
+        # 设置窗口属性
+        self.setWindowTitle(self.i18n['config_title'])
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
+        self.setMinimumWidth(500)
+        self.setModal(True)
         
-        msg.exec_()
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
         
+        # 创建标签页
+        self.tab_widget = QTabWidget()
+        layout.addWidget(self.tab_widget)
+        
+        # 添加配置标签页
+        self.config_widget = AskGPTConfigWidget(self.gui)
+        self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
+        
+        # 添加关于标签页
+        self.about_widget = AboutWidget(self)
+        self.tab_widget.addTab(self.about_widget, self.i18n['about_title'])
+        
+        # 设置合适的窗口大小
+        self.resize(600, 500)
+
+        # 连接 ConfigDialog 的信号
+        self.config_widget.config_dialog.accepted.connect(self.accept)
+        self.config_widget.config_dialog.rejected.connect(self.reject)
+
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
         # 英语（默认语言）
