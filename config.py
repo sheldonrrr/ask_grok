@@ -87,6 +87,9 @@ class ConfigWidget(QWidget):
         # 获取当前语言的翻译
         self.i18n = TRANSLATIONS.get(prefs['language'], TRANSLATIONS['en'])
         
+        # 设置窗口标题
+        self.setWindowTitle(self.i18n['config_title'])
+        
         # 语言选择
         lang_label = QLabel(self.i18n['language_label'])
         self.layout.addWidget(lang_label)
