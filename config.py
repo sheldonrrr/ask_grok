@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PyQt5.Qt import Qt
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
-                           QLineEdit, QPushButton, QTextEdit, QComboBox)
 import os
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
+                           QLineEdit, QTextEdit, QComboBox, QPushButton)
 from calibre.utils.config import JSONConfig
-from .i18n import get_translation
 
-# 全局配置对象
+from .i18n import TRANSLATIONS, get_default_template, get_translation
+
+# 创建配置对象
 prefs = JSONConfig('plugins/ask_gpt')
 
-# 支持的语言选项
-LANGUAGE_OPTIONS = [
+# 支持的语言列表
+SUPPORTED_LANGUAGES = [
     # 中文变体
-    ('zh', '简体中文'),
-    ('zht', '繁體中文'),
-    ('yue', '粵語'),
+    ('zh', '简体中文'),   # 简体中文
+    ('zht', '繁體中文'),  # 繁体中文
+    ('yue', '粵語'),      # 粤语
     
     # 日语
-    ('ja', '日本語'),
+    ('ja', '日本語'),     # 日语
     
     # 欧洲语系
     ('fr', 'Français'),   # 法语
@@ -39,15 +39,21 @@ LANGUAGE_OPTIONS = [
 
 # 默认配置
 prefs.defaults['auth_token'] = os.environ.get('XAI_AUTH_TOKEN', '')
-prefs.defaults['template'] = '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}'
+prefs.defaults['template'] = get_default_template('zh')  # 使用中文模板作为默认值
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-2-latest'
 prefs.defaults['language'] = 'zh'  # 默认使用简体中文
 
 def get_prefs():
+    """获取配置"""
     # 如果配置中没有 auth token，尝试从环境变量获取
     if not prefs['auth_token'] and os.environ.get('XAI_AUTH_TOKEN'):
         prefs['auth_token'] = os.environ.get('XAI_AUTH_TOKEN')
+    
+    # 确保模板不为空，如果为空则使用当前语言的默认模板
+    if not prefs['template']:
+        prefs['template'] = get_default_template(prefs['language'])
+    
     return prefs
 
 class ConfigWidget(QWidget):
@@ -57,19 +63,18 @@ class ConfigWidget(QWidget):
         self.setLayout(self.layout)
         
         # 获取当前语言的翻译
-        self.i18n = get_translation(prefs['language'])
+        self.i18n = TRANSLATIONS.get(prefs['language'], TRANSLATIONS['en'])
         
         # 语言选择
         lang_label = QLabel(self.i18n['language_label'])
         self.layout.addWidget(lang_label)
         
         self.lang_combo = QComboBox(self)
-        for code, name in LANGUAGE_OPTIONS:
+        for code, name in SUPPORTED_LANGUAGES:
             self.lang_combo.addItem(name, code)
-        # 设置当前语言
-        index = self.lang_combo.findData(prefs['language'])
-        if index >= 0:
-            self.lang_combo.setCurrentIndex(index)
+        current_index = self.lang_combo.findData(prefs['language'])
+        self.lang_combo.setCurrentIndex(current_index)
+        self.lang_combo.currentIndexChanged.connect(self.on_language_changed)
         self.layout.addWidget(self.lang_combo)
         
         # X.AI Authorization Token 配置
@@ -113,6 +118,11 @@ class ConfigWidget(QWidget):
         
         self.layout.addStretch()
     
+    def on_language_changed(self, index):
+        """语言改变时更新模板"""
+        lang_code = self.lang_combo.currentData()
+        self.template_edit.setText(get_default_template(lang_code))
+
     def save_settings(self):
         """保存配置到 calibre 配置文件"""
         prefs['auth_token'] = self.auth_token_edit.text()

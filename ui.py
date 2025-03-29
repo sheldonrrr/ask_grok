@@ -233,24 +233,24 @@ class AskDialog(QDialog):
         # 构建书籍信息HTML
         metadata_info = []
         if self.book_info.title:
-            metadata_info.append(f"<p><b>书名：</b>{self.book_info.title}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_title']}：</b>{self.book_info.title}</p>")
         if self.book_info.authors:
-            metadata_info.append(f"<p><b>作者：</b>{', '.join(self.book_info.authors)}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_authors']}：</b>{', '.join(self.book_info.authors)}</p>")
         if self.book_info.publisher:
-            metadata_info.append(f"<p><b>出版社：</b>{self.book_info.publisher}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_publisher']}：</b>{self.book_info.publisher}</p>")
         if self.book_info.pubdate:
-            metadata_info.append(f"<p><b>出版日期：</b>{self.book_info.pubdate.year}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_pubdate']}：</b>{self.book_info.pubdate.year}</p>")
         if self.book_info.language:
-            metadata_info.append(f"<p><b>语言：</b>{self.get_language_name(self.book_info.language)}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_language']}：</b>{self.get_language_name(self.book_info.language)}</p>")
         if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"<p><b>系列：</b>{self.book_info.series}</p>")
+            metadata_info.append(f"<p><b>{self.i18n['metadata_series']}：</b>{self.book_info.series}</p>")
         
         info_area.setText("".join(metadata_info))
         layout.addWidget(info_area)
         
         # 创建输入区域
         self.input_area = QTextEdit()
-        self.input_area.setPlaceholderText("在这里输入你的问题...")
+        self.input_area.setPlaceholderText(self.i18n['input_placeholder'])
         self.input_area.setMinimumHeight(100)
         layout.addWidget(self.input_area)
         

@@ -3,6 +3,54 @@
 
 import sys
 
+# 默认提示词模板
+DEFAULT_TEMPLATES = {
+    # 简体中文
+    'zh': '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
+    
+    # 繁体中文
+    'zht': '關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
+    
+    # 粤语
+    'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
+    
+    # 日语
+    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
+    
+    # 法语
+    'fr': 'À propos du livre "{title}" : Auteur : {author}, Éditeur : {publisher}, Date de publication : {pubdate}, Langue : {language}, Série : {series}, Ma question est : {query}',
+    
+    # 德语
+    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
+    
+    # 西班牙语
+    'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
+    
+    # 俄语
+    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
+    
+    # 葡萄牙语
+    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
+    
+    # 瑞典语
+    'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, Språk: {language}, Serie: {series}, Min fråga är: {query}',
+    
+    # 丹麦语
+    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
+    
+    # 荷兰语
+    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
+    
+    # 挪威语
+    'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
+    
+    # 芬兰语
+    'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
+    
+    # 英语（默认）
+    'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}'
+}
+
 # 语言包
 TRANSLATIONS = {
     # 简体中文
@@ -26,6 +74,14 @@ TRANSLATIONS = {
         'about_title': '关于 Ask Grok',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': '书名',
+        'metadata_authors': '作者',
+        'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日期',
+        'metadata_language': '语言',
+        'metadata_series': '系列',
+        'input_placeholder': '在这里输入你的问题...',
+        'menu_ask_grok': '询问 Grok',
     },
     
     # 繁体中文
@@ -39,7 +95,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-2-latest',
         'template_label': '提示詞範本:',
-        'template_placeholder': '範本示例：\n關於《{title}》這本書的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
+        'template_placeholder': '範本示例：\n關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
         'shortcut_enter': 'Ctrl + Enter',
@@ -49,6 +105,14 @@ TRANSLATIONS = {
         'about_title': '關於 Ask Grok',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': '書名',
+        'metadata_authors': '作者',
+        'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日期',
+        'metadata_language': '語言',
+        'metadata_series': '系列',
+        'input_placeholder': '在此輸入你的問題...',
+        'menu_ask_grok': '詢問 Grok',
     },
     
     # 粤语
@@ -72,6 +136,14 @@ TRANSLATIONS = {
         'about_title': '關於 Ask Grok',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': '書名',
+        'metadata_authors': '作者',
+        'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日期',
+        'metadata_language': '語言',
+        'metadata_series': '系列',
+        'input_placeholder': '喺呢度輸入你嘅問題...',
+        'menu_ask_grok': '問 Grok',
     },
     
     # 日语
@@ -95,6 +167,14 @@ TRANSLATIONS = {
         'about_title': 'Ask Grok について',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': 'タイトル',
+        'metadata_authors': '著者',
+        'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日',
+        'metadata_language': '言語',
+        'metadata_series': 'シリーズ',
+        'input_placeholder': 'ここに質問を入力してください...',
+        'menu_ask_grok': 'Grok に質問する',
     },
     
     # 法语
@@ -118,6 +198,14 @@ TRANSLATIONS = {
         'about_title': 'À propos de Ask Grok',
         'base_url_label': 'URL de base de l\'API :',
         'base_url_placeholder': 'Par défaut : https://api.x.ai/v1',
+        'metadata_title': 'Titre',
+        'metadata_authors': 'Auteur',
+        'metadata_publisher': 'Éditeur',
+        'metadata_pubdate': 'Date de publication',
+        'metadata_language': 'Langue',
+        'metadata_series': 'Série',
+        'input_placeholder': 'Saisissez votre question ici...',
+        'menu_ask_grok': 'Poser une question à Grok',
     },
     
     # 德语
@@ -141,6 +229,14 @@ TRANSLATIONS = {
         'about_title': 'Über Ask Grok',
         'base_url_label': 'API-Basis-URL:',
         'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Titel',
+        'metadata_authors': 'Autor',
+        'metadata_publisher': 'Verlag',
+        'metadata_pubdate': 'Erscheinungsdatum',
+        'metadata_language': 'Sprache',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Geben Sie hier Ihre Frage ein...',
+        'menu_ask_grok': 'Grok fragen',
     },
     
     # 西班牙语
@@ -164,6 +260,14 @@ TRANSLATIONS = {
         'about_title': 'Acerca de Ask Grok',
         'base_url_label': 'URL base de la API:',
         'base_url_placeholder': 'Predeterminado: https://api.x.ai/v1',
+        'metadata_title': 'Título',
+        'metadata_authors': 'Autor',
+        'metadata_publisher': 'Editorial',
+        'metadata_pubdate': 'Fecha de publicación',
+        'metadata_language': 'Idioma',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Escriba su pregunta aquí...',
+        'menu_ask_grok': 'Preguntar a Grok',
     },
     
     # 俄语
@@ -187,6 +291,14 @@ TRANSLATIONS = {
         'about_title': 'О программе Ask Grok',
         'base_url_label': 'Базовый URL API:',
         'base_url_placeholder': 'По умолчанию: https://api.x.ai/v1',
+        'metadata_title': 'Название',
+        'metadata_authors': 'Автор',
+        'metadata_publisher': 'Издательство',
+        'metadata_pubdate': 'Дата публикации',
+        'metadata_language': 'Язык',
+        'metadata_series': 'Серия',
+        'input_placeholder': 'Введите ваш вопрос здесь...',
+        'menu_ask_grok': 'Спросить у Grok',
     },
     
     # 葡萄牙语
@@ -210,6 +322,14 @@ TRANSLATIONS = {
         'about_title': 'Sobre o Ask Grok',
         'base_url_label': 'URL base da API:',
         'base_url_placeholder': 'Padrão: https://api.x.ai/v1',
+        'metadata_title': 'Título',
+        'metadata_authors': 'Autor',
+        'metadata_publisher': 'Editora',
+        'metadata_pubdate': 'Data de publicação',
+        'metadata_language': 'Idioma',
+        'metadata_series': 'Série',
+        'input_placeholder': 'Digite sua pergunta aqui...',
+        'menu_ask_grok': 'Perguntar ao Grok',
     },
     
     # 瑞典语
@@ -233,6 +353,14 @@ TRANSLATIONS = {
         'about_title': 'Om Ask Grok',
         'base_url_label': 'API Bas-URL:',
         'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Titel',
+        'metadata_authors': 'Författare',
+        'metadata_publisher': 'Förlag',
+        'metadata_pubdate': 'Utgivningsdatum',
+        'metadata_language': 'Språk',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Skriv din fråga här...',
+        'menu_ask_grok': 'Fråga Grok',
     },
     
     # 丹麦语
@@ -256,6 +384,14 @@ TRANSLATIONS = {
         'about_title': 'Om Ask Grok',
         'base_url_label': 'API Base-URL:',
         'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Titel',
+        'metadata_authors': 'Forfatter',
+        'metadata_publisher': 'Forlag',
+        'metadata_pubdate': 'Udgivelsesdato',
+        'metadata_language': 'Sprog',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Skriv dit spørgsmål her...',
+        'menu_ask_grok': 'Spørg Grok',
     },
     
     # 荷兰语
@@ -279,6 +415,14 @@ TRANSLATIONS = {
         'about_title': 'Over Ask Grok',
         'base_url_label': 'API Basis-URL:',
         'base_url_placeholder': 'Standaard: https://api.x.ai/v1',
+        'metadata_title': 'Titel',
+        'metadata_authors': 'Auteur',
+        'metadata_publisher': 'Uitgever',
+        'metadata_pubdate': 'Publicatiedatum',
+        'metadata_language': 'Taal',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Voer hier uw vraag in...',
+        'menu_ask_grok': 'Vraag aan Grok',
     },
     
     # 挪威语
@@ -302,6 +446,14 @@ TRANSLATIONS = {
         'about_title': 'Om Ask Grok',
         'base_url_label': 'API Base-URL:',
         'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Tittel',
+        'metadata_authors': 'Forfatter',
+        'metadata_publisher': 'Forlag',
+        'metadata_pubdate': 'Utgivelsesdato',
+        'metadata_language': 'Språk',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Skriv spørsmålet ditt her...',
+        'menu_ask_grok': 'Spør Grok',
     },
     
     # 芬兰语
@@ -325,6 +477,14 @@ TRANSLATIONS = {
         'about_title': 'Tietoja Ask Grokista',
         'base_url_label': 'API-perus-URL:',
         'base_url_placeholder': 'Oletus: https://api.x.ai/v1',
+        'metadata_title': 'Otsikko',
+        'metadata_authors': 'Kirjailija',
+        'metadata_publisher': 'Kustantaja',
+        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_language': 'Kieli',
+        'metadata_series': 'Sarja',
+        'input_placeholder': 'Kirjoita kysymyksesi tähän...',
+        'menu_ask_grok': 'Kysy Grok',
     },
     
     # 英语（保留作为默认语言）
@@ -348,9 +508,21 @@ TRANSLATIONS = {
         'about_title': 'About Ask Grok',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': 'Title',
+        'metadata_authors': 'Author',
+        'metadata_publisher': 'Publisher',
+        'metadata_pubdate': 'Publication Date',
+        'metadata_language': 'Language',
+        'metadata_series': 'Series',
+        'input_placeholder': 'Enter your question here...',
+        'menu_ask_grok': 'Ask Grok',
     }
 }
 
 def get_translation(lang_code):
     """获取指定语言的翻译"""
-    return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])  # 默认使用英文
+    return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
+
+def get_default_template(lang_code):
+    """获取指定语言的默认提示词模板"""
+    return DEFAULT_TEMPLATES.get(lang_code, DEFAULT_TEMPLATES['en'])
