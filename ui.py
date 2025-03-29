@@ -10,6 +10,7 @@ from calibre.gui2 import info_dialog
 from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_gpt.api import APIClient
 from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
+from calibre_plugins.ask_gpt.shortcuts_widget import ShortcutsWidget
 from calibre.utils.resources import get_path as I
 import os
 import sys
@@ -126,7 +127,7 @@ class AskGPTPluginUI(InterfaceAction):
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(1)  # 默认显示关于标签页
+        dlg.tab_widget.setCurrentIndex(2)  # 默认显示关于标签页
         dlg.exec_()
 
 class AskGPTConfigWidget(QWidget):
@@ -154,9 +155,20 @@ class AboutWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建关于内容
-        about_label = QLabel()
-        about_label.setText(f"""
+        # 创建关于标签
+        self.about_label = QLabel()
+        self.about_label.setTextFormat(Qt.RichText)
+        self.about_label.setAlignment(Qt.AlignCenter)
+        self.about_label.setOpenExternalLinks(True)
+        layout.addWidget(self.about_label)
+        
+        # 初始化内容
+        self.update_content()
+        
+    def update_content(self):
+        """更新关于页面内容"""
+        self.i18n = get_translation(get_prefs()['language'])
+        self.about_label.setText(f"""
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
@@ -169,10 +181,6 @@ class AboutWidget(QWidget):
             </p>
         </div>
         """)
-        about_label.setTextFormat(Qt.RichText)
-        about_label.setAlignment(Qt.AlignCenter)
-        about_label.setOpenExternalLinks(True)
-        layout.addWidget(about_label)
 
 class TabDialog(QDialog):
     def __init__(self, parent=None):
@@ -192,6 +200,10 @@ class TabDialog(QDialog):
         self.config_widget = AskGPTConfigWidget(self.gui)
         self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
         
+        # 创建快捷键页面
+        self.shortcuts_widget = ShortcutsWidget(self)
+        self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts_tab'])
+        
         # 创建关于页面
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about_title'])
@@ -209,6 +221,31 @@ class TabDialog(QDialog):
         
         # 连接配置对话框的信号
         self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
+        
+        # 连接语言切换信号
+        self.config_widget.config_dialog.language_changed.connect(self.on_language_changed)
+    
+    def on_language_changed(self, new_language):
+        """当语言改变时更新所有组件"""
+        self.i18n = get_translation(new_language)
+        
+        # 更新窗口标题
+        self.setWindowTitle(self.i18n['config_title'])
+        
+        # 更新标签页标题
+        self.tab_widget.setTabText(0, self.i18n['config_title'])
+        self.tab_widget.setTabText(1, self.i18n['shortcuts_tab'])
+        self.tab_widget.setTabText(2, self.i18n['about_title'])
+        
+        # 更新快捷键页面
+        self.shortcuts_widget.update_shortcuts()
+        
+        # 更新关于页面
+        self.about_widget.update_content()
+    
+    def on_settings_saved(self):
+        """当设置保存时的处理函数"""
+        pass  # 不再需要在这里处理语言更新
     
     def keyPressEvent(self, event):
         """处理按键事件"""
@@ -227,11 +264,6 @@ class TabDialog(QDialog):
         if self.config_widget.config_dialog.save_button.isEnabled():
             self.config_widget.config_dialog.reset_to_initial_values()
         super().reject()
-    
-    def on_settings_saved(self):
-        """当设置保存时的处理函数"""
-        # 这里可以添加任何需要在设置保存后执行的操作
-        pass
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -315,7 +347,7 @@ class AskDialog(QDialog):
     def setup_ui(self):
         self.setWindowTitle(f"{self.i18n['menu_title']} - {self.book_info.title}")
         self.setMinimumWidth(500)
-        self.setMinimumHeight(400)
+        self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
         
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -354,7 +386,7 @@ class AskDialog(QDialog):
         # 创建输入区域
         self.input_area = QTextEdit()
         self.input_area.setPlaceholderText(self.i18n['input_placeholder'])
-        self.input_area.setFixedHeight(72)  # 设置为三行文字的高度
+        self.input_area.setFixedHeight(80)  # 设置输入框高度
         self.input_area.setStyleSheet("""
             QTextEdit {
                 border: 1px solid #ccc;
@@ -420,7 +452,7 @@ class AskDialog(QDialog):
         # 创建响应区域
         self.response_area = QTextEdit()
         self.response_area.setReadOnly(True)
-        self.response_area.setMinimumHeight(150)
+        self.response_area.setFixedHeight(280)  # 增加输出区域的高度
         self.response_area.setStyleSheet("""
             QTextEdit {
                 border: 1px dashed #999;
