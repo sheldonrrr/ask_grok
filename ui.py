@@ -116,23 +116,17 @@ class AskGPTPluginUI(InterfaceAction):
         msg = QMessageBox(self.gui)
         msg.setWindowTitle(self.i18n['about_title'])
         
-        # 加载并设置图标
+        # 加载图标
         icon_path = I('images/ask_gpt.png')
-        icon_pixmap = QPixmap(icon_path)
-        if not icon_pixmap.isNull():
-            scaled_pixmap = icon_pixmap.scaledToHeight(
-                128,
-                Qt.TransformationMode.SmoothTransformation
-            )
-            msg.setIconPixmap(scaled_pixmap)
         
-        # 设置文本内容
+        # 设置文本内容，将图标嵌入到HTML中
         msg.setText(f"""
         <div style='text-align: center'>
-            <h3 style='margin-bottom: 10px'>{self.i18n['menu_title']}</h3>
+            <img src='{icon_path}' height='128' style='margin-bottom: 20px'>
+            <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: #666; font-weight: normal; margin: 20px 0;'>v1.0.0</p>
-            <p style='color: #666;'>
+            <p style='color: #666; font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
+            <p style='color: #666; font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_gpt' 
                    style='color: #666; text-decoration: none;'>
                    GitHub
