@@ -51,6 +51,159 @@ DEFAULT_TEMPLATES = {
     'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
 }
 
+# 建议提示词模板
+SUGGESTION_TEMPLATES = {
+    # 丹麦语
+    'da': """Du er en ekspert i boganmeldelser. For bogen "{title}" af {author}, generér ÉT indsigtfuldt spørgsmål, der hjælper læserne med at forstå bogen bedre.
+
+Regler:
+1. Returner KUN spørgsmålet, uden introduktion eller forklaring
+2. Fokuser på bogens indhold, ikke kun titlen
+3. Gør spørgsmålet praktisk og tankevækkende
+4. Hold det kort (15-25 ord)
+5. Vær kreativ og generer et andet spørgsmål hver gang, selv for samme bog""",
+
+    # 德语
+    'de': """Sie sind ein Experte für Buchrezensionen. Für das Buch "{title}" von {author} generieren Sie EINE aufschlussreiche Frage, die den Lesern hilft, das Buch besser zu verstehen.
+
+Regeln:
+1. Geben Sie NUR die Frage zurück, ohne Einleitung oder Erklärung
+2. Konzentrieren Sie sich auf den Inhalt des Buches, nicht nur auf den Titel
+3. Machen Sie die Frage praktisch und nachdenklich
+4. Halten Sie sie kurz (15-25 Wörter)
+5. Seien Sie kreativ und generieren Sie jedes Mal eine andere Frage, auch für dasselbe Buch""",
+
+    # 英语
+    'en': """You are an expert book reviewer. For the book "{title}" by {author}, generate ONE insightful question that helps readers better understand the book's core ideas, practical applications, or unique perspectives. 
+
+Rules:
+1. Return ONLY the question, without any introduction or explanation
+2. Focus on the book's substance, not just its title
+3. Make the question practical and thought-provoking
+4. Keep it concise (15-25 words)
+5. Be creative and generate a different question each time, even for the same book""",
+
+    # 西班牙语
+    'es': """Eres un experto en reseñas de libros. Para el libro "{title}" de {author}, genera UNA pregunta perspicaz que ayude a los lectores a entender mejor el libro.
+
+Reglas:
+1. Devuelve SOLO la pregunta, sin introducción ni explicación
+2. Concéntrate en el contenido del libro, no solo en el título
+3. Haz que la pregunta sea práctica y reflexiva
+4. Mantenla breve (15-25 palabras)
+5. Sé creativo y genera una pregunta diferente cada vez, incluso para el mismo libro""",
+
+    # 芬兰语
+    'fi': """Olet kirja-arvostelun asiantuntija. Kirjalle "{title}" kirjailijana {author}, luo YKSI oivaltava kysymys, joka auttaa lukijoita ymmärtämään kirjaa paremmin.
+
+Säännöt:
+1. Palauta VAIN kysymys, ilman johdantoa tai selitystä
+2. Keskity kirjan sisältöön, älä pelkästään otsikkoon
+3. Tee kysymyksestä käytännöllinen ja ajatuksia herättävä
+4. Pidä se lyhyenä (15-25 sanaa)
+5. Ole luova ja luo eri kysymys joka kerta, myös samalle kirjalle""",
+
+    # 法语
+    'fr': """Vous êtes un expert en critiques de livres. Pour le livre "{title}" de {author}, générez UNE question pertinente qui aide les lecteurs à mieux comprendre le livre.
+
+Règles:
+1. Retournez UNIQUEMENT la question, sans introduction ni explication
+2. Concentrez-vous sur le contenu du livre, pas seulement sur le titre
+3. Faites en sorte que la question soit pratique et réflexive
+4. Gardez-la concise (15-25 mots)
+5. Soyez créatif et générez une question différente à chaque fois, même pour le même livre""",
+
+    # 日语
+    'ja': """あなたは本のレビューの専門家です。{author}著の本「{title}」について、読者が本の核心的な考え、実用的な応用、または独自の視点をよりよく理解するのに役立つような、1つの洞察に富んだ質問を生成してください。
+
+ルール：
+1. 質問のみを返し、導入や説明は不要です
+2. 本の内容に焦点を当て、タイトルだけに焦点を当てないでください
+3. 質問を実用的で考えさせられるようにしてください
+4. 15〜25文字以内に保ちます
+5. 創造的に、同じ本でも毎回異なる質問を生成してください""",
+
+    # 荷兰语
+    'nl': """U bent een expert in boekrecensies. Voor het boek "{title}" van {author} genereert u ÉÉN inzichtelijke vraag die lezers helpt om het boek beter te begrijpen.
+
+Regels:
+1. Retourneer ALLEEN de vraag, zonder inleiding of uitleg
+2. Concentreer u op de inhoud van het boek, niet alleen op de titel
+3. Maak de vraag praktisch en nadenkend
+4. Houd het kort (15-25 woorden)
+5. Wees creatief en genereer elke keer een andere vraag, zelfs voor hetzelfde boek""",
+
+    # 挪威语
+    'no': """Du er en ekspert i bokanmeldelser. For boken "{title}" av {author}, generer ÉT innsiktsfullt spørsmål som hjelper lesere med å forstå boken bedre.
+
+Regler:
+1. Returner KUN spørsmålet, uten introduksjon eller forklaring
+2. Fokuser på bokens innhold, ikke bare tittelen
+3. Gjør spørsmålet praktisk og tankevekkende
+4. Hold det kort (15-25 ord)
+5. Vær kreativ og generer et annet spørsmål hver gang, selv for samme bok""",
+
+    # 葡萄牙语
+    'pt': """Você é um especialista em resenhas de livros. Para o livro "{title}" de {author}, gere UMA pergunta perspicaz que ajude os leitores a entender melhor o livro.
+
+Regras:
+1. Retorne APENAS a pergunta, sem introdução ou explicação
+2. Concentre-se no conteúdo do livro, não apenas no título
+3. Faça a pergunta prática e reflexiva
+4. Mantenha-a breve (15-25 palavras)
+5. Seja criativo e gere uma pergunta diferente cada vez, mesmo para o mesmo livro""",
+
+    # 俄语
+    'ru': """Вы эксперт в области рецензий на книги. Для книги "{title}" автора {author} сгенерируйте ОДИН проницательный вопрос, который поможет читателям лучше понять книгу.
+
+Правила:
+1. Верните ТОЛЬКО вопрос, без введения или объяснения
+2. Сосредоточьтесь на содержании книги, а не только на названии
+3. Сделайте вопрос практичным и провокационным
+4. Сдерживайте его кратким (15-25 слов)
+5. Будьте креативны и генерируйте разные вопросы каждый раз, даже для одной и той же книги""",
+
+    # 瑞典语
+    'sv': """Du är en expert på bokrecensioner. För boken "{title}" av {author}, generera EN insiktsfull fråga som hjälper läsarna att förstå boken bättre.
+
+Regler:
+1. Returnera ENDAST frågan, utan introduktion eller förklaring
+2. Fokusera på bokens innehåll, inte bara titeln
+3. Gör frågan praktisk och tankeväckande
+4. Håll den kort (15-25 ord)
+5. Var kreativ och generera en annan fråga varje gång, även för samma bok""",
+
+    # 简体中文
+    'zh': """你是一位专业的图书点评人。请为《{title}》（作者：{author}）生成一个有见地的问题，帮助读者更好地理解这本书的核心思想、实用价值或独特观点。
+
+规则：
+1. 只返回问题本身，不要加任何介绍或解释
+2. 关注书籍的实质内容，而不是仅仅分析标题
+3. 问题要实用且发人深省
+4. 保持简洁（15-25字）
+5. 保持创意，即使是同一本书，每次也要生成不同的问题""",
+
+    # 繁体中文
+    'zht': """你是一位專業的圖書點評人。請為《{title}》（作者：{author}）生成一個有見地的問題，幫助讀者更好地理解這本書的核心思想、實用價值或獨特觀點。
+
+規則：
+1. 只返回問題本身，不要加任何介紹或解釋
+2. 關注書籍的實質內容，而不是僅僅分析標題
+3. 問題要實用且發人深省
+4. 保持簡潔（15-25字）
+5. 保持創意，即使是同一本書，每次也要生成不同的問題""",
+
+    # 粤语
+    'yue': """你係一位專業嘅圖書點評人。請為《{title}》（作者：{author}）生成一個有見地嘅問題，幫助讀者更好噉理解呢本書嘅核心思想、實用價值或獨特觀點。
+
+規則：
+1. 淨係返回問題本身，唔好加任何介紹或解釋
+2. 關注書籍嘅實質內容，而唔係淨係分析標題
+3. 問題要實用同發人深省
+4. 保持簡潔（15-25字）
+5. 保持創意，即使係同一本書，每次都要生成唔同嘅問題""",
+}
+
 # 语言包
 TRANSLATIONS = {
     # 丹麦语 (da)
@@ -74,12 +227,12 @@ TRANSLATIONS = {
         'about_title': 'Om',
         'base_url_label': 'API Base-URL:',
         'base_url_placeholder': 'Standard: https://api.x.ai/v1',
-        'metadata_title': 'Titel',
-        'metadata_authors': 'Forfatter',
-        'metadata_publisher': 'Forlag',
-        'metadata_pubdate': 'Udgivelsesdato',
-        'metadata_language': 'Sprog',
-        'metadata_series': 'Serie',
+        'metadata_title': 'Otsikko',
+        'metadata_authors': 'Kirjailija',
+        'metadata_publisher': 'Kustantaja',
+        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_language': 'Kieli',
+        'metadata_series': 'Sarja',
         'input_placeholder': 'Skriv dit spørgsmål her...',
         'menu_title': 'Spørg',
         'menu_ask_grok': 'Spørg Grok',
@@ -88,6 +241,7 @@ TRANSLATIONS = {
         'save_success': 'Indstillinger gemt',
         'response_placeholder': 'Groks svar vil blive vist her',
         'loading_text': 'Spørger',
+        'suggest_button': 'Forslag?',
     },
     
     # 德语 (de)
@@ -125,6 +279,7 @@ TRANSLATIONS = {
         'save_success': 'Einstellungen gespeichert',
         'response_placeholder': 'Groks Antwort wird hier angezeigt',
         'loading_text': 'Frage',
+        'suggest_button': 'Vorschlag?',
     },
     
     # 英语 (en)
@@ -141,26 +296,29 @@ TRANSLATIONS = {
         'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
         'language_label': 'Interface Language:',
         'send_button': 'Send',
+        'suggest_button': 'Suggest?',
+        'loading': 'Loading...',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': 'Error: ',
+        'error_no_api': 'Please configure your X.AI API token in settings first.',
         'about': 'About',
         'about_title': 'About',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'input_placeholder': 'Type your question here...',
+        'response_placeholder': 'Response will appear here...',
         'metadata_title': 'Title',
         'metadata_authors': 'Author',
         'metadata_publisher': 'Publisher',
         'metadata_pubdate': 'Publication Date',
         'metadata_language': 'Language',
         'metadata_series': 'Series',
-        'input_placeholder': 'Enter your question here...',
         'menu_title': 'Ask',
         'menu_ask_grok': 'Ask Grok',
         'ok_button': 'OK',
         'save_button': 'Save',
         'save_success': 'Settings saved',
-        'response_placeholder': "Grok's response will appear here",
         'loading_text': 'Asking',
     },
     
@@ -174,8 +332,8 @@ TRANSLATIONS = {
         'token_help': 'Formato: Bearer xai-xxx o simplemente xai-xxx',
         'model_label': 'Modelo:',
         'model_placeholder': 'Predeterminado: grok-2-latest',
-        'template_label': 'Plantilla de prompt:',
-        'template_placeholder': 'Ejemplo de plantilla:\nSobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
+        'template_label': 'Modelo de prompt:',
+        'template_placeholder': 'Ejemplo de modelo:\nSobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
         'language_label': 'Idioma de la interfaz:',
         'send_button': 'Enviar',
         'shortcut_enter': 'Ctrl + Intro',
@@ -199,6 +357,7 @@ TRANSLATIONS = {
         'save_success': 'Configuración guardada',
         'response_placeholder': 'La respuesta de Grok aparecerá aquí',
         'loading_text': 'Preguntando',
+        'suggest_button': 'Sugerir?',
     },
     
     # 芬兰语 (fi)
@@ -236,6 +395,7 @@ TRANSLATIONS = {
         'save_success': 'Asetukset tallennettu',
         'response_placeholder': 'Grokin vastaus näkyy tässä',
         'loading_text': 'Kysytään',
+        'suggest_button': 'Ehdota?',
     },
     
     # 法语 (fr)
@@ -273,6 +433,7 @@ TRANSLATIONS = {
         'save_success': 'Paramètres enregistrés',
         'response_placeholder': 'La réponse de Grok apparaîtra ici',
         'loading_text': 'Demande en cours',
+        'suggest_button': 'Suggérer?',
     },
     
     # 日语 (ja)
@@ -310,6 +471,7 @@ TRANSLATIONS = {
         'save_success': '設定を保存しました',
         'response_placeholder': 'Grokの回答がここに表示されます',
         'loading_text': '質問中',
+        'suggest_button': '提案?',
     },
     
     # 荷兰语 (nl)
@@ -347,6 +509,7 @@ TRANSLATIONS = {
         'save_success': 'Instellingen opgeslagen',
         'response_placeholder': 'Het antwoord van Grok verschijnt hier',
         'loading_text': 'Vragen',
+        'suggest_button': 'Suggestie?',
     },
     
     # 挪威语 (no)
@@ -384,6 +547,7 @@ TRANSLATIONS = {
         'save_success': 'Innstillinger lagret',
         'response_placeholder': 'Groks svar vil bli vist her',
         'loading_text': 'Spør',
+        'suggest_button': 'Forslag?',
     },
     
     # 葡萄牙语 (pt)
@@ -421,6 +585,7 @@ TRANSLATIONS = {
         'save_success': 'Configurações salvas',
         'response_placeholder': 'A resposta do Grok aparecerá aqui',
         'loading_text': 'Perguntando',
+        'suggest_button': 'Sugerir?',
     },
     
     # 俄语 (ru)
@@ -458,6 +623,7 @@ TRANSLATIONS = {
         'save_success': 'Настройки сохранены',
         'response_placeholder': 'Ответ Grok появится здесь',
         'loading_text': 'Спрашиваю',
+        'suggest_button': 'Предложить?',
     },
     
     # 瑞典语 (sv)
@@ -495,6 +661,7 @@ TRANSLATIONS = {
         'save_success': 'Inställningar sparade',
         'response_placeholder': 'Groks svar kommer att visas här',
         'loading_text': 'Frågar',
+        'suggest_button': 'Föreslå?',
     },
     
     # 简体中文 (zh)
@@ -511,6 +678,8 @@ TRANSLATIONS = {
         'template_placeholder': '示例模板：\n关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
         'language_label': '界面语言:',
         'send_button': '发送',
+        'suggest_button': '建议？',
+        'loading': 'Loading...',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '错误：',
@@ -518,19 +687,19 @@ TRANSLATIONS = {
         'about_title': '关于',
         'base_url_label': 'API 基础 URL:',
         'base_url_placeholder': '默认：https://api.x.ai/v1',
+        'input_placeholder': '在这里输入你的问题...',
+        'response_placeholder': 'Grok 的回答将显示在这里',
         'metadata_title': '标题',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
         'metadata_pubdate': '出版日期',
         'metadata_language': '语言',
         'metadata_series': '系列',
-        'input_placeholder': '在这里输入你的问题...',
         'menu_title': '询问',
         'menu_ask_grok': '询问 Grok',
         'ok_button': '确定',
         'save_button': '保存',
         'save_success': '设置已保存',
-        'response_placeholder': 'Grok 的回答将显示在这里',
         'loading_text': '正在询问',
     },
     
@@ -548,6 +717,8 @@ TRANSLATIONS = {
         'template_placeholder': '範本示例：\n關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
+        'suggest_button': '建議？',
+        'loading': 'Loading...',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '錯誤：',
@@ -555,19 +726,19 @@ TRANSLATIONS = {
         'about_title': '關於',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'input_placeholder': '在此輸入你的問題...',
+        'response_placeholder': 'Grok 的回答將顯示在這裡',
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
         'metadata_pubdate': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
-        'input_placeholder': '在此輸入你的問題...',
         'menu_title': '詢問',
         'menu_ask_grok': '詢問 Grok',
         'ok_button': '確定',
         'save_button': '儲存',
         'save_success': '設定已儲存',
-        'response_placeholder': 'Grok 的回答將顯示在這裡',
         'loading_text': '正在詢問',
     },
     
@@ -581,10 +752,12 @@ TRANSLATIONS = {
         'token_help': '格式: Bearer xai-xxx 或直接輸入 xai-xxx',
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-2-latest',
-        'template_label': '提示詞模板:',
+        'template_label': '提示詞範本:',
         'template_placeholder': '範例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
+        'suggest_button': '建議？',
+        'loading': 'Loading...',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '出錯啦：',
@@ -592,19 +765,19 @@ TRANSLATIONS = {
         'about_title': '關於',
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'input_placeholder': '喺呢度輸入你嘅問題...',
+        'response_placeholder': 'Grok 嘅答案會喺呢度顯示',
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
         'metadata_pubdate': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
-        'input_placeholder': '喺呢度輸入你嘅問題...',
         'menu_title': '問嘢',
         'menu_ask_grok': '問 Grok',
         'ok_button': '確定',
         'save_button': '保存',
         'save_success': '設定已保存',
-        'response_placeholder': 'Grok 嘅答案會喺呢度顯示',
         'loading_text': '問緊',
     }
 }
