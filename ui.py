@@ -42,6 +42,14 @@ class AskGPTPluginUI(InterfaceAction):
         # 创建菜单
         self.menu = QMenu(self.gui)
         
+        # 添加主要动作
+        self.ask_action = QAction(self.i18n['menu_title'], self)
+        self.ask_action.triggered.connect(self.show_dialog)
+        self.menu.addAction(self.ask_action)
+        
+        # 添加分隔符
+        self.menu.addSeparator()
+        
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
         self.config_action.triggered.connect(self.show_configuration)
@@ -50,16 +58,8 @@ class AskGPTPluginUI(InterfaceAction):
         # 添加分隔符
         self.menu.addSeparator()
         
-        # 添加主要动作
-        self.ask_action = QAction(self.i18n['plugin_name'], self)
-        self.ask_action.triggered.connect(self.show_dialog)
-        self.menu.addAction(self.ask_action)
-        
-        # 添加分隔符
-        self.menu.addSeparator()
-        
         # 添加关于菜单项
-        self.about_action = QAction(self.i18n['about'], self)
+        self.about_action = QAction(self.i18n['about_title'], self)
         self.about_action.triggered.connect(self.show_about)
         self.menu.addAction(self.about_action)
         
@@ -74,8 +74,8 @@ class AskGPTPluginUI(InterfaceAction):
         # 更新菜单项的文本
         self.i18n = get_translation(get_prefs()['language'])
         self.config_action.setText(self.i18n['config_title'])
-        self.ask_action.setText(self.i18n['plugin_name'])
-        self.about_action.setText(self.i18n['about'])
+        self.ask_action.setText(self.i18n['menu_title'])
+        self.about_action.setText(self.i18n['about_title'])
         
     def initialize_api(self):
         if not self.api:
@@ -90,10 +90,10 @@ class AskGPTPluginUI(InterfaceAction):
         prefs = get_prefs()
         self.i18n = get_translation(prefs['language'])
         self.initialize_api()
-    
+
     def show_configuration(self):
         self.interface_action_base_plugin.do_user_config(self.gui)
-    
+
     def show_dialog(self):
         self.initialize_api()
         
@@ -129,7 +129,7 @@ class AskGPTPluginUI(InterfaceAction):
         # 设置文本内容
         msg.setText(f"""
         <div style='text-align: center'>
-            <h3 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h3>
+            <h3 style='margin-bottom: 10px'>{self.i18n['menu_title']}</h3>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
             <p style='color: #666; font-weight: normal; margin: 20px 0;'>v1.0.0</p>
             <p style='color: #666;'>
@@ -154,44 +154,66 @@ class AskGPTPluginUI(InterfaceAction):
         
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
-        # 中文变体
-        'zho': '简体中文',  # 简体中文
-        'zh': '简体中文',
-        'zht': '繁體中文',  # 繁体中文
-        'zh-tw': '繁體中文',
-        'zh-hk': '繁體中文',
-        'yue': '粵語',      # 粤语
-        'zh-yue': '粵語',
+        # 英语（默认语言）
+        'en': 'English (default)',
+        'eng': 'English (default)',
+        
+        # 丹麦语
+        'da': 'Dansk',
+        'dan': 'Dansk',
+        
+        # 德语
+        'de': 'Deutsch',
+        'deu': 'Deutsch',
+        
+        # 西班牙语
+        'es': 'Español',
+        'spa': 'Español',
+        
+        # 芬兰语
+        'fi': 'Suomi',
+        'fin': 'Suomi',
+        
+        # 法语
+        'fr': 'Français',
+        'fra': 'Français',
         
         # 日语
-        'jpn': '日本語',
         'ja': '日本語',
+        'jpn': '日本語',
         
-        # 欧洲语系
-        'fra': 'Français',   # 法语
-        'fr': 'Français',
-        'deu': 'Deutsch',    # 德语
-        'de': 'Deutsch',
-        'spa': 'Español',    # 西班牙语
-        'es': 'Español',
-        'rus': 'Русский',    # 俄语
-        'ru': 'Русский',
-        'por': 'Português',  # 葡萄牙语
-        'pt': 'Português',
-        'swe': 'Svenska',    # 瑞典语
-        'sv': 'Svenska',
-        'dan': 'Dansk',      # 丹麦语
-        'da': 'Dansk',
-        'nld': 'Nederlands', # 荷兰语
+        # 荷兰语
         'nl': 'Nederlands',
-        'nor': 'Norsk',      # 挪威语
-        'no': 'Norsk',
-        'fin': 'Suomi',      # 芬兰语
-        'fi': 'Suomi',
+        'nld': 'Nederlands',
         
-        # 英语（保留作为默认语言）
-        'eng': 'English',
-        'en': 'English',
+        # 挪威语
+        'no': 'Norsk',
+        'nor': 'Norsk',
+        
+        # 葡萄牙语
+        'pt': 'Português',
+        'por': 'Português',
+        
+        # 俄语
+        'ru': 'Русский',
+        'rus': 'Русский',
+        
+        # 瑞典语
+        'sv': 'Svenska',
+        'swe': 'Svenska',
+        
+        # 简体中文
+        'zh': '简体中文',
+        'zho': '简体中文',
+        
+        # 繁体中文
+        'zh-hk': '繁體中文',
+        'zh-tw': '繁體中文',
+        'zht': '繁體中文',
+        
+        # 粤语
+        'yue': '粵語',
+        'zh-yue': '粵語',
     }
     
     def __init__(self, gui, book_info, api):
@@ -210,7 +232,7 @@ class AskDialog(QDialog):
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
-        self.setWindowTitle(f"{self.i18n['plugin_name']} - {self.book_info.title}")
+        self.setWindowTitle(f"{self.i18n['menu_title']} - {self.book_info.title}")
         self.setMinimumWidth(500)
         self.setMinimumHeight(400)
         

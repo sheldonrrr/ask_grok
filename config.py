@@ -13,28 +13,50 @@ prefs = JSONConfig('plugins/ask_gpt')
 
 # 支持的语言列表
 SUPPORTED_LANGUAGES = [
-    # 中文变体
-    ('zh', '简体中文'),   # 简体中文
-    ('zht', '繁體中文'),  # 繁体中文
-    ('yue', '粵語'),      # 粤语
+    # 英语（默认语言）
+    ('en', 'English (default)'),
+    
+    # 丹麦语
+    ('da', 'Dansk'),
+    
+    # 德语
+    ('de', 'Deutsch'),
+    
+    # 西班牙语
+    ('es', 'Español'),
+    
+    # 芬兰语
+    ('fi', 'Suomi'),
+    
+    # 法语
+    ('fr', 'Français'),
     
     # 日语
-    ('ja', '日本語'),     # 日语
+    ('ja', '日本語'),
     
-    # 欧洲语系
-    ('fr', 'Français'),   # 法语
-    ('de', 'Deutsch'),    # 德语
-    ('es', 'Español'),    # 西班牙语
-    ('ru', 'Русский'),    # 俄语
-    ('pt', 'Português'),  # 葡萄牙语
-    ('sv', 'Svenska'),    # 瑞典语
-    ('da', 'Dansk'),      # 丹麦语
-    ('nl', 'Nederlands'), # 荷兰语
-    ('no', 'Norsk'),      # 挪威语
-    ('fi', 'Suomi'),      # 芬兰语
+    # 荷兰语
+    ('nl', 'Nederlands'),
     
-    # 英语
-    ('en', 'English'),    # 保留英语作为选项
+    # 挪威语
+    ('no', 'Norsk'),
+    
+    # 葡萄牙语
+    ('pt', 'Português'),
+    
+    # 俄语
+    ('ru', 'Русский'),
+    
+    # 瑞典语
+    ('sv', 'Svenska'),
+    
+    # 简体中文
+    ('zh', '简体中文'),
+    
+    # 繁体中文
+    ('zht', '繁體中文'),
+    
+    # 粤语
+    ('yue', '粵語'),
 ]
 
 # 默认配置
