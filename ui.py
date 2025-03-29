@@ -44,6 +44,7 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
+        self.ask_action.setShortcut(QKeySequence("Ctrl+L"))  # 使用与 action_spec 相同的快捷键
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -52,6 +53,10 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
+        # 根据操作系统设置快捷键
+        self.config_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
+        if sys.platform == 'darwin':  # macOS 使用 Command
+            self.config_action.setShortcut(QKeySequence("Ctrl+Shift+L"))  # macOS 会自动将 Ctrl 映射为 Command
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
@@ -145,14 +150,10 @@ class AboutWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 加载图标
-        icon_path = I('images/ask_gpt.png')
-        
         # 创建关于内容
         about_label = QLabel()
         about_label.setText(f"""
         <div style='text-align: center'>
-            <img src='{icon_path}' height='128' style='margin-bottom: 20px'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
             <p style='color: #666; font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
@@ -204,6 +205,24 @@ class TabDialog(QDialog):
         
         # 连接配置对话框的信号
         self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
+    
+    def keyPressEvent(self, event):
+        """处理按键事件"""
+        if event.key() == Qt.Key_Escape:
+            # 如果配置页面有未保存的更改，先重置字段
+            if self.config_widget.config_dialog.save_button.isEnabled():
+                self.config_widget.config_dialog.reset_to_initial_values()
+            # 关闭窗口
+            self.reject()
+        else:
+            super().keyPressEvent(event)
+    
+    def reject(self):
+        """处理关闭按钮"""
+        # 如果配置页面有未保存的更改，先重置字段
+        if self.config_widget.config_dialog.save_button.isEnabled():
+            self.config_widget.config_dialog.reset_to_initial_values()
+        super().reject()
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
