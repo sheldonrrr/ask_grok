@@ -86,6 +86,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Gem',
         'save_success': 'Indstillinger gemt',
+        'response_placeholder': 'Groks svar vil blive vist her',
+        'loading_text': 'Spørger',
     },
     
     # 德语 (de)
@@ -121,6 +123,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Speichern',
         'save_success': 'Einstellungen gespeichert',
+        'response_placeholder': 'Groks Antwort wird hier angezeigt',
+        'loading_text': 'Frage',
     },
     
     # 英语 (en)
@@ -156,6 +160,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Save',
         'save_success': 'Settings saved',
+        'response_placeholder': "Grok's response will appear here",
+        'loading_text': 'Asking',
     },
     
     # 西班牙语 (es)
@@ -191,6 +197,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Guardar',
         'save_success': 'Configuración guardada',
+        'response_placeholder': 'La respuesta de Grok aparecerá aquí',
+        'loading_text': 'Preguntando',
     },
     
     # 芬兰语 (fi)
@@ -226,6 +234,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Tallenna',
         'save_success': 'Asetukset tallennettu',
+        'response_placeholder': 'Grokin vastaus näkyy tässä',
+        'loading_text': 'Kysytään',
     },
     
     # 法语 (fr)
@@ -261,6 +271,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Enregistrer',
         'save_success': 'Paramètres enregistrés',
+        'response_placeholder': 'La réponse de Grok apparaîtra ici',
+        'loading_text': 'Demande en cours',
     },
     
     # 日语 (ja)
@@ -296,6 +308,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': '保存',
         'save_success': '設定を保存しました',
+        'response_placeholder': 'Grokの回答がここに表示されます',
+        'loading_text': '質問中',
     },
     
     # 荷兰语 (nl)
@@ -331,6 +345,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Opslaan',
         'save_success': 'Instellingen opgeslagen',
+        'response_placeholder': 'Het antwoord van Grok verschijnt hier',
+        'loading_text': 'Vragen',
     },
     
     # 挪威语 (no)
@@ -366,6 +382,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Lagre',
         'save_success': 'Innstillinger lagret',
+        'response_placeholder': 'Groks svar vil bli vist her',
+        'loading_text': 'Spør',
     },
     
     # 葡萄牙语 (pt)
@@ -401,6 +419,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Salvar',
         'save_success': 'Configurações salvas',
+        'response_placeholder': 'A resposta do Grok aparecerá aqui',
+        'loading_text': 'Perguntando',
     },
     
     # 俄语 (ru)
@@ -436,6 +456,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Сохранить',
         'save_success': 'Настройки сохранены',
+        'response_placeholder': 'Ответ Grok появится здесь',
+        'loading_text': 'Спрашиваю',
     },
     
     # 瑞典语 (sv)
@@ -471,6 +493,8 @@ TRANSLATIONS = {
         'ok_button': 'OK',
         'save_button': 'Spara',
         'save_success': 'Inställningar sparade',
+        'response_placeholder': 'Groks svar kommer att visas här',
+        'loading_text': 'Frågar',
     },
     
     # 简体中文 (zh)
@@ -543,6 +567,8 @@ TRANSLATIONS = {
         'ok_button': '確定',
         'save_button': '儲存',
         'save_success': '設定已儲存',
+        'response_placeholder': 'Grok 的回答將顯示在這裡',
+        'loading_text': '正在詢問',
     },
     
     # 粤语 (yue)
@@ -578,6 +604,8 @@ TRANSLATIONS = {
         'ok_button': '確定',
         'save_button': '保存',
         'save_success': '設定已保存',
+        'response_placeholder': 'Grok 嘅答案會喺呢度顯示',
+        'loading_text': '問緊',
     }
 }
 

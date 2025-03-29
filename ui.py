@@ -358,7 +358,7 @@ class AskDialog(QDialog):
             }
         """)
         # 设置占位符文字，使用当前语言
-        self.response_area.setPlaceholderText(self.i18n.get('response_placeholder', 'Grok的回答将显示在这里'))
+        self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
         layout.addWidget(self.response_area)
         
         # 创建按钮区域
