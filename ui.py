@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
                            QLabel, QTextEdit, QPushButton)
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
-from calibre_plugins.ask_gpt.config import ConfigWidget, get_prefs
+from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_gpt.api import APIClient
 from calibre_plugins.ask_gpt.i18n import get_translation
 from calibre.utils.resources import get_path as I
@@ -92,8 +92,12 @@ class AskGPTPluginUI(InterfaceAction):
         self.initialize_api()
 
     def show_configuration(self):
-        self.interface_action_base_plugin.do_user_config(self.gui)
-
+        """显示配置对话框"""
+        # 直接创建并显示配置对话框
+        from calibre_plugins.ask_gpt.config import ConfigDialog
+        dlg = ConfigDialog(self.gui)
+        dlg.exec_()
+    
     def show_dialog(self):
         self.initialize_api()
         

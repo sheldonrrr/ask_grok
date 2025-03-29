@@ -23,21 +23,38 @@ class AskGPTPlugin(InterfaceActionBase):
     minimum_calibre_version = (0, 7, 53)
     icon                = 'images/ask_gpt.png'
 
+    # Declare the main action associated with this plugin
+    # The keyboard shortcut can be None if you dont want to use a keyboard
+    # shortcut. Remember that currently calibre has no central management for
+    # keyboard shortcuts, so try to use an unusual/unused shortcut.
     actual_plugin = 'calibre_plugins.ask_gpt.ui:AskGPTPluginUI'
-
+    
     def is_customizable(self):
         return True
 
+    def load_actual_plugin(self, gui):
+        '''
+        This method must return the actual interface action plugin object.
+        '''
+        ac = getattr(self, 'actual_plugin_object', None)
+        if ac is None:
+            mod, cls = self.actual_plugin.split(':')
+            from importlib import import_module
+            ac = getattr(import_module(mod), cls)(gui, self.site_customization)
+            self.actual_plugin_object = ac
+        return ac
+
+    def customization_help(self, gui=False):
+        if getattr(self, 'actual_plugin_object', None) is not None:
+            return self.actual_plugin_object.customization_help(gui)
+        raise NotImplementedError()
+
     def config_widget(self):
-        from calibre_plugins.ask_gpt.config import ConfigWidget
-        return ConfigWidget()
+        if getattr(self, 'actual_plugin_object', None) is not None:
+            return self.actual_plugin_object.config_widget()
+        raise NotImplementedError()
 
     def save_settings(self, config_widget):
-        # 只保存配置，不尝试重新初始化 API
-        config_widget.save_settings()
-        # Apply the changes
-        ac = self.actual_plugin_
-        if ac is not None:
-            ac.apply_settings()
-        else:
-            print("Warning: actual_plugin_ is None in save_settings")
+        if getattr(self, 'actual_plugin_object', None) is not None:
+            return self.actual_plugin_object.save_settings(config_widget)
+        raise NotImplementedError()
