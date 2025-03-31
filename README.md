@@ -63,7 +63,6 @@ To import the file as a custom plugin in Calibre:
 
 ## Keyboard Shortcuts
 - [Global] Ask: Command + L
-- [Dialog only] Send: Command + Enter
 
 ## Requirements
 

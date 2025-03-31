@@ -244,9 +244,6 @@ TRANSLATIONS = {
         'suggest_button': 'Forslag?',
         'shortcuts_tab': 'Genveje',
         'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
-        'shortcut_suggest': 'Få spørgsmålssuggestion',
-        'shortcut_send': 'Send spørgsmål',
-        'shortcut_settings': 'Åbn indstillinger',
     },
     
     # 德语 (de)
@@ -287,9 +284,6 @@ TRANSLATIONS = {
         'suggest_button': 'Vorschlag?',
         'shortcuts_tab': 'Tastenkombinationen',
         'shortcut_open_dialog': 'Fragenfenster öffnen',
-        'shortcut_suggest': 'Fragevorschlag erhalten',
-        'shortcut_send': 'Frage senden',
-        'shortcut_settings': 'Einstellungen öffnen',
     },
     
     # 英语 (en)
@@ -332,9 +326,6 @@ TRANSLATIONS = {
         'loading_text': 'Asking',
         'shortcuts_tab': 'Shortcuts',
         'shortcut_open_dialog': 'Open Ask Dialog',
-        'shortcut_suggest': 'Get Question Suggestion',
-        'shortcut_send': 'Send Question',
-        'shortcut_settings': 'Open Settings',
     },
     
     # 西班牙语 (es)
@@ -375,9 +366,6 @@ TRANSLATIONS = {
         'suggest_button': 'Sugerir?',
         'shortcuts_tab': 'Atajos',
         'shortcut_open_dialog': 'Abrir diálogo de preguntas',
-        'shortcut_suggest': 'Obtener sugerencia de pregunta',
-        'shortcut_send': 'Enviar pregunta',
-        'shortcut_settings': 'Abrir configuración',
     },
     
     # 芬兰语 (fi)
@@ -418,9 +406,6 @@ TRANSLATIONS = {
         'suggest_button': 'Ehdota?',
         'shortcuts_tab': 'Pikanäppäimet',
         'shortcut_open_dialog': 'Avaa kysymysikkuna',
-        'shortcut_suggest': 'Hae kysymysehdotus',
-        'shortcut_send': 'Lähetä kysymys',
-        'shortcut_settings': 'Avaa asetukset',
     },
     
     # 法语 (fr)
@@ -461,9 +446,6 @@ TRANSLATIONS = {
         'suggest_button': 'Suggérer?',
         'shortcuts_tab': 'Raccourcis',
         'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
-        'shortcut_suggest': 'Obtenir une suggestion de question',
-        'shortcut_send': 'Envoyer la question',
-        'shortcut_settings': 'Ouvrir les paramètres',
     },
     
     # 日语 (ja)
@@ -504,9 +486,6 @@ TRANSLATIONS = {
         'suggest_button': '提案?',
         'shortcuts_tab': 'ショートカット',
         'shortcut_open_dialog': '質問ウィンドウを開く',
-        'shortcut_suggest': '質問の提案を取得する',
-        'shortcut_send': '質問を送信する',
-        'shortcut_settings': '設定を開く',
     },
     
     # 荷兰语 (nl)
@@ -547,9 +526,6 @@ TRANSLATIONS = {
         'suggest_button': 'Suggestie?',
         'shortcuts_tab': 'Sneltoetsen',
         'shortcut_open_dialog': 'Vraagdialoog openen',
-        'shortcut_suggest': 'Vraagsuggestie krijgen',
-        'shortcut_send': 'Vraag verzenden',
-        'shortcut_settings': 'Instellingen openen',
     },
     
     # 挪威语 (no)
@@ -590,9 +566,6 @@ TRANSLATIONS = {
         'suggest_button': 'Forslag?',
         'shortcuts_tab': 'Hurtigtaster',
         'shortcut_open_dialog': 'Åpne spørsmålsdialog',
-        'shortcut_suggest': 'Få spørsmålssuggester',
-        'shortcut_send': 'Send spørsmål',
-        'shortcut_settings': 'Åpne innstillinger',
     },
     
     # 葡萄牙语 (pt)
@@ -633,9 +606,6 @@ TRANSLATIONS = {
         'suggest_button': 'Sugerir?',
         'shortcuts_tab': 'Atalhos',
         'shortcut_open_dialog': 'Abrir diálogo de perguntas',
-        'shortcut_suggest': 'Obter sugestão de pergunta',
-        'shortcut_send': 'Enviar pergunta',
-        'shortcut_settings': 'Abrir configurações',
     },
     
     # 俄语 (ru)
@@ -676,9 +646,6 @@ TRANSLATIONS = {
         'suggest_button': 'Предложить?',
         'shortcuts_tab': 'Горячие клавиши',
         'shortcut_open_dialog': 'Открыть диалог вопросов',
-        'shortcut_suggest': 'Получить предложение вопроса',
-        'shortcut_send': 'Отправить вопрос',
-        'shortcut_settings': 'Открыть настройки',
     },
     
     # 瑞典语 (sv)
@@ -719,9 +686,6 @@ TRANSLATIONS = {
         'suggest_button': 'Föreslå?',
         'shortcuts_tab': 'Genvägar',
         'shortcut_open_dialog': 'Öppna frågedialog',
-        'shortcut_suggest': 'Få frågeförslag',
-        'shortcut_send': 'Skicka fråga',
-        'shortcut_settings': 'Öppna inställningar',
     },
     
     # 简体中文 (zh)
@@ -763,9 +727,6 @@ TRANSLATIONS = {
         'loading_text': '正在询问',
         'shortcuts_tab': '快捷键',
         'shortcut_open_dialog': '打开询问窗口',
-        'shortcut_suggest': '获取问题建议',
-        'shortcut_send': '发送问题',
-        'shortcut_settings': '打开设置',
     },
     
     # 繁体中文 (zht)
@@ -807,9 +768,6 @@ TRANSLATIONS = {
         'loading_text': '正在詢問',
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開啟詢問視窗',
-        'shortcut_suggest': '取得問題建議',
-        'shortcut_send': '發送問題',
-        'shortcut_settings': '開啟設定',
     },
     
     # 粤语 (yue)
@@ -851,9 +809,6 @@ TRANSLATIONS = {
         'loading_text': '問緊',
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開詢問視窗',
-        'shortcut_suggest': '攞問題建議',
-        'shortcut_send': '發送問題',
-        'shortcut_settings': '開設定',
     }
 }
 
