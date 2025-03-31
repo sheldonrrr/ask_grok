@@ -79,6 +79,7 @@
 - 发送请求给Grok时，插件会调用书籍的Metadate信息，其中包含：书名、作者、出版社，但不会包含可能含有用户自定义信息的 Tags、Comments等
 - Grok API Key在输入后会保存一份Json文件到本地，不会传输到服务器
 - 使用Python中的requests module，不会经过第三方服务器
-- 本插件的隐私处理会依赖于Grok自身的隐私处理政策：是的，Grok会使用你提交的数据进行模型训练
+- 本插件的隐私处理会依赖于Grok自身的隐私处理政策，由于仍然还没支持Private Chat：是的，Grok会使用你提交的数据进行模型训练
+- 插件支持从本地的环境变量中获取API Key，在本地的环境变量中设置`XAI_AUTH_TOKEN`即可
   
-（Grok Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.）
+Grok Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.
