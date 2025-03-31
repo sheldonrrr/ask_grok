@@ -48,9 +48,6 @@ class ShortcutsWidget(QWidget):
         # 定义快捷键列表
         shortcuts = [
             (i18n['menu_ask_grok'], f'{modifier}+L'),  # 打开询问窗口
-            (i18n['suggest_button'], f'{modifier}+Shift+S'),  # 获取建议
-            (i18n['send_button'], f'{modifier}+Enter'),  # 发送问题
-            (i18n['config_title'], f'{modifier}+Shift+L')  # 打开设置
         ]
         
         # 创建快捷键标签
