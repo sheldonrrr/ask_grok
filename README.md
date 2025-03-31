@@ -39,7 +39,7 @@
   - 如果没有团队，创建团队
   - 选择并进入页面：API Keys
   - 点击按钮：Create API Keys
-  - 输入API Key的命名，建议是：Calibre_Ask_Grok
+  - 输入API Key的命名，建议是：calibre_Ask_Grok
   - 点击按钮：Save
   - 创建成功后会得到一个Key值：`Bearer x-ai *****`，或`x-ai *****`
   - 复制该Key
