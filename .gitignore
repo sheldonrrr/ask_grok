@@ -168,3 +168,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+ask_gpt.code-workspace
