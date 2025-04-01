@@ -182,8 +182,14 @@ class AboutWidget(QWidget):
             <p style='color: #666; font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
             <p style='color: #666; font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_gpt' 
-                   style='color: #666;'>
-                   GitHub
+                   style='color: #666; text-decoration: none;'>
+                   💻 GitHub 💻
+                </a>
+            </p>
+            <p style='color: #666; font-weight: normal; '>
+                <a href='https://t.me/sheldonrrr' 
+                   style='color: #666; text-decoration: none;'>
+                   ✈️ Telegram with {self.i18n['author_name']} ✈️
                 </a>
             </p>
         </div>

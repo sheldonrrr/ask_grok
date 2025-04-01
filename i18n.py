@@ -244,6 +244,7 @@ TRANSLATIONS = {
         'suggest_button': 'Forslag?',
         'shortcuts_tab': 'Genveje',
         'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
+        'author_name': 'Sheldon',
     },
     
     # 德语 (de)
@@ -284,6 +285,7 @@ TRANSLATIONS = {
         'suggest_button': 'Vorschlag?',
         'shortcuts_tab': 'Tastenkombinationen',
         'shortcut_open_dialog': 'Fragenfenster öffnen',
+        'author_name': 'Sheldon',
     },
     
     # 英语 (en)
@@ -326,6 +328,7 @@ TRANSLATIONS = {
         'loading_text': 'Asking',
         'shortcuts_tab': 'Shortcuts',
         'shortcut_open_dialog': 'Open Ask Dialog',
+        'author_name': 'Sheldon',
     },
     
     # 西班牙语 (es)
@@ -366,6 +369,7 @@ TRANSLATIONS = {
         'suggest_button': 'Sugerir?',
         'shortcuts_tab': 'Atajos',
         'shortcut_open_dialog': 'Abrir diálogo de preguntas',
+        'author_name': 'Sheldon',
     },
     
     # 芬兰语 (fi)
@@ -406,6 +410,7 @@ TRANSLATIONS = {
         'suggest_button': 'Ehdota?',
         'shortcuts_tab': 'Pikanäppäimet',
         'shortcut_open_dialog': 'Avaa kysymysikkuna',
+        'author_name': 'Sheldon',
     },
     
     # 法语 (fr)
@@ -446,6 +451,7 @@ TRANSLATIONS = {
         'suggest_button': 'Suggérer?',
         'shortcuts_tab': 'Raccourcis',
         'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
+        'author_name': 'Sheldon',
     },
     
     # 日语 (ja)
@@ -486,6 +492,7 @@ TRANSLATIONS = {
         'suggest_button': '提案?',
         'shortcuts_tab': 'ショートカット',
         'shortcut_open_dialog': '質問ウィンドウを開く',
+        'author_name': 'シェルドン',
     },
     
     # 荷兰语 (nl)
@@ -526,6 +533,7 @@ TRANSLATIONS = {
         'suggest_button': 'Suggestie?',
         'shortcuts_tab': 'Sneltoetsen',
         'shortcut_open_dialog': 'Vraagdialoog openen',
+        'author_name': 'Sheldon',
     },
     
     # 挪威语 (no)
@@ -566,6 +574,7 @@ TRANSLATIONS = {
         'suggest_button': 'Forslag?',
         'shortcuts_tab': 'Hurtigtaster',
         'shortcut_open_dialog': 'Åpne spørsmålsdialog',
+        'author_name': 'Sheldon',
     },
     
     # 葡萄牙语 (pt)
@@ -606,6 +615,7 @@ TRANSLATIONS = {
         'suggest_button': 'Sugerir?',
         'shortcuts_tab': 'Atalhos',
         'shortcut_open_dialog': 'Abrir diálogo de perguntas',
+        'author_name': 'Sheldon',
     },
     
     # 俄语 (ru)
@@ -646,6 +656,7 @@ TRANSLATIONS = {
         'suggest_button': 'Предложить?',
         'shortcuts_tab': 'Горячие клавиши',
         'shortcut_open_dialog': 'Открыть диалог вопросов',
+        'author_name': 'Шелдон',
     },
     
     # 瑞典语 (sv)
@@ -686,6 +697,7 @@ TRANSLATIONS = {
         'suggest_button': 'Föreslå?',
         'shortcuts_tab': 'Genvägar',
         'shortcut_open_dialog': 'Öppna frågedialog',
+        'author_name': 'Sheldon',
     },
     
     # 简体中文 (zh)
@@ -727,6 +739,7 @@ TRANSLATIONS = {
         'loading_text': '正在询问',
         'shortcuts_tab': '快捷键',
         'shortcut_open_dialog': '打开询问窗口',
+        'author_name': 'Sheldon',
     },
     
     # 繁体中文 (zht)
@@ -768,6 +781,7 @@ TRANSLATIONS = {
         'loading_text': '正在詢問',
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開啟詢問視窗',
+        'author_name': 'Sheldon',
     },
     
     # 粤语 (yue)
@@ -794,7 +808,7 @@ TRANSLATIONS = {
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
         'input_placeholder': '喺呢度輸入你嘅問題...',
-        'response_placeholder': 'Grok 嘅答案會喺呢度顯示',
+        'response_placeholder': 'Grok 嘅答案將顯示喺呢度',
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
@@ -809,6 +823,7 @@ TRANSLATIONS = {
         'loading_text': '問緊',
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開詢問視窗',
+        'author_name': 'Sheldon',
     }
 }
 
