@@ -183,17 +183,18 @@ class AboutWidget(QWidget):
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: #666; font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
-            <p style='color: #666; font-weight: normal; '>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
+            <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_gpt' 
-                   style='color: #666; text-decoration: none;'>
-                   💻 GitHub 💻
+                   style='color: palette(text); text-decoration: none;'>
+                   GitHub
                 </a>
             </p>
-            <p style='color: #666; font-weight: normal; '>
+            <p style='color: palette(text); font-weight: normal; '>
+                Telegram: @
                 <a href='https://t.me/sheldonrrr' 
-                   style='color: #666; text-decoration: none;'>
-                   ✈️ Telegram with {self.i18n['author_name']} ✈️
+                   style='color: palette(text); text-decoration: none;'>
+                   {self.i18n['author_name']}
                 </a>
             </p>
         </div>
@@ -375,10 +376,12 @@ class AskDialog(QDialog):
         info_area.setTextFormat(Qt.RichText)
         info_area.setStyleSheet("""
             QLabel {
-                background-color: #f5f5f5;
+                background-color: palette(base);
+                color: palette(text);
                 padding: 10px;
                 border-radius: 5px;
                 line-height: 150%;
+                border: 1px solid palette(mid);
             }
         """)
         info_area.setFixedHeight(150)  # 设置固定高度
@@ -407,12 +410,12 @@ class AskDialog(QDialog):
         self.input_area.setFixedHeight(80)  # 设置输入框高度
         self.input_area.setStyleSheet("""
             QTextEdit {
-                border: 1px solid #ccc;
+                border: 1px solid palette(mid);
                 border-radius: 4px;
                 padding: 5px;
             }
             QTextEdit:focus {
-                border: 1px solid #4a90e2;
+                border: 1px solid palette(midlight);
                 outline: none;
             }
         """)
@@ -444,10 +447,10 @@ class AskDialog(QDialog):
                 padding: 2px 8px;
             }
             QPushButton:hover:enabled {
-                background-color: #f5f5f5;
+                background-color: palette(midlight);
             }
             QPushButton:pressed {
-                background-color: #4a90e2;
+                background-color: palette(midlight);
                 color: white;
             }
         """)
@@ -478,10 +481,10 @@ class AskDialog(QDialog):
                 padding: 2px 8px;
             }
             QPushButton:hover:enabled {
-                background-color: #f5f5f5;
+                background-color: palette(midlight);
             }
             QPushButton:pressed {
-                background-color: #4a90e2;
+                background-color: palette(midlight);
             }
         """)
         action_layout.addWidget(self.send_button)
@@ -494,10 +497,11 @@ class AskDialog(QDialog):
         self.response_area.setMinimumHeight(280)  # 设置最小高度，允许用户拉伸
         self.response_area.setStyleSheet("""
             QTextEdit {
-                border: 1px dashed #999;
+                border: 1px dashed palette(midlight);
+                color: palette(text);
                 border-radius: 4px;
                 padding: 5px;
-                background-color: #fafafa;
+                background-color: palette(midlight);
             }
         """)
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
