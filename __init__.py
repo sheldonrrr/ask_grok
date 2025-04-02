@@ -8,6 +8,7 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 import os
 import sys
+from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
 
 # 添加 lib 目录到 Python 路径
 lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
@@ -16,7 +17,7 @@ if lib_dir not in sys.path:
 
 class AskGPTPlugin(InterfaceActionBase):
     name                = 'Ask Grok'
-    description         = '使用 X.AI Grok 询问关于当前书籍的问题'
+    description         = 'Ask Grok about this book'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
     version             = (1, 0, 0)
