@@ -46,6 +46,11 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 创建菜单
         self.menu = QMenu(self.gui)
+        self.menu.setStyleSheet("""
+            QMenu {
+                min-width: 80px;
+            }
+        """)
         
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
@@ -66,9 +71,13 @@ class AskGPTPluginUI(InterfaceAction):
         self.config_action = QAction(self.i18n['config_title'], self)
         # 根据操作系统设置快捷键
         if sys.platform == 'darwin':  # macOS
-            self.config_action.setShortcut(QKeySequence("Command+Shift+L"))
+            shortcut = QKeySequence("Command+K")
         else:
-            self.config_action.setShortcut(QKeySequence("Ctrl+Shift+L"))
+            shortcut = QKeySequence("Ctrl+K")
+        
+        self.config_action.setShortcut(shortcut)
+        self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
+        
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
