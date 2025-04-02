@@ -14,10 +14,6 @@ from calibre_plugins.ask_gpt.shortcuts_widget import ShortcutsWidget
 from calibre.utils.resources import get_path as I
 import os
 import sys
-import logging
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 def get_suggestion_template(lang_code):
     """获取指定语言的建议提示词模板"""
@@ -34,11 +30,10 @@ class AskGPTPluginUI(InterfaceAction):
         try:
             InterfaceAction.__init__(self, parent, site_customization)
         except Exception as e:
-            logger.debug(f"初始化插件时出现非致命错误（可以忽略）：{str(e)}")
+            pass
         self.api = None
         self.gui = parent
         self.i18n = get_translation(get_prefs()['language'])
-        logger.info("AskGPTPluginUI initialized")
         
     def genesis(self):
         icon = get_icons('images/ask_gpt.png')
@@ -66,17 +61,17 @@ class AskGPTPluginUI(InterfaceAction):
         
         # 添加分隔符
         self.menu.addSeparator()
-        
+
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
-        # 根据操作系统设置快捷键
-        if sys.platform == 'darwin':  # macOS
-            shortcut = QKeySequence("Command+K")
-        else:
-            shortcut = QKeySequence("Ctrl+K")
-        
-        self.config_action.setShortcut(shortcut)
-        self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
+
+        # # 根据操作系统设置快捷键，暂时注销，之后找其他办法实现
+        # if sys.platform == 'darwin':  # macOS
+        #     shortcut = QKeySequence("Command+K")
+        # else:
+        #     shortcut = QKeySequence("Ctrl+K")
+        # self.config_action.setShortcut(shortcut)
+        # self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
         
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
@@ -217,15 +212,15 @@ class TabDialog(QDialog):
         
         # 创建标签页
         self.tab_widget = QTabWidget()
-        
+
         # 创建配置页面
         self.config_widget = AskGPTConfigWidget(self.gui)
         self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
-        
+
         # 创建快捷键页面
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts_tab'])
-        
+
         # 创建关于页面
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about_title'])
@@ -435,6 +430,10 @@ class AskDialog(QDialog):
         # 创建建议动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
         self.suggest_action.setShortcut(QKeySequence("Ctrl+Shift+S" if not sys.platform == 'darwin' else "Cmd+Shift+S"))
+
+        # 设置快捷键的范围为窗口级别的
+        self.suggest_action.setShortcutContext(Qt.WindowShortcut)
+
         self.suggest_action.triggered.connect(self.generate_suggestion)
         self.addAction(self.suggest_action)
         
@@ -447,6 +446,10 @@ class AskDialog(QDialog):
             QPushButton:hover:enabled {
                 background-color: #f5f5f5;
             }
+            QPushButton:pressed {
+                background-color: #4a90e2;
+                color: white;
+            }
         """)
         action_layout.addWidget(self.suggest_button)
         
@@ -458,6 +461,16 @@ class AskDialog(QDialog):
         self.send_button.clicked.connect(self.send_question)
         self.send_button.setFixedWidth(80)  # 设置固定宽度
         self.send_button.setFixedHeight(24)  # 设置固定高度
+
+        # 创建发送动作和快捷键
+        self.send_action = QAction(self.i18n['send_button'], self)
+        self.send_action.setShortcut(QKeySequence("Ctrl+Enter" if not sys.platform == 'darwin' else "Cmd+Enter"))
+
+        # 设置快捷键的范围为窗口级别的
+        self.send_action.setShortcutContext(Qt.WindowShortcut)
+        self.send_action.triggered.connect(self.send_question)
+        self.addAction(self.send_action)
+
         # 设置按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
@@ -466,6 +479,9 @@ class AskDialog(QDialog):
             }
             QPushButton:hover:enabled {
                 background-color: #f5f5f5;
+            }
+            QPushButton:pressed {
+                background-color: #4a90e2;
             }
         """)
         action_layout.addWidget(self.send_button)
@@ -541,7 +557,6 @@ class AskDialog(QDialog):
                 self.input_area.setText(original_input)
             
         except Exception as e:
-            logger.error(f"生成建议时出错：{str(e)}")
             # 发生错误时恢复原来的输入
             self.input_area.setText(original_input)
         
