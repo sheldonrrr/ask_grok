@@ -377,6 +377,7 @@ class AskDialog(QDialog):
                 line-height: 150%;
             }
         """)
+        info_area.setFixedHeight(150)  # 设置固定高度
         
         # 构建书籍信息HTML
         metadata_info = []
@@ -465,7 +466,7 @@ class AskDialog(QDialog):
         # 创建响应区域
         self.response_area = QTextEdit()
         self.response_area.setReadOnly(True)
-        self.response_area.setFixedHeight(280)  # 增加输出区域的高度
+        self.response_area.setMinimumHeight(280)  # 设置最小高度，允许用户拉伸
         self.response_area.setStyleSheet("""
             QTextEdit {
                 border: 1px dashed #999;
