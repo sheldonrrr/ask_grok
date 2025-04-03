@@ -245,6 +245,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Genveje',
         'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Genveje',
     },
     
     # 德语 (de)
@@ -286,6 +287,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Tastenkombinationen',
         'shortcut_open_dialog': 'Fragenfenster öffnen',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Tastenkombinationen',
     },
     
     # 英语 (en)
@@ -329,6 +331,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Shortcuts',
         'shortcut_open_dialog': 'Open Ask Dialog',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Shortcuts',
     },
     
     # 西班牙语 (es)
@@ -370,6 +373,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Atajos',
         'shortcut_open_dialog': 'Abrir diálogo de preguntas',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Atajos',
     },
     
     # 芬兰语 (fi)
@@ -411,6 +415,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Pikanäppäimet',
         'shortcut_open_dialog': 'Avaa kysymysikkuna',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Pikanäppäimet',
     },
     
     # 法语 (fr)
@@ -452,6 +457,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Raccourcis',
         'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Raccourcis',
     },
     
     # 日语 (ja)
@@ -493,6 +499,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'ショートカット',
         'shortcut_open_dialog': '質問ウィンドウを開く',
         'author_name': 'シェルドン',
+        'shortcuts_title': 'ショートカット',
     },
     
     # 荷兰语 (nl)
@@ -534,6 +541,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Sneltoetsen',
         'shortcut_open_dialog': 'Vraagdialoog openen',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Sneltoetsen',
     },
     
     # 挪威语 (no)
@@ -575,6 +583,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Hurtigtaster',
         'shortcut_open_dialog': 'Åpne spørsmålsdialog',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Hurtigtaster',
     },
     
     # 葡萄牙语 (pt)
@@ -616,6 +625,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Atalhos',
         'shortcut_open_dialog': 'Abrir diálogo de perguntas',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Atalhos',
     },
     
     # 俄语 (ru)
@@ -657,6 +667,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Горячие клавиши',
         'shortcut_open_dialog': 'Открыть диалог вопросов',
         'author_name': 'Шелдон',
+        'shortcuts_title': 'Горячие клавиши',
     },
     
     # 瑞典语 (sv)
@@ -698,6 +709,7 @@ TRANSLATIONS = {
         'shortcuts_tab': 'Genvägar',
         'shortcut_open_dialog': 'Öppna frågedialog',
         'author_name': 'Sheldon',
+        'shortcuts_title': 'Genvägar',
     },
     
     # 简体中文 (zh)
@@ -740,6 +752,8 @@ TRANSLATIONS = {
         'shortcuts_tab': '快捷键',
         'shortcut_open_dialog': '打开询问窗口',
         'author_name': 'Sheldon',
+        'shortcuts_title': '快捷键',
+        'error_no_api': '请先在设置中配置X.AI API令牌。',
     },
     
     # 繁体中文 (zht)
@@ -782,6 +796,8 @@ TRANSLATIONS = {
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開啟詢問視窗',
         'author_name': 'Sheldon',
+        'shortcuts_title': '快速鍵',
+        'error_no_api': '請先在設定中配置X.AI API令牌。',
     },
     
     # 粤语 (yue)
@@ -824,6 +840,7 @@ TRANSLATIONS = {
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開詢問視窗',
         'author_name': 'Sheldon',
+        'shortcuts_title': '快速鍵',
     }
 }
 
