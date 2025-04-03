@@ -118,8 +118,12 @@ class ConfigDialog(QWidget):
         
         # X.AI Authorization Token 配置
         self.key_label = QLabel(self.i18n['token_label'])
-        self.key_help = QLabel(self.i18n['token_help'])
+        self.key_help = QLabel()
+        self.key_help.setWordWrap(True)
+        self.key_help.setOpenExternalLinks(True)  # 允许打开外部链接
+        self.key_help.setTextFormat(Qt.TextFormat.RichText)  # 支持 HTML 富文本
         self.key_help.setStyleSheet('color: gray; font-size: 11px;')
+        self.key_help.setText(self.i18n['token_help'])
         layout.addWidget(self.key_label)
         layout.addWidget(self.key_help)
         
