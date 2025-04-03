@@ -83,7 +83,7 @@ class AskGPTPluginUI(InterfaceAction):
         self.shortcuts_action = QAction(self.i18n['shortcuts_title'], self)
         self.shortcuts_action.triggered.connect(self.show_shortcuts)
         self.menu.addAction(self.shortcuts_action)      
-        
+
         # 添加分隔符
         self.menu.addSeparator()
         
@@ -147,6 +147,11 @@ class AskGPTPluginUI(InterfaceAction):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(2)  # 默认显示关于标签页
+        dlg.exec_()
+    
+    def show_shortcuts(self):
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
         dlg.exec_()
 
 class AskGPTConfigWidget(QWidget):
