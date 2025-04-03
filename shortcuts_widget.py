@@ -53,7 +53,7 @@ class ShortcutsWidget(QWidget):
         # 创建快捷键标签
         label_style = """
             QLabel {
-                font-size: 13px;
+                font-size: 1em;
                 color: palette(text);
             }
         """

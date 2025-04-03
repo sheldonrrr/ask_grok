@@ -76,6 +76,14 @@ class AskGPTPluginUI(InterfaceAction):
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
+        #添加分隔符
+        self.menu.addSeparator()
+
+        #添加快捷键菜单项
+        self.shortcuts_action = QAction(self.i18n['shortcuts_title'], self)
+        self.shortcuts_action.triggered.connect(self.show_shortcuts)
+        self.menu.addAction(self.shortcuts_action)      
+        
         # 添加分隔符
         self.menu.addSeparator()
         
