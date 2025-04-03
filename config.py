@@ -284,3 +284,13 @@ class ConfigDialog(QWidget):
         
         # 根据是否有改变来设置保存按钮状态
         self.save_button.setEnabled(has_changes)
+    def reset_to_initial_values(self):
+        """重置到初始值"""
+        self.load_initial_values()
+        self.auth_token_edit.setText(self.initial_values['auth_token'])
+        self.base_url_edit.setText(self.initial_values['api_base_url'])
+        self.model_edit.setText(self.initial_values['model'])
+        self.template_edit.setText(self.initial_values['template'])
+        self.save_button.setEnabled(False)
+        self.save_success_label.setText('')
+        self.save_success_label.hide()
