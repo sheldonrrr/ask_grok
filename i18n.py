@@ -248,6 +248,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Genveje',
+        'loading':'Indlæser',
     },
     
     # 德语 (de)
@@ -290,6 +291,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Fragenfenster öffnen',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Tastenkombinationen',
+        'loading':'Laden',
     },
     
     # 英语 (en)
@@ -307,7 +309,7 @@ TRANSLATIONS = {
         'language_label': 'Interface Language:',
         'send_button': 'Send',
         'suggest_button': 'Suggest?',
-        'loading': 'Loading...',
+        'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': 'Error: ',
@@ -334,6 +336,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Open Ask Dialog',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Shortcuts',
+        'loading':'Loading',
     },
     
     # 西班牙语 (es)
@@ -376,6 +379,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Abrir diálogo de preguntas',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Atajos',
+        'loading':'Cargando',
     },
     
     # 芬兰语 (fi)
@@ -418,6 +422,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Avaa kysymysikkuna',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Pikanäppäimet',
+        'loading':'Ladataan',
     },
     
     # 法语 (fr)
@@ -460,6 +465,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Raccourcis',
+        'loading':'Chargement',
     },
     
     # 日语 (ja)
@@ -502,6 +508,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': '質問ウィンドウを開く',
         'author_name': 'シェルドン',
         'shortcuts_title': 'ショートカット',
+        'loading':'読み込み中',
     },
     
     # 荷兰语 (nl)
@@ -544,6 +551,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Vraagdialoog openen',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Sneltoetsen',
+        'loading':'Laden',
     },
     
     # 挪威语 (no)
@@ -586,6 +594,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Åpne spørsmålsdialog',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Hurtigtaster',
+        'loading':'Laster',
     },
     
     # 葡萄牙语 (pt)
@@ -628,6 +637,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Abrir diálogo de perguntas',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Atalhos',
+        'loading':'Carregando',
     },
     
     # 俄语 (ru)
@@ -670,6 +680,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Открыть диалог вопросов',
         'author_name': 'Шелдон',
         'shortcuts_title': 'Горячие клавиши',
+        'loading':'Загрузка',
     },
     
     # 瑞典语 (sv)
@@ -712,6 +723,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': 'Öppna frågedialog',
         'author_name': 'Sheldon',
         'shortcuts_title': 'Genvägar',
+        'loading':'Laddar',
     },
     
     # 简体中文 (zh)
@@ -729,7 +741,7 @@ TRANSLATIONS = {
         'language_label': '界面语言:',
         'send_button': '发送',
         'suggest_button': '建议？',
-        'loading': 'Loading...',
+        'loading': '加载中',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '错误：',
@@ -756,6 +768,7 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': '快捷键',
         'error_no_api': '请先在设置中配置X.AI API令牌。',
+        'loading':'加载中',
     },
     
     # 繁体中文 (zht)
@@ -773,7 +786,7 @@ TRANSLATIONS = {
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '建議？',
-        'loading': 'Loading...',
+        'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '錯誤：',
@@ -800,6 +813,7 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': '快速鍵',
         'error_no_api': '請先在設定中配置X.AI API令牌。',
+        'loading':'Loading',
     },
     
     # 粤语 (yue)
@@ -817,7 +831,7 @@ TRANSLATIONS = {
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '建議？',
-        'loading': 'Loading...',
+        'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': '出錯啦：',
@@ -843,6 +857,7 @@ TRANSLATIONS = {
         'shortcut_open_dialog': '開詢問視窗',
         'author_name': 'Sheldon',
         'shortcuts_title': '快速鍵',
+        'loading':'Loading',
     }
 }
 
