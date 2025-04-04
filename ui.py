@@ -15,6 +15,12 @@ from calibre.utils.resources import get_path as I
 import os
 import sys
 
+# 导入插件实例
+import calibre_plugins.ask_gpt.ui as ask_gpt_plugin
+
+# 存储插件实例的全局变量
+plugin_instance = None
+
 def get_suggestion_template(lang_code):
     """获取指定语言的建议提示词模板"""
     return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
@@ -34,6 +40,10 @@ class AskGPTPluginUI(InterfaceAction):
         self.api = None
         self.gui = parent
         self.i18n = get_translation(get_prefs()['language'])
+        
+        # 保存插件实例到全局变量
+        global plugin_instance
+        plugin_instance = self
         
     def genesis(self):
         icon = get_icons('images/ask_gpt.png')
@@ -154,6 +164,32 @@ class AskGPTPluginUI(InterfaceAction):
         dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
         dlg.exec_()
 
+    def update_menu_texts(self):
+        """更新菜单项的文本"""
+        try:
+            # 保存原始状态
+            original_texts = {
+                'ask': self.ask_action.text(),
+                'config': self.config_action.text(),
+                'shortcuts': self.shortcuts_action.text(),
+                'about': self.about_action.text()
+            }
+            
+            # 更新文本
+            self.i18n = get_translation(get_prefs()['language'])
+            self.ask_action.setText(self.i18n['menu_title'])
+            self.config_action.setText(self.i18n['config_title'])
+            self.shortcuts_action.setText(self.i18n['shortcuts_title'])
+            self.about_action.setText(self.i18n['about_title'])
+            
+        except Exception as e:
+            # 发生错误时恢复原始状态
+            self.ask_action.setText(original_texts['ask'])
+            self.config_action.setText(original_texts['config'])
+            self.shortcuts_action.setText(original_texts['shortcuts'])
+            self.about_action.setText(original_texts['about'])
+            raise e
+
 class AskGPTConfigWidget(QWidget):
     """配置页面组件"""
     def __init__(self, parent=None):
@@ -273,10 +309,16 @@ class TabDialog(QDialog):
         
         # 更新关于页面
         self.about_widget.update_content()
+        
+        # 通知主界面更新菜单
+        ask_gpt_plugin.plugin_instance.update_menu_texts()
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
-        pass  # 不再需要在这里处理语言更新
+        # 获取最新的语言设置
+        new_language = get_prefs()['language']
+        # 更新界面
+        self.on_language_changed(new_language)
     
     def keyPressEvent(self, event):
         """处理按键事件"""
