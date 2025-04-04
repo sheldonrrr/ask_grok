@@ -4,7 +4,8 @@
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox)
+                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox,
+                           QTextBrowser)
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
@@ -12,8 +13,16 @@ from calibre_plugins.ask_gpt.api import APIClient
 from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
 from calibre_plugins.ask_gpt.shortcuts_widget import ShortcutsWidget
 from calibre.utils.resources import get_path as I
-import os
 import sys
+import os
+
+# 添加 lib 目录到 Python 路径
+lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
+if lib_dir not in sys.path:
+    sys.path.insert(0, lib_dir)
+
+import markdown2
+import bleach
 
 # 导入插件实例
 import calibre_plugins.ask_gpt.ui as ask_gpt_plugin
@@ -547,11 +556,15 @@ class AskDialog(QDialog):
         layout.addLayout(action_layout)
         
         # 创建响应区域
-        self.response_area = QTextEdit()
-        self.response_area.setReadOnly(True)
+        self.response_area = QTextBrowser()
+        self.response_area.setOpenExternalLinks(True)  # 允许打开外部链接
         self.response_area.setMinimumHeight(280)  # 设置最小高度，允许用户拉伸
+        self.response_area.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextBrowserInteraction | 
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         self.response_area.setStyleSheet("""
-            QTextEdit {
+            QTextBrowser {
                 border: 1px dashed palette(midlight);
                 color: palette(text);
                 border-radius: 4px;
@@ -559,6 +572,46 @@ class AskDialog(QDialog):
             }
         """)
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
+        
+        # 设置 Markdown 支持
+        self.response_area.document().setDefaultStyleSheet("""
+            strong { font-weight: bold; }
+            em { font-style: italic; }
+            h1 { font-size: 1.5em; margin: 0.5em 0; }
+            h2 { font-size: 1.3em; margin: 0.5em 0; }
+            h3 { font-size: 1.1em; margin: 0.5em 0; }
+            code { 
+                background-color: palette(midlight); 
+                padding: 2px 4px; 
+                border-radius: 3px; 
+                font-family: monospace; 
+            }
+            pre { 
+                background-color: palette(midlight); 
+                padding: 10px; 
+                border-radius: 5px; 
+                margin: 10px 0; 
+            }
+            blockquote { 
+                border-left: 4px solid palette(midlight); 
+                margin: 10px 0; 
+                padding: 0 10px; 
+                color: #333; 
+            }
+            table { 
+                border-collapse: collapse; 
+                margin: 10px 0; 
+            }
+            th, td { 
+                border: 1px solid palette(midlight); 
+                padding: 5px; 
+            }
+            ul, ol { 
+                margin: 10px 0; 
+                padding-left: 20px; 
+            }
+            li { margin: 5px 0; }
+        """)
         layout.addWidget(self.response_area)
     
     def generate_suggestion(self):
@@ -652,7 +705,7 @@ class AskDialog(QDialog):
                 current_dot = (current_dot + 1) % len(dots)
             else:  # 如果有响应，显示响应内容
                 timer.stop()
-                self.response_area.setText(self._response_text)
+                self.set_response(self._response_text)
         
         # 创建定时器
         timer = QTimer()
@@ -701,6 +754,17 @@ class AskDialog(QDialog):
         finally:
             # 重新启用发送按钮
             self.send_button.setEnabled(True)
+    
+    def set_response(self, text):
+        if not text:
+            return
+        try:
+            html = markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'break-on-newline', 'header-ids', 'strike', 'task_list', 'markdown-in-html'])
+            # 清理不安全的 HTML
+            safe_html = bleach.clean(html, tags=['p', 'strong', 'em', 'h1', 'h2', 'h3', 'pre', 'code', 'blockquote', 'table', 'tr', 'th', 'td', 'ul', 'ol', 'li'], attributes=['id'])
+            self.response_area.setHtml(safe_html)
+        except Exception as e:
+            self.response_area.setPlainText(f"Markdown 渲染失败: {str(e)}\n原始文本:\n{text}")
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
