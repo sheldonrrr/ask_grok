@@ -556,7 +556,6 @@ class AskDialog(QDialog):
                 color: palette(text);
                 border-radius: 4px;
                 padding: 5px;
-                background-color: palette(midlight);
             }
         """)
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
