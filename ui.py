@@ -347,6 +347,8 @@ class TabDialog(QDialog):
             self.config_widget.config_dialog.reset_to_initial_values()
         super().reject()
 
+from calibre_plugins.ask_gpt.response_handler import ResponseHandler
+
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
         # 英语（默认语言）
@@ -412,13 +414,13 @@ class AskDialog(QDialog):
     }
     
     def __init__(self, gui, book_info, api):
-        QDialog.__init__(self, gui)
+        super().__init__(gui)
         self.gui = gui
         self.book_info = book_info
         self.api = api
-        self.i18n = get_translation(get_prefs()['language'])
+        self.response_handler = ResponseHandler(self)  # 设置父对象
         self.setup_ui()
-    
+
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
@@ -427,6 +429,7 @@ class AskDialog(QDialog):
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
+        self.i18n = get_translation(get_prefs()['language'])
         self.setWindowTitle(f"{self.i18n['menu_title']} - {self.book_info.title}")
         self.setMinimumWidth(500)
         self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
@@ -689,31 +692,10 @@ class AskDialog(QDialog):
             """)
     
     def send_question(self):
-        self.send_button.setEnabled(False)
         question = self.input_area.toPlainText()
         
-        # 设置加载动画
-        loading_text = self.i18n['loading_text'] if 'loading_text' in self.i18n else 'Loading'
-        dots = ['', '.', '..', '...']
-        current_dot = 0
-        self._response_text = ''  # 初始化响应文本
-        
-        def update_loading():
-            nonlocal current_dot
-            if not self._response_text:  # 只有在没有响应时才显示加载动画
-                self.response_area.setText(f"{loading_text}{dots[current_dot]}")
-                current_dot = (current_dot + 1) % len(dots)
-            else:  # 如果有响应，显示响应内容
-                timer.stop()
-                self.set_response(self._response_text)
-        
-        # 创建定时器
-        timer = QTimer()
-        timer.timeout.connect(update_loading)
-        timer.start(250)  # 每250毫秒更新一次，这样1秒会循环一遍
-        
-        # 1秒后停止加载动画
-        QTimer.singleShot(1000, timer.stop)
+        # 设置响应处理器
+        self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
         
         # 获取配置的模板
         from calibre_plugins.ask_gpt.config import get_prefs
@@ -735,36 +717,11 @@ class AskDialog(QDialog):
         try:
             prompt = template.format(**template_vars)
         except KeyError as e:
-            self.response_area.setText(f"{self.i18n['error_prefix']}Template error: {str(e)}")
-            self.send_button.setEnabled(True)
+            self.response_handler.handle_error(f"Template error: {str(e)}")
             return
         
-        # 发送请求并处理流式响应
-        try:
-            for chunk in self.api.ask_stream(prompt):
-                self._response_text += chunk  # 累积响应文本
-                cursor = self.response_area.textCursor()
-                cursor.movePosition(QTextCursor.MoveOperation.End)
-                cursor.insertText(chunk)
-                self.response_area.setTextCursor(cursor)
-                self.response_area.ensureCursorVisible()
-                QApplication.processEvents()
-        except Exception as e:
-            self.response_area.setText(f"{self.i18n['error_prefix']}{str(e)}")
-        finally:
-            # 重新启用发送按钮
-            self.send_button.setEnabled(True)
-    
-    def set_response(self, text):
-        if not text:
-            return
-        try:
-            html = markdown2.markdown(text, extras=['fenced-code-blocks', 'tables', 'break-on-newline', 'header-ids', 'strike', 'task_list', 'markdown-in-html'])
-            # 清理不安全的 HTML
-            safe_html = bleach.clean(html, tags=['p', 'strong', 'em', 'h1', 'h2', 'h3', 'pre', 'code', 'blockquote', 'table', 'tr', 'th', 'td', 'ul', 'ol', 'li'], attributes=['id'])
-            self.response_area.setHtml(safe_html)
-        except Exception as e:
-            self.response_area.setPlainText(f"Markdown 渲染失败: {str(e)}\n原始文本:\n{text}")
+        # 开始请求
+        self.response_handler.start_request(prompt)
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
@@ -775,3 +732,9 @@ class AskDialog(QDialog):
                 self.send_question()
                 return True
         return False
+
+    def closeEvent(self, event):
+        """处理窗口关闭事件"""
+        # 准备关闭，让线程自然结束
+        self.response_handler.prepare_close()
+        event.accept()

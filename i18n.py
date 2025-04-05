@@ -63,7 +63,7 @@ Regler:
 2. Fokuser på bogens indhold, ikke kun titlen
 3. Gør spørgsmålet praktisk og tankevækkende
 4. Hold det kort (15-25 ord)
-5. Vær kreativ og generer et andet spørgsmål hver gang, selv for samme bog""",
+5. Vær kreativ og generer et andet spørsmål hver gang, selv for samme bog""",
 
     # 德语
     'de': """Sie sind ein Experte für Buchrezensionen. Für das Buch "{title}" von {author} generieren Sie EINE aufschlussreiche Frage, die den Lesern hilft, das Buch besser zu verstehen.
@@ -86,7 +86,7 @@ Rules:
 5. Be creative and generate a different question each time, even for the same book""",
 
     # 西班牙语
-    'es': """Eres un experto en reseñas de libros. Para el libro "{title}" de {author}, genera UNA pregunta perspicaz que ayude a los lectores a entender mejor el libro.
+    'es': """Eres un experto en reseñas de libros. Para el libro "{title}" de {author} genera UNA pregunta perspicaz que ayude a los lectores a entender mejor el libro.
 
 Reglas:
 1. Devuelve SOLO la pregunta, sin introducción ni explicación
@@ -249,6 +249,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Genveje',
         'loading':'Indlæser',
+        'network_error': 'Netværksfejl, tjek venligst din forbindelse',
+        'request_timeout': 'Anmodningen tog for lang tid, afbrudt automatisk',
+        'request_failed': 'Anmodningen fejlede, prøv igen senere',
     },
     
     # 德语 (de)
@@ -292,6 +295,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Tastenkombinationen',
         'loading':'Laden',
+        'network_error': 'Netzwerkfehler, bitte überprüfen Sie Ihre Verbindung',
+        'request_timeout': 'Anfrage dauerte zu lange, automatisch abgebrochen',
+        'request_failed': 'Anfrage fehlgeschlagen, bitte versuchen Sie es später erneut',
     },
     
     # 英语 (en)
@@ -337,6 +343,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Shortcuts',
         'loading':'Loading',
+        'network_error': 'Network error, please check your connection',
+        'request_timeout': 'Request took too long, automatically terminated',
+        'request_failed': 'Request failed, please try again later',
     },
     
     # 西班牙语 (es)
@@ -380,6 +389,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Atajos',
         'loading':'Cargando',
+        'network_error': 'Error de red, por favor verifique su conexión',
+        'request_timeout': 'La solicitud tardó demasiado, se terminó automáticamente',
+        'request_failed': 'La solicitud falló, por favor inténtelo de nuevo más tarde',
     },
     
     # 芬兰语 (fi)
@@ -423,6 +435,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Pikanäppäimet',
         'loading':'Ladataan',
+        'network_error': 'Verkkovirhe, tarkista yhteytesi',
+        'request_timeout': 'Pyyntö kesti liian kauan, automaattisesti keskeytetty',
+        'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
     },
     
     # 法语 (fr)
@@ -466,6 +481,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Raccourcis',
         'loading':'Chargement',
+        'network_error': 'Erreur réseau, veuillez vérifier votre connexion',
+        'request_timeout': 'La requête a pris trop de temps, terminée automatiquement',
+        'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
     },
     
     # 日语 (ja)
@@ -475,7 +493,7 @@ TRANSLATIONS = {
         'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
         'config_title': '設定',
         'token_label': 'X.AI Authorization Token:',
-        'token_help': '形式: Bearer xai-xxx または xai-xxx (から <a href="https://console.x.ai">console.x.ai</a>)',
+        'token_help': '形式: Bearer xai-xxx または xai-xxx (から <a href="https://console.x.ai">console.x.ai</a> を使用)',
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-2-latest',
         'template_label': 'プロンプトテンプレート:',
@@ -509,6 +527,9 @@ TRANSLATIONS = {
         'author_name': 'シェルドン',
         'shortcuts_title': 'ショートカット',
         'loading':'読み込み中',
+        'network_error': 'ネットワークエラー、接続を確認してください',
+        'request_timeout': 'リクエストが時間超過、自動終了しました',
+        'request_failed': 'リクエストが失敗しました、後で再度試してください',
     },
     
     # 荷兰语 (nl)
@@ -552,6 +573,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Sneltoetsen',
         'loading':'Laden',
+        'network_error': 'Netwerkfout, controleer uw verbinding',
+        'request_timeout': 'Verzoek duurde te lang, automatisch beëindigd',
+        'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
     },
     
     # 挪威语 (no)
@@ -595,6 +619,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Hurtigtaster',
         'loading':'Laster',
+        'network_error': 'Nettverksfeil, sjekk tilkoblingen din',
+        'request_timeout': 'Forespørselen tok for lang tid, automatisk avbrutt',
+        'request_failed': 'Forespørselen feilet, prøv igjen senere',
     },
     
     # 葡萄牙语 (pt)
@@ -638,6 +665,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Atalhos',
         'loading':'Carregando',
+        'network_error': 'Erro de rede, verifique sua conexão',
+        'request_timeout': 'A solicitação demorou muito, terminada automaticamente',
+        'request_failed': 'A solicitação falhou, tente novamente mais tarde',
     },
     
     # 俄语 (ru)
@@ -681,6 +711,9 @@ TRANSLATIONS = {
         'author_name': 'Шелдон',
         'shortcuts_title': 'Горячие клавиши',
         'loading':'Загрузка',
+        'network_error': 'Ошибка сети, проверьте подключение',
+        'request_timeout': 'Запрос занял слишком много времени, автоматически прерван',
+        'request_failed': 'Запрос не удался, попробуйте еще раз позже',
     },
     
     # 瑞典语 (sv)
@@ -724,6 +757,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': 'Genvägar',
         'loading':'Laddar',
+        'network_error': 'Nätverksfel, kontrollera din anslutning',
+        'request_timeout': 'Begäran tog för lång tid, avslutades automatiskt',
+        'request_failed': 'Begäran misslyckades, försök igen senare',
     },
     
     # 简体中文 (zh)
@@ -767,8 +803,10 @@ TRANSLATIONS = {
         'shortcut_open_dialog': '打开询问窗口',
         'author_name': 'Sheldon',
         'shortcuts_title': '快捷键',
-        'error_no_api': '请先在设置中配置X.AI API令牌。',
         'loading':'加载中',
+        'network_error': '网络错误，请检查网络连接',
+        'request_timeout': '请求时间过长，已自动终止',
+        'request_failed': '请求失败，请稍后重试',
     },
     
     # 繁体中文 (zht)
@@ -812,8 +850,10 @@ TRANSLATIONS = {
         'shortcut_open_dialog': '開啟詢問視窗',
         'author_name': 'Sheldon',
         'shortcuts_title': '快速鍵',
-        'error_no_api': '請先在設定中配置X.AI API令牌。',
         'loading':'Loading',
+        'network_error': '網路錯誤，請檢查網路連線',
+        'request_timeout': '請求時間過長，已經自動終止',
+        'request_failed': '請求失敗，請稍後重試',
     },
     
     # 粤语 (yue)
@@ -858,6 +898,9 @@ TRANSLATIONS = {
         'author_name': 'Sheldon',
         'shortcuts_title': '快速鍵',
         'loading':'Loading',
+        'network_error': '網絡出咗問題，請檢查網絡',
+        'request_timeout': '請求時間過長，已經自動停咗',
+        'request_failed': '請求失敗，請稍後重試',
     }
 }
 
