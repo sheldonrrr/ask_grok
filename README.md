@@ -6,92 +6,97 @@ A simple Calibre plugin that allows users to ask questions about books using Gro
 
 ## Features
 
-- Direct integration with Calibre to query Grok about selected books
-- Automatic inclusion of book metadata, no manual copying required
-- Single input/output dialogue interface
+- Ask questions about books directly in Calibre
+- Automatically includes the current book's metadata, no need to copy-paste or manually enter
+- Single input-output dialog interface
 - Configurable API key
-- Customizable prompt templates
-- Keyboard shortcuts with preview
-- Plugin version information with preview
+- Configurable prompt template
+- Previewable interface shortcuts
+- Previewable plugin version information
 
 ## Installation
 
-### Method 1: Via Calibre Plugin Market
+### Method 1: Install via GitHub zip plugin file
+
+1. Download [Ask Grok zip file]()
+
+Import the file to Calibre custom plugins:
+
+1. In Calibre, select "Preferences" -> "Plugins" -> "Load plugin from file"
+2. Select the downloaded plugin file to install
+3. After installation, restart Calibre
+
+### Method 2: Install via Calibre official plugin market
+
+This method requires the plugin to be added to the Calibre plugin index before it can be searched. If searchable, I will update the index entry date here.
 
 1. Open Calibre's `Preferences`
-2. Navigate to `Plugins`
-3. Click `Get new plugins`
-4. Search for `Ask Grok` in the filter
-5. Select and install the plugin
+2. Open `Plugins`
+3. Open `Get new plugins`
+4. Enter `Ask Grok` in the `Filter by name`
+5. Select the plugin to install
 6. Restart Calibre
 
-### Method 2: Manual Installation via GitHub
+## Get Grok API Key
 
-1. Download the [Ask Grok zip file]()
-
-To import the file as a custom plugin in Calibre:
-
-1. In Calibre, go to "Preferences" -> "Plugins" -> "Load plugin from file"
-2. Select the downloaded plugin file
-3. Restart Calibre after installation
-
-## Getting Grok API Key
-
-  - Visit the Grok configuration page: https://console.x.ai/
+  - Go to Grok backend configuration address: https://console.x.ai/
   - Create a team if you don't have one
-  - Navigate to: API Keys
-  - Click: Create API Keys
-  - Enter a name for your API Key (suggested: calibre_Ask_Grok)
-  - Click: Save
-  - You'll receive a key in the format: `Bearer x-ai *****` or `x-ai *****`
-  - Copy this key
+  - Select and enter the page: API Keys
+  - Click the button: Create API Keys
+  - Enter API Key naming, suggested: calibre_Ask_Grok
+  - Click the button: Save
+  - After successful creation, you will get a Key value: `Bearer x-ai *****`, or `x-ai *****`
+  - Copy this Key
 
-## Configuring API Key
+## Configure API Key
 
-  - Click the Ask Grok dropdown menu and select `Configure`
-  - Paste your API Key into the `X.AI Authorization Token` field
-  - Click `Save`
-  - You'll see a "Save successful" message
+  - Click the Ask Grok dropdown menu in the menu bar, select `Configure`
+  - Enter the API Key into the `X.AI Authorization Token` input box
+  - Click the `Save` button
+  - A `Save successful` text prompt will appear
 
-## Usage
+## Interface Usage
 
-1. Select a book in your Calibre library
+1. Select a book in the Calibre library
 2. Click the "Ask Grok" button in the toolbar
-3. Enter your question in the dialog box
+3. Enter your question in the popup dialog
 4. Click "Send" to get Grok's answer
-5. Click "Suggest?" to have AI generate a question
+5. Click "Suggestion?" to request AI-generated questions
 
-## Keyboard Shortcuts
+## Shortcuts
 - [Global] Ask: Command + L
 
 ## Requirements
 
 - Calibre 7.25 or higher
-- External Python modules: Requests
+- External Python modules:
+  - requests
+  - bleach
+  - markdown2
 
 ### Built-in Python Modules Used
-- PyQt5 (Qt GUI framework)
+- PyQt5 (Qt GUI Framework)
   - QtWidgets: QDialog, QVBoxLayout, QHBoxLayout, QLabel, etc.
   - QtCore: Qt, QTimer
   - Qt: QKeySequence, QAction, QMenu
 - Standard Library
   - os: File and path operations
-  - sys: System-specific parameters
-  - json: JSON data handling
-  - logging: Debug and error logging
+  - sys: System-related parameters
+  - json: JSON data processing
+  - logging: Debug and error logs
   - datetime: Time operations
   - threading: Thread management
 
 ## Grok API Key Notes
 
-- API call limits depend on your account permissions
+- API call count depends on the account's permissions
 
-## Privacy
+## Privacy Handling
 
-- When sending requests to Grok, the plugin includes book metadata (title, author, publisher) but excludes user-specific data like Tags and Comments
-- Grok API Keys are stored locally in a JSON file and are not transmitted to any server
-- Uses Python's requests module directly, no third-party servers involved
-- Privacy handling follows Grok's privacy policy. Note: Until Private Chat is supported, Grok may use submitted data for model training
-- API Key can be set via local environment variable `XAI_AUTH_TOKEN`
+- When sending requests to Grok, the plugin will use the book's Metadata information, including: title, author, publisher, but will not include Tags, Comments, etc. that may contain user-defined information
+- The Grok API Key is saved as a Json file locally after input and is not transmitted to the server
+- Uses Python's requests module, does not go through third-party servers
+- The plugin's privacy handling will depend on Grok's own privacy policy. Since Private Chat is not yet supported: yes, Grok will use your submitted data for model training
+- The plugin supports getting the API Key from local environment variables, set `XAI_AUTH_TOKEN` in your local environment variables
 
-> **Official Grok Statement**: Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.
+> **Grok Official Statement**: Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.
