@@ -129,6 +129,7 @@ class ConfigDialog(QWidget):
         
         self.auth_token_edit = QLineEdit(self)
         self.auth_token_edit.setText(get_prefs()['auth_token'])
+        self.auth_token_edit.setEchoMode(QLineEdit.Password)  # 设置为密码模式，显示掩码
         layout.addWidget(self.auth_token_edit)
         
         # API Base URL 配置
