@@ -11,7 +11,7 @@ from calibre.utils.config import JSONConfig
 from .i18n import TRANSLATIONS, get_default_template, get_translation
 
 # 创建配置对象
-prefs = JSONConfig('plugins/ask_gpt')
+prefs = JSONConfig('plugins/ask_grok')
 
 # 支持的语言列表
 SUPPORTED_LANGUAGES = [

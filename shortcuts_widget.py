@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout
 from PyQt5.QtCore import Qt
-from calibre_plugins.ask_gpt.i18n import get_translation
-from calibre_plugins.ask_gpt.config import get_prefs
+from calibre_plugins.ask_grok.i18n import get_translation
+from calibre_plugins.ask_grok.config import get_prefs
 import sys
 
 class ShortcutsWidget(QWidget):
