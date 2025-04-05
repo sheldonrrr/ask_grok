@@ -119,11 +119,13 @@ class ResponseHandler(QObject):
         if self._request_cancelled:
             return
             
-        # 如果是第一个数据块，停止加载动画并开始更新定时器
+        # 如果是第一个数据块，停止加载动画
         first_chunk = not self._response_text and not self._new_chunks
         if first_chunk:
             self._stop_loading_timer()
             self._start_update_timer()
+            # 清空响应区域，确保 loading 文字消失
+            self.response_area.clear()
         
         # 将新chunk添加到缓冲区
         self._new_chunks.append(chunk)
@@ -187,6 +189,10 @@ class ResponseHandler(QObject):
             return
             
         try:
+            # 如果是第一次更新，确保响应区域是空的
+            if not self._response_text:
+                self.response_area.clear()
+            
             # 获取文本光标
             cursor = self.response_area.textCursor()
             cursor.movePosition(QTextCursor.MoveOperation.End)
