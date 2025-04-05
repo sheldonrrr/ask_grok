@@ -8,10 +8,10 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
                            QTextBrowser)
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
-from calibre_plugins.ask_gpt.config import ConfigDialog, get_prefs
-from calibre_plugins.ask_gpt.api import APIClient
-from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
-from calibre_plugins.ask_gpt.shortcuts_widget import ShortcutsWidget
+from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
+from calibre_plugins.ask_grok.api import APIClient
+from calibre_plugins.ask_grok.i18n import get_translation, SUGGESTION_TEMPLATES
+from calibre_plugins.ask_grok.shortcuts_widget import ShortcutsWidget
 from calibre.utils.resources import get_path as I
 import sys
 import os
@@ -25,7 +25,7 @@ import markdown2
 import bleach
 
 # 导入插件实例
-import calibre_plugins.ask_gpt.ui as ask_gpt_plugin
+import calibre_plugins.ask_grok.ui as ask_grok_plugin
 
 # 存储插件实例的全局变量
 plugin_instance = None
@@ -34,10 +34,10 @@ def get_suggestion_template(lang_code):
     """获取指定语言的建议提示词模板"""
     return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
 
-class AskGPTPluginUI(InterfaceAction):
+class AskGrokPluginUI(InterfaceAction):
     name = 'Ask Grok'
     # 根据操作系统设置不同的快捷键
-    action_spec = ('Ask Grok', 'images/ask_gpt.png', 'Ask Grok about this book', 
+    action_spec = ('Ask Grok', 'images/ask_grok.png', 'Ask Grok about this book', 
                   'Ctrl+L')
     action_type = 'global'
     
@@ -55,7 +55,7 @@ class AskGPTPluginUI(InterfaceAction):
         plugin_instance = self
         
     def genesis(self):
-        icon = get_icons('images/ask_gpt.png')
+        icon = get_icons('images/ask_grok.png')
         self.qaction.setIcon(icon)
         
         # 创建菜单
@@ -199,7 +199,7 @@ class AskGPTPluginUI(InterfaceAction):
             self.about_action.setText(original_texts['about'])
             raise e
 
-class AskGPTConfigWidget(QWidget):
+class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -243,7 +243,7 @@ class AboutWidget(QWidget):
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
             <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.0.0</p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://github.com/sheldonrrr/ask_gpt' 
+                <a href='https://github.com/sheldonrrr/ask_grok' 
                    style='color: palette(text); text-decoration: none;'>
                    GitHub
                 </a>
@@ -273,7 +273,7 @@ class TabDialog(QDialog):
         self.tab_widget = QTabWidget()
 
         # 创建配置页面
-        self.config_widget = AskGPTConfigWidget(self.gui)
+        self.config_widget = AskGrokConfigWidget(self.gui)
         self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
 
         # 创建快捷键页面
@@ -320,7 +320,7 @@ class TabDialog(QDialog):
         self.about_widget.update_content()
         
         # 通知主界面更新菜单
-        ask_gpt_plugin.plugin_instance.update_menu_texts()
+        ask_grok_plugin.plugin_instance.update_menu_texts()
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
@@ -347,8 +347,8 @@ class TabDialog(QDialog):
             self.config_widget.config_dialog.reset_to_initial_values()
         super().reject()
 
-from calibre_plugins.ask_gpt.response_handler import ResponseHandler
-from calibre_plugins.ask_gpt.generate_suggestion import SuggestionHandler
+from calibre_plugins.ask_grok.response_handler import ResponseHandler
+from calibre_plugins.ask_grok.generate_suggestion import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -652,7 +652,7 @@ class AskDialog(QDialog):
         }
         
         # 获取配置的模板
-        from calibre_plugins.ask_gpt.config import get_prefs
+        from calibre_plugins.ask_grok.config import get_prefs
         prefs = get_prefs()
         template = prefs['template']
         

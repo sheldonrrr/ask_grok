@@ -8,27 +8,27 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 import os
 import sys
-from calibre_plugins.ask_gpt.i18n import get_translation, SUGGESTION_TEMPLATES
+from calibre_plugins.ask_grok.i18n import get_translation, SUGGESTION_TEMPLATES
 
 # 添加 lib 目录到 Python 路径
 lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
 if lib_dir not in sys.path:
     sys.path.insert(0, lib_dir)
 
-class AskGPTPlugin(InterfaceActionBase):
+class AskGrokPlugin(InterfaceActionBase):
     name                = 'Ask Grok'
     description         = 'Ask Grok about this book'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
     version             = (1, 0, 0)
     minimum_calibre_version = (0, 7, 53)
-    icon                = 'images/ask_gpt.png'
+    icon                = 'images/ask_grok.png'
 
     # Declare the main action associated with this plugin
     # The keyboard shortcut can be None if you dont want to use a keyboard
     # shortcut. Remember that currently calibre has no central management for
     # keyboard shortcuts, so try to use an unusual/unused shortcut.
-    actual_plugin = 'calibre_plugins.ask_gpt.ui:AskGPTPluginUI'
+    actual_plugin = 'calibre_plugins.ask_grok.ui:AskGrokPluginUI'
     
     def is_customizable(self):
         return True
