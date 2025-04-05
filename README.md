@@ -66,6 +66,23 @@ This method requires the plugin to be added to the Calibre plugin index before i
 ## Shortcuts
 - [Global] Ask: Command + L
 
+## Language Support
+- Danish (da)
+- German (de)
+- English (en)
+- Spanish (es)
+- Finnish (fi)
+- French (fr)
+- Japanese (ja)
+- Dutch (nl)
+- Norwegian (no)
+- Portuguese (pt)
+- Russian (ru)
+- Swedish (sv)
+- Simplified Chinese (zh)
+- Traditional Chinese (zht)
+- Cantonese (yue)
+
 ## Requirements
 
 - Calibre 7.25 or higher
