@@ -348,6 +348,7 @@ class TabDialog(QDialog):
         super().reject()
 
 from calibre_plugins.ask_gpt.response_handler import ResponseHandler
+from calibre_plugins.ask_gpt.generate_suggestion import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -418,9 +419,22 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
-        self.response_handler = ResponseHandler(self)  # 设置父对象
+        self.i18n = get_translation(get_prefs()['language'])
+        
+        # 初始化处理器
+        self.response_handler = ResponseHandler(self)
+        self.suggestion_handler = SuggestionHandler(self)
+        
+        # 先创建 UI
         self.setup_ui()
-
+        
+        # 再设置处理器
+        self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
+        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.i18n, self.api)
+        
+        # 添加事件过滤器
+        self.input_area.installEventFilter(self)
+        
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
@@ -429,7 +443,6 @@ class AskDialog(QDialog):
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
-        self.i18n = get_translation(get_prefs()['language'])
         self.setWindowTitle(f"{self.i18n['menu_title']} - {self.book_info.title}")
         self.setMinimumWidth(500)
         self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
@@ -618,89 +631,14 @@ class AskDialog(QDialog):
         layout.addWidget(self.response_area)
     
     def generate_suggestion(self):
-        """生成问题建议
-        点击"建议？"按钮后，使用 AI 生成一个关于当前书籍的问题建议，
-        并将这个建议直接填入输入框中，作为用户的问题。
-        """
+        """生成问题建议"""
         if not self.api:
             return
             
-        # 禁用建议按钮，显示加载状态
-        self.suggest_button.setEnabled(False)
-        original_text = self.suggest_button.text()
-        self.suggest_button.setText(self.i18n['loading'])
-        self.suggest_button.setStyleSheet("""
-            QPushButton {
-                font-size: 12px;
-                color: #666;
-                padding: 2px 8px;
-            }
-        """)
-        
-        # 清空输入框，显示加载状态
-        original_input = self.input_area.toPlainText()
-        self.input_area.clear()
-        self.input_area.setPlaceholderText(self.i18n['loading'])
-        
-        # 确保 UI 更新
-        QApplication.processEvents()
-        
-        # 延迟执行 API 调用，确保 UI 状态已更新
-        QTimer.singleShot(100, lambda: self._do_generate_suggestion(original_text, original_input))
-        
-    def _do_generate_suggestion(self, original_button_text, original_input):
-        """实际执行生成建议的逻辑"""
-        try:
-            # 准备提示词
-            template = get_suggestion_template(get_prefs()['language'])
-            prompt = template.format(
-                title=self.book_info.title,
-                author=', '.join(self.book_info.authors) if self.book_info.authors else 'Unknown'
-            )
-            
-            # 调用 API 获取建议
-            suggestion = ""
-            for chunk in self.api.ask_stream(prompt):
-                suggestion += chunk
-            
-            # 将建议设置到输入框
-            if suggestion:
-                self.input_area.setText(suggestion)
-            else:
-                # 如果没有得到建议，恢复原来的输入
-                self.input_area.setText(original_input)
-            
-        except Exception as e:
-            # 发生错误时恢复原来的输入
-            self.input_area.setText(original_input)
-        
-        finally:
-            # 恢复输入框占位符
-            self.input_area.setPlaceholderText(self.i18n['input_placeholder'])
-            
-            # 恢复按钮状态
-            self.suggest_button.setText(original_button_text)
-            self.suggest_button.setEnabled(True)
-            self.suggest_button.setStyleSheet("""
-                QPushButton {
-                    font-size: 12px;
-                    padding: 2px 8px;
-                }
-                QPushButton:hover:enabled {
-                    background-color: #f5f5f5;
-                }
-            """)
-    
+        self.suggestion_handler.generate(self.book_info)
+
     def send_question(self):
         question = self.input_area.toPlainText()
-        
-        # 设置响应处理器
-        self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
-        
-        # 获取配置的模板
-        from calibre_plugins.ask_gpt.config import get_prefs
-        prefs = get_prefs()
-        template = prefs['template']
         
         # 准备模板变量
         template_vars = {
@@ -712,6 +650,11 @@ class AskDialog(QDialog):
             'series': getattr(self.book_info, 'series', ''),
             'query': question
         }
+        
+        # 获取配置的模板
+        from calibre_plugins.ask_gpt.config import get_prefs
+        prefs = get_prefs()
+        template = prefs['template']
         
         # 格式化提示词
         try:
@@ -737,4 +680,5 @@ class AskDialog(QDialog):
         """处理窗口关闭事件"""
         # 准备关闭，让线程自然结束
         self.response_handler.prepare_close()
+        self.suggestion_handler.prepare_close()  # 改用 prepare_close
         event.accept()
