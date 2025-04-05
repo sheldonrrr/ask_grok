@@ -64,6 +64,23 @@
 ## 快捷键
 - [全局]询问： Command + L
 
+## 语言支持
+- 丹麦语 (Danish, da)
+- 德语 (German, de)
+- 英语 (English, en)
+- 西班牙语 (Spanish, es)
+- 芬兰语 (Finnish, fi)
+- 法语 (French, fr)
+- 日语 (Japanese, ja)
+- 荷兰语 (Dutch, nl)
+- 挪威语 (Norwegian, no)
+- 葡萄牙语 (Portuguese, pt)
+- 俄语 (Russian, ru)
+- 瑞典语 (Swedish, sv)
+- 简体中文 (Simplified Chinese, zh)
+- 繁体中文 (Traditional Chinese, zht)
+- 粤语 (Cantonese, yue)
+
 ## 依赖要求
 
 - Calibre 7.25 或更高版本
