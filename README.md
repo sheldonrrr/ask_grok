@@ -4,6 +4,11 @@
 
 A simple Calibre plugin that allows users to ask questions about books using Grok.
 
+## Preview
+
+![Ask Dialogu](https://github.com/sheldonrrr/ask_grok/blob/main/ask.gif)
+![Config Dialogu](https://github.com/sheldonrrr/ask_grok/blob/main/config.gif)
+
 ## Features
 
 - Ask questions about books directly in Calibre
