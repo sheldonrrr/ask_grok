@@ -6,8 +6,8 @@ A simple Calibre plugin that allows users to ask questions about books using Gro
 
 ## Preview
 
-![Ask Dialogu](https://github.com/sheldonrrr/ask_grok/blob/main/ask.gif)
-![Config Dialogu](https://github.com/sheldonrrr/ask_grok/blob/main/config.gif)
+<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask.gif" width="300">
+<img src="https://github.com/sheldonrrr/ask_grok/blob/main/config.gif" width="300">
 
 ## Features
 
