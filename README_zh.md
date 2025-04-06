@@ -2,6 +2,11 @@
 
 一个简单的calibre插件，允许用户使用Grok询问关于书籍的问题。
 
+## 预览
+
+<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask.gif" width="400">
+<img src="https://github.com/sheldonrrr/ask_grok/blob/main/config.gif" width="400">
+
 ## 功能
 
 - 直接在calibre选中书籍后中调用Grok问询关于书籍的问题
