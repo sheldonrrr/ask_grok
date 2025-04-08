@@ -122,3 +122,7 @@ This method requires the plugin to be added to the Calibre plugin index before i
 - The plugin supports getting the API Key from local environment variables, set `XAI_AUTH_TOKEN` in your local environment variables
 
 > **Grok Official Statement**: Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.
+
+## Dev Memos
+
+[Memo_0408_2025](https://github.com/sheldonrrr/sheldonrrr.github.io/blob/main/memo_ask_grok_plugin_for_calibre.md)
