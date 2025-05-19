@@ -65,7 +65,7 @@ SUPPORTED_LANGUAGES = [
 prefs.defaults['auth_token'] = os.environ.get('XAI_AUTH_TOKEN', '')
 prefs.defaults['template'] = get_default_template('zh')  # 使用中文模板作为默认值
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
-prefs.defaults['model'] = 'grok-2-latest'
+prefs.defaults['model'] = 'grok-3-latest'
 prefs.defaults['language'] = 'en'  # 默认使用英语
 
 def get_prefs():

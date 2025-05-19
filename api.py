@@ -3,16 +3,21 @@
 
 import json
 import requests
+import os
+import sys
 from typing import Generator
 import logging
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from i18n import get_translation
+
 class APIClient:
     """X.AI API 客户端"""
     
-    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-2-latest"):
+    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
         """初始化 X.AI API 客户端
         
         Args:
@@ -24,11 +29,12 @@ class APIClient:
         self.api_base = api_base.rstrip('/')
         self.model = model
     
-    def ask_stream(self, prompt: str) -> Generator[str, None, None]:
+    def ask_stream(self, prompt: str, lang_code: str = 'en') -> Generator[str, None, None]:
         """向 X.AI API 发送问题并获取流式回答
         
         Args:
             prompt: 问题文本
+            lang_code: 语言代码，用于获取相应的翻译文本
             
         Yields:
             str: API 返回的每个文本片段
@@ -74,7 +80,9 @@ class APIClient:
                         except json.JSONDecodeError:
                             logger.error(f"Failed to decode JSON: {line[6:]}")
                             continue
-                            
+                                
         except requests.exceptions.RequestException as e:
-            logger.error(f"API request failed: {str(e)}")
-            raise Exception(f"API 请求失败：{str(e)}")
+            translation = get_translation(lang_code)
+            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
+            logger.error(error_message)
+            raise Exception(error_message)
