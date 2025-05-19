@@ -11,17 +11,17 @@ if sys.version_info < (2, 7):
 
 setup(
     name=package_name,
-    version='1.0.0',
+    version='1.0.1',
     description='使用 X.AI Grok 询问关于当前书籍的问题',
     author='Sheldon',
     author_email='boy.liushaopeng@gmail.com',
-    packages=['ask_gpt'],
+    packages=['ask_grok'],
     include_package_data=True,
     platforms=['windows', 'osx', 'linux'],
     install_requires=[],
     zip_safe=False,
     keywords='bookAI readingAI grokbook ebook epub',
     package_data={
-        'ask_gpt': ['images/*.png', 'lib/*']
+        'ask_grok': ['images/*.png', 'lib/*']
     }
 )
