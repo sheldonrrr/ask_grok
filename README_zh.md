@@ -21,7 +21,7 @@
 
 ### 安装方法（1/2）：通过GitHub下载zip插件文件进行安装
 
-1. 下载[Ask_Grok-v1.0.0.zip](https://github.com/sheldonrrr/ask_grok/releases/tag/v1.0.0)
+1. 下载[Ask_Grok-v1.0.1.zip](https://github.com/sheldonrrr/ask_grok/releases/tag/v1.0.1)
 
 导入文件到calibre的自定义插件：
 
