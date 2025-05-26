@@ -29,12 +29,8 @@ class SuggestionWorker(QThread):
             )
             
             # 调用 API 获取建议
-            suggestion = ""
-            for chunk in self.api.ask_stream(prompt):
-                if self._is_cancelled:
-                    return  # 立即返回，不发送完成信号
-                suggestion += chunk
-                
+            suggestion = self.api.ask_stream(prompt)
+            
             if not self._is_cancelled and suggestion:
                 self.result.emit(suggestion)
                 

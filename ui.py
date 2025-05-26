@@ -241,7 +241,7 @@ class AboutWidget(QWidget):
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.0.1</p>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.0.1.4</p>
             <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_grok' 
                    style='color: palette(text); text-decoration: none;'>

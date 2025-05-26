@@ -29,19 +29,21 @@ class APIClient:
         self.api_base = api_base.rstrip('/')
         self.model = model
     
-    def ask_stream(self, prompt: str, lang_code: str = 'en') -> Generator[str, None, None]:
-        """向 X.AI API 发送问题并获取流式回答
+    def ask_stream(self, prompt: str, lang_code: str = 'en') -> str:
+        """向 X.AI API 发送问题并获取回答
         
         Args:
             prompt: 问题文本
             lang_code: 语言代码，用于获取相应的翻译文本
             
-        Yields:
-            str: API 返回的每个文本片段
+        Returns:
+            str: API 返回的完整回答
         """
+        # 确保 token 格式正确：移除可能存在的 Bearer 前缀和多余空格，然后重新添加
+        token = self.auth_token.replace('Bearer', '').strip()
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth_token}" if not self.auth_token.startswith('Bearer ') else self.auth_token
+            "Authorization": f"Bearer {token}"
         }
         
         data = {
@@ -56,30 +58,26 @@ class APIClient:
                 }
             ],
             "model": self.model,
-            "stream": True
+            "stream": False,
+            "temperature": 0
         }
         
         try:
             response = requests.post(
                 f"{self.api_base}/chat/completions",
                 headers=headers,
-                json=data,
-                stream=True
+                json=data
             )
             response.raise_for_status()
             
-            for line in response.iter_lines():
-                if line:
-                    if line.strip() == b"data: [DONE]":
-                        break
-                    if line.startswith(b"data: "):
-                        try:
-                            chunk = json.loads(line[6:])
-                            if chunk.get("choices") and chunk["choices"][0].get("delta", {}).get("content"):
-                                yield chunk["choices"][0]["delta"]["content"]
-                        except json.JSONDecodeError:
-                            logger.error(f"Failed to decode JSON: {line[6:]}")
-                            continue
+            result = response.json()
+            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
+                return result["choices"][0]["message"]["content"]
+            else:
+                logger.error(f"Unexpected API response format: {result}")
+                translation = get_translation(lang_code)
+                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
+                raise Exception(error_message)
                                 
         except requests.exceptions.RequestException as e:
             translation = get_translation(lang_code)
