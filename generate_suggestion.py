@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication
-from .config import get_prefs
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from .config import get_prefs, ConfigDialog
 from .i18n import SUGGESTION_TEMPLATES
 
 class SuggestionWorker(QThread):
@@ -207,6 +207,10 @@ class SuggestionHandler(QObject):
     def generate(self, book_info):
         """生成建议"""
         if not self.api or not book_info:
+            return
+            
+        # 检查 auth token
+        if not self.suggest_button.window()._check_auth_token():
             return
 
         # 保存原始状态

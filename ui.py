@@ -419,6 +419,7 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
+        from calibre_plugins.ask_grok.config import get_prefs
         self.i18n = get_translation(get_prefs()['language'])
         
         # 初始化处理器
@@ -434,7 +435,7 @@ class AskDialog(QDialog):
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
-        
+    
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
@@ -637,19 +638,72 @@ class AskDialog(QDialog):
             
         self.suggestion_handler.generate(self.book_info)
 
+    def _check_auth_token(self):
+        """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
+        from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
+        
+        if not get_prefs()['auth_token']:
+            # 显示提示信息
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.information(
+                self,
+                self.i18n.get('auth_token_required_title', 'Auth Token Required'),
+                self.i18n.get('auth_token_required_message', 'Please set your Auth Token in the configuration dialog.')
+            )
+            
+            # 创建并显示配置对话框
+            config_dialog = ConfigDialog(self)
+            config_dialog.show()
+            return False
+        return True
+    
     def send_question(self):
+        # 首先检查 API 和 auth token
+        if not self.api:
+            return
+            
+        if not self._check_auth_token():
+            return
+            
         question = self.input_area.toPlainText()
         
         # 准备模板变量
-        template_vars = {
-            'title': self.book_info.title,
-            'author': ', '.join(self.book_info.authors),
-            'publisher': self.book_info.publisher or '',
-            'pubdate': self.book_info.pubdate.year if self.book_info.pubdate else '',
-            'language': self.get_language_name(self.book_info.language) if self.book_info.language else '',
-            'series': getattr(self.book_info, 'series', ''),
-            'query': question
-        }
+        try:
+            # 安全地获取作者列表
+            authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
+            author_str = ', '.join(authors) if authors else 'Unknown'
+            
+            # 安全地获取出版年份
+            try:
+                pubdate = self.book_info.pubdate.year if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else ''
+            except AttributeError:
+                pubdate = ''
+                
+            # 安全地获取语言名称
+            try:
+                language = self.book_info.language
+                language_name = self.get_language_name(language) if language else ''
+            except (AttributeError, KeyError) as e:
+                language_name = ''
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Language name error: {str(e)}")
+            
+            template_vars = {
+                'title': getattr(self.book_info, 'title', 'Unknown'),
+                'author': author_str,
+                'publisher': getattr(self.book_info, 'publisher', '') or '',
+                'pubdate': pubdate,
+                'language': language_name,
+                'series': getattr(self.book_info, 'series', ''),
+                'query': question
+            }
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error preparing template variables: {str(e)}")
+            self.response_handler.handle_error(f"Error preparing request: {str(e)}")
+            return
         
         # 获取配置的模板
         from calibre_plugins.ask_grok.config import get_prefs
@@ -659,12 +713,28 @@ class AskDialog(QDialog):
         # 格式化提示词
         try:
             prompt = template.format(**template_vars)
+            # 添加日志
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Template variables: {template_vars}")
+            logger.info(f"Template: {template}")
+            logger.info(f"Final prompt: {prompt}")
+            logger.info(f"Prompt length: {len(prompt)}")
         except KeyError as e:
             self.response_handler.handle_error(f"Template error: {str(e)}")
             return
         
-        # 开始请求
-        self.response_handler.start_request(prompt)
+        # 如果提示词过长，可能会导致超时
+        if len(prompt) > 2000:  # 设置一个合理的限制
+            self.response_handler.handle_error("问题过长，请精简后再试")
+            return
+        
+        # 禁用发送按钮并显示加载状态
+        self.send_button.setEnabled(False)
+        self.send_button.setText(self.i18n.get('sending', 'Sending...'))
+        
+        # 开始异步请求
+        self.response_handler.start_async_request(prompt)
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
