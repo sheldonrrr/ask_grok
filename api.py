@@ -135,18 +135,6 @@ class APIClient:
             logger.error(error_message)
             raise Exception(error_message)
     
-    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
-        """初始化 X.AI API 客户端
-        
-        Args:
-            auth_token: API 认证令牌
-            api_base: API 基础 URL
-            model: 使用的模型名称
-        """
-        self.auth_token = auth_token
-        self.api_base = api_base.rstrip('/')
-        self.model = model
-    
     def ask_stream(self, prompt: str, lang_code: str = 'en') -> str:
         """向 X.AI API 发送问题并获取回答（流式请求，适用于短文本）
         
@@ -158,12 +146,30 @@ class APIClient:
             str: API 返回的完整回答
         
         Note:
-            这个方法使用流式请求，更适合处理短文本和快速响应的场景
+            这个方法不使用流式请求，更适合处理短文本和快速响应的场景
         """
+        
+        # 确保 token 格式正确：
+        # 1. 移除所有空白字符（包括空格、tab、换行符等）
+        # 2. 移除 BOM 标记
+        # 3. 处理 Bearer 前缀，确保格式正确
+        # 记录原始 token
+        logger.debug(f"Original token: {self.auth_token}")
+        
+        token = self.auth_token
+        token = ''.join(token.split())  # 移除所有空白字符
+        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
+        
+        # 处理 Bearer 前缀
+        if token.startswith('Bearer'):
+            token = token[6:]
+            token = token.strip()
+        token = 'Bearer ' + token
         
         # 准备请求
         headers, data = self._prepare_request(prompt)
         data["stream"] = False  # 非流式请求
+        headers['Authorization'] = token  # 使用处理后的 token
         
         try:
             # 添加超时设置
@@ -198,3 +204,15 @@ class APIClient:
             error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
             logger.error(error_message)
             raise Exception(error_message)
+    
+    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
+        """初始化 X.AI API 客户端
+        
+        Args:
+            auth_token: API 认证令牌
+            api_base: API 基础 URL
+            model: 使用的模型名称
+        """
+        self.auth_token = auth_token
+        self.api_base = api_base.rstrip('/')
+        self.model = model
