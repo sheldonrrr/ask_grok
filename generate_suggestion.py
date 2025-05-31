@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication
-from .config import get_prefs
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from .config import get_prefs, ConfigDialog
 from .i18n import SUGGESTION_TEMPLATES
+import logging
+
+logger = logging.getLogger(__name__)
 
 class SuggestionWorker(QThread):
     """生成建议的工作线程"""
@@ -28,13 +31,9 @@ class SuggestionWorker(QThread):
                 author=', '.join(self.book_info.authors) if self.book_info.authors else 'Unknown'
             )
             
-            # 调用 API 获取建议
-            suggestion = ""
-            for chunk in self.api.ask_stream(prompt):
-                if self._is_cancelled:
-                    return  # 立即返回，不发送完成信号
-                suggestion += chunk
-                
+            # 调用 API 获取建议，确保传递 lang_code 参数
+            suggestion = self.api.ask_stream(prompt, lang_code=get_prefs()['language'])
+            
             if not self._is_cancelled and suggestion:
                 self.result.emit(suggestion)
                 
@@ -210,7 +209,16 @@ class SuggestionHandler(QObject):
 
     def generate(self, book_info):
         """生成建议"""
-        if not self.api or not book_info:
+        if not self.api:
+            logger.error("API object is not initialized. Suggestion generation failed.")
+            return
+        if not book_info:
+            logger.error("Book info is not provided. Suggestion generation failed.")
+            return
+        
+        # 检查 auth token
+        if not self.suggest_button.window()._check_auth_token():
+            logger.error("Auth token check failed. Suggestion generation failed.")
             return
 
         # 保存原始状态
@@ -249,7 +257,7 @@ class SuggestionHandler(QObject):
         self._worker.start()
         
         # 设置超时检查
-        QTimer.singleShot(2000, self._check_response_timeout)
+        QTimer.singleShot(5000, self._check_response_timeout)
 
     def prepare_close(self):
         """准备关闭，清理资源但不影响线程运行"""

@@ -252,6 +252,10 @@ TRANSLATIONS = {
         'network_error': 'Netværksfejl, tjek venligst din forbindelse',
         'request_timeout': 'Anmodningen tog for lang tid, afbrudt automatisk',
         'request_failed': 'Anmodningen fejlede, prøv igen senere',
+        'sending': 'Sender...',
+        'requesting': 'Anmoder, vent venligst',
+        'formatting': 'Anmodning succesfuld, formatterer...',
+        'generating': 'Genererer...',
     },
     
     # 德语 (de)
@@ -298,6 +302,10 @@ TRANSLATIONS = {
         'network_error': 'Netzwerkfehler, bitte überprüfen Sie Ihre Verbindung',
         'request_timeout': 'Anfrage dauerte zu lange, automatisch abgebrochen',
         'request_failed': 'Anfrage fehlgeschlagen, bitte versuchen Sie es später erneut',
+        'sending': 'Senden...',
+        'requesting': 'Anfrage, bitte warten',
+        'formatting': 'Anfrage erfolgreich, formatiere...',
+        'generating': 'Generiere...',
     },
     
     # 英语 (en)
@@ -319,7 +327,6 @@ TRANSLATIONS = {
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
         'error_prefix': 'Error: ',
-        'error_no_api': 'Please configure your X.AI API token in settings first.',
         'about': 'About',
         'about_title': 'About',
         'base_url_label': 'API Base URL:',
@@ -346,6 +353,10 @@ TRANSLATIONS = {
         'network_error': 'Network error, please check your connection',
         'request_timeout': 'Request took too long, automatically terminated',
         'request_failed': 'Request failed, please try again later',
+        'sending': 'Sending...',
+        'requesting': 'Requesting, please wait',
+        'formatting': 'Request successful, formatting...',
+        'generating': 'Generating...',
     },
     
     # 西班牙语 (es)
@@ -392,6 +403,10 @@ TRANSLATIONS = {
         'network_error': 'Error de red, por favor verifique su conexión',
         'request_timeout': 'La solicitud tardó demasiado, se terminó automáticamente',
         'request_failed': 'La solicitud falló, por favor inténtelo de nuevo más tarde',
+        'sending': 'Enviando...',
+        'requesting': 'Solicitando, por favor espere',
+        'formatting': 'Solicitud exitosa, formateando...',
+        'generating': 'Generando...',
     },
     
     # 芬兰语 (fi)
@@ -438,6 +453,10 @@ TRANSLATIONS = {
         'network_error': 'Verkkovirhe, tarkista yhteytesi',
         'request_timeout': 'Pyyntö kesti liian kauan, automaattisesti keskeytetty',
         'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
+        'sending': 'Lähetetään...',
+        'requesting': 'Pyyntö, odota hetki',
+        'formatting': 'Pyyntö onnistui, muotoillaan...',
+        'generating': 'Luodaan...',
     },
     
     # 法语 (fr)
@@ -484,6 +503,10 @@ TRANSLATIONS = {
         'network_error': 'Erreur réseau, veuillez vérifier votre connexion',
         'request_timeout': 'La requête a pris trop de temps, terminée automatiquement',
         'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
+        'sending': 'Envoi...',
+        'requesting': 'Requête, veuillez patienter',
+        'formatting': 'Requête réussie, mise en forme...',
+        'generating': 'Génération...',
     },
     
     # 日语 (ja)
@@ -530,6 +553,10 @@ TRANSLATIONS = {
         'network_error': 'ネットワークエラー、接続を確認してください',
         'request_timeout': 'リクエストが時間超過、自動終了しました',
         'request_failed': 'リクエストが失敗しました、後で再度試してください',
+        'sending': '送信中...',
+        'requesting': 'リクエスト中、少々お待ちください',
+        'formatting': 'リクエスト成功、フォーマット中...',
+        'generating': '生成中...',
     },
     
     # 荷兰语 (nl)
@@ -576,6 +603,10 @@ TRANSLATIONS = {
         'network_error': 'Netwerkfout, controleer uw verbinding',
         'request_timeout': 'Verzoek duurde te lang, automatisch beëindigd',
         'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
+        'sending': 'Verzenden...',
+        'requesting': 'Verzoek, even geduld',
+        'formatting': 'Verzoek succesvol, formatteren...',
+        'generating': 'Genereren...',
     },
     
     # 挪威语 (no)
@@ -622,6 +653,10 @@ TRANSLATIONS = {
         'network_error': 'Nettverksfeil, sjekk tilkoblingen din',
         'request_timeout': 'Forespørselen tok for lang tid, automatisk avbrutt',
         'request_failed': 'Forespørselen feilet, prøv igjen senere',
+        'sending': 'Sender...',
+        'requesting': 'Forespørsel, vent litt',
+        'formatting': 'Forespørsel vellykket, formatterer...',
+        'generating': 'Genererer...',
     },
     
     # 葡萄牙语 (pt)
@@ -668,6 +703,10 @@ TRANSLATIONS = {
         'network_error': 'Erro de rede, verifique sua conexão',
         'request_timeout': 'A solicitação demorou muito, terminada automaticamente',
         'request_failed': 'A solicitação falhou, tente novamente mais tarde',
+        'sending': 'Enviando...',
+        'requesting': 'Solicitação, aguarde',
+        'formatting': 'Solicitação bem-sucedida, formatando...',
+        'generating': 'Gerando...',
     },
     
     # 俄语 (ru)
@@ -714,6 +753,10 @@ TRANSLATIONS = {
         'network_error': 'Ошибка сети, проверьте подключение',
         'request_timeout': 'Запрос занял слишком много времени, автоматически прерван',
         'request_failed': 'Запрос не удался, попробуйте еще раз позже',
+        'sending': 'Отправка...',
+        'requesting': 'Запрос, пожалуйста, подождите',
+        'formatting': 'Запрос успешен, форматирую...',
+        'generating': 'Генерирую...',
     },
     
     # 瑞典语 (sv)
@@ -760,6 +803,10 @@ TRANSLATIONS = {
         'network_error': 'Nätverksfel, kontrollera din anslutning',
         'request_timeout': 'Begäran tog för lång tid, avslutades automatiskt',
         'request_failed': 'Begäran misslyckades, försök igen senare',
+        'sending': 'Skickar...',
+        'requesting': 'Begäran, vänligen vänta',
+        'formatting': 'Begäran lyckades, formaterar...',
+        'generating': 'Genererar...',
     },
     
     # 简体中文 (zh)
@@ -807,6 +854,10 @@ TRANSLATIONS = {
         'network_error': '网络错误，请检查网络连接',
         'request_timeout': '请求时间过长，已自动终止',
         'request_failed': '请求失败，请稍后重试',
+        'sending': '发送中...',
+        'requesting': '请求中，请稍等',
+        'formatting': '请求成功，正在格式化...',
+        'generating': '正在生成...',
     },
     
     # 繁体中文 (zht)
@@ -833,7 +884,7 @@ TRANSLATIONS = {
         'base_url_label': 'API Base URL:',
         'base_url_placeholder': 'Default: https://api.x.ai/v1',
         'input_placeholder': '在此輸入你的問題...',
-        'response_placeholder': 'Grok 的回答將顯示在這裡',
+        'response_placeholder': 'Grok 的答案將顯示在這裡',
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
@@ -845,7 +896,7 @@ TRANSLATIONS = {
         'ok_button': '確定',
         'save_button': '儲存',
         'save_success': '設定已儲存',
-        'loading_text': '正在詢問',
+        'loading_text': '詢問中',
         'shortcuts_tab': '快速鍵',
         'shortcut_open_dialog': '開啟詢問視窗',
         'author_name': 'Sheldon',
@@ -854,6 +905,10 @@ TRANSLATIONS = {
         'network_error': '網路錯誤，請檢查網路連線',
         'request_timeout': '請求時間過長，已經自動終止',
         'request_failed': '請求失敗，請稍後重試',
+        'sending': '發送中...',
+        'requesting': '請求中，請稍等',
+        'formatting': '請求成功，正在格式化...',
+        'generating': '正在生成...',
     },
     
     # 粤语 (yue)
@@ -901,6 +956,10 @@ TRANSLATIONS = {
         'network_error': '網絡出咗問題，請檢查網絡',
         'request_timeout': '請求時間過長，已經自動停咗',
         'request_failed': '請求失敗，請稍後重試',
+        'sending': '發送中...',
+        'requesting': '請求中，請稍等',
+        'formatting': '請求成功，正在格式化...',
+        'generating': '正在生成...',
     }
 }
 

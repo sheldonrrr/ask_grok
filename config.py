@@ -62,7 +62,7 @@ SUPPORTED_LANGUAGES = [
 ]
 
 # 默认配置
-prefs.defaults['auth_token'] = os.environ.get('XAI_AUTH_TOKEN', '')
+prefs.defaults['auth_token'] = ''
 prefs.defaults['template'] = get_default_template('zh')  # 使用中文模板作为默认值
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-3-latest'
@@ -70,10 +70,6 @@ prefs.defaults['language'] = 'en'  # 默认使用英语
 
 def get_prefs():
     """获取配置"""
-    # 如果配置中没有 auth token，尝试从环境变量获取
-    if not prefs['auth_token'] and os.environ.get('XAI_AUTH_TOKEN'):
-        prefs['auth_token'] = os.environ.get('XAI_AUTH_TOKEN')
-    
     # 确保模板不为空，如果为空则使用当前语言的默认模板
     if not prefs['template']:
         prefs['template'] = get_default_template(prefs['language'])
@@ -248,12 +244,9 @@ class ConfigDialog(QWidget):
         
     def save_settings(self):
         """保存设置"""
-        # 保存 API Token
-        token = self.auth_token_edit.text().strip()
-        if token.startswith('Bearer '):
-            prefs['auth_token'] = token
-        else:
-            prefs['auth_token'] = f'Bearer {token}'
+        # 保存 API Token，确保格式正确
+        token = self.auth_token_edit.text().replace('Bearer', '').strip()
+        prefs['auth_token'] = f'Bearer {token}'
             
         # 保存其他设置
         prefs['model'] = self.model_edit.text().strip()
