@@ -254,7 +254,7 @@ TRANSLATIONS = {
         'request_failed': 'Anmodningen fejlede, prøv igen senere',
         'sending': 'Sender...',
         'requesting': 'Anmoder, vent venligst',
-        'formatting': 'Anmodning succesfuld, formatterer...',
+        'formatting': 'Anmodning succesfuld, formatterer',
         'generating': 'Genererer...',
     },
     
@@ -304,7 +304,7 @@ TRANSLATIONS = {
         'request_failed': 'Anfrage fehlgeschlagen, bitte versuchen Sie es später erneut',
         'sending': 'Senden...',
         'requesting': 'Anfrage, bitte warten',
-        'formatting': 'Anfrage erfolgreich, formatiere...',
+        'formatting': 'Anfrage erfolgreich, formatiere',
         'generating': 'Generiere...',
     },
     
@@ -355,7 +355,7 @@ TRANSLATIONS = {
         'request_failed': 'Request failed, please try again later',
         'sending': 'Sending...',
         'requesting': 'Requesting, please wait',
-        'formatting': 'Request successful, formatting...',
+        'formatting': 'Request successful, formatting',
         'generating': 'Generating...',
     },
     
@@ -405,7 +405,7 @@ TRANSLATIONS = {
         'request_failed': 'La solicitud falló, por favor inténtelo de nuevo más tarde',
         'sending': 'Enviando...',
         'requesting': 'Solicitando, por favor espere',
-        'formatting': 'Solicitud exitosa, formateando...',
+        'formatting': 'Solicitud exitosa, formateando',
         'generating': 'Generando...',
     },
     
@@ -455,7 +455,7 @@ TRANSLATIONS = {
         'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
         'sending': 'Lähetetään...',
         'requesting': 'Pyyntö, odota hetki',
-        'formatting': 'Pyyntö onnistui, muotoillaan...',
+        'formatting': 'Pyyntö onnistui, muotoillaan',
         'generating': 'Luodaan...',
     },
     
@@ -505,7 +505,7 @@ TRANSLATIONS = {
         'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
         'sending': 'Envoi...',
         'requesting': 'Requête, veuillez patienter',
-        'formatting': 'Requête réussie, mise en forme...',
+        'formatting': 'Requête réussie, mise en forme',
         'generating': 'Génération...',
     },
     
@@ -555,7 +555,7 @@ TRANSLATIONS = {
         'request_failed': 'リクエストが失敗しました、後で再度試してください',
         'sending': '送信中...',
         'requesting': 'リクエスト中、少々お待ちください',
-        'formatting': 'リクエスト成功、フォーマット中...',
+        'formatting': 'リクエスト成功、フォーマット中',
         'generating': '生成中...',
     },
     
@@ -605,7 +605,7 @@ TRANSLATIONS = {
         'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
         'sending': 'Verzenden...',
         'requesting': 'Verzoek, even geduld',
-        'formatting': 'Verzoek succesvol, formatteren...',
+        'formatting': 'Verzoek succesvol, formatteren',
         'generating': 'Genereren...',
     },
     
@@ -655,7 +655,7 @@ TRANSLATIONS = {
         'request_failed': 'Forespørselen feilet, prøv igjen senere',
         'sending': 'Sender...',
         'requesting': 'Forespørsel, vent litt',
-        'formatting': 'Forespørsel vellykket, formatterer...',
+        'formatting': 'Forespørsel vellykket, formatterer',
         'generating': 'Genererer...',
     },
     
@@ -705,7 +705,7 @@ TRANSLATIONS = {
         'request_failed': 'A solicitação falhou, tente novamente mais tarde',
         'sending': 'Enviando...',
         'requesting': 'Solicitação, aguarde',
-        'formatting': 'Solicitação bem-sucedida, formatando...',
+        'formatting': 'Solicitação bem-sucedida, formatando',
         'generating': 'Gerando...',
     },
     
@@ -755,7 +755,7 @@ TRANSLATIONS = {
         'request_failed': 'Запрос не удался, попробуйте еще раз позже',
         'sending': 'Отправка...',
         'requesting': 'Запрос, пожалуйста, подождите',
-        'formatting': 'Запрос успешен, форматирую...',
+        'formatting': 'Запрос успешен, форматирую',
         'generating': 'Генерирую...',
     },
     
@@ -805,7 +805,7 @@ TRANSLATIONS = {
         'request_failed': 'Begäran misslyckades, försök igen senare',
         'sending': 'Skickar...',
         'requesting': 'Begäran, vänligen vänta',
-        'formatting': 'Begäran lyckades, formaterar...',
+        'formatting': 'Begäran lyckades, formaterar',
         'generating': 'Genererar...',
     },
     
@@ -856,7 +856,7 @@ TRANSLATIONS = {
         'request_failed': '请求失败，请稍后重试',
         'sending': '发送中...',
         'requesting': '请求中，请稍等',
-        'formatting': '请求成功，正在格式化...',
+        'formatting': '请求成功，正在格式化',
         'generating': '正在生成...',
     },
     
@@ -907,7 +907,7 @@ TRANSLATIONS = {
         'request_failed': '請求失敗，請稍後重試',
         'sending': '發送中...',
         'requesting': '請求中，請稍等',
-        'formatting': '請求成功，正在格式化...',
+        'formatting': '請求成功，正在格式化',
         'generating': '正在生成...',
     },
     
@@ -958,14 +958,17 @@ TRANSLATIONS = {
         'request_failed': '請求失敗，請稍後重試',
         'sending': '發送中...',
         'requesting': '請求中，請稍等',
-        'formatting': '請求成功，正在格式化...',
+        'formatting': '請求成功，正在格式化',
         'generating': '正在生成...',
     }
 }
 
 def get_translation(lang_code):
     """获取指定语言的翻译"""
-    return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
+    try:
+        return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
+    except KeyError:
+        return TRANSLATIONS['en']
 
 def get_default_template(lang_code):
     """获取指定语言的默认提示词模板"""

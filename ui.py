@@ -48,7 +48,9 @@ class AskGrokPluginUI(InterfaceAction):
             pass
         self.api = None
         self.gui = parent
-        self.i18n = get_translation(get_prefs()['language'])
+        # 初始化 i18n
+        prefs = get_prefs()
+        self.i18n = get_translation(prefs.get('language', 'en'))
         
         # 保存插件实例到全局变量
         global plugin_instance
@@ -120,7 +122,7 @@ class AskGrokPluginUI(InterfaceAction):
         
     def about_to_show_menu(self):
         # 更新菜单项的文本
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         self.config_action.setText(self.i18n['config_title'])
         self.ask_action.setText(self.i18n['menu_title'])
         self.about_action.setText(self.i18n['about_title'])
@@ -136,7 +138,7 @@ class AskGrokPluginUI(InterfaceAction):
     
     def apply_settings(self):
         prefs = get_prefs()
-        self.i18n = get_translation(prefs['language'])
+        self.i18n = get_translation(prefs.get('language', 'en'))
         self.initialize_api()
 
     def show_configuration(self):
@@ -185,7 +187,7 @@ class AskGrokPluginUI(InterfaceAction):
             }
             
             # 更新文本
-            self.i18n = get_translation(get_prefs()['language'])
+            self.i18n = get_translation(get_prefs().get('language', 'en'))
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts_title'])
@@ -204,7 +206,7 @@ class AskGrokConfigWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -218,7 +220,7 @@ class AboutWidget(QWidget):
     """关于页面组件"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -236,7 +238,7 @@ class AboutWidget(QWidget):
         
     def update_content(self):
         """更新关于页面内容"""
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         self.about_label.setText(f"""
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
@@ -262,7 +264,7 @@ class TabDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
@@ -321,11 +323,16 @@ class TabDialog(QDialog):
         
         # 通知主界面更新菜单
         ask_grok_plugin.plugin_instance.update_menu_texts()
+        
+        # 更新 response_handler 和 suggestion_handler 的 i18n 对象
+        if hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and ask_grok_plugin.plugin_instance.ask_dialog:
+            ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
+            ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
         # 获取最新的语言设置
-        new_language = get_prefs()['language']
+        new_language = get_prefs().get('language', 'en')
         # 更新界面
         self.on_language_changed(new_language)
     
@@ -420,7 +427,7 @@ class AskDialog(QDialog):
         self.book_info = book_info
         self.api = api
         from calibre_plugins.ask_grok.config import get_prefs
-        self.i18n = get_translation(get_prefs()['language'])
+        self.i18n = get_translation(get_prefs().get('language', 'en'))
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
@@ -601,7 +608,7 @@ class AskDialog(QDialog):
                 background-color: palette(midlight); 
                 padding: 2px 4px; 
                 border-radius: 3px; 
-                font-family: monospace; 
+                font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
             }
             pre { 
                 background-color: palette(midlight); 
@@ -642,7 +649,7 @@ class AskDialog(QDialog):
         """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
         
-        if not get_prefs()['auth_token']:
+        if not get_prefs().get('auth_token'):
             # 显示提示信息
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
@@ -708,7 +715,7 @@ class AskDialog(QDialog):
         # 获取配置的模板
         from calibre_plugins.ask_grok.config import get_prefs
         prefs = get_prefs()
-        template = prefs['template']
+        template = prefs.get('template', '')
         
         # 格式化提示词
         try:

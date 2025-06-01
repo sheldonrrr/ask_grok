@@ -87,6 +87,13 @@ class SuggestionHandler(QObject):
         self._response_text = ''
         self._cleanup_timer = None
 
+    def update_i18n(self, i18n):
+        """更新国际化文本对象"""
+        self.i18n = i18n
+        # 更新按钮文本
+        if self.suggest_button.isEnabled():
+            self.suggest_button.setText(self.i18n.get('suggest_button', 'Suggest?'))
+
     def _setup_loading_animation(self):
         """设置加载动画定时器"""
         loading_text = self.i18n.get('loading_text', 'Loading')

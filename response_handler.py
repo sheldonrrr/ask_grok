@@ -24,6 +24,7 @@ class MarkdownWorker(QThread):
         try:
             html = markdown2.markdown(self.text, extras=['fenced-code-blocks', 'tables', 'break-on-newline', 'header-ids', 'strike', 'task_list', 'markdown-in-html'])
             if not self._is_cancelled:
+                html = html.replace('<br />', '')
                 safe_html = bleach.clean(html, tags=['p', 'strong', 'em', 'h1', 'h2', 'h3', 'pre', 'code', 'blockquote', 'table', 'tr', 'th', 'td', 'ul', 'ol', 'li'], attributes=['id'])
                 self.result.emit(safe_html)
         except Exception:
@@ -54,6 +55,13 @@ class ResponseHandler(QObject):
         self.send_button = send_button
         self.i18n = i18n
         self.api = api
+
+    def update_i18n(self, i18n):
+        """更新国际化文本对象"""
+        self.i18n = i18n
+        # 更新按钮文本
+        if self.send_button.isEnabled():
+            self.send_button.setText(self.i18n.get('send', 'Send'))
 
     def start_request(self, prompt):
         """开始一个新的请求，使用非流式 API"""
@@ -146,10 +154,10 @@ class ResponseHandler(QObject):
                 self.response_area.setHtml(f"""
                     <div style="
                         text-align: left;
-                        color: #888;
-                        font-size: 14px;
+                        color: palette(midlight);
+                        font-size: 13px;
                         margin-top: 10px;
-                        font-family: system-ui, -apple-system, BlinkMacSystemFont;
+                        font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
                     ">
                         {text}{dots[current_dot[0]]}
                     </div>
@@ -193,9 +201,9 @@ class ResponseHandler(QObject):
         self.response_area.setHtml(f"""
             <div style="
                 color: #cc0000;
-                font-size: 14px;
+                font-size: 13px;
                 margin-top: 10px;
-                font-family: system-ui, -apple-system, BlinkMacSystemFont;
+                font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
             ">
                 {error_prefix}{request_failed}<br>
                 {error_msg}
@@ -247,23 +255,35 @@ class ResponseHandler(QObject):
             self.send_button.setText(text)
             self.send_button.setStyleSheet("""
                 QPushButton {
-                    font-size: 14px;
-                    color: #888;
-                    padding: 5px 10px;
+                    font-size: 12px;
+                    color: palette(text);
+                    padding: 2px 8px;
+                    width: auto;
+                    height: auto;
                 }
+                QPushButton:hover:enabled {
+                    background-color: palette(midlight);
+                }
+                QPushButton:pressed {
+                    background-color: palette(midlight);
+                    color: white;
+            }
             """)
             self.send_button.setEnabled(False)
 
     def _restore_button_state(self):
         """恢复按钮状态，确保在主线程中执行"""
         self.send_button.setEnabled(True)
-        self.send_button.setText(self._original_button_text)
+        if hasattr(self, 'i18n') and self.i18n is not None:
+            self.send_button.setText(self.i18n.get('send_button', 'Send'))
+        else:
+            self.send_button.setText('Send')
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 14px;
-                padding: 5px 10px;
+                font-size: 12px;
+                padding: 2px 8px;
             }
             QPushButton:disabled {
-                color: #888;
+                color: #ccc;
             }
         """)
