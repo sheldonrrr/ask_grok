@@ -117,16 +117,12 @@ class ResponseHandler(QObject):
         self._setup_loading_animation()
 
     def prepare_close(self):
-        """准备关闭，清理资源但不影响线程运行"""
-        self._request_cancelled = True
-            
         if self._markdown_worker:
             self._markdown_worker.cancel()
 
     def cleanup(self):
         """清理资源并重置状态"""
         self._stop_all_timers()
-        self._request_cancelled = True
             
         if self._markdown_worker:
             self._markdown_worker.cancel()
@@ -148,13 +144,12 @@ class ResponseHandler(QObject):
         request_phase = [True]  # True for requesting, False for formatting
 
         def update_loading():
-            if not self._request_cancelled:
-                text = requesting_text if request_phase[0] else formatting_text
-                # 添加动画效果的 CSS，左对齐，参考 Suggestion 样式，字体大小与内容正文一致
-                self.response_area.setHtml(f"""
-                    <div style="
-                        text-align: left;
-                        color: palette(midlight);
+            text = requesting_text if request_phase[0] else formatting_text
+            # 添加动画效果的 CSS，左对齐，参考 Suggestion 样式，字体大小与内容正文一致
+            self.response_area.setHtml(f"""
+                <div style="
+                    text-align: left;
+                        color: palette(text);
                         font-size: 13px;
                         margin-top: 10px;
                         font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
@@ -162,7 +157,7 @@ class ResponseHandler(QObject):
                         {text}{dots[current_dot[0]]}
                     </div>
                 """)
-                current_dot[0] = (current_dot[0] + 1) % len(dots)
+            current_dot[0] = (current_dot[0] + 1) % len(dots)
 
         # 清除之前的定时器
         self._stop_loading_timer()
@@ -173,11 +168,11 @@ class ResponseHandler(QObject):
         
         # 立即显示第一次加载文本
         update_loading()
-        
-        # 模拟切换到格式化阶段（这里可以根据实际需求调整）
+
+        # 添加1秒的定时器来切换状态
         def switch_phase():
             request_phase[0] = False
-        QTimer.singleShot(5000, switch_phase)
+        QTimer.singleShot(1000, switch_phase) # 1秒后切换到格式化阶段
 
     def _stop_loading_timer(self):
         """停止加载动画定时器"""
@@ -193,7 +188,7 @@ class ResponseHandler(QObject):
 
     def handle_error(self, error_msg):
         """处理错误信息"""
-        self._request_cancelled = True
+        self._stop_loading_timer()
         error_prefix = self.i18n.get('error_prefix', 'Error: ')
         request_failed = self.i18n.get('request_failed', 'Request failed, please check your network')
         
@@ -270,6 +265,34 @@ class ResponseHandler(QObject):
             }
             """)
             self.send_button.setEnabled(False)
+            # 显示加载动画文本
+            requesting_text = self.i18n.get('requesting', 'Requesting, please wait...')
+            formatting_text = self.i18n.get('formatting', 'Request successful, formatting...')
+            # 始终显示 requesting 字段
+            self.response_area.setHtml(f"""
+                <div style="
+                    text-align: left;
+                    color: palette(midlight);
+                    font-size: 13px;
+                    margin-top: 10px;
+                    font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                ">
+                    {requesting_text}
+                </div>
+            """)
+            # 如果文本是 'Sending...'，则切换到 formatting 字段
+            if text.lower() == self.i18n.get('sending', 'Sending...').lower():
+                self.response_area.setHtml(f"""
+                    <div style="
+                        text-align: left;
+                        color: palette(midlight);
+                        font-size: 13px;
+                        margin-top: 10px;
+                        font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                    ">
+                        {formatting_text}
+                    </div>
+                """)
 
     def _restore_button_state(self):
         """恢复按钮状态，确保在主线程中执行"""

@@ -9,7 +9,6 @@ from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 
 from .i18n import TRANSLATIONS, get_default_template, get_translation
-from .version import __version__
 
 # 创建配置对象
 prefs = JSONConfig('plugins/ask_grok')
@@ -68,7 +67,9 @@ prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-3-latest'
 prefs.defaults['language'] = 'en'
-prefs.defaults['config_version'] = __version__  # 使用插件的版本号
+prefs.defaults['ask_dialog_width'] = 600
+prefs.defaults['ask_dialog_height'] = 400
+
 
 def get_prefs():
     """获取配置"""
@@ -79,13 +80,6 @@ def get_prefs():
     # 确保语言键存在，如果不存在则使用默认值 'en'
     if 'language' not in prefs:
         prefs['language'] = 'en'
-    
-    # 检查配置版本，如果版本号不存在或低于当前默认版本，则更新默认值
-    if 'config_version' not in prefs or prefs['config_version'] < prefs.defaults['config_version']:
-        for key, value in prefs.defaults.items():
-            if key not in prefs or prefs[key] == prefs.defaults[key]:
-                prefs[key] = value
-        prefs['config_version'] = prefs.defaults['config_version']
     
     return prefs
 

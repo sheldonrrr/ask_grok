@@ -442,7 +442,30 @@ class AskDialog(QDialog):
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
-    
+
+        # 读取保存窗口的大小
+        prefs = get_prefs()
+        self.saved_width = prefs.get('ask_dialog_width', 400)
+        self.saved_height = prefs.get('ask_dialog_height', 600)
+        
+        self.setup_ui()
+        self.setWindowTitle(self.i18n['menu_title'])
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(600)
+        
+        # 设置窗口大小
+        self.resize(self.saved_width, self.saved_height)
+        
+        # 连接窗口大小变化信号
+        self.resizeEvent = self.on_resize
+
+    def on_resize(self, event):
+        """窗口大小变化时的处理函数"""
+        prefs = get_prefs()
+        prefs['ask_dialog_width'] = self.width()
+        prefs['ask_dialog_height'] = self.height()
+        super().resizeEvent(event)
+
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
@@ -466,30 +489,38 @@ class AskDialog(QDialog):
             QLabel {
                 background-color: palette(base);
                 color: palette(text);
+                font-size: 10px;
                 padding: 10px;
                 border-radius: 5px;
-                line-height: 150%;
+                line-height: 100%;
                 border: 1px solid palette(mid);
             }
         """)
-        info_area.setFixedHeight(150)  # 设置固定高度
+
+        # 设置一个最低高度
+        info_area.setMinimumHeight(20) 
+        info_area.setMaximumHeight(100)
         
         # 构建书籍信息HTML
         metadata_info = []
+        metadata_info.append(f"<span style='color: palette(text);'><p><b>{self.i18n.get('metadata', 'Metadata')}:</b></p></span>")
         if self.book_info.title:
-            metadata_info.append(f"<p><b>{self.i18n['metadata_title']}：</b>{self.book_info.title}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_title']}：</b>{self.book_info.title}")
         if self.book_info.authors:
-            metadata_info.append(f"<p><b>{self.i18n['metadata_authors']}：</b>{', '.join(self.book_info.authors)}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_authors']}：</b>{', '.join(self.book_info.authors)}")
         if self.book_info.publisher:
-            metadata_info.append(f"<p><b>{self.i18n['metadata_publisher']}：</b>{self.book_info.publisher}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_publisher']}：</b>{self.book_info.publisher}")
         if self.book_info.pubdate:
-            metadata_info.append(f"<p><b>{self.i18n['metadata_pubdate']}：</b>{self.book_info.pubdate.year}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_pubdate']}：</b>{self.book_info.pubdate.year}")
         if self.book_info.language:
-            metadata_info.append(f"<p><b>{self.i18n['metadata_language']}：</b>{self.get_language_name(self.book_info.language)}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_language']}：</b>{self.get_language_name(self.book_info.language)}")
         if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"<p><b>{self.i18n['metadata_series']}：</b>{self.book_info.series}</p>")
+            metadata_info.append(f"<b>{self.i18n['metadata_series']}：</b>{self.book_info.series}")
         
-        info_area.setText("".join(metadata_info))
+        if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
+            metadata_info.append(f"<p>{self.i18n.get('no_metadata', '暂无 Metadata')}</p>")
+        
+        info_area.setText("\n".join(metadata_info))
         layout.addWidget(info_area)
         
         # 创建输入区域
@@ -503,7 +534,9 @@ class AskDialog(QDialog):
                 padding: 5px;
             }
             QTextEdit:focus {
-                border: 1px solid palette(midlight);
+                border: 1px solid palette(highlight);
+                border-radius: 4px;
+                padding: 5px;
                 outline: none;
             }
         """)
@@ -538,7 +571,7 @@ class AskDialog(QDialog):
                 background-color: palette(midlight);
             }
             QPushButton:pressed {
-                background-color: palette(midlight);
+                background-color: palette(mid);
                 color: white;
             }
         """)
@@ -572,7 +605,7 @@ class AskDialog(QDialog):
                 background-color: palette(midlight);
             }
             QPushButton:pressed {
-                background-color: palette(midlight);
+                background-color: palette(mid);
             }
         """)
         action_layout.addWidget(self.send_button)
@@ -589,7 +622,7 @@ class AskDialog(QDialog):
         )
         self.response_area.setStyleSheet("""
             QTextBrowser {
-                border: 1px dashed palette(midlight);
+                border: 1px dashed palette(mid);
                 color: palette(text);
                 border-radius: 4px;
                 padding: 5px;

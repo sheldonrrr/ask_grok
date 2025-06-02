@@ -256,6 +256,8 @@ TRANSLATIONS = {
         'requesting': 'Anmoder, vent venligst',
         'formatting': 'Anmodning succesfuld, formatterer',
         'generating': 'Genererer...',
+        'no_metadata': 'Ingen metadata tilgængelig',
+        'metadata': 'Metadata',
     },
     
     # 德语 (de)
@@ -306,6 +308,8 @@ TRANSLATIONS = {
         'requesting': 'Anfrage, bitte warten',
         'formatting': 'Anfrage erfolgreich, formatiere',
         'generating': 'Generiere...',
+        'no_metadata': 'Keine Metadaten verfügbar',
+        'metadata': 'Metadaten',
     },
     
     # 英语 (en)
@@ -357,6 +361,8 @@ TRANSLATIONS = {
         'requesting': 'Requesting, please wait',
         'formatting': 'Request successful, formatting',
         'generating': 'Generating...',
+        'no_metadata': 'No metadata available',
+        'metadata': 'Metadata',
     },
     
     # 西班牙语 (es)
@@ -407,6 +413,8 @@ TRANSLATIONS = {
         'requesting': 'Solicitando, por favor espere',
         'formatting': 'Solicitud exitosa, formateando',
         'generating': 'Generando...',
+        'no_metadata': 'No hay metadatos disponibles',
+        'metadata': 'Metadatos',
     },
     
     # 芬兰语 (fi)
@@ -457,6 +465,8 @@ TRANSLATIONS = {
         'requesting': 'Pyyntö, odota hetki',
         'formatting': 'Pyyntö onnistui, muotoillaan',
         'generating': 'Luodaan...',
+        'no_metadata': 'Ei metatietoa saatavilla',
+        'metadata': 'Metatieto',
     },
     
     # 法语 (fr)
@@ -507,6 +517,8 @@ TRANSLATIONS = {
         'requesting': 'Requête, veuillez patienter',
         'formatting': 'Requête réussie, mise en forme',
         'generating': 'Génération...',
+        'no_metadata': 'Aucune métadonnée disponible',
+        'metadata': 'Métadonnées',
     },
     
     # 日语 (ja)
@@ -557,6 +569,8 @@ TRANSLATIONS = {
         'requesting': 'リクエスト中、少々お待ちください',
         'formatting': 'リクエスト成功、フォーマット中',
         'generating': '生成中...',
+        'no_metadata': 'メタデータはありません',
+        'metadata': 'メタデータ',
     },
     
     # 荷兰语 (nl)
@@ -607,6 +621,8 @@ TRANSLATIONS = {
         'requesting': 'Verzoek, even geduld',
         'formatting': 'Verzoek succesvol, formatteren',
         'generating': 'Genereren...',
+        'no_metadata': 'Geen metadata beschikbaar',
+        'metadata': 'Metagegevens',
     },
     
     # 挪威语 (no)
@@ -657,6 +673,8 @@ TRANSLATIONS = {
         'requesting': 'Forespørsel, vent litt',
         'formatting': 'Forespørsel vellykket, formatterer',
         'generating': 'Genererer...',
+        'no_metadata': 'Ingen metadata tilgjengelig',
+        'metadata': 'Metadata',
     },
     
     # 葡萄牙语 (pt)
@@ -707,6 +725,8 @@ TRANSLATIONS = {
         'requesting': 'Solicitação, aguarde',
         'formatting': 'Solicitação bem-sucedida, formatando',
         'generating': 'Gerando...',
+        'no_metadata': 'Nenhuma metadado disponível',
+        'metadata': 'Metadados',
     },
     
     # 俄语 (ru)
@@ -757,6 +777,8 @@ TRANSLATIONS = {
         'requesting': 'Запрос, пожалуйста, подождите',
         'formatting': 'Запрос успешен, форматирую',
         'generating': 'Генерирую...',
+        'no_metadata': 'Нет метаданных',
+        'metadata': 'Метаданные',
     },
     
     # 瑞典语 (sv)
@@ -807,6 +829,8 @@ TRANSLATIONS = {
         'requesting': 'Begäran, vänligen vänta',
         'formatting': 'Begäran lyckades, formaterar',
         'generating': 'Genererar...',
+        'no_metadata': 'Ingen metadata tillgänglig',
+        'metadata': 'Metadata',
     },
     
     # 简体中文 (zh)
@@ -858,6 +882,8 @@ TRANSLATIONS = {
         'requesting': '请求中，请稍等',
         'formatting': '请求成功，正在格式化',
         'generating': '正在生成...',
+        'no_metadata': '没有元数据',
+        'metadata': '元数据',
     },
     
     # 繁体中文 (zht)
@@ -909,6 +935,8 @@ TRANSLATIONS = {
         'requesting': '請求中，請稍等',
         'formatting': '請求成功，正在格式化',
         'generating': '正在生成...',
+        'no_metadata': '沒有元資料',
+        'metadata': '元資料',
     },
     
     # 粤语 (yue)
@@ -960,6 +988,8 @@ TRANSLATIONS = {
         'requesting': '請求中，請稍等',
         'formatting': '請求成功，正在格式化',
         'generating': '正在生成...',
+        'no_metadata': '冇元資料',
+        'metadata': '元資料',
     }
 }
 
