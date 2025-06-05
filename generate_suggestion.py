@@ -142,16 +142,16 @@ class SuggestionHandler(QObject):
         if not self._request_cancelled:
             self._stop_loading_timer()
             self._request_cancelled = True
-            self._response_text = suggestion
+        self._response_text = suggestion
             
-            # 清空输出区域的加载动画
-            self.response_area.clear()
-            
-            # 更新输入框内容
-            self.input_area.setPlainText(suggestion)
-            
-            # 恢复按钮状态
-            self._restore_ui_state()
+        # 清空输出区域的加载动画
+        self.response_area.clear()
+        
+        # 更新输入框内容
+        self.input_area.setPlainText(suggestion)
+
+        # 恢复 UI 状态
+        self._restore_ui_state()
 
     def _on_error(self, error):
         """处理错误"""

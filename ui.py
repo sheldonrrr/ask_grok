@@ -70,6 +70,7 @@ class AskGrokPluginUI(InterfaceAction):
         
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
+        
         # 根据操作系统设置快捷键
         if sys.platform == 'darwin':  # macOS
             self.ask_action.setShortcut(QKeySequence("Command+L"))  # macOS 使用 Command
@@ -706,37 +707,48 @@ class AskDialog(QDialog):
             return
             
         question = self.input_area.toPlainText()
+        # 标准化换行符并确保使用 UTF-8 编码
+        question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
         
         # 准备模板变量
         try:
             # 安全地获取作者列表
             authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-            author_str = ', '.join(authors) if authors else 'Unknown'
+            author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
             
             # 安全地获取出版年份
             try:
-                pubdate = self.book_info.pubdate.year if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else ''
+                pubdate = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
             except AttributeError:
-                pubdate = ''
+                pubdate = self.i18n.get('unknown', 'Unknown')
                 
             # 安全地获取语言名称
             try:
                 language = self.book_info.language
-                language_name = self.get_language_name(language) if language else ''
+                language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
             except (AttributeError, KeyError) as e:
-                language_name = ''
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"Language name error: {str(e)}")
+                language_name = self.i18n.get('unknown', 'Unknown')
+
+            # 安全地获取出版时间
+            try:
+                pubdate = self.book_info.pubdate.strftime('%Y-%m-%d') if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
+            except AttributeError:
+                pubdate = self.i18n.get('unknown', 'Unknown')
+            
+            # 安全地获取系列名称
+            try:
+                series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
+            except AttributeError:
+                series = self.i18n.get('unknown', 'Unknown')
             
             template_vars = {
-                'title': getattr(self.book_info, 'title', 'Unknown'),
-                'author': author_str,
-                'publisher': getattr(self.book_info, 'publisher', '') or '',
-                'pubdate': pubdate,
-                'language': language_name,
-                'series': getattr(self.book_info, 'series', ''),
-                'query': question
+                'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                'pubdate': pubdate.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubdate else '',
+                'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
+                'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
             }
         except Exception as e:
             import logging
@@ -749,6 +761,14 @@ class AskDialog(QDialog):
         from calibre_plugins.ask_grok.config import get_prefs
         prefs = get_prefs()
         template = prefs.get('template', '')
+        
+        # 如果模板为空，使用默认模板
+        if not template:
+            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication date: {pubdate}\nLanguage: {language}\nSeries: {series}"
+        
+        # 检查并替换模板中的变量名，确保用户输入能够正确插入
+        if '{query}' not in template and '{question}' in template:
+            template = template.replace('{question}', '{query}')
         
         # 格式化提示词
         try:

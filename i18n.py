@@ -258,6 +258,8 @@ TRANSLATIONS = {
         'generating': 'Genererer...',
         'no_metadata': 'Ingen metadata tilgængelig',
         'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukendt'
     },
     
     # 德语 (de)
@@ -306,10 +308,12 @@ TRANSLATIONS = {
         'request_failed': 'Anfrage fehlgeschlagen, bitte versuchen Sie es später erneut',
         'sending': 'Senden...',
         'requesting': 'Anfrage, bitte warten',
-        'formatting': 'Anfrage erfolgreich, formatiere',
+        'formatting': 'Anfrage erfolgreich, formate',
         'generating': 'Generiere...',
         'no_metadata': 'Keine Metadaten verfügbar',
         'metadata': 'Metadaten',
+        'no_series': 'Keine Serie',
+        'unknown': 'Unbekannt'
     },
     
     # 英语 (en)
@@ -363,6 +367,8 @@ TRANSLATIONS = {
         'generating': 'Generating...',
         'no_metadata': 'No metadata available',
         'metadata': 'Metadata',
+        'no_series': 'No Series',
+        'unknown': 'Unknown'
     },
     
     # 西班牙语 (es)
@@ -415,6 +421,8 @@ TRANSLATIONS = {
         'generating': 'Generando...',
         'no_metadata': 'No hay metadatos disponibles',
         'metadata': 'Metadatos',
+        'no_series': 'Sin serie',
+        'unknown': 'Desconocido'
     },
     
     # 芬兰语 (fi)
@@ -467,6 +475,8 @@ TRANSLATIONS = {
         'generating': 'Luodaan...',
         'no_metadata': 'Ei metatietoa saatavilla',
         'metadata': 'Metatieto',
+        'no_series': 'Ei sarjaa',
+        'unknown': 'Tuntematon'
     },
     
     # 法语 (fr)
@@ -519,6 +529,8 @@ TRANSLATIONS = {
         'generating': 'Génération...',
         'no_metadata': 'Aucune métadonnée disponible',
         'metadata': 'Métadonnées',
+        'no_series': 'Pas de série',
+        'unknown': 'Inconnu'
     },
     
     # 日语 (ja)
@@ -571,6 +583,8 @@ TRANSLATIONS = {
         'generating': '生成中...',
         'no_metadata': 'メタデータはありません',
         'metadata': 'メタデータ',
+        'no_series': 'シリーズなし',
+        'unknown': '不明'
     },
     
     # 荷兰语 (nl)
@@ -623,6 +637,8 @@ TRANSLATIONS = {
         'generating': 'Genereren...',
         'no_metadata': 'Geen metadata beschikbaar',
         'metadata': 'Metagegevens',
+        'no_series': 'Geen serie',
+        'unknown': 'Onbekend'
     },
     
     # 挪威语 (no)
@@ -675,6 +691,8 @@ TRANSLATIONS = {
         'generating': 'Genererer...',
         'no_metadata': 'Ingen metadata tilgjengelig',
         'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukjent'
     },
     
     # 葡萄牙语 (pt)
@@ -727,6 +745,8 @@ TRANSLATIONS = {
         'generating': 'Gerando...',
         'no_metadata': 'Nenhuma metadado disponível',
         'metadata': 'Metadados',
+        'no_series': 'Sem série',
+        'unknown': 'Desconhecido'
     },
     
     # 俄语 (ru)
@@ -779,6 +799,8 @@ TRANSLATIONS = {
         'generating': 'Генерирую...',
         'no_metadata': 'Нет метаданных',
         'metadata': 'Метаданные',
+        'no_series': 'Нет серии',
+        'unknown': 'Неизвестно'
     },
     
     # 瑞典语 (sv)
@@ -831,6 +853,8 @@ TRANSLATIONS = {
         'generating': 'Genererar...',
         'no_metadata': 'Ingen metadata tillgänglig',
         'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Okänd'
     },
     
     # 简体中文 (zh)
@@ -884,6 +908,8 @@ TRANSLATIONS = {
         'generating': '正在生成...',
         'no_metadata': '没有元数据',
         'metadata': '元数据',
+        'no_series': '暂无',
+        'unknown': '未知'
     },
     
     # 繁体中文 (zht)
@@ -937,6 +963,8 @@ TRANSLATIONS = {
         'generating': '正在生成...',
         'no_metadata': '沒有元資料',
         'metadata': '元資料',
+        'no_series': '暫無',
+        'unknown': '未知'
     },
     
     # 粤语 (yue)
@@ -950,7 +978,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': '提示詞範本:',
-        'template_placeholder': '範例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
+        'template_placeholder': '範本示例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '建議？',
@@ -990,6 +1018,8 @@ TRANSLATIONS = {
         'generating': '正在生成...',
         'no_metadata': '冇元資料',
         'metadata': '元資料',
+        'no_series': '冇系列',
+        'unknown': '未知'
     }
 }
 
