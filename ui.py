@@ -434,25 +434,25 @@ class AskDialog(QDialog):
         self.response_handler = ResponseHandler(self)
         self.suggestion_handler = SuggestionHandler(self)
         
-        # 先创建 UI
+        # 读取保存窗口的大小
+        prefs = get_prefs()
+        self.saved_width = prefs.get('ask_dialog_width', 800)  # 增加默认宽度
+        self.saved_height = prefs.get('ask_dialog_height', 600)
+        
+        # 设置窗口属性
+        self.setWindowTitle(self.i18n['menu_title'])
+        self.setMinimumWidth(600)  # 增加最小宽度
+        self.setMinimumHeight(600)
+        
+        # 创建 UI
         self.setup_ui()
         
-        # 再设置处理器
+        # 设置处理器
         self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
         self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.i18n, self.api)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
-
-        # 读取保存窗口的大小
-        prefs = get_prefs()
-        self.saved_width = prefs.get('ask_dialog_width', 400)
-        self.saved_height = prefs.get('ask_dialog_height', 600)
-        
-        self.setup_ui()
-        self.setWindowTitle(self.i18n['menu_title'])
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(600)
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
@@ -642,7 +642,7 @@ class AskDialog(QDialog):
                 background-color: palette(midlight); 
                 padding: 2px 4px; 
                 border-radius: 3px; 
-                font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             }
             pre { 
                 background-color: palette(midlight); 

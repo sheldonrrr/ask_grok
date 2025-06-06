@@ -24,15 +24,61 @@ class SuggestionWorker(QThread):
         
     def run(self):
         try:
+            # 记录开始生成建议
+            logger.info("开始生成问题建议...")
+            
+            # 准备书籍信息
+            title = getattr(self.book_info, 'title', 'Unknown')
+            authors = getattr(self.book_info, 'authors', [])
+            author_str = ', '.join(authors) if authors else 'Unknown'
+            publisher = getattr(self.book_info, 'publisher', 'Unknown')
+            
+            # 获取出版日期
+            try:
+                pubdate = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else 'Unknown'
+            except (AttributeError, ValueError):
+                pubdate = 'Unknown'
+                
+            # 获取语言
+            language = getattr(self.book_info, 'language', 'Unknown')
+            
+            # 获取系列信息
+            series = getattr(self.book_info, 'series', '')
+            series_index = getattr(self.book_info, 'series_index', '')
+            
+            # 记录书籍信息
+            logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 出版社: {publisher}, "
+                      f"出版日期: {pubdate}, 语言: {language}, 系列: {series} ({series_index})")
+            
             # 准备提示词
             template = SUGGESTION_TEMPLATES.get(get_prefs()['language'], SUGGESTION_TEMPLATES['en'])
+            
+            # 记录使用的模板
+            logger.info(f"使用的问题建议模板: {template}")
+            
+            # 格式化提示词，包含完整的书籍信息
             prompt = template.format(
-                title=self.book_info.title,
-                author=', '.join(self.book_info.authors) if self.book_info.authors else 'Unknown'
+                title=title,
+                author=author_str,
+                publisher=publisher,
+                pubdate=pubdate,
+                language=language,
+                series=series,
+                series_index=series_index if series_index else ''
             )
             
+            # 记录最终生成的提示词
+            logger.info(f"生成的完整提示词: {prompt}")
+            
             # 调用 API 获取建议，确保传递 lang_code 参数
+            logger.info("正在调用 API 获取建议...")
             suggestion = self.api.ask_stream(prompt, lang_code=get_prefs()['language'])
+            
+            # 记录 API 返回的建议
+            if suggestion:
+                logger.info(f"成功获取到建议: {suggestion[:200]}...")  # 只记录前200个字符
+            else:
+                logger.warning("API 返回了空建议")
             
             if not self._is_cancelled and suggestion:
                 self.result.emit(suggestion)

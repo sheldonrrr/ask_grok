@@ -37,8 +37,14 @@ class MarkdownWorker(QThread):
 
 
 class ResponseHandler(QObject):
+    stop_time_signal = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        #连接信号到停止方法
+        self.stop_time_signal.connect(self._stop_loading_timer)
+
         self.response_area = None
         self.send_button = None
         self.i18n = None
@@ -133,7 +139,8 @@ class ResponseHandler(QObject):
 
     def _stop_all_timers(self):
         """停止所有定时器"""
-        self._stop_loading_timer()
+        # self._stop_loading_timer()
+        self.stop_time_signal.emit()
         
     def _setup_loading_animation(self):
         """设置加载动画定时器"""
@@ -152,7 +159,7 @@ class ResponseHandler(QObject):
                         color: palette(text);
                         font-size: 13px;
                         margin-top: 10px;
-                        font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                        font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, 'Helvetica Neue', 'Ubuntu', 'Cantarell', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {text}{dots[current_dot[0]]}
                     </div>
@@ -176,8 +183,9 @@ class ResponseHandler(QObject):
 
     def _stop_loading_timer(self):
         """停止加载动画定时器"""
-        if self._loading_timer and self._loading_timer.isActive():
-            self._loading_timer.stop()
+        if self._loading_timer:
+            if self._loading_timer.isActive():
+                self._loading_timer.stop()
             self._loading_timer.deleteLater()
             self._loading_timer = None
             
@@ -198,7 +206,7 @@ class ResponseHandler(QObject):
                 color: #cc0000;
                 font-size: 13px;
                 margin-top: 10px;
-                font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
             ">
                 {error_prefix}{request_failed}<br>
                 {error_msg}
@@ -275,7 +283,7 @@ class ResponseHandler(QObject):
                     color: palette(midlight);
                     font-size: 13px;
                     margin-top: 10px;
-                    font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                    font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                 ">
                     {requesting_text}
                 </div>
@@ -288,7 +296,7 @@ class ResponseHandler(QObject):
                         color: palette(midlight);
                         font-size: 13px;
                         margin-top: 10px;
-                        font-family: sans-serif, -apple-system, 'Segoe UI', 'Ubuntu';
+                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {formatting_text}
                     </div>
