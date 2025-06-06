@@ -82,13 +82,15 @@ class ResponseHandler(QObject):
         
         self._response_text = ''
         self._request_cancelled = False
-
+        self._is_loading = True  # 开始加载
+    
         try:
             # 发送请求
             response = self.api.ask(prompt)
             
             # 停止加载动画
             self._stop_loading_timer()
+            self._is_loading = False  # 停止加载
             
             # 更新响应区域 - 通过信号在主线程中更新
             self._response_text = response
@@ -96,6 +98,7 @@ class ResponseHandler(QObject):
             
         except Exception as e:
             self._stop_loading_timer()
+            self._is_loading = False  # 停止加载
             self.signal.error_occurred.emit(str(e))
         finally:
             # 恢复按钮状态 - 通过信号在主线程中更新
@@ -144,31 +147,34 @@ class ResponseHandler(QObject):
         
     def _setup_loading_animation(self):
         """设置加载动画定时器"""
-        requesting_text = self.i18n.get('requesting', 'Requesting, please wait...')
-        formatting_text = self.i18n.get('formatting', 'Request successful, formatting...')
-        dots = ['', '.', '..', '...']
-        current_dot = [0]
-        request_phase = [True]  # True for requesting, False for formatting
+        self._loading_texts = {
+            'requesting': self.i18n.get('requesting', 'Requesting, please wait'),
+            'formatting': self.i18n.get('formatting', 'Request successful, formatting')
+        }
+        self._current_phase = 'requesting'  # 当前阶段
+        self._dots = ['', '.', '..', '...']
+        self._current_dot = 0
+        self._is_loading = True  # 添加一个标志变量
 
         def update_loading():
-            text = f"{requesting_text if request_phase[0] else formatting_text}{dots[current_dot[0]]}"
-            self.response_area.setText(text)
-            current_dot[0] = (current_dot[0] + 1) % len(dots)
+            if hasattr(self, '_is_loading') and self._is_loading:  # 使用标志变量控制
+                text = f"{self._loading_texts[self._current_phase]}{self._dots[self._current_dot]}"
+                self.response_area.setText(f"<span style='color: palette(text);'>{text}</span>")
+                self._current_dot = (self._current_dot + 1) % len(self._dots)
 
         # 清除之前的定时器
         self._stop_loading_timer()
-        
+    
+        # 设置定时器
         self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(update_loading)
         self._loading_timer.start(250)
-        
+    
         # 立即显示第一次加载文本
         update_loading()
 
-        # 添加1秒的定时器来切换状态
-        def switch_phase():
-            request_phase[0] = False
-        QTimer.singleShot(1000, switch_phase) # 1秒后切换到格式化阶段
+        # 0.5秒后切换状态
+        QTimer.singleShot(500, lambda: setattr(self, '_current_phase', 'formatting'))
 
     def _stop_loading_timer(self):
         """停止加载动画定时器"""

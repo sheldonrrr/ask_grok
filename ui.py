@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from enum import auto
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
@@ -490,7 +491,7 @@ class AskDialog(QDialog):
             QLabel {
                 background-color: palette(base);
                 color: palette(text);
-                font-size: 13px;
+                font-size: 15px;
                 padding: 10px;
                 border-radius: 5px;
                 line-height: 100%;
@@ -502,26 +503,26 @@ class AskDialog(QDialog):
         info_area.setMinimumHeight(20) 
         info_area.setMaximumHeight(100)
         
-        # 构建书籍信息HTML
+        # 构建书籍信息
         metadata_info = []
-        metadata_info.append(f"<span style='color: palette(text);'><b>{self.i18n.get('metadata', 'Metadata')}:</b>/span>")
+        metadata_info.append(f"<b>{self.i18n.get('metadata', 'Metadata')}:</b>")
         if self.book_info.title:
-            metadata_info.append(f"<b>{self.i18n['metadata_title']}-</b>{self.book_info.title},")
+            metadata_info.append(f"{self.i18n['metadata_title']}-{self.book_info.title}")
         if self.book_info.authors:
-            metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)},")
+            metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)}")
         if self.book_info.publisher:
-            metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher},")
+            metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
         if self.book_info.pubdate:
-            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year},")
+            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year}")
         if self.book_info.language:
-            metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)},")
+            metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
         if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}.")
+            metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}")
         
         if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
             metadata_info.append(f"{self.i18n.get('no_metadata', '暂无 Metadata')}.")
         
-        info_area.setText("\n".join(metadata_info))
+        info_area.setText("<span><br>".join(metadata_info)+"</span>")
         layout.addWidget(info_area)
         
         # 创建输入区域
@@ -550,7 +551,6 @@ class AskDialog(QDialog):
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
         self.suggest_button.setFixedWidth(80)  # 设置固定宽度
-        self.suggest_button.setFixedHeight(24)  # 设置固定高度
         
         # 创建建议动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
@@ -565,7 +565,6 @@ class AskDialog(QDialog):
         # 设置按钮样式
         self.suggest_button.setStyleSheet("""
             QPushButton {
-                font-size: 12px;
                 padding: 2px 8px;
             }
             QPushButton:hover:enabled {
@@ -585,7 +584,6 @@ class AskDialog(QDialog):
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
         self.send_button.setFixedWidth(80)  # 设置固定宽度
-        self.send_button.setFixedHeight(24)  # 设置固定高度
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
@@ -599,7 +597,6 @@ class AskDialog(QDialog):
         # 设置按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 12px;
                 padding: 2px 8px;
             }
             QPushButton:hover:enabled {
@@ -786,7 +783,7 @@ class AskDialog(QDialog):
         
         # 如果提示词过长，可能会导致超时
         if len(prompt) > 2000:  # 设置一个合理的限制
-            self.response_handler.handle_error("问题过长，请精简后再试")
+            self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
             return
         
         # 禁用发送按钮并显示加载状态

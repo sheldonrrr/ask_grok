@@ -258,7 +258,8 @@ TRANSLATIONS = {
         'no_metadata': 'Ingen metadata tilgængelig',
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
-        'unknown': 'Ukendt'
+        'unknown': 'Ukendt',
+        'question_too_long':'Spørgsmål for langt, kan ikke svare'
     },
     
     # 德语 (de)
@@ -311,7 +312,8 @@ TRANSLATIONS = {
         'no_metadata': 'Keine Metadaten verfügbar',
         'metadata': 'Metadaten',
         'no_series': 'Keine Serie',
-        'unknown': 'Unbekannt'
+        'unknown': 'Unbekannt',
+        'question_too_long':'Frage zu lang, kann nicht beantworten'
     },
     
     # 英语 (en)
@@ -365,7 +367,8 @@ TRANSLATIONS = {
         'no_metadata': 'No metadata available',
         'metadata': 'Metadata',
         'no_series': 'No Series',
-        'unknown': 'Unknown'
+        'unknown': 'Unknown',
+        'question_too_long':'Question is too long, cannot be answered'
     },
     
     # 西班牙语 (es)
@@ -418,7 +421,8 @@ TRANSLATIONS = {
         'no_metadata': 'No hay metadatos disponibles',
         'metadata': 'Metadatos',
         'no_series': 'Sin serie',
-        'unknown': 'Desconocido'
+        'unknown': 'Desconocido',
+        'question_too_long':'La pregunta es demasiado larga, no se puede responder'
     },
     
     # 芬兰语 (fi)
@@ -471,7 +475,8 @@ TRANSLATIONS = {
         'no_metadata': 'Ei metatietoa saatavilla',
         'metadata': 'Metatieto',
         'no_series': 'Ei sarjaa',
-        'unknown': 'Tuntematon'
+        'unknown': 'Tuntematon',
+        'question_too_long':'Kysymys on liian pitkä, ei voida vastata'
     },
     
     # 法语 (fr)
@@ -524,7 +529,8 @@ TRANSLATIONS = {
         'no_metadata': 'Aucune métadonnée disponible',
         'metadata': 'Métadonnées',
         'no_series': 'Pas de série',
-        'unknown': 'Inconnu'
+        'unknown': 'Inconnu',
+        'question_too_long':'La question est trop longue, impossible de répondre'
     },
     
     # 日语 (ja)
@@ -577,7 +583,8 @@ TRANSLATIONS = {
         'no_metadata': 'メタデータはありません',
         'metadata': 'メタデータ',
         'no_series': 'シリーズなし',
-        'unknown': '不明'
+        'unknown': '不明',
+        'question_too_long':'問題が長すぎ、答えられない'
     },
     
     # 荷兰语 (nl)
@@ -630,7 +637,8 @@ TRANSLATIONS = {
         'no_metadata': 'Geen metadata beschikbaar',
         'metadata': 'Metagegevens',
         'no_series': 'Geen serie',
-        'unknown': 'Onbekend'
+        'unknown': 'Onbekend',
+        'question_too_long':'Vraag is te lang, kan niet worden beantwoord'
     },
     
     # 挪威语 (no)
@@ -683,7 +691,8 @@ TRANSLATIONS = {
         'no_metadata': 'Ingen metadata tilgjengelig',
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
-        'unknown': 'Ukjent'
+        'unknown': 'Ukjent',
+        'question_too_long':'Spørsmålet er for langt, kan ikke besvares'
     },
     
     # 葡萄牙语 (pt)
@@ -736,7 +745,8 @@ TRANSLATIONS = {
         'no_metadata': 'Nenhuma metadado disponível',
         'metadata': 'Metadados',
         'no_series': 'Sem série',
-        'unknown': 'Desconhecido'
+        'unknown': 'Desconhecido',
+        'question_too_long':'A pergunta é muito longa, não pode ser respondida'
     },
     
     # 俄语 (ru)
@@ -789,7 +799,8 @@ TRANSLATIONS = {
         'no_metadata': 'Нет метаданных',
         'metadata': 'Метаданные',
         'no_series': 'Нет серии',
-        'unknown': 'Неизвестно'
+        'unknown': 'Неизвестно',
+        'question_too_long':'Вопрос слишком длинный, не может быть обработан'
     },
     
     # 瑞典语 (sv)
@@ -842,7 +853,8 @@ TRANSLATIONS = {
         'no_metadata': 'Ingen metadata tillgänglig',
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
-        'unknown': 'Okänd'
+        'unknown': 'Okänd',
+        'question_too_long':'Frågan är för lång, kan inte besvaras'
     },
     
     # 简体中文 (zh)
@@ -896,7 +908,8 @@ TRANSLATIONS = {
         'no_metadata': '没有元数据',
         'metadata': '元数据',
         'no_series': '暂无',
-        'unknown': '未知'
+        'unknown': '未知',
+        'question_too_long':'问题过长，无法回答'
     },
     
     # 繁体中文 (zht)
@@ -950,7 +963,8 @@ TRANSLATIONS = {
         'no_metadata': '沒有元資料',
         'metadata': '元資料',
         'no_series': '暫無',
-        'unknown': '未知'
+        'unknown': '未知',
+        'question_too_long':'問題過長，無法回答'
     },
     
     # 粤语 (yue)
@@ -1004,7 +1018,8 @@ TRANSLATIONS = {
         'no_metadata': '冇元資料',
         'metadata': '元資料',
         'no_series': '冇系列',
-        'unknown': '未知'
+        'unknown': '未知',
+        'question_too_long':'問題過長，無法回答'
     }
 }
 
