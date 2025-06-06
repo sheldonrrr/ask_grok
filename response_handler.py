@@ -151,19 +151,8 @@ class ResponseHandler(QObject):
         request_phase = [True]  # True for requesting, False for formatting
 
         def update_loading():
-            text = requesting_text if request_phase[0] else formatting_text
-            # 添加动画效果的 CSS，左对齐，参考 Suggestion 样式，字体大小与内容正文一致
-            self.response_area.setHtml(f"""
-                <div style="
-                    text-align: left;
-                        color: palette(text);
-                        font-size: 13px;
-                        margin-top: 10px;
-                        font-family: 'SF Pro Text', 'SF Pro Display', -apple-system, 'Helvetica Neue', 'Ubuntu', 'Cantarell', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                    ">
-                        {text}{dots[current_dot[0]]}
-                    </div>
-                """)
+            text = f"{requesting_text if request_phase[0] else formatting_text}{dots[current_dot[0]]}"
+            self.response_area.setText(text)
             current_dot[0] = (current_dot[0] + 1) % len(dots)
 
         # 清除之前的定时器

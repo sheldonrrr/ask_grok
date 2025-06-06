@@ -490,7 +490,7 @@ class AskDialog(QDialog):
             QLabel {
                 background-color: palette(base);
                 color: palette(text);
-                font-size: 10px;
+                font-size: 13px;
                 padding: 10px;
                 border-radius: 5px;
                 line-height: 100%;
@@ -504,22 +504,22 @@ class AskDialog(QDialog):
         
         # 构建书籍信息HTML
         metadata_info = []
-        metadata_info.append(f"<span style='color: palette(text);'><p><b>{self.i18n.get('metadata', 'Metadata')}:</b></p></span>")
+        metadata_info.append(f"<span style='color: palette(text);'><b>{self.i18n.get('metadata', 'Metadata')}:</b>/span>")
         if self.book_info.title:
-            metadata_info.append(f"<b>{self.i18n['metadata_title']}：</b>{self.book_info.title}")
+            metadata_info.append(f"<b>{self.i18n['metadata_title']}-</b>{self.book_info.title},")
         if self.book_info.authors:
-            metadata_info.append(f"<b>{self.i18n['metadata_authors']}：</b>{', '.join(self.book_info.authors)}")
+            metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)},")
         if self.book_info.publisher:
-            metadata_info.append(f"<b>{self.i18n['metadata_publisher']}：</b>{self.book_info.publisher}")
+            metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher},")
         if self.book_info.pubdate:
-            metadata_info.append(f"<b>{self.i18n['metadata_pubdate']}：</b>{self.book_info.pubdate.year}")
+            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year},")
         if self.book_info.language:
-            metadata_info.append(f"<b>{self.i18n['metadata_language']}：</b>{self.get_language_name(self.book_info.language)}")
+            metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)},")
         if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"<b>{self.i18n['metadata_series']}：</b>{self.book_info.series}")
+            metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}.")
         
         if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
-            metadata_info.append(f"<p>{self.i18n.get('no_metadata', '暂无 Metadata')}</p>")
+            metadata_info.append(f"{self.i18n.get('no_metadata', '暂无 Metadata')}.")
         
         info_area.setText("\n".join(metadata_info))
         layout.addWidget(info_area)
