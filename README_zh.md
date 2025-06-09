@@ -4,8 +4,7 @@
 
 ## 预览
 
-<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask.gif" width="400">
-<img src="https://github.com/sheldonrrr/ask_grok/blob/main/config.gif" width="400">
+<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask_grok_gif_preview.gif" width="400">
 
 ## 功能
 
