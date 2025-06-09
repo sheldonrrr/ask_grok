@@ -254,8 +254,12 @@ TRANSLATIONS = {
         'request_failed': 'Anmodningen fejlede, prøv igen senere',
         'sending': 'Sender...',
         'requesting': 'Anmoder, vent venligst',
-        'formatting': 'Anmodning succesfuld, formatterer...',
-        'generating': 'Genererer...',
+        'formatting': 'Anmodning succesfuld, formatterer',
+        'no_metadata': 'Ingen metadata tilgængelig',
+        'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukendt',
+        'question_too_long':'Spørgsmål for langt, kan ikke svare'
     },
     
     # 德语 (de)
@@ -304,8 +308,12 @@ TRANSLATIONS = {
         'request_failed': 'Anfrage fehlgeschlagen, bitte versuchen Sie es später erneut',
         'sending': 'Senden...',
         'requesting': 'Anfrage, bitte warten',
-        'formatting': 'Anfrage erfolgreich, formatiere...',
-        'generating': 'Generiere...',
+        'formatting': 'Anfrage erfolgreich, formate',
+        'no_metadata': 'Keine Metadaten verfügbar',
+        'metadata': 'Metadaten',
+        'no_series': 'Keine Serie',
+        'unknown': 'Unbekannt',
+        'question_too_long':'Frage zu lang, kann nicht beantworten'
     },
     
     # 英语 (en)
@@ -355,8 +363,12 @@ TRANSLATIONS = {
         'request_failed': 'Request failed, please try again later',
         'sending': 'Sending...',
         'requesting': 'Requesting, please wait',
-        'formatting': 'Request successful, formatting...',
-        'generating': 'Generating...',
+        'formatting': 'Request successful, formatting',
+        'no_metadata': 'No metadata available',
+        'metadata': 'Metadata',
+        'no_series': 'No Series',
+        'unknown': 'Unknown',
+        'question_too_long':'Question is too long, cannot be answered'
     },
     
     # 西班牙语 (es)
@@ -405,8 +417,12 @@ TRANSLATIONS = {
         'request_failed': 'La solicitud falló, por favor inténtelo de nuevo más tarde',
         'sending': 'Enviando...',
         'requesting': 'Solicitando, por favor espere',
-        'formatting': 'Solicitud exitosa, formateando...',
-        'generating': 'Generando...',
+        'formatting': 'Solicitud exitosa, formateando',
+        'no_metadata': 'No hay metadatos disponibles',
+        'metadata': 'Metadatos',
+        'no_series': 'Sin serie',
+        'unknown': 'Desconocido',
+        'question_too_long':'La pregunta es demasiado larga, no se puede responder'
     },
     
     # 芬兰语 (fi)
@@ -455,8 +471,12 @@ TRANSLATIONS = {
         'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
         'sending': 'Lähetetään...',
         'requesting': 'Pyyntö, odota hetki',
-        'formatting': 'Pyyntö onnistui, muotoillaan...',
-        'generating': 'Luodaan...',
+        'formatting': 'Pyyntö onnistui, muotoillaan',
+        'no_metadata': 'Ei metatietoa saatavilla',
+        'metadata': 'Metatieto',
+        'no_series': 'Ei sarjaa',
+        'unknown': 'Tuntematon',
+        'question_too_long':'Kysymys on liian pitkä, ei voida vastata'
     },
     
     # 法语 (fr)
@@ -505,8 +525,12 @@ TRANSLATIONS = {
         'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
         'sending': 'Envoi...',
         'requesting': 'Requête, veuillez patienter',
-        'formatting': 'Requête réussie, mise en forme...',
-        'generating': 'Génération...',
+        'formatting': 'Requête réussie, mise en forme',
+        'no_metadata': 'Aucune métadonnée disponible',
+        'metadata': 'Métadonnées',
+        'no_series': 'Pas de série',
+        'unknown': 'Inconnu',
+        'question_too_long':'La question est trop longue, impossible de répondre'
     },
     
     # 日语 (ja)
@@ -555,8 +579,12 @@ TRANSLATIONS = {
         'request_failed': 'リクエストが失敗しました、後で再度試してください',
         'sending': '送信中...',
         'requesting': 'リクエスト中、少々お待ちください',
-        'formatting': 'リクエスト成功、フォーマット中...',
-        'generating': '生成中...',
+        'formatting': 'リクエスト成功、フォーマット中',
+        'no_metadata': 'メタデータはありません',
+        'metadata': 'メタデータ',
+        'no_series': 'シリーズなし',
+        'unknown': '不明',
+        'question_too_long':'問題が長すぎ、答えられない'
     },
     
     # 荷兰语 (nl)
@@ -605,8 +633,12 @@ TRANSLATIONS = {
         'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
         'sending': 'Verzenden...',
         'requesting': 'Verzoek, even geduld',
-        'formatting': 'Verzoek succesvol, formatteren...',
-        'generating': 'Genereren...',
+        'formatting': 'Verzoek succesvol, formatteren',
+        'no_metadata': 'Geen metadata beschikbaar',
+        'metadata': 'Metagegevens',
+        'no_series': 'Geen serie',
+        'unknown': 'Onbekend',
+        'question_too_long':'Vraag is te lang, kan niet worden beantwoord'
     },
     
     # 挪威语 (no)
@@ -655,8 +687,12 @@ TRANSLATIONS = {
         'request_failed': 'Forespørselen feilet, prøv igjen senere',
         'sending': 'Sender...',
         'requesting': 'Forespørsel, vent litt',
-        'formatting': 'Forespørsel vellykket, formatterer...',
-        'generating': 'Genererer...',
+        'formatting': 'Forespørsel vellykket, formatterer',
+        'no_metadata': 'Ingen metadata tilgjengelig',
+        'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukjent',
+        'question_too_long':'Spørsmålet er for langt, kan ikke besvares'
     },
     
     # 葡萄牙语 (pt)
@@ -705,8 +741,12 @@ TRANSLATIONS = {
         'request_failed': 'A solicitação falhou, tente novamente mais tarde',
         'sending': 'Enviando...',
         'requesting': 'Solicitação, aguarde',
-        'formatting': 'Solicitação bem-sucedida, formatando...',
-        'generating': 'Gerando...',
+        'formatting': 'Solicitação bem-sucedida, formatando',
+        'no_metadata': 'Nenhuma metadado disponível',
+        'metadata': 'Metadados',
+        'no_series': 'Sem série',
+        'unknown': 'Desconhecido',
+        'question_too_long':'A pergunta é muito longa, não pode ser respondida'
     },
     
     # 俄语 (ru)
@@ -755,8 +795,12 @@ TRANSLATIONS = {
         'request_failed': 'Запрос не удался, попробуйте еще раз позже',
         'sending': 'Отправка...',
         'requesting': 'Запрос, пожалуйста, подождите',
-        'formatting': 'Запрос успешен, форматирую...',
-        'generating': 'Генерирую...',
+        'formatting': 'Запрос успешен, форматирую',
+        'no_metadata': 'Нет метаданных',
+        'metadata': 'Метаданные',
+        'no_series': 'Нет серии',
+        'unknown': 'Неизвестно',
+        'question_too_long':'Вопрос слишком длинный, не может быть обработан'
     },
     
     # 瑞典语 (sv)
@@ -805,8 +849,12 @@ TRANSLATIONS = {
         'request_failed': 'Begäran misslyckades, försök igen senare',
         'sending': 'Skickar...',
         'requesting': 'Begäran, vänligen vänta',
-        'formatting': 'Begäran lyckades, formaterar...',
-        'generating': 'Genererar...',
+        'formatting': 'Begäran lyckades, formaterar',
+        'no_metadata': 'Ingen metadata tillgänglig',
+        'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Okänd',
+        'question_too_long':'Frågan är för lång, kan inte besvaras'
     },
     
     # 简体中文 (zh)
@@ -856,8 +904,12 @@ TRANSLATIONS = {
         'request_failed': '请求失败，请稍后重试',
         'sending': '发送中...',
         'requesting': '请求中，请稍等',
-        'formatting': '请求成功，正在格式化...',
-        'generating': '正在生成...',
+        'formatting': '请求成功，正在格式化',
+        'no_metadata': '没有元数据',
+        'metadata': '元数据',
+        'no_series': '暂无',
+        'unknown': '未知',
+        'question_too_long':'问题过长，无法回答'
     },
     
     # 繁体中文 (zht)
@@ -907,8 +959,12 @@ TRANSLATIONS = {
         'request_failed': '請求失敗，請稍後重試',
         'sending': '發送中...',
         'requesting': '請求中，請稍等',
-        'formatting': '請求成功，正在格式化...',
-        'generating': '正在生成...',
+        'formatting': '請求成功，正在格式化',
+        'no_metadata': '沒有元資料',
+        'metadata': '元資料',
+        'no_series': '暫無',
+        'unknown': '未知',
+        'question_too_long':'問題過長，無法回答'
     },
     
     # 粤语 (yue)
@@ -922,7 +978,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': '提示詞範本:',
-        'template_placeholder': '範例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
+        'template_placeholder': '範本示例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '建議？',
@@ -958,14 +1014,21 @@ TRANSLATIONS = {
         'request_failed': '請求失敗，請稍後重試',
         'sending': '發送中...',
         'requesting': '請求中，請稍等',
-        'formatting': '請求成功，正在格式化...',
-        'generating': '正在生成...',
+        'formatting': '請求成功，正在格式化',
+        'no_metadata': '冇元資料',
+        'metadata': '元資料',
+        'no_series': '冇系列',
+        'unknown': '未知',
+        'question_too_long':'問題過長，無法回答'
     }
 }
 
 def get_translation(lang_code):
     """获取指定语言的翻译"""
-    return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
+    try:
+        return TRANSLATIONS.get(lang_code, TRANSLATIONS['en'])
+    except KeyError:
+        return TRANSLATIONS['en']
 
 def get_default_template(lang_code):
     """获取指定语言的默认提示词模板"""

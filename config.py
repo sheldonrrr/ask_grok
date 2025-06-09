@@ -63,16 +63,23 @@ SUPPORTED_LANGUAGES = [
 
 # 默认配置
 prefs.defaults['auth_token'] = ''
-prefs.defaults['template'] = get_default_template('zh')  # 使用中文模板作为默认值
+prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-3-latest'
-prefs.defaults['language'] = 'en'  # 默认使用英语
+prefs.defaults['language'] = 'en'
+prefs.defaults['ask_dialog_width'] = 600
+prefs.defaults['ask_dialog_height'] = 400
+
 
 def get_prefs():
     """获取配置"""
     # 确保模板不为空，如果为空则使用当前语言的默认模板
     if not prefs['template']:
-        prefs['template'] = get_default_template(prefs['language'])
+        prefs['template'] = get_default_template(prefs.get('language', 'en'))
+    
+    # 确保语言键存在，如果不存在则使用默认值 'en'
+    if 'language' not in prefs:
+        prefs['language'] = 'en'
     
     return prefs
 

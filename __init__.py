@@ -8,7 +8,7 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 import os
 import sys
-from calibre_plugins.ask_grok.i18n import get_translation, SUGGESTION_TEMPLATES
+from calibre_plugins.ask_grok import i18n
 
 # 添加 lib 目录到 Python 路径
 lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
@@ -20,7 +20,7 @@ class AskGrokPlugin(InterfaceActionBase):
     description         = 'Ask Grok about this book'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 0, 1)
+    version             = (1, 1, 15)
     minimum_calibre_version = (0, 7, 53)
     icon                = 'images/ask_grok.png'
 
