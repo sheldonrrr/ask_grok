@@ -245,18 +245,23 @@ class AboutWidget(QWidget):
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.0.1.5</p>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.15</p>
             <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_grok' 
                    style='color: palette(text); text-decoration: none;'>
-                   GitHub
+                   GitHub: Release & Issues
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                Telegram: @
+                <a href='https://www.mobileread.com/forums/showthread.php?p=4503254#post4503254' 
+                   style='color: palette(text); text-decoration: none;'>
+                   MobileRead: calibre's Forum
+                </a>
+            </p>
+            <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://t.me/sheldonrrr' 
                    style='color: palette(text); text-decoration: none;'>
-                   {self.i18n['author_name']}
+                   Telegram: @sheldonrrr
                 </a>
             </p>
         </div>
@@ -483,29 +488,29 @@ class AskDialog(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建书籍信息显示区域
-        info_area = QLabel()
-        info_area.setWordWrap(True)
-        info_area.setTextFormat(Qt.RichText)
+        # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
+        info_area = QTextEdit()
+        info_area.setReadOnly(True)  # 设置为只读
+        info_area.setFrameShape(QTextEdit.NoFrame)  # 无边框
+        info_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # 需要时显示滚动条
+        info_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 禁用水平滚动条
         info_area.setStyleSheet("""
-            QLabel {
+            QTextEdit {
                 background-color: palette(base);
                 color: palette(text);
-                font-size: 15px;
+                font-size: 13px;
                 padding: 10px;
                 border-radius: 5px;
-                line-height: 100%;
                 border: 1px solid palette(mid);
+                line-height: 1.5;
             }
         """)
-
-        # 设置一个最低高度
-        info_area.setMinimumHeight(20) 
+        # 设置高度和滚动条策略
+        info_area.setMinimumHeight(20)
         info_area.setMaximumHeight(100)
         
         # 构建书籍信息
         metadata_info = []
-        metadata_info.append(f"<b>{self.i18n.get('metadata', 'Metadata')}:</b>")
         if self.book_info.title:
             metadata_info.append(f"{self.i18n['metadata_title']}-{self.book_info.title}")
         if self.book_info.authors:
@@ -522,7 +527,7 @@ class AskDialog(QDialog):
         if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
             metadata_info.append(f"{self.i18n.get('no_metadata', '暂无 Metadata')}.")
         
-        info_area.setText("<span><br>".join(metadata_info)+"</span>")
+        info_area.setHtml("<br>".join(metadata_info))
         layout.addWidget(info_area)
         
         # 创建输入区域

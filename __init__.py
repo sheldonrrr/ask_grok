@@ -20,7 +20,7 @@ class AskGrokPlugin(InterfaceActionBase):
     description         = 'Ask Grok about this book'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 0, 1)
+    version             = (1, 1, 15)
     minimum_calibre_version = (0, 7, 53)
     icon                = 'images/ask_grok.png'
 

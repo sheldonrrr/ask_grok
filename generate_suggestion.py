@@ -287,8 +287,8 @@ class SuggestionHandler(QObject):
         self.suggest_button.setText(self.i18n.get('loading_text', 'Loading'))
         self.suggest_button.setStyleSheet("""
             QPushButton {
-                font-size: 12px;
-                color: #666;
+                font-size: 13px;
+                color: palette(text);
                 padding: 2px 8px;
             }
         """)

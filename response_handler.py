@@ -145,36 +145,44 @@ class ResponseHandler(QObject):
         # self._stop_loading_timer()
         self.stop_time_signal.emit()
         
-    def _setup_loading_animation(self):
-        """设置加载动画定时器"""
+    def _setup_loading_animation(self, mode='requesting'):
+        """设置加载动画定时器
+        
+        :param mode: 动画模式，'requesting' 或 'formatting'
+        """
         self._loading_texts = {
             'requesting': self.i18n.get('requesting', 'Requesting, please wait'),
             'formatting': self.i18n.get('formatting', 'Request successful, formatting')
         }
-        self._current_phase = 'requesting'  # 当前阶段
-        self._dots = ['', '.', '..', '...']
-        self._current_dot = 0
-        self._is_loading = True  # 添加一个标志变量
+        self._animation_dots = ['', '.', '..', '...']
+        self._animation_dot_index = 0
+        self._animation_mode = mode
 
         def update_loading():
-            if hasattr(self, '_is_loading') and self._is_loading:  # 使用标志变量控制
-                text = f"{self._loading_texts[self._current_phase]}{self._dots[self._current_dot]}"
-                self.response_area.setText(f"<span style='color: palette(text);'>{text}</span>")
-                self._current_dot = (self._current_dot + 1) % len(self._dots)
+            if not self._request_cancelled:
+                base_text = self._loading_texts[self._animation_mode]
+                self.response_area.setHtml(f"""
+                    <div style="
+                        text-align: left;
+                        color: palette(text);
+                        font-size: 15px;
+                        margin-top: 10px;
+                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+                    ">
+                        {base_text}{self._animation_dots[self._animation_dot_index]}
+                    </div>
+                """)
+                self._animation_dot_index = (self._animation_dot_index + 1) % len(self._animation_dots)
 
-        # 清除之前的定时器
+        # 停止之前的定时器
         self._stop_loading_timer()
-    
-        # 设置定时器
+        
         self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(update_loading)
         self._loading_timer.start(250)
-    
-        # 立即显示第一次加载文本
+        # 立即更新一次
         update_loading()
 
-        # 0.5秒后切换状态
-        QTimer.singleShot(500, lambda: setattr(self, '_current_phase', 'formatting'))
 
     def _stop_loading_timer(self):
         """停止加载动画定时器"""
@@ -246,56 +254,46 @@ class ResponseHandler(QObject):
         self.response_area.setAlignment(Qt.AlignLeft)
 
     def _update_ui_from_signal(self, text, is_response):
-        """通过信号更新UI，确保在主线程中执行"""
+        """通过信号更新UI，确保在主线程中执行
+        
+        :param text: 要显示的文本
+        :param is_response: 是否为最终响应
+        """
         if is_response:
+            # 如果是最终响应，设置Markdown响应
             self.set_markdown_response(text)
-        else:
-            self.send_button.setText(text)
-            self.send_button.setStyleSheet("""
-                QPushButton {
-                    font-size: 12px;
-                    color: palette(text);
-                    padding: 2px 8px;
-                    width: auto;
-                    height: auto;
-                }
-                QPushButton:hover:enabled {
-                    background-color: palette(midlight);
-                }
-                QPushButton:pressed {
-                    background-color: palette(midlight);
-                    color: white;
+            return
+            
+        # 处理非响应状态（如加载中）
+        self.send_button.setText(text)
+        self.send_button.setStyleSheet("""
+            QPushButton {
+                font-size: 13px;
+                color: palette(text);
+                padding: 2px 8px;
+                width: auto;
+                height: auto;
             }
-            """)
-            self.send_button.setEnabled(False)
-            # 显示加载动画文本
-            requesting_text = self.i18n.get('requesting', 'Requesting, please wait...')
-            formatting_text = self.i18n.get('formatting', 'Request successful, formatting...')
-            # 始终显示 requesting 字段
-            self.response_area.setHtml(f"""
-                <div style="
-                    text-align: left;
-                    color: palette(midlight);
-                    font-size: 13px;
-                    margin-top: 10px;
-                    font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                ">
-                    {requesting_text}
-                </div>
-            """)
-            # 如果文本是 'Sending...'，则切换到 formatting 字段
-            if text.lower() == self.i18n.get('sending', 'Sending...').lower():
-                self.response_area.setHtml(f"""
-                    <div style="
-                        text-align: left;
-                        color: palette(midlight);
-                        font-size: 13px;
-                        margin-top: 10px;
-                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                    ">
-                        {formatting_text}
-                    </div>
-                """)
+            QPushButton:hover:enabled {
+                background-color: palette(midlight);
+            }
+            QPushButton:pressed {
+                background-color: palette(midlight);
+                color: white;
+            }
+        """)
+        self.send_button.setEnabled(False)
+        
+        # 根据文本内容判断当前状态
+        if text == self.i18n.get('sending', 'Sending...'):
+            # 发送中的状态
+            self._setup_loading_animation('requesting')
+        elif not self._request_cancelled:
+            # 其他非取消状态，如格式化中
+            self._setup_loading_animation('formatting')
+        else:
+            # 请求已取消，停止加载动画
+            self._stop_loading_timer()
 
     def _restore_button_state(self):
         """恢复按钮状态，确保在主线程中执行"""
@@ -306,10 +304,17 @@ class ResponseHandler(QObject):
             self.send_button.setText('Send')
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 12px;
+                font-size: 13px;
                 padding: 2px 8px;
             }
             QPushButton:disabled {
                 color: #ccc;
             }
+            QPushButton:hover:enabled {
+                background-color: palette(midlight);
+            }
+            QPushButton:pressed {
+                background-color: palette(midlight);
+                color: white;
+            }   
         """)
