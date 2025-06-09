@@ -21,7 +21,7 @@
 
 ### 安装方法（1/2）：通过GitHub下载zip插件文件进行安装
 
-1. 在发布页下载最新版本。
+1. 在[发布页](https://github.com/sheldonrrr/ask_grok/releases)下载最新版本。
 
 导入文件到calibre的自定义插件：
 

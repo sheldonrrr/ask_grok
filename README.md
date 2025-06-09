@@ -23,7 +23,7 @@ A simple Calibre plugin that allows users to ask questions about books using Gro
 
 ### Method 1: Install via GitHub zip plugin file
 
-1. Download the latest version in releases page.
+1. Download the latest version in [releases page](https://github.com/sheldonrrr/ask_grok/releases).
 
 Import the file to Calibre custom plugins:
 
