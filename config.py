@@ -61,15 +61,34 @@ SUPPORTED_LANGUAGES = [
     ('yue', '粵語'),
 ]
 
-# 默认配置
+# 默认语言是英文
+prefs.defaults['language'] = 'en'
+
+# 增加AI服务列表
+SUPPORTED_AIs = [
+    ('xai', 'X.AI'),
+    ('gemini', 'Google Gemini')
+]
+
+# 默认选中X.AI
+prefs.defaults['AI'] = 'xai'
+
+# X.AI的配置细节
 prefs.defaults['auth_token'] = ''
-prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['api_base_url'] = 'https://api.x.ai/v1'
 prefs.defaults['model'] = 'grok-3-latest'
-prefs.defaults['language'] = 'en'
+
+# gemini的配置细节
+prefs.defaults['gemini_auth_token'] = ''
+prefs.defaults['gemini_api_base_url'] = 'https://generativelanguage.googleapis.com/v1beta'
+prefs.defaults['gemini_model'] = 'gemini-2.0-flash-exp'
+
+# 提示词的默认配置文本
+prefs.defaults['template'] = get_default_template('en')
+
+# Ask对话框的默认尺寸
 prefs.defaults['ask_dialog_width'] = 600
 prefs.defaults['ask_dialog_height'] = 400
-
 
 def get_prefs():
     """获取配置"""
@@ -118,40 +137,21 @@ class ConfigDialog(QWidget):
         self.lang_combo.setCurrentIndex(current_index)
         self.lang_combo.currentIndexChanged.connect(self.on_language_changed)
         layout.addWidget(self.lang_combo)
+
+        # AI选择
+        self.ai_label = QLabel('AI:')  # AI在不同语言是通用的，因此这里使用硬编码
+        layout.addWidget(self.ai_label)  # 添加到布局
+
+        self.ai_combo = QComboBox(self)  # 创建下拉框
+        for code, name in SUPPORTED_AIs:  # 遍历AI服务列表
+            self.ai_combo.addItem(name, code)  # 添加选项
+        current_index = self.ai_combo.findData(get_prefs()['AI'])  # 查找当前选中的索引
+        self.ai_combo.setCurrentIndex(current_index)  # 设置当前选中项
+        self.ai_combo.currentIndexChanged.connect(self.on_ai_changed)  # 连接信号
+        layout.addWidget(self.ai_combo)  # 将下拉框添加到布局
         
-        # X.AI Authorization Token 配置
-        self.key_label = QLabel(self.i18n['token_label'])
-        self.key_help = QLabel()
-        self.key_help.setWordWrap(True)
-        self.key_help.setOpenExternalLinks(True)  # 允许打开外部链接
-        self.key_help.setTextFormat(Qt.TextFormat.RichText)  # 支持 HTML 富文本
-        self.key_help.setStyleSheet('color: gray; font-size: 11px;')
-        self.key_help.setText(self.i18n['token_help'])
-        layout.addWidget(self.key_label)
-        layout.addWidget(self.key_help)
-        
-        self.auth_token_edit = QLineEdit(self)
-        self.auth_token_edit.setText(get_prefs()['auth_token'])
-        self.auth_token_edit.setEchoMode(QLineEdit.Password)  # 设置为密码模式，显示掩码
-        layout.addWidget(self.auth_token_edit)
-        
-        # API Base URL 配置
-        self.base_url_label = QLabel(self.i18n['base_url_label'])
-        layout.addWidget(self.base_url_label)
-        
-        self.base_url_edit = QLineEdit(self)
-        self.base_url_edit.setText(get_prefs()['api_base_url'])
-        self.base_url_edit.setPlaceholderText(self.i18n['base_url_placeholder'])
-        layout.addWidget(self.base_url_edit)
-        
-        # Model 配置
-        self.model_label = QLabel(self.i18n['model_label'])
-        layout.addWidget(self.model_label)
-        
-        self.model_edit = QLineEdit(self)
-        self.model_edit.setText(get_prefs()['model'])
-        self.model_edit.setPlaceholderText(self.i18n['model_placeholder'])
-        layout.addWidget(self.model_edit)
+        # 从ai_config.py导入ai_config函数
+        ai_config(self)
         
         # 提示词模板配置
         self.template_label = QLabel(self.i18n['template_label'])
@@ -224,6 +224,7 @@ class ConfigDialog(QWidget):
         self.i18n = get_translation(lang_code)
         
         # 更新界面文字
+        self.ai_label.setText(self.i18n['ai_label'])
         self.lang_label.setText(self.i18n['language_label'])
         self.key_label.setText(self.i18n['token_label'])
         self.key_help.setText(self.i18n['token_help'])
@@ -251,25 +252,28 @@ class ConfigDialog(QWidget):
         
     def save_settings(self):
         """保存设置"""
-        # 保存 API Token，确保格式正确
-        token = self.auth_token_edit.text().replace('Bearer', '').strip()
-        prefs['auth_token'] = f'Bearer {token}'
+        try:
+            prefs['language'] = self.lang_combo.currentData()
+            prefs['AI'] = self.ai_combo.currentData()
             
-        # 保存其他设置
-        prefs['model'] = self.model_edit.text().strip()
-        prefs['api_base_url'] = self.base_url_edit.text().strip()
-        prefs['template'] = self.template_edit.toPlainText().strip()
-        
-        # 更新按钮状态
-        self.save_button.setEnabled(False)
-        
-        # 显示保存成功提示
-        self.save_success_label.setText(self.i18n['save_success'])
-        self.save_success_label.show()
-        QTimer.singleShot(2000, self.save_success_label.hide)
-        
-        # 发出保存成功信号
-        self.settings_saved.emit()
+            if hasattr(self, 'auth_token_edit'):
+                prefs['auth_token'] = self.auth_token_edit.text().strip()
+                prefs['api_base_url'] = self.api_base_url_edit.text().strip()
+                prefs['model'] = self.model_edit.text().strip()
+                
+            if hasattr(self, 'gemini_auth_token_edit'):
+                prefs['gemini_auth_token'] = self.gemini_auth_token_edit.text().strip()
+                prefs['gemini_model'] = self.gemini_model_edit.text().strip()
+                
+            prefs['template'] = self.template_edit.toPlainText()
+            
+            # 显示保存成功提示
+            self.show_save_success()
+            self.show_save_success_label.setText(self.i18n['save_success'])
+            self.show_save_success_label.show()
+            
+        except Exception as e:
+            QMessageBox.critical(self.i18n['save_error'], f"{self.i18n['save_error']}: {str(e)}")
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""

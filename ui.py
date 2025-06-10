@@ -87,14 +87,6 @@ class AskGrokPluginUI(InterfaceAction):
 
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
-
-        # # 根据操作系统设置快捷键，暂时注销，之后找其他办法实现
-        # if sys.platform == 'darwin':  # macOS
-        #     shortcut = QKeySequence("Command+K")
-        # else:
-        #     shortcut = QKeySequence("Ctrl+K")
-        # self.config_action.setShortcut(shortcut)
-        # self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
         
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
@@ -208,6 +200,8 @@ class AskGrokConfigWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
+
+        # 设置全局的界面语言
         self.i18n = get_translation(get_prefs().get('language', 'en'))
         
         # 创建主布局

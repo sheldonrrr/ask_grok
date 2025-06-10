@@ -7,6 +7,7 @@ import os
 import sys
 from typing import Generator
 import logging
+import ai_config
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
@@ -14,36 +15,73 @@ logger = logging.getLogger(__name__)
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from i18n import get_translation
 
-class APIClient:
-    """X.AI API 客户端"""
+class BaseClient:
+    """AI 客户端的基类"""
     
-    def _prepare_request(self, prompt: str) -> tuple:
-        """准备 API 请求的共同部分
+    def _normalize_token(self, token: str) -> str:
+        """规范化 Token，移除多余的空格和 BOM 标记
         
         Args:
-            prompt: 问题文本
+            token: 原始 Token 字符串
             
         Returns:
-            tuple: (headers, data) 请求头和请求数据
+            str: 规范化后的 Token
         """
-        # 处理 token
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
-        
-        # 处理 Bearer 前缀
+        if not token:
+            return ""
+            
+        # 移除所有空白字符
+        token = ''.join(token.split())
+        # 移除 BOM 标记
+        token = token.encode('utf-8').decode('utf-8-sig')
+        # 移除 Bearer 前缀（如果存在）
         if token.startswith('Bearer'):
-            token = token[6:]
+            token = token[6:].strip()
             
-        # 确保 token 以 xai- 开头
-        if not token.startswith('xai-'):
-            logger.warning(f"Token format warning: token should start with 'xai-', current token: {token}")
-            
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}"
-        }
+        return token
+    
+    def ask(self, prompt: str, lang_code: str = 'en') -> str:
+        """发送请求并获取响应（同步）"""
+        raise NotImplementedError("子类必须实现此方法")
+    
+    def ask_stream(self, prompt: str, lang_code: str = 'en') -> Generator[str, None, None]:
+        """发送流式请求并获取响应"""
+        raise NotImplementedError("子类必须实现此方法")
+
+
+class XAIClient(BaseClient):
+    """X.AI API 客户端"""
+    
+    def __init__(self, auth_token: str, model: str = "grok-3-latest", api_base: str = "https://api.x.ai/v1/chat/completions"):
+        """初始化 X.AI API 客户端
         
+        Args:
+            auth_token: X.AI 认证 Token
+            model: 使用的模型，默认为 grok-3-latest
+            api_base: API 基础 URL
+        """
+        self.auth_token = auth_token
+        self.model = model
+        self.api_base = api_base
+    
+    def _validate_xai_token(self, token: str) -> str:
+        """验证 X.AI Token 格式"""
+        if not token.startswith('xai-'):
+            logger.warning(f"Token 格式警告：Token 应以 'xai-' 开头，当前 Token: {token}")
+        return f"Bearer {token}"
+    
+    def _get_auth_headers(self) -> dict:
+        """获取认证头"""
+        normalized = self._normalize_token(self.auth_token)
+        validated = self._validate_xai_token(normalized)
+        return {
+            "Content-Type": "application/json",
+            "Authorization": validated
+        }
+    
+    def _prepare_request(self, prompt: str) -> tuple:
+        """准备 API 请求"""
+        headers = self._get_auth_headers()
         data = {
             "messages": [
                 {
@@ -58,231 +96,130 @@ class APIClient:
             "model": self.model,
             "temperature": 0
         }
-        
         return headers, data
     
     def ask(self, prompt: str, lang_code: str = 'en') -> str:
-        """向 X.AI API 发送问题并获取回答（非流式）
-        
-        Args:
-            prompt: 问题文本
-            lang_code: 语言代码，用于获取相应的翻译文本
-            
-        Returns:
-            str: API 返回的完整回答
-            
-        Note:
-            这个方法不使用流式请求，更适合处理长文本和需要完整响应的场景
-        """
-        # 记录请求开始
-        logger.info(f"=== 开始处理 API 请求 ===")
-        logger.info(f"请求语言代码: {lang_code}")
-        logger.info(f"原始提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
-        
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
-        # 记录原始 token
-        logger.debug(f"原始 Token: {self.auth_token}")
-        
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        logger.debug(f"移除空白字符后: {token}")
-        
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
-        logger.debug(f"移除 BOM 后: {token}")
-        
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]  # 移除 'Bearer'
-            logger.debug(f"移除 Bearer 前缀后: {token}")
-        
-        # 准备请求
-        logger.info("准备请求头和请求数据...")
-        headers, data = self._prepare_request(prompt)
-        data["stream"] = False  # 非流式请求
-        
-        # 记录请求详情（敏感信息已脱敏）
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            auth = safe_headers['Authorization']
-            if len(auth) > 20:  # 只显示前10个和后5个字符
-                safe_headers['Authorization'] = f"{auth[:10]}...{auth[-5:]}"
-        
-        logger.info(f"请求头: {safe_headers}")
-        logger.info(f"请求数据 (前500字符): {str(data)[:500]}{'...' if len(str(data)) > 500 else ''}")
-        logger.info(f"请求数据大小: {len(str(data))} 字节")
-        
-        # 记录完整的系统提示词
-        if 'messages' in data and len(data['messages']) > 0:
-            for i, msg in enumerate(data['messages']):
-                if msg.get('role') == 'system':
-                    logger.info(f"系统提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-                elif msg.get('role') == 'user':
-                    logger.info(f"用户提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-        
-        # 发送请求
+        """发送请求并获取响应（同步）"""
         try:
-            logger.info("正在发送请求到 API...")
+            headers, data = self._prepare_request(prompt)
             response = requests.post(
-                "https://api.x.ai/v1/chat/completions",
+                self.api_base,
                 headers=headers,
                 json=data,
                 timeout=30
             )
-            logger.info(f"收到 API 响应，状态码: {response.status_code}")
-            
-            # 检查响应状态
             response.raise_for_status()
-            
-            # 解析响应
-            result = response.json()
-            
-            # 记录完整的响应（敏感信息已脱敏）
-            logger.debug(f"完整 API 响应: {result}")
-            
-            # 提取回答
-            if 'choices' in result and len(result['choices']) > 0:
-                answer = result['choices'][0].get('message', {}).get('content', '')
-                logger.info(f"成功获取到回答，长度: {len(answer)} 字符")
-                logger.debug(f"回答内容 (前500字符): {answer[:500]}{'...' if len(answer) > 500 else ''}")
-                return answer
-            else:
-                logger.error(f"API 响应中未找到有效的回答: {result}")
-                raise ValueError("API 响应中未找到有效的回答")
-                
-        except requests.exceptions.RequestException as e:
-            logger.error(f"请求 API 时发生错误: {str(e)}")
-            if hasattr(e, 'response') and e.response is not None:
-                try:
-                    error_detail = e.response.json()
-                    logger.error(f"API 错误详情: {error_detail}")
-                except:
-                    logger.error(f"API 错误响应内容: {e.response.text[:1000]}")
-            raise
-            
+            return response.json()["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.error(f"处理 API 响应时发生错误: {str(e)}", exc_info=True)
+            logger.error(f"请求出错: {str(e)}")
             raise
-            
-        finally:
-            logger.info("=== API 请求处理完成 ===\n")
-        
+    
+    def ask_stream(self, prompt: str, lang_code: str = 'en') -> Generator[str, None, None]:
+        """发送流式请求并获取响应"""
         try:
-            # 添加超时设置
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
+            headers, data = self._prepare_request(prompt)
+            data["stream"] = True
+            with requests.post(
+                self.api_base,
                 headers=headers,
                 json=data,
-                timeout=60  # 增加到60秒
-            )
-            logger.info(f"Response status code: {response.status_code}")
-            logger.info(f"Response content: {response.text}")
-            
-            # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
-            
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
+                stream=True,
+                timeout=30
+            ) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if line:
+                        yield line.decode('utf-8')
+        except Exception as e:
+            logger.error(f"流式请求出错: {str(e)}")
+            raise
+
+
+class GeminiClient(BaseClient):
+    """Gemini API 客户端"""
     
-    def ask_stream(self, prompt: str, lang_code: str = 'en') -> str:
-        """向 X.AI API 发送问题并获取回答（流式请求，适用于短文本）
+    def __init__(self, api_key: str, model: str = "gemini-2.0-flash", api_base: str = "https://generativelanguage.googleapis.com/v1beta"):
+        """初始化 Gemini API 客户端
         
         Args:
-            prompt: 问题文本
-            lang_code: 语言代码，用于获取相应的翻译文本
-            
-        Returns:
-            str: API 返回的完整回答
-        
-        Note:
-            这个方法不使用流式请求，更适合处理短文本和快速响应的场景
-        """
-        
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
-        # 记录原始 token
-        logger.debug(f"Original token: {self.auth_token}")
-        
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
-        
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]
-            token = token.strip()
-        token = 'Bearer ' + token
-        
-        # 准备请求
-        headers, data = self._prepare_request(prompt)
-        data["stream"] = False  # 非流式请求
-        headers['Authorization'] = token  # 使用处理后的 token
-        
-        try:
-            # 添加超时设置
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=60  # 增加到60秒
-            )
-            
-            # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
-            
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
-    
-    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
-        """初始化 X.AI API 客户端
-        
-        Args:
-            auth_token: API 认证令牌
+            api_key: Gemini API 密钥
+            model: 使用的模型，默认为 gemini-2.0-flash
             api_base: API 基础 URL
-            model: 使用的模型名称
         """
-        self.auth_token = auth_token
-        self.api_base = api_base.rstrip('/')
+        self.api_key = api_key
         self.model = model
+        self.api_base = api_base
+    
+    def _validate_gemini_token(self, token: str) -> str:
+        """验证 Gemini Token 格式"""
+        if not (token.startswith('AI') and token.endswith('-HA')):
+            logger.warning("Gemini Token 格式警告：Token 应以 'AI' 开头并以 '-HA' 结尾")
+        return token
+    
+    def _prepare_request(self, prompt: str) -> tuple:
+        """准备 API 请求"""
+        normalized_token = self._normalize_token(self.api_key)
+        validated_token = self._validate_gemini_token(normalized_token)
+        
+        url = f"{self.api_base}/models/{self.model}:generateContent?key={validated_token}"
+        headers = {"Content-Type": "application/json"}
+        data = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
+        return url, headers, data
+    
+    def ask(self, prompt: str, lang_code: str = 'en') -> str:
+        """发送请求并获取响应（同步）"""
+        try:
+            url, headers, data = self._prepare_request(prompt)
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+            if 'candidates' in result and result['candidates']:
+                return result['candidates'][0]['content']['parts'][0]['text']
+            return ""
+        except Exception as e:
+            logger.error(f"Gemini 请求出错: {str(e)}")
+            raise
+    
+    def ask_stream(self, prompt: str, lang_code: str = 'en') -> Generator[str, None, None]:
+        """发送流式请求并获取响应"""
+        try:
+            url, headers, data = self._prepare_request(prompt)
+            with requests.post(
+                url,
+                headers=headers,
+                json=data,
+                stream=True,
+                timeout=30
+            ) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if line:
+                        yield line.decode('utf-8')
+        except Exception as e:
+            logger.error(f"Gemini 流式请求出错: {str(e)}")
+            raise
+
+
+def create_client(ai_type: str, **kwargs) -> BaseClient:
+    """创建 AI 客户端工厂函数
+    
+    Args:
+        ai_type: AI 类型，支持 'xai' 或 'gemini'
+        **kwargs: 传递给客户端的参数
+        
+    Returns:
+        BaseClient: 对应的客户端实例
+        
+    Raises:
+        ValueError: 如果 ai_type 不支持
+    """
+    if ai_type == 'xai':
+        return XAIClient(**kwargs)
+    elif ai_type == 'gemini':
+        return GeminiClient(**kwargs)
+    else:
+        raise ValueError(f"不支持的 AI 类型: {ai_type}")
