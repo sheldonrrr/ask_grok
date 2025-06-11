@@ -1,20 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-import requests
+import logging
 import os
 import sys
 from typing import Generator
-import logging
-import ai_config
+
+import requests
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
 
+# 添加项目根目录到 Python 路径
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# 导入 i18n 模块
 from i18n import get_translation
 
+# 本页面的 i18n 字典，页面仅显示英文中文，之后会在 i18n.py 中集中校验
+
+# 'en': {
+#    'token_format_warning_xai': "Token format warning: token should start with 'xai-', current token: {}",
+#     'token_format_warning_gemini': "Gemini token format warning: token should start with 'AI' and end with '-HA'",
+#     'request_error': "Request error: {}",
+#     'stream_request_error': "Stream request error: {}",
+#     'gemini_request_error': "Gemini request error: {}",
+#     'gemini_stream_error': "Gemini stream request error: {}",
+#     'unsupported_ai_type': "Unsupported AI type: {}",
+#     'system_prompt': "You are Grok, an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis. Focus on the substance of the books, not just their titles."
+# },
+# 'zh': {
+#     'token_format_warning_xai': "Token 格式警告：Token 应以 'xai-' 开头，当前 Token: {}",
+#     'token_format_warning_gemini': "Gemini Token 格式警告：Token 应以 'AI' 开头并以 '-HA' 结尾",
+#     'request_error': "请求出错: {}",
+#     'stream_request_error': "流式请求出错: {}",
+#     'gemini_request_error': "Gemini 请求出错: {}",
+#     'gemini_stream_error': "Gemini 流式请求出错: {}",
+#     'unsupported_ai_type': "不支持的 AI 类型: {}",
+#     'system_prompt': "你是 Grok，一个书籍分析专家。你的任务是通过提供有见地的问题和分析来帮助用户更好地理解书籍。专注于书籍的实质内容，而不仅仅是标题。"
+# }
+    
 class BaseClient:
     """AI 客户端的基类"""
     
