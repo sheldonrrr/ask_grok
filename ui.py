@@ -714,38 +714,6 @@ class AskDialog(QDialog):
             config_dialog.show()
             return False
             
-        # 检查 token 格式是否正确（以 xai- 或 Bearer xai- 开头）
-        normalized_token = token.strip().lower()
-        if not (normalized_token.startswith('xai-') or 
-               normalized_token.startswith('bearer xai-') or 
-               normalized_token.startswith('bearerxai-')):
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self,
-                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
-                self.i18n.get('invalid_token_message', 'The token format is invalid. It should start with "xai-" or "Bearer xai-".')
-            )
-            
-            # 创建并显示配置对话框
-            config_dialog = ConfigDialog(self)
-            config_dialog.show()
-            return False
-            
-        # 检查 token 长度是否足够（xai- 前缀 + 至少 60 个字符）
-        min_token_length = 64  # xai- 前缀 + 60 个字符
-        if len(token) < min_token_length:
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self,
-                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
-                self.i18n.get('token_too_short_message', 'The token is too short. Please check and enter the complete token.')
-            )
-            
-            # 创建并显示配置对话框
-            config_dialog = ConfigDialog(self)
-            config_dialog.show()
-            return False
-            
         return True
     
     def send_question(self):

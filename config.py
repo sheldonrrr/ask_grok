@@ -274,8 +274,44 @@ class ConfigDialog(QWidget):
         
     def save_settings(self):
         """保存设置"""
+        # 获取并清理 token
+        token = self.auth_token_edit.text().strip()
+        
+        # 检查 token 是否为空
+        if not token:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('auth_token_required_title', 'Auth Token Required'),
+                self.i18n.get('auth_token_required_message', 'Please set your Auth Token in the configuration dialog.')
+            )
+            return
+            
+        # 检查 token 格式是否正确（以 xai- 或 Bearer xai- 开头）
+        normalized_token = token.lower()
+        if not (normalized_token.startswith('xai-') or 
+               normalized_token.startswith('bearer xai-')):
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                self.i18n.get('invalid_token_message', 'The token format is invalid. It should start with "xai-" or "Bearer xai-".')
+            )
+            return
+            
+        # 检查 token 长度是否足够（xai- 前缀 + 至少 60 个字符）
+        min_token_length = 64  # xai- 前缀 + 60 个字符
+        if len(token) < min_token_length:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                self.i18n.get('token_too_short_message', 'The token is too short. Please check and enter the complete token.')
+            )
+            return
+        
         # 保存 API Token，不添加 Bearer 前缀
-        prefs['auth_token'] = self.auth_token_edit.text().strip()
+        prefs['auth_token'] = token
             
         # 保存其他设置
         prefs['model'] = self.model_edit.text().strip()
@@ -292,6 +328,9 @@ class ConfigDialog(QWidget):
         
         # 发出保存成功信号
         self.settings_saved.emit()
+        
+        # 更新初始值
+        self.load_initial_values()
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
