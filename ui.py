@@ -355,8 +355,17 @@ class TabDialog(QDialog):
             ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
             ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
+    def get_plugin_instance(self):
+        """获取插件实例"""
+        from calibre_plugins.ask_grok.ui import plugin_instance
+        return plugin_instance
+        
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
+        # 更新插件实例中的 API 配置
+        plugin = self.get_plugin_instance()
+        if plugin:
+            plugin.initialize_api()  # 重新初始化 API 客户端
         # 获取最新的语言设置
         new_language = get_prefs().get('language', 'en')
         # 更新界面
