@@ -51,7 +51,8 @@ class AskGrokPluginUI(InterfaceAction):
         self.gui = parent
         # 初始化 i18n
         prefs = get_prefs()
-        self.i18n = get_translation(prefs.get('language', 'en'))
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 保存插件实例到全局变量
         global plugin_instance
@@ -134,15 +135,21 @@ class AskGrokPluginUI(InterfaceAction):
     def initialize_api(self):
         if not self.api:
             prefs = get_prefs()
+            # 安全地获取配置值，如果 prefs 不是字典或缺少键，则使用空字符串作为默认值
+            auth_token = prefs.get('auth_token', '') if hasattr(prefs, 'get') and callable(prefs.get) else ''
+            api_base = prefs.get('api_base_url', 'https://api.x.ai/v1') if hasattr(prefs, 'get') and callable(prefs.get) else 'https://api.x.ai/v1'
+            model = prefs.get('model', 'grok-3-latest') if hasattr(prefs, 'get') and callable(prefs.get) else 'grok-3-latest'
+            
             self.api = APIClient(
-                auth_token=prefs['auth_token'],
-                api_base=prefs['api_base_url'],
-                model=prefs['model']
+                auth_token=auth_token,
+                api_base=api_base,
+                model=model
             )
     
     def apply_settings(self):
         prefs = get_prefs()
-        self.i18n = get_translation(prefs.get('language', 'en'))
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.initialize_api()
 
     def show_configuration(self):
@@ -255,7 +262,7 @@ class AboutWidget(QWidget):
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.15</p>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.18</p>
             <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_grok' 
                    style='color: palette(text); text-decoration: none;'>
