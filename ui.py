@@ -134,15 +134,8 @@ class AskGrokPluginUI(InterfaceAction):
         
     def initialize_api(self):
         if not self.api:
-            prefs = get_prefs()
-            # 安全地获取配置值，如果 prefs 不是字典或缺少键，则使用默认值
-            api_base = prefs.get('api_base_url', 'https://api.x.ai/v1') if hasattr(prefs, 'get') and callable(prefs.get) else 'https://api.x.ai/v1'
-            model = prefs.get('model', 'grok-3-latest') if hasattr(prefs, 'get') and callable(prefs.get) else 'grok-3-latest'
-            
-            self.api = APIClient(
-                api_base=api_base,
-                model=model
-            )
+            # 现在 APIClient 会自己处理配置的加载
+            self.api = APIClient()
     
     def apply_settings(self):
         prefs = get_prefs()

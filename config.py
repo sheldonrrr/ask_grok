@@ -272,10 +272,6 @@ class ConfigDialog(QWidget):
         
         # 发出保存成功信号
         self.settings_saved.emit()
-        
-        # 强制重新初始化 API 客户端
-        if hasattr(self.parent(), 'initialize_api'):
-            self.parent().initialize_api()
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""

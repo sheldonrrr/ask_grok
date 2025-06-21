@@ -281,13 +281,44 @@ class APIClient:
             api_base: API 基础 URL
             model: 使用的模型名称
         """
-        self.api_base = api_base.rstrip('/')
-        self.model = model
-        # 添加对 config 的引用
-        from calibre_plugins.ask_grok.config import prefs
-        self.prefs = prefs
+        self._api_base = api_base.rstrip('/')
+        self._model = model
+        # 存储默认值
+        self._default_prefs = {
+            'api_base_url': api_base,
+            'model': model,
+            'auth_token': ''
+        }
+    
+    @property
+    def api_base(self):
+        """动态获取最新的 API 基础 URL"""
+        prefs = self._get_latest_prefs()
+        return prefs.get('api_base_url', self._default_prefs['api_base_url']).rstrip('/')
+    
+    @property
+    def model(self):
+        """动态获取最新的模型名称"""
+        prefs = self._get_latest_prefs()
+        return prefs.get('model', self._default_prefs['model'])
     
     @property
     def auth_token(self):
         """动态获取最新的 auth_token"""
-        return self.prefs.get('auth_token', '')
+        prefs = self._get_latest_prefs()
+        return prefs.get('auth_token', self._default_prefs['auth_token'])
+    
+    def _get_latest_prefs(self):
+        """直接从配置文件读取最新的配置"""
+        from calibre.utils.config import JSONConfig
+        try:
+            # 直接创建一个新的 JSONConfig 实例，确保获取最新的配置
+            prefs = JSONConfig('plugins/ask_grok')
+            # 确保所有必要的键都存在
+            for key, default in self._default_prefs.items():
+                if key not in prefs:
+                    prefs[key] = default
+            return prefs
+        except Exception as e:
+            logger.error(f"Error loading preferences: {str(e)}")
+            return self._default_prefs
