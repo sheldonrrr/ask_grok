@@ -277,7 +277,7 @@ class ConfigDialog(QWidget):
         # 获取并清理 token
         token = self.auth_token_edit.text().strip()
         
-        # 检查 token 是否为空，如果为空则显示警告但允许保存
+        # 检查 token 是否为空
         if not token:
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.warning(
@@ -286,29 +286,30 @@ class ConfigDialog(QWidget):
                 self.i18n.get('auth_token_none_message', 'No auth token, Ask Grok can not work.')
             )
             # 不返回，继续保存空token
+        else:
+            # 只有 token 不为空时才进行格式和长度检查
+            # 检查 token 格式是否正确（以 xai- 或 Bearer xai- 开头）
+            normalized_token = token.lower()
+            if not (normalized_token.startswith('xai-') or 
+                   normalized_token.startswith('bearer xai-')):
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                    self.i18n.get('invalid_token_message', 'The token format is invalid. It should start with "xai-" or "Bearer xai-".')
+                )
+                return
             
-        # 检查 token 格式是否正确（以 xai- 或 Bearer xai- 开头）
-        normalized_token = token.lower()
-        if not (normalized_token.startswith('xai-') or 
-               normalized_token.startswith('bearer xai-')):
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self,
-                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
-                self.i18n.get('invalid_token_message', 'The token format is invalid. It should start with "xai-" or "Bearer xai-".')
-            )
-            return
-            
-        # 检查 token 长度是否足够（xai- 前缀 + 至少 60 个字符）
-        min_token_length = 64  # xai- 前缀 + 60 个字符
-        if len(token) < min_token_length:
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self,
-                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
-                self.i18n.get('token_too_short_message', 'The token is too short. Please check and enter the complete token.')
-            )
-            return
+            # 检查 token 长度是否足够（xai- 前缀 + 至少 60 个字符）
+            min_token_length = 64  # xai- 前缀 + 60 个字符
+            if len(token) < min_token_length:
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                    self.i18n.get('token_too_short_message', 'The token is too short. Please check and enter the complete token.')
+                )
+                return
         
         # 保存 API Token，不添加 Bearer 前缀
         prefs['auth_token'] = token
