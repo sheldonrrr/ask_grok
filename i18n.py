@@ -263,7 +263,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Godkendelsestoken påkrævet',
         'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].',
         'invalid_token_title': 'Ugyldigt token-format',
-        'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-".',
+        'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-" eller "Bearer xai-".',
         'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.'
     },
     
@@ -322,7 +322,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Authentifizierungstoken erforderlich',
         'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.',
         'invalid_token_title': 'Ungültiges Token-Format',
-        'invalid_token_message': 'Das Token-Format ist ungültig. Es sollte mit "xai-" beginnen.',
+        'invalid_token_message': 'Das Token-Format ist ungültig. Es sollte mit "xai-" oder "Bearer xai-" beginnen.',
         'token_too_short_message': 'Token ist zu kurz. Bitte prüfen und den ganzen Token eingeben.'
     },
     
@@ -382,7 +382,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Auth Token Required',
         'auth_token_required_message': 'Please set your Auth Token in the configuration dialog.',
         'invalid_token_title': 'Invalid Token Format',
-        'invalid_token_message': 'The token format is invalid. It should start with "xai-".',
+        'invalid_token_message': 'The token format is invalid. It should start with "xai-" or "Bearer xai-".',
         'token_too_short_message': 'Token is too short. Please check and enter the complete token.'
     },
     
@@ -441,7 +441,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Token de autenticación requerido',
         'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].',
         'invalid_token_title': 'Formato de token inválido',
-        'invalid_token_message': 'El formato del token es inválido. Debe comenzar con "xai-".',
+        'invalid_token_message': 'El formato del token es inválido. Debe comenzar con "xai-" o "Bearer xai-".',
         'token_too_short_message': 'Token es demasiado corto. Por favor, verifique y entre el token completo.'
     },
     
@@ -500,7 +500,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Todennustunniste vaaditaan',
         'auth_token_required_message': 'Aseta todennustunniste [Ask Grok] -asetusikkunassa.',
         'invalid_token_title': 'Virheellinen tunnisteen muoto',
-        'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-".',
+        'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-" tai "Bearer xai-".',
         'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.'
     },
     
@@ -559,7 +559,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Jeton d\'authentification requis',
         'auth_token_required_message': 'Veuillez définir votre jeton d\'authentification dans la boîte de dialogue de configuration [Ask Grok].',
         'invalid_token_title': 'Format de jeton non valide',
-        'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-".',
+        'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-" ou "Bearer xai-".',
         'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.'
     },
     
@@ -618,7 +618,7 @@ TRANSLATIONS = {
         'auth_token_required_title': '認証トークンが必要です',
         'auth_token_required_message': '認証トークンを設定してください。',
         'invalid_token_title': '無効なトークン形式',
-        'invalid_token_message': 'トークンの形式が無効です。"xai-" で始まる必要があります。',
+        'invalid_token_message': 'トークンの形式が無効です。"xai-"または"Bearer xai-"で始まる必要があります。',
         'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。'
     },
     
@@ -677,7 +677,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Auth Token vereist',
         'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].',
         'invalid_token_title': 'Ongeldig tokenformaat',
-        'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-".',
+        'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-" of "Bearer xai-".',
         'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.'
     },
     
@@ -736,7 +736,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Autorisasjonstoken kreves',
         'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].',
         'invalid_token_title': 'Ugyldig tokenformat',
-        'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-".',
+        'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-" eller "Bearer xai-".',
         'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.'
     },
     
@@ -795,7 +795,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Token de Autenticação Necessário',
         'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].',
         'invalid_token_title': 'Formato de Token Inválido',
-        'invalid_token_message': 'O formato do token é inválido. Deve começar com "xai-".',
+        'invalid_token_message': 'O formato do token é inválido. Deve começar com "xai-" ou "Bearer xai-".',
         'token_too_short_message': 'O token é muito curto. Verifique e insira o token completo.'
     },
     
@@ -854,7 +854,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Требуется токен аутентификации',
         'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].',
         'invalid_token_title': 'Неверный формат токена',
-        'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-".',
+        'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-" или "Bearer xai-".',
         'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.'
     },
     
@@ -913,7 +913,7 @@ TRANSLATIONS = {
         'auth_token_required_title': 'Tillgångstoken krävs',
         'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].',
         'invalid_token_title': 'Ogiltigt tokenformat',
-        'invalid_token_message': 'Tokenformatet är ogiltigt. Det måste börja med "xai-".',
+        'invalid_token_message': 'Tokenformatet är ogiltigt. Det måste börja med "xai-" eller "Bearer xai-".',
         'token_too_short_message': 'Token är för kort. Kontrollera och ange den fullständiga tokenen.'
     },
     
@@ -973,7 +973,7 @@ TRANSLATIONS = {
         'auth_token_required_title': '需要有授权令牌',
         'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。',
         'invalid_token_title': '令牌格式无效',
-        'invalid_token_message': '令牌格式无效，应以 "xai-" 开头。',
+        'invalid_token_message': '令牌格式无效，应以 "xai-" 或 "Bearer xai-" 开头。',
         'token_too_short_message': '令牌过短。请检查并输入完整令牌。'
     },
     
@@ -1033,7 +1033,7 @@ TRANSLATIONS = {
         'auth_token_required_title': '需要身份驗證令牌',
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
-        'invalid_token_message': '令牌格式無效，應以 "xai-" 開頭。',
+        'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。'
     },
     
@@ -1093,7 +1093,7 @@ TRANSLATIONS = {
         'auth_token_required_title': '需要身份驗證令牌',
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
-        'invalid_token_message': '令牌格式無效，應以 "xai-" 開頭。',
+        'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。'
     }
 }
