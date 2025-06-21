@@ -11,8 +11,7 @@ import logging
 # 添加一个 logger
 logger = logging.getLogger(__name__)
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from i18n import get_translation
+from calibre_plugins.ask_grok.i18n import get_translation
 
 class APIClient:
     """X.AI API 客户端"""
@@ -275,14 +274,20 @@ class APIClient:
             logger.error(error_message)
             raise Exception(error_message)
     
-    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
+    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
         """初始化 X.AI API 客户端
         
         Args:
-            auth_token: API 认证令牌
             api_base: API 基础 URL
             model: 使用的模型名称
         """
-        self.auth_token = auth_token
         self.api_base = api_base.rstrip('/')
         self.model = model
+        # 添加对 config 的引用
+        from calibre_plugins.ask_grok.config import prefs
+        self.prefs = prefs
+    
+    @property
+    def auth_token(self):
+        """动态获取最新的 auth_token"""
+        return self.prefs.get('auth_token', '')
