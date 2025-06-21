@@ -728,6 +728,21 @@ class AskDialog(QDialog):
             config_dialog.show()
             return False
             
+        # 检查 token 长度是否足够（xai- 前缀 + 至少 60 个字符）
+        min_token_length = 64  # xai- 前缀 + 60 个字符
+        if len(token) < min_token_length:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                self.i18n.get('token_too_short_message', 'The token is too short. Please check and enter the complete token.')
+            )
+            
+            # 创建并显示配置对话框
+            config_dialog = ConfigDialog(self)
+            config_dialog.show()
+            return False
+            
         return True
     
     def send_question(self):
