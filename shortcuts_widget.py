@@ -43,7 +43,9 @@ class ShortcutsWidget(QWidget):
         modifier = 'Command' if is_mac else 'Ctrl'
         
         # 获取当前语言的翻译
-        i18n = get_translation(get_prefs()['language'])
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        i18n = get_translation(language)
         
         # 定义快捷键列表
         shortcuts = [

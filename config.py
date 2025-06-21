@@ -92,7 +92,9 @@ class ConfigDialog(QWidget):
         QWidget.__init__(self, parent)
         
         # 获取当前语言的翻译
-        self.i18n = get_translation(get_prefs()['language'])
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 保存初始值
         self.initial_values = {}

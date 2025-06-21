@@ -124,7 +124,9 @@ class AskGrokPluginUI(InterfaceAction):
         
     def about_to_show_menu(self):
         # 更新菜单项的文本
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.config_action.setText(self.i18n['config_title'])
         self.ask_action.setText(self.i18n['menu_title'])
         self.about_action.setText(self.i18n['about_title'])
@@ -189,7 +191,9 @@ class AskGrokPluginUI(InterfaceAction):
             }
             
             # 更新文本
-            self.i18n = get_translation(get_prefs().get('language', 'en'))
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            self.i18n = get_translation(language)
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts_title'])
@@ -208,7 +212,9 @@ class AskGrokConfigWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -222,7 +228,9 @@ class AboutWidget(QWidget):
     """关于页面组件"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -240,7 +248,9 @@ class AboutWidget(QWidget):
         
     def update_content(self):
         """更新关于页面内容"""
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.about_label.setText(f"""
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
@@ -271,7 +281,9 @@ class TabDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
@@ -433,8 +445,9 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
-        from calibre_plugins.ask_grok.config import get_prefs
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
