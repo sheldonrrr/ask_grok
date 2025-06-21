@@ -7,11 +7,10 @@ import os
 import sys
 from typing import Generator, Optional, Dict, Any, Tuple
 import logging
+from .i18n import get_translation
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
-
-from calibre_plugins.ask_grok.i18n import get_translation
 
 class GrokAPIError(Exception):
     """自定义 API 错误异常类"""
@@ -38,13 +37,9 @@ class APIClient:
         Returns:
             tuple: (headers, data) 请求头和请求数据
         """
-        # 处理 token
-        token = self.auth_token
-        if not token or not token.strip():
-            raise GrokAPIError("Authentication token is empty", error_type="auth_error")
-            
-        token = token.strip()
         
+        token = self.auth_token
+
         # 记录原始 token 用于调试（脱敏处理）
         logger.debug(f"Token length: {len(token)}")
         
@@ -88,15 +83,16 @@ class APIClient:
         
         return headers, data
     
-    def ask(self, prompt: str, lang_code: str = 'en') -> str:
+    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
         """向 X.AI API 发送问题并获取回答（非流式）
         
         Args:
             prompt: 问题文本
             lang_code: 语言代码，用于获取相应的翻译文本
+            return_dict: 是否返回字典类型，默认为 False 返回字符串
             
         Returns:
-            str: API 返回的完整回答
+            Union[str, dict]: 默认返回字符串，当 return_dict=True 时返回解析后的字典
             
         Raises:
             GrokAPIError: 当 API 请求失败时抛出
@@ -158,9 +154,17 @@ class APIClient:
                 answer = result['choices'][0].get('message', {}).get('content', '')
                 if not answer:
                     raise GrokAPIError("API 返回了空的回答")
-                    
+                
                 logger.info(f"成功获取到回答，长度: {len(answer)} 字符")
                 logger.debug(f"回答内容 (前500字符): {answer[:500]}{'...' if len(answer) > 500 else ''}")
+                
+                if return_dict:
+                    try:
+                        import json
+                        return json.loads(answer)
+                    except json.JSONDecodeError:
+                        logger.warning("返回的内容不是有效的 JSON 格式，返回原始字符串")
+                        return answer
                 return answer
             else:
                 raise GrokAPIError("API 响应中未找到有效的回答")
@@ -219,61 +223,22 @@ class APIClient:
             
         finally:
             logger.info("=== API 请求处理完成 ===\n")
-        
-        try:
-            # 添加超时设置
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=60  # 增加到60秒
-            )
-            logger.info(f"Response status code: {response.status_code}")
-            logger.info(f"Response content: {response.text}")
-            
-            # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
-            
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
-    
-    def ask_stream(self, prompt: str, lang_code: str = 'en') -> str:
-        """向 X.AI API 发送问题并获取回答（流式请求，适用于短文本）
+
+    def ask_stream(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
+        """向 X.AI API 发送问题并获取回答（非流式请求，适用于短文本）
         
         Args:
             prompt: 问题文本
             lang_code: 语言代码，用于获取相应的翻译文本
+            return_dict: 是否返回字典类型，默认为 False 返回字符串
             
         Returns:
-            str: API 返回的完整回答
+            Union[str, dict]: 默认返回字符串，当 return_dict=True 时返回解析后的字典
         
         Note:
             这个方法不使用流式请求，更适合处理短文本和快速响应的场景
         """
         
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
         # 记录原始 token
         logger.debug(f"Original token: {self.auth_token}")
         

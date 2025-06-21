@@ -6,7 +6,7 @@ from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication,
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                            QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox,
-                           QTextBrowser)
+                           QTextBrowser, QSizePolicy)   
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
@@ -569,7 +569,8 @@ class AskDialog(QDialog):
         # 创建随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        self.suggest_button.setFixedWidth(80)  # 设置固定宽度
+        self.suggest_button.setMinimumWidth(80)
+        self.suggest_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
@@ -602,7 +603,8 @@ class AskDialog(QDialog):
         # 创建发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
-        self.send_button.setFixedWidth(80)  # 设置固定宽度
+        self.send_button.setMinimumWidth(80)
+        self.send_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
@@ -613,7 +615,7 @@ class AskDialog(QDialog):
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
 
-        # 设置按钮样式
+        # 设置发送按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
                 padding: 2px 8px;

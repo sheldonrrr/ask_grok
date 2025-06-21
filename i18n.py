@@ -10,49 +10,49 @@ from PyQt5.QtCore import Qt
 
 DEFAULT_TEMPLATES = {
     # 英语
-    'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
+    'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, book in language: {language}, Series: {series}, My question is: {query}',
     
     # 法语
-    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Date de publication: {pubdate}, Langue: {language}, Série: {series}, Ma question est: {query}',
+    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Date de publication: {pubdate}, livre en language: {language}, Série: {series}, Ma question est: {query}',
 
     # 德语
-    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
+    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Buchsprache: {language}, Serie: {series}, Meine Frage ist: {query}',
 
     # 西班牙语
-    'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
+    'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, libro en language: {language}, Serie: {series}, Mi pregunta es: {query}',
 
     # 葡萄牙语
-    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
+    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, livro em language: {language}, Série: {series}, Minha pergunta é: {query}',
 
     # 荷兰语
-    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
+    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, boek in language: {language}, Serie: {series}, Mijn vraag is: {query}',
 
     # 丹麦语
-    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
+    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, bog i language: {language}, Serie: {series}, Mit spørgsmål er: {query}',
     
     # 芬兰语
-    'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
+    'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, kirja i language: {language}, Sarja: {series}, Kysymykseni on: {query}',
     
     # 挪威语
-    'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
+    'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, bok på språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
     
     # 瑞典语
-    'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, Språk: {language}, Serie: {series}, Min fråga är: {query}',
+    'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, bok på språk: {language}, Serie: {series}, Min fråga är: {query}',
 
     # 俄语
-    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
+    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, книга на языке: {language}, Серия: {series}, Мой вопрос: {query}',
 
     # 日语
-    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
+    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語の本：{language}、シリーズ：{series}、質問：{query}',
     
     # 简体中文
-    'zh': '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
+    'zh': '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，书籍语言：{language}，系列：{series}，我的问题是：{query}',
     
     # 繁体中文
-    'zht': '關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
+    'zht': '關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，書本語言：{language}，系列：{series}，我的問題是：{query}',
     
     # 粤语
-    'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
+    'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，書本語言：{language}，系列：{series}，我問嘅係：{query}',
 }
 
 # 建议按钮提示词模板

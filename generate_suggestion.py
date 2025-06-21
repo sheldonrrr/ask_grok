@@ -120,7 +120,6 @@ class SuggestionHandler(QObject):
 
         # 确保 i18n 是字典
         if not isinstance(i18n, dict):
-            logger.warning(f"i18n 参数不是字典类型: {type(i18n)}")
             self.i18n = {}
         else:
             self.i18n = i18n
