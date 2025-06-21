@@ -277,15 +277,15 @@ class ConfigDialog(QWidget):
         # 获取并清理 token
         token = self.auth_token_edit.text().strip()
         
-        # 检查 token 是否为空
+        # 检查 token 是否为空，如果为空则显示警告但允许保存
         if not token:
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
                 self.i18n.get('auth_token_required_title', 'Auth Token Required'),
-                self.i18n.get('auth_token_required_message', 'Please set your Auth Token in the configuration dialog.')
+                self.i18n.get('auth_token_none_message', 'No auth token, Ask Grok can not work.')
             )
-            return
+            # 不返回，继续保存空token
             
         # 检查 token 格式是否正确（以 xai- 或 Bearer xai- 开头）
         normalized_token = token.lower()

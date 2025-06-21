@@ -208,6 +208,67 @@ Regler:
 
 # 语言包
 TRANSLATIONS = {
+    # 英语 (en)
+    'en': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Ask questions about a book using Grok',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Configuration',
+        'token_label': 'X.AI Authorization Token:',
+        'token_help': 'Format: Bearer xai-xxx or just xai-xxx (from <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Model:',
+        'model_placeholder': 'Default: grok-3-latest',
+        'template_label': 'Prompt Template:',
+        'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
+        'language_label': 'Interface Language:',
+        'send_button': 'Send',
+        'suggest_button': 'Suggest?',
+        'loading': 'Loading',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Error: ',
+        'about': 'About',
+        'about_title': 'About',
+        'base_url_label': 'API Base URL:',
+        'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'input_placeholder': 'Type your question here...',
+        'response_placeholder': 'Response will appear here...',
+        'metadata_title': 'Title',
+        'metadata_authors': 'Author',
+        'metadata_publisher': 'Publisher',
+        'metadata_pubdate': 'Publication Date',
+        'metadata_language': 'Language',
+        'metadata_series': 'Series',
+        'menu_title': 'Ask',
+        'menu_ask_grok': 'Ask Grok',
+        'ok_button': 'OK',
+        'save_button': 'Save',
+        'save_success': 'Settings saved',
+        'loading_text': 'Asking',
+        'shortcuts_tab': 'Shortcuts',
+        'shortcut_open_dialog': 'Open Ask Dialog',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Shortcuts',
+        'loading':'Loading',
+        'network_error': 'Network error, please check your connection',
+        'request_timeout': 'Request took too long, automatically terminated',
+        'request_failed': 'Request failed, please try again later',
+        'sending': 'Sending...',
+        'requesting': 'Requesting, please wait',
+        'formatting': 'Request successful, formatting',
+        'no_metadata': 'No metadata available',
+        'metadata': 'Metadata',
+        'no_series': 'No Series',
+        'unknown': 'Unknown',
+        'question_too_long':'Question is too long, cannot be answered',
+        'auth_token_required_title': 'Auth Token Required',
+        'auth_token_required_message': 'Please set your Auth Token in the configuration dialog.',
+        'invalid_token_title': 'Invalid Token Format',
+        'invalid_token_message': 'The token format is invalid. It should start with "xai-" or "Bearer xai-".',
+        'token_too_short_message': 'Token is too short. Please check and enter the complete token.',
+        'auth_token_none_message': 'No auth token, Ask Grok can not work.'
+    },
+
     # 丹麦语 (da)
     'da': {
         'plugin_name': 'Ask Grok',
@@ -264,7 +325,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].',
         'invalid_token_title': 'Ugyldigt token-format',
         'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-" eller "Bearer xai-".',
-        'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.'
+        'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.',
+        'auth_token_none_message': 'Ingen godkendelsestoken, Ask Grok kan ikke virke.'
     },
     
     # 德语 (de)
@@ -323,67 +385,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.',
         'invalid_token_title': 'Ungültiges Token-Format',
         'invalid_token_message': 'Das Token-Format ist ungültig. Es sollte mit "xai-" oder "Bearer xai-" beginnen.',
-        'token_too_short_message': 'Token ist zu kurz. Bitte prüfen und den ganzen Token eingeben.'
-    },
-    
-    # 英语 (en)
-    'en': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Ask questions about a book using Grok',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Configuration',
-        'token_label': 'X.AI Authorization Token:',
-        'token_help': 'Format: Bearer xai-xxx or just xai-xxx (from <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Model:',
-        'model_placeholder': 'Default: grok-3-latest',
-        'template_label': 'Prompt Template:',
-        'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
-        'language_label': 'Interface Language:',
-        'send_button': 'Send',
-        'suggest_button': 'Suggest?',
-        'loading': 'Loading',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Error: ',
-        'about': 'About',
-        'about_title': 'About',
-        'base_url_label': 'API Base URL:',
-        'base_url_placeholder': 'Default: https://api.x.ai/v1',
-        'input_placeholder': 'Type your question here...',
-        'response_placeholder': 'Response will appear here...',
-        'metadata_title': 'Title',
-        'metadata_authors': 'Author',
-        'metadata_publisher': 'Publisher',
-        'metadata_pubdate': 'Publication Date',
-        'metadata_language': 'Language',
-        'metadata_series': 'Series',
-        'menu_title': 'Ask',
-        'menu_ask_grok': 'Ask Grok',
-        'ok_button': 'OK',
-        'save_button': 'Save',
-        'save_success': 'Settings saved',
-        'loading_text': 'Asking',
-        'shortcuts_tab': 'Shortcuts',
-        'shortcut_open_dialog': 'Open Ask Dialog',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Shortcuts',
-        'loading':'Loading',
-        'network_error': 'Network error, please check your connection',
-        'request_timeout': 'Request took too long, automatically terminated',
-        'request_failed': 'Request failed, please try again later',
-        'sending': 'Sending...',
-        'requesting': 'Requesting, please wait',
-        'formatting': 'Request successful, formatting',
-        'no_metadata': 'No metadata available',
-        'metadata': 'Metadata',
-        'no_series': 'No Series',
-        'unknown': 'Unknown',
-        'question_too_long':'Question is too long, cannot be answered',
-        'auth_token_required_title': 'Auth Token Required',
-        'auth_token_required_message': 'Please set your Auth Token in the configuration dialog.',
-        'invalid_token_title': 'Invalid Token Format',
-        'invalid_token_message': 'The token format is invalid. It should start with "xai-" or "Bearer xai-".',
-        'token_too_short_message': 'Token is too short. Please check and enter the complete token.'
+        'token_too_short_message': 'Token ist zu kurz. Bitte prüfen und den ganzen Token eingeben.',
+        'auth_token_none_message': 'Kein Authentifizierungstoken, Ask Grok kann nicht funktionieren.'
     },
     
     # 西班牙语 (es)
@@ -442,7 +445,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].',
         'invalid_token_title': 'Formato de token inválido',
         'invalid_token_message': 'El formato del token es inválido. Debe comenzar con "xai-" o "Bearer xai-".',
-        'token_too_short_message': 'Token es demasiado corto. Por favor, verifique y entre el token completo.'
+        'token_too_short_message': 'Token es demasiado corto. Por favor, verifique y entre el token completo.',
+        'auth_token_none_message': 'No hay token de autenticación, Ask Grok no puede funcionar.'
     },
     
     # 芬兰语 (fi)
@@ -501,7 +505,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Aseta todennustunniste [Ask Grok] -asetusikkunassa.',
         'invalid_token_title': 'Virheellinen tunnisteen muoto',
         'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-" tai "Bearer xai-".',
-        'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.'
+        'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.',
+        'auth_token_none_message': 'Tunnistetta ei ole asetettu, Ask Grok ei toimi.'
     },
     
     # 法语 (fr)
@@ -560,7 +565,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Veuillez définir votre jeton d\'authentification dans la boîte de dialogue de configuration [Ask Grok].',
         'invalid_token_title': 'Format de jeton non valide',
         'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-" ou "Bearer xai-".',
-        'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.'
+        'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.',
+        'auth_token_none_message': 'Aucun jeton d\'authentification, Ask Grok ne peut pas fonctionner.'
     },
     
     # 日语 (ja)
@@ -619,7 +625,8 @@ TRANSLATIONS = {
         'auth_token_required_message': '認証トークンを設定してください。',
         'invalid_token_title': '無効なトークン形式',
         'invalid_token_message': 'トークンの形式が無効です。"xai-"または"Bearer xai-"で始まる必要があります。',
-        'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。'
+        'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。',
+        'auth_token_none_message': '認証トークンがありません、Ask Grokは動作しません。'
     },
     
     # 荷兰语 (nl)
@@ -678,7 +685,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].',
         'invalid_token_title': 'Ongeldig tokenformaat',
         'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-" of "Bearer xai-".',
-        'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.'
+        'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.',
+        'auth_token_none_message': 'Auth Token is niet ingesteld, Ask Grok kan niet werken.'
     },
     
     # 挪威语 (no)
@@ -737,7 +745,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].',
         'invalid_token_title': 'Ugyldig tokenformat',
         'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-" eller "Bearer xai-".',
-        'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.'
+        'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.',
+        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok fungerar inte.'
     },
     
     # 葡萄牙语 (pt)
@@ -796,7 +805,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].',
         'invalid_token_title': 'Formato de Token Inválido',
         'invalid_token_message': 'O formato do token é inválido. Deve começar com "xai-" ou "Bearer xai-".',
-        'token_too_short_message': 'O token é muito curto. Verifique e insira o token completo.'
+        'token_too_short_message': 'O token é muito curto. Verifique e insira o token completo.',
+        'auth_token_none_message': 'Token de autenticação não definido, Ask Grok não pode funcionar.'
     },
     
     # 俄语 (ru)
@@ -855,7 +865,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].',
         'invalid_token_title': 'Неверный формат токена',
         'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-" или "Bearer xai-".',
-        'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.'
+        'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.',
+        'auth_token_none_message': 'Токен аутентификации не установлен, Ask Grok не может работать.'
     },
     
     # 瑞典语 (sv)
@@ -914,7 +925,8 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].',
         'invalid_token_title': 'Ogiltigt tokenformat',
         'invalid_token_message': 'Tokenformatet är ogiltigt. Det måste börja med "xai-" eller "Bearer xai-".',
-        'token_too_short_message': 'Token är för kort. Kontrollera och ange den fullständiga tokenen.'
+        'token_too_short_message': 'Token är för kort. Kontrollera och ange den fullständiga tokenen.',
+        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok kan inte fungera.'
     },
     
     # 简体中文 (zh)
@@ -974,7 +986,8 @@ TRANSLATIONS = {
         'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。',
         'invalid_token_title': '令牌格式无效',
         'invalid_token_message': '令牌格式无效，应以 "xai-" 或 "Bearer xai-" 开头。',
-        'token_too_short_message': '令牌过短。请检查并输入完整令牌。'
+        'token_too_short_message': '令牌过短。请检查并输入完整令牌。',
+        'auth_token_none_message': '授权令牌未设置，Ask Grok 无法工作。'
     },
     
     # 繁体中文 (zht)
@@ -1034,7 +1047,8 @@ TRANSLATIONS = {
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
         'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
-        'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。'
+        'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
+        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。'
     },
     
     # 粤语 (yue)
@@ -1094,7 +1108,8 @@ TRANSLATIONS = {
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
         'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
-        'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。'
+        'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
+        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。'
     }
 }
 
