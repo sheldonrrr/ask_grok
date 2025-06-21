@@ -101,6 +101,23 @@ class ConfigDialog(QWidget):
         self.setup_ui()
         self.load_initial_values()
         
+    def get_auth_token_without_bearer(self, token):
+        """从 token 中移除 'Bearer ' 前缀"""
+        if not token:
+            return ''
+        if token.startswith('Bearer '):
+            return token[7:].strip()
+        return token.strip()
+        
+    def get_auth_token_with_bearer(self, token):
+        """确保 token 有 'Bearer ' 前缀"""
+        if not token:
+            return ''
+        token = token.strip()
+        if not token.startswith('Bearer '):
+            return f'Bearer {token}'
+        return token
+        
     def setup_ui(self):
         # 设置窗口属性
         self.setMinimumWidth(400)
@@ -133,7 +150,11 @@ class ConfigDialog(QWidget):
         layout.addWidget(self.key_help)
         
         self.auth_token_edit = QLineEdit(self)
-        self.auth_token_edit.setText(get_prefs()['auth_token'])
+        # 显示时移除 Bearer 前缀
+        auth_token = get_prefs()['auth_token']
+        if auth_token.startswith('Bearer '):
+            auth_token = auth_token[7:].strip()
+        self.auth_token_edit.setText(auth_token)
         self.auth_token_edit.setEchoMode(QLineEdit.Password)  # 设置为密码模式，显示掩码
         layout.addWidget(self.auth_token_edit)
         
@@ -253,9 +274,8 @@ class ConfigDialog(QWidget):
         
     def save_settings(self):
         """保存设置"""
-        # 保存 API Token，确保格式正确
-        token = self.auth_token_edit.text().replace('Bearer', '').strip()
-        prefs['auth_token'] = f'Bearer {token}'
+        # 保存 API Token，不添加 Bearer 前缀
+        prefs['auth_token'] = self.auth_token_edit.text().strip()
             
         # 保存其他设置
         prefs['model'] = self.model_edit.text().strip()

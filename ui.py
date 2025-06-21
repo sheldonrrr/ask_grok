@@ -696,7 +696,11 @@ class AskDialog(QDialog):
         """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
         
-        if not get_prefs().get('auth_token'):
+        # 获取 token 并移除首尾空格
+        token = (get_prefs().get('auth_token') or '').strip()
+        
+        # 检查 token 是否为空
+        if not token:
             # 显示提示信息
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
@@ -709,6 +713,21 @@ class AskDialog(QDialog):
             config_dialog = ConfigDialog(self)
             config_dialog.show()
             return False
+            
+        # 检查 token 格式是否正确（以 xai- 开头）
+        if not (token.lower().startswith('xai-') or token.lower().startswith('bearer xai-')):
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('invalid_token_title', 'Invalid Token Format'),
+                self.i18n.get('invalid_token_message', 'The token format is invalid. It should start with "xai-".')
+            )
+            
+            # 创建并显示配置对话框
+            config_dialog = ConfigDialog(self)
+            config_dialog.show()
+            return False
+            
         return True
     
     def send_question(self):

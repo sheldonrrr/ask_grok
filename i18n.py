@@ -261,7 +261,9 @@ TRANSLATIONS = {
         'unknown': 'Ukendt',
         'question_too_long':'Spørgsmål for langt, kan ikke svare',
         'auth_token_required_title': 'Godkendelsestoken påkrævet',
-        'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].'
+        'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].',
+        'invalid_token_title': 'Ugyldigt token-format',
+        'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-".'
     },
     
     # 德语 (de)
@@ -317,7 +319,9 @@ TRANSLATIONS = {
         'unknown': 'Unbekannt',
         'question_too_long':'Frage zu lang, kann nicht beantworten',
         'auth_token_required_title': 'Authentifizierungstoken erforderlich',
-        'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.'
+        'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.',
+        'invalid_token_title': 'Ungültiges Token-Format',
+        'invalid_token_message': 'Das Token-Format ist ungültig. Es sollte mit "xai-" beginnen.'
     },
     
     # 英语 (en)
@@ -374,7 +378,9 @@ TRANSLATIONS = {
         'unknown': 'Unknown',
         'question_too_long':'Question is too long, cannot be answered',
         'auth_token_required_title': 'Auth Token Required',
-        'auth_token_required_message': 'Please set your Auth Token in [Ask Grok] configuration dialog.'
+        'auth_token_required_message': 'Please set your Auth Token in the configuration dialog.',
+        'invalid_token_title': 'Invalid Token Format',
+        'invalid_token_message': 'The token format is invalid. It should start with "xai-".'
     },
     
     # 西班牙语 (es)
@@ -430,7 +436,9 @@ TRANSLATIONS = {
         'unknown': 'Desconocido',
         'question_too_long':'La pregunta es demasiado larga, no se puede responder',
         'auth_token_required_title': 'Token de autenticación requerido',
-        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
+        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].',
+        'invalid_token_title': 'Formato de token inválido',
+        'invalid_token_message': 'El formato del token es inválido. Debe comenzar con "xai-".'
     },
     
     # 芬兰语 (fi)
@@ -485,8 +493,10 @@ TRANSLATIONS = {
         'no_series': 'Ei sarjaa',
         'unknown': 'Tuntematon',
         'question_too_long':'Kysymys on liian pitkä, ei voida vastata',
-        'auth_token_required_title': 'Token de autenticación requerido',
-        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
+        'auth_token_required_title': 'Todennustunniste vaaditaan',
+        'auth_token_required_message': 'Aseta todennustunniste [Ask Grok] -asetusikkunassa.',
+        'invalid_token_title': 'Virheellinen tunnisteen muoto',
+        'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-".'
     },
     
     # 法语 (fr)
@@ -541,8 +551,10 @@ TRANSLATIONS = {
         'no_series': 'Pas de série',
         'unknown': 'Inconnu',
         'question_too_long':'La question est trop longue, impossible de répondre',
-        'auth_token_required_title': 'Token de autenticación requerido',
-        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
+        'auth_token_required_title': 'Jeton d\'authentification requis',
+        'auth_token_required_message': 'Veuillez définir votre jeton d\'authentification dans la boîte de dialogue de configuration [Ask Grok].',
+        'invalid_token_title': 'Format de jeton non valide',
+        'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-".'
     },
     
     # 日语 (ja)
@@ -598,7 +610,9 @@ TRANSLATIONS = {
         'unknown': '不明',
         'question_too_long':'問題が長すぎ、答えられない',
         'auth_token_required_title': '認証トークンが必要です',
-        'auth_token_required_message': '認証トークンを設定してください。'
+        'auth_token_required_message': '認証トークンを設定してください。',
+        'invalid_token_title': '無効なトークン形式',
+        'invalid_token_message': 'トークンの形式が無効です。"xai-" で始まる必要があります。'
     },
     
     # 荷兰语 (nl)
@@ -654,7 +668,9 @@ TRANSLATIONS = {
         'unknown': 'Onbekend',
         'question_too_long':'Vraag is te lang, kan niet worden beantwoord',
         'auth_token_required_title': 'Auth Token vereist',
-        'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].'
+        'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].',
+        'invalid_token_title': 'Ongeldig tokenformaat',
+        'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-".'
     },
     
     # 挪威语 (no)
@@ -710,7 +726,9 @@ TRANSLATIONS = {
         'unknown': 'Ukjent',
         'question_too_long':'Spørsmålet er for langt, kan ikke besvares',
         'auth_token_required_title': 'Autorisasjonstoken kreves',
-        'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].'
+        'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].',
+        'invalid_token_title': 'Ugyldig tokenformat',
+        'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-".'
     },
     
     # 葡萄牙语 (pt)
@@ -766,7 +784,9 @@ TRANSLATIONS = {
         'unknown': 'Desconhecido',
         'question_too_long':'A pergunta é muito longa, não pode ser respondida',
         'auth_token_required_title': 'Token de Autenticação Necessário',
-        'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].'
+        'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].',
+        'invalid_token_title': 'Formato de Token Inválido',
+        'invalid_token_message': 'O formato do token é inválido. Deve começar com "xai-".'
     },
     
     # 俄语 (ru)
@@ -822,7 +842,9 @@ TRANSLATIONS = {
         'unknown': 'Неизвестно',
         'question_too_long':'Вопрос слишком длинный, не может быть обработан',
         'auth_token_required_title': 'Требуется токен аутентификации',
-        'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].'
+        'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].',
+        'invalid_token_title': 'Неверный формат токена',
+        'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-".'
     },
     
     # 瑞典语 (sv)
@@ -878,7 +900,9 @@ TRANSLATIONS = {
         'unknown': 'Okänd',
         'question_too_long':'Frågan är för lång, kan inte besvaras',
         'auth_token_required_title': 'Tillgångstoken krävs',
-        'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].'
+        'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].',
+        'invalid_token_title': 'Ogiltigt tokenformat',
+        'invalid_token_message': 'Tokenformatet är ogiltigt. Det måste börja med "xai-".'
     },
     
     # 简体中文 (zh)
@@ -935,7 +959,9 @@ TRANSLATIONS = {
         'unknown': '未知',
         'question_too_long':'问题过长，无法回答',
         'auth_token_required_title': '需要有授权令牌',
-        'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。'
+        'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。',
+        'invalid_token_title': '令牌格式无效',
+        'invalid_token_message': '令牌格式无效，应以 "xai-" 开头。'
     },
     
     # 繁体中文 (zht)
@@ -992,7 +1018,9 @@ TRANSLATIONS = {
         'unknown': '未知',
         'question_too_long':'問題過長，無法回答',
         'auth_token_required_title': '需要身份驗證令牌',
-        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。'
+        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
+        'invalid_token_title': '令牌格式無效',
+        'invalid_token_message': '令牌格式無效，應以 "xai-" 開頭。'
     },
     
     # 粤语 (yue)
@@ -1049,7 +1077,9 @@ TRANSLATIONS = {
         'unknown': '未知',
         'question_too_long':'問題過長，無法回答',
         'auth_token_required_title': '需要身份驗證令牌',
-        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。'
+        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
+        'invalid_token_title': '令牌格式無效',
+        'invalid_token_message': '令牌格式無效，應以 "xai-" 開頭。'
     }
 }
 

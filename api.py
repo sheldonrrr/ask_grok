@@ -27,20 +27,26 @@ class APIClient:
         """
         # 处理 token
         token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
+        token = token.strip()  # 移除首尾空白字符
         
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]
+        # 记录原始 token 用于调试
+        logger.debug(f"原始 Token: {token}")
+        
+        # 确保 token 不为空
+        if not token:
+            raise ValueError("Authentication token is empty")
             
-        # 确保 token 以 xai- 开头
-        if not token.startswith('xai-'):
+        # 确保 token 以 xai- 开头（不区分大小写）
+        if not token.lower().startswith('xai-') and not token.lower().startswith('bearer xai-'):
             logger.warning(f"Token format warning: token should start with 'xai-', current token: {token}")
+            
+        # 确保 token 有 Bearer 前缀
+        if not token.startswith('Bearer '):
+            token = f'Bearer {token}'
             
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}"
+            "Authorization": token
         }
         
         data = {
@@ -78,25 +84,11 @@ class APIClient:
         logger.info(f"请求语言代码: {lang_code}")
         logger.info(f"原始提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
         
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
-        # 记录原始 token
-        logger.debug(f"原始 Token: {self.auth_token}")
-        
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        logger.debug(f"移除空白字符后: {token}")
-        
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
-        logger.debug(f"移除 BOM 后: {token}")
-        
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]  # 移除 'Bearer'
-            logger.debug(f"移除 Bearer 前缀后: {token}")
-        
+        # 确保 token 不为空
+        if not self.auth_token or not self.auth_token.strip():
+            logger.error("Error: Authentication token is empty")
+            raise ValueError("Authentication token is not set")
+            
         # 准备请求
         logger.info("准备请求头和请求数据...")
         headers, data = self._prepare_request(prompt)
