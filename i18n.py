@@ -259,7 +259,9 @@ TRANSLATIONS = {
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
         'unknown': 'Ukendt',
-        'question_too_long':'Spørgsmål for langt, kan ikke svare'
+        'question_too_long':'Spørgsmål for langt, kan ikke svare',
+        'auth_token_required_title': 'Godkendelsestoken påkrævet',
+        'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].'
     },
     
     # 德语 (de)
@@ -313,7 +315,9 @@ TRANSLATIONS = {
         'metadata': 'Metadaten',
         'no_series': 'Keine Serie',
         'unknown': 'Unbekannt',
-        'question_too_long':'Frage zu lang, kann nicht beantworten'
+        'question_too_long':'Frage zu lang, kann nicht beantworten',
+        'auth_token_required_title': 'Authentifizierungstoken erforderlich',
+        'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.'
     },
     
     # 英语 (en)
@@ -368,7 +372,9 @@ TRANSLATIONS = {
         'metadata': 'Metadata',
         'no_series': 'No Series',
         'unknown': 'Unknown',
-        'question_too_long':'Question is too long, cannot be answered'
+        'question_too_long':'Question is too long, cannot be answered',
+        'auth_token_required_title': 'Auth Token Required',
+        'auth_token_required_message': 'Please set your Auth Token in [Ask Grok] configuration dialog.'
     },
     
     # 西班牙语 (es)
@@ -422,7 +428,9 @@ TRANSLATIONS = {
         'metadata': 'Metadatos',
         'no_series': 'Sin serie',
         'unknown': 'Desconocido',
-        'question_too_long':'La pregunta es demasiado larga, no se puede responder'
+        'question_too_long':'La pregunta es demasiado larga, no se puede responder',
+        'auth_token_required_title': 'Token de autenticación requerido',
+        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
     },
     
     # 芬兰语 (fi)
@@ -476,7 +484,9 @@ TRANSLATIONS = {
         'metadata': 'Metatieto',
         'no_series': 'Ei sarjaa',
         'unknown': 'Tuntematon',
-        'question_too_long':'Kysymys on liian pitkä, ei voida vastata'
+        'question_too_long':'Kysymys on liian pitkä, ei voida vastata',
+        'auth_token_required_title': 'Token de autenticación requerido',
+        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
     },
     
     # 法语 (fr)
@@ -530,7 +540,9 @@ TRANSLATIONS = {
         'metadata': 'Métadonnées',
         'no_series': 'Pas de série',
         'unknown': 'Inconnu',
-        'question_too_long':'La question est trop longue, impossible de répondre'
+        'question_too_long':'La question est trop longue, impossible de répondre',
+        'auth_token_required_title': 'Token de autenticación requerido',
+        'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].'
     },
     
     # 日语 (ja)
@@ -584,7 +596,9 @@ TRANSLATIONS = {
         'metadata': 'メタデータ',
         'no_series': 'シリーズなし',
         'unknown': '不明',
-        'question_too_long':'問題が長すぎ、答えられない'
+        'question_too_long':'問題が長すぎ、答えられない',
+        'auth_token_required_title': '認証トークンが必要です',
+        'auth_token_required_message': '認証トークンを設定してください。'
     },
     
     # 荷兰语 (nl)
@@ -638,7 +652,9 @@ TRANSLATIONS = {
         'metadata': 'Metagegevens',
         'no_series': 'Geen serie',
         'unknown': 'Onbekend',
-        'question_too_long':'Vraag is te lang, kan niet worden beantwoord'
+        'question_too_long':'Vraag is te lang, kan niet worden beantwoord',
+        'auth_token_required_title': 'Auth Token vereist',
+        'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].'
     },
     
     # 挪威语 (no)
@@ -692,7 +708,9 @@ TRANSLATIONS = {
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
         'unknown': 'Ukjent',
-        'question_too_long':'Spørsmålet er for langt, kan ikke besvares'
+        'question_too_long':'Spørsmålet er for langt, kan ikke besvares',
+        'auth_token_required_title': 'Autorisasjonstoken kreves',
+        'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].'
     },
     
     # 葡萄牙语 (pt)
@@ -746,7 +764,9 @@ TRANSLATIONS = {
         'metadata': 'Metadados',
         'no_series': 'Sem série',
         'unknown': 'Desconhecido',
-        'question_too_long':'A pergunta é muito longa, não pode ser respondida'
+        'question_too_long':'A pergunta é muito longa, não pode ser respondida',
+        'auth_token_required_title': 'Token de Autenticação Necessário',
+        'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].'
     },
     
     # 俄语 (ru)
@@ -800,7 +820,9 @@ TRANSLATIONS = {
         'metadata': 'Метаданные',
         'no_series': 'Нет серии',
         'unknown': 'Неизвестно',
-        'question_too_long':'Вопрос слишком длинный, не может быть обработан'
+        'question_too_long':'Вопрос слишком длинный, не может быть обработан',
+        'auth_token_required_title': 'Требуется токен аутентификации',
+        'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].'
     },
     
     # 瑞典语 (sv)
@@ -854,7 +876,9 @@ TRANSLATIONS = {
         'metadata': 'Metadata',
         'no_series': 'Ingen serie',
         'unknown': 'Okänd',
-        'question_too_long':'Frågan är för lång, kan inte besvaras'
+        'question_too_long':'Frågan är för lång, kan inte besvaras',
+        'auth_token_required_title': 'Tillgångstoken krävs',
+        'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].'
     },
     
     # 简体中文 (zh)
@@ -909,7 +933,9 @@ TRANSLATIONS = {
         'metadata': '元数据',
         'no_series': '暂无',
         'unknown': '未知',
-        'question_too_long':'问题过长，无法回答'
+        'question_too_long':'问题过长，无法回答',
+        'auth_token_required_title': '需要有授权令牌',
+        'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。'
     },
     
     # 繁体中文 (zht)
@@ -964,7 +990,9 @@ TRANSLATIONS = {
         'metadata': '元資料',
         'no_series': '暫無',
         'unknown': '未知',
-        'question_too_long':'問題過長，無法回答'
+        'question_too_long':'問題過長，無法回答',
+        'auth_token_required_title': '需要身份驗證令牌',
+        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。'
     },
     
     # 粤语 (yue)
@@ -1019,7 +1047,9 @@ TRANSLATIONS = {
         'metadata': '元資料',
         'no_series': '冇系列',
         'unknown': '未知',
-        'question_too_long':'問題過長，無法回答'
+        'question_too_long':'問題過長，無法回答',
+        'auth_token_required_title': '需要身份驗證令牌',
+        'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。'
     }
 }
 
