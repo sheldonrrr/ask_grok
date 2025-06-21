@@ -99,7 +99,8 @@ class ResponseHandler(QObject):
         except Exception as e:
             self._stop_loading_timer()
             self._is_loading = False  # 停止加载
-            self.signal.error_occurred.emit(str(e))
+            # 直接传递异常对象，而不是字符串
+            self.signal.error_occurred.emit(e)
         finally:
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
@@ -195,27 +196,87 @@ class ResponseHandler(QObject):
     def _show_request_failed(self):
         """显示请求失败状态"""
         if self.response_area and not self._response_text:
-            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please check your network'))
+            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please try again later'))
 
     def handle_error(self, error_msg):
-        """处理错误信息"""
+        """处理错误信息
+        
+        Args:
+            error_msg: 错误信息，可以是字符串或异常对象
+        """
         self._stop_loading_timer()
-        error_prefix = self.i18n.get('error_prefix', 'Error: ')
-        request_failed = self.i18n.get('request_failed', 'Request failed, please check your network')
+        
+        # 默认错误信息
+        error_prefix = self.i18n.get('error', 'Error: ')
+        request_failed = self.i18n.get('request_failed', 'Request failed, please try again later')
+        invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token in settings.')
+        
+        # 检查错误类型
+        if hasattr(error_msg, 'error_type'):
+            if error_msg.error_type == "invalid_token":
+                # 认证错误
+                error_html = f"""
+                    <div style="
+                        color: palette(text);
+                        font-size: 13px;
+                        margin: 15px 0;
+                        padding: 10px;
+                        background-color: #ffebee;
+                        border-radius: 4px;
+                        border-left: 4px solid #d32f2f;
+                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+                    ">
+                        <strong>{error_prefix}{invalid_token}</strong><br><br>
+                        {str(error_msg)}
+                    </div>
+                    <div style="margin-top: 15px; color: #666; font-size: 12px;">
+                        {self.i18n.get('invalid_token', 'Please check your API token validable in the plugin settings.') if hasattr(self.i18n, 'get') else 'Please check your API token in the plugin settings.'}
+                    </div>
+                """
+            else:
+                # 其他API错误
+                error_html = f"""
+                    <div style="
+                        color: palette(text);
+                        font-size: 13px;
+                        margin: 15px 0;
+                        padding: 10px;
+                        background-color: #ffebee;
+                        border-radius: 4px;
+                        border-left: 4px solid #d32f2f;
+                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+                    ">
+                        <strong>{error_prefix}{request_failed}</strong><br><br>
+                        {str(error_msg)}
+                    </div>
+                """
+        else:
+            # 其他类型的错误
+            error_html = f"""
+                <div style="
+                    color: palette(text);
+                    font-size: 13px;
+                    margin: 15px 0;
+                    padding: 10px;
+                    background-color: #ffebee;
+                    border-radius: 4px;
+                    border-left: 4px solid #d32f2f;
+                    font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+                ">
+                    <strong>{error_prefix}{request_failed}</strong><br><br>
+                    {str(error_msg)}
+                </div>
+            """
         
         # 显示错误信息
-        self.response_area.setHtml(f"""
-            <div style="
-                color: #cc0000;
-                font-size: 13px;
-                margin-top: 10px;
-                font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            ">
-                {error_prefix}{request_failed}<br>
-                {error_msg}
-            </div>
-        """)
+        self.response_area.setHtml(error_html)
+        
+        # 恢复按钮状态
         self.send_button.setEnabled(True)
+        if hasattr(self, 'i18n') and self.i18n is not None:
+            self.send_button.setText(self.i18n.get('send_button', 'Send'))
+        else:
+            self.send_button.setText('Send')
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""

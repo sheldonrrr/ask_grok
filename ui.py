@@ -32,7 +32,7 @@ import calibre_plugins.ask_grok.ui as ask_grok_plugin
 plugin_instance = None
 
 def get_suggestion_template(lang_code):
-    """获取指定语言的建议提示词模板"""
+    """获取指定语言的随机问题提示词模板"""
     return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
 
 class AskGrokPluginUI(InterfaceAction):
@@ -342,7 +342,9 @@ class TabDialog(QDialog):
         ask_grok_plugin.plugin_instance.update_menu_texts()
         
         # 更新 response_handler 和 suggestion_handler 的 i18n 对象
-        if hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and ask_grok_plugin.plugin_instance.ask_dialog:
+        if (hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
+            ask_grok_plugin.plugin_instance.ask_dialog and
+            hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler')):
             ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
             ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
@@ -449,7 +451,8 @@ class AskDialog(QDialog):
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
-        self.suggestion_handler = SuggestionHandler(self)
+        # 确保 SuggestionHandler 正确初始化
+        self.suggestion_handler = SuggestionHandler(parent=self)
         
         # 读取保存窗口的大小
         prefs = get_prefs()
@@ -466,7 +469,7 @@ class AskDialog(QDialog):
         
         # 设置处理器
         self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
-        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.i18n, self.api)
+        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
@@ -529,14 +532,14 @@ class AskDialog(QDialog):
         if self.book_info.publisher:
             metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
         if self.book_info.pubdate:
-            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year}")
+            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year}")  
         if self.book_info.language:
             metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
         if getattr(self.book_info, 'series', None):
             metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}")
         
         if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
-            metadata_info.append(f"{self.i18n.get('no_metadata', '暂无 Metadata')}.")
+            metadata_info.append(f"{self.i18n.get('no_metadata', 'No metadata available')}.")
         
         info_area.setHtml("<br>".join(metadata_info))
         layout.addWidget(info_area)
@@ -563,12 +566,12 @@ class AskDialog(QDialog):
         # 创建操作区域
         action_layout = QHBoxLayout()
         
-        # 创建建议按钮
+        # 创建随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
         self.suggest_button.setFixedWidth(80)  # 设置固定宽度
         
-        # 创建建议动作和快捷键
+        # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
         self.suggest_action.setShortcut(QKeySequence("Ctrl+Shift+S" if not sys.platform == 'darwin' else "Cmd+Shift+S"))
 
@@ -686,7 +689,7 @@ class AskDialog(QDialog):
         layout.addWidget(self.response_area)
     
     def generate_suggestion(self):
-        """生成问题建议"""
+        """生成问题随机问题"""
         if not self.api:
             return
             
@@ -696,11 +699,12 @@ class AskDialog(QDialog):
         """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
         
-        # 获取 token 并移除首尾空格
-        token = (get_prefs().get('auth_token') or '').strip()
+        # 从配置中获取 token
+        prefs = get_prefs()
+        token = prefs.get('auth_token', '') if hasattr(prefs, 'get') and callable(prefs.get) else ''
         
         # 检查 token 是否为空
-        if not token:
+        if not token or not token.strip():
             # 显示提示信息
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
@@ -710,69 +714,64 @@ class AskDialog(QDialog):
             )
             
             # 创建并显示配置对话框
-            config_dialog = ConfigDialog(self)
+            config_dialog = ConfigDialog(self.gui)  # 使用 self.gui 而不是 self
             config_dialog.show()
             return False
-            
+        
         return True
-    
+
     def send_question(self):
-        # 首先检查 API 和 auth token
-        if not self.api:
-            return
-            
+        """发送问题"""
+        # 检查 token 是否有效
         if not self._check_auth_token():
             return
             
-        question = self.input_area.toPlainText()
-        # 标准化换行符并确保使用 UTF-8 编码
-        question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
-        
-        # 准备模板变量
         try:
-            # 安全地获取作者列表
-            authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-            author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
-            
-            # 安全地获取出版年份
+            # 获取输入的问题
+            question = self.input_area.toPlainText()
+            # 标准化换行符并确保使用 UTF-8 编码
+            question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
+        
+            # 准备模板变量
+
+            # 安全地获取书籍的作者或作者列表
             try:
-                pubdate = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
+                authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
+                author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
             except AttributeError:
-                pubdate = self.i18n.get('unknown', 'Unknown')
-                
-            # 安全地获取语言名称
+                author_str = self.i18n.get('unknown', 'Unknown')
+            
+            # 安全地获取书籍的出版年份
+            try:
+                pubyear = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
+            except AttributeError:
+                pubyear = self.i18n.get('unknown', 'Unknown')
+            
+            # 安全地获取书籍的语言类别
             try:
                 language = self.book_info.language
                 language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
             except (AttributeError, KeyError) as e:
                 language_name = self.i18n.get('unknown', 'Unknown')
-
-            # 安全地获取出版时间
-            try:
-                pubdate = self.book_info.pubdate.strftime('%Y-%m-%d') if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                pubdate = self.i18n.get('unknown', 'Unknown')
             
-            # 安全地获取系列名称
+            # 安全地获取书籍的系列名
             try:
                 series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
             except AttributeError:
                 series = self.i18n.get('unknown', 'Unknown')
             
+            # 准备模板变量
             template_vars = {
                 'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'pubdate': pubdate.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubdate else '',
+                'pubyear': pubyear.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
                 'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
                 'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
             }
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error preparing template variables: {str(e)}")
-            self.response_handler.handle_error(f"Error preparing request: {str(e)}")
+            self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
         
         # 获取配置的模板
@@ -782,7 +781,7 @@ class AskDialog(QDialog):
         
         # 如果模板为空，使用默认模板
         if not template:
-            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication date: {pubdate}\nLanguage: {language}\nSeries: {series}"
+            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
         
         # 检查并替换模板中的变量名，确保用户输入能够正确插入
         if '{query}' not in template and '{question}' in template:

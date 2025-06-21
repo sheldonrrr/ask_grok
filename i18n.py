@@ -5,43 +5,45 @@ import sys
 from PyQt5.QtWidgets import QLabel, QTextFormat
 from PyQt5.QtCore import Qt
 
-# 默认提示词模板
+# 配置页面默认提示词模板，支持用户修改
+# 语言顺序：英、法、德、西、葡、荷、丹、芬、挪、瑞、俄、日、简、繁、粤
+
 DEFAULT_TEMPLATES = {
-    # 丹麦语
-    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
-    
-    # 德语
-    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
-    
     # 英语
     'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
     
+    # 法语
+    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Date de publication: {pubdate}, Langue: {language}, Série: {series}, Ma question est: {query}',
+
+    # 德语
+    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
+
     # 西班牙语
     'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
+
+    # 葡萄牙语
+    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
+
+    # 荷兰语
+    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
+
+    # 丹麦语
+    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
     
     # 芬兰语
     'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
     
-    # 法语
-    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Date de publication: {pubdate}, Langue: {language}, Série: {series}, Ma question est: {query}',
-    
-    # 日语
-    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
-    
-    # 荷兰语
-    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
-    
     # 挪威语
     'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
     
-    # 葡萄牙语
-    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
-    
-    # 俄语
-    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
-    
     # 瑞典语
     'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, Språk: {language}, Serie: {series}, Min fråga är: {query}',
+
+    # 俄语
+    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
+
+    # 日语
+    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
     
     # 简体中文
     'zh': '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
@@ -53,160 +55,161 @@ DEFAULT_TEMPLATES = {
     'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
 }
 
-# 建议提示词模板
+# 建议按钮提示词模板
+# 语言顺序：英、法、德、西、葡、荷、丹、芬、挪、瑞、俄、日、简、繁、粤
 SUGGESTION_TEMPLATES = {
-    # 丹麦语
-    'da': """Du er en ekspert i boganmeldelser. For bogen "{title}" af {author}, generér ÉT indsigtfuldt spørgsmål, der hjælper læserne med at forstå bogen bedre.
-
-Regler:
-1. Returner KUN spørgsmålet, uden introduktion eller forklaring
-2. Fokuser på bogens indhold, ikke kun titlen
-3. Gør spørgsmålet praktisk og tankevækkende
-4. Hold det kort (15-25 ord)
-5. Vær kreativ og generer et andet spørsmål hver gang, selv for samme bog""",
-
-    # 德语
-    'de': """Sie sind ein Experte für Buchrezensionen. Für das Buch "{title}" von {author} generieren Sie EINE aufschlussreiche Frage, die den Lesern hilft, das Buch besser zu verstehen.
-
-Regeln:
-1. Geben Sie NUR die Frage zurück, ohne Einleitung oder Erklärung
-2. Konzentrieren Sie sich auf den Inhalt des Buches, nicht nur auf den Titel
-3. Machen Sie die Frage praktisch und nachdenklich
-4. Halten Sie sie kurz (15-25 Wörter)
-5. Seien Sie kreativ und generieren Sie jedes Mal eine andere Frage, auch für dasselbe Buch""",
-
     # 英语
-    'en': """You are an expert book reviewer. For the book "{title}" by {author}, generate ONE insightful question that helps readers better understand the book's core ideas, practical applications, or unique perspectives. 
+    'en': """You are an expert book reviewer. For the book "{title}" by {author},publish language is {language}, generate ONE insightful question that helps readers better understand the book's core ideas, practical applications, or unique perspectives. 
 
-Rules:
-1. Return ONLY the question, without any introduction or explanation
-2. Focus on the book's substance, not just its title
-3. Make the question practical and thought-provoking
-4. Keep it concise (15-25 words)
-5. Be creative and generate a different question each time, even for the same book""",
-
-    # 西班牙语
-    'es': """Eres un experto en reseñas de libros. Para el libro "{title}" de {author} genera UNA pregunta perspicaz que ayude a los lectores a entender mejor el libro.
-
-Reglas:
-1. Devuelve SOLO la pregunta, sin introducción ni explicación
-2. Concéntrate en el contenido del libro, no solo en el título
-3. Haz que la pregunta sea práctica y reflexiva
-4. Mantenla breve (15-25 palabras)
-5. Sé creativo y genera una pregunta diferente cada vez, incluso para el mismo libro""",
-
-    # 芬兰语
-    'fi': """Olet kirja-arvostelun asiantuntija. Kirjalle "{title}" kirjailijana {author}, luo YKSI oivaltava kysymys, joka auttaa lukijoita ymmärtämään kirjaa paremmin.
-
-Säännöt:
-1. Palauta VAIN kysymys, ilman johdantoa tai selitystä
-2. Keskity kirjan sisältöön, älä pelkästään otsikkoon
-3. Tee kysymyksestä käytännöllinen ja ajatuksia herättävä
-4. Pidä se lyhyenä (15-25 sanaa)
-5. Ole luova ja luo eri kysymys joka kerta, myös samalle kirjalle""",
+    Rules:
+    1. Return ONLY the question, without any introduction or explanation
+    2. Focus on the book's substance, not just its title
+    3. Make the question practical and thought-provoking
+    4. Keep it concise (30-200 words)
+    5. Be creative and generate a different question each time, even for the same book""",
 
     # 法语
-    'fr': """Vous êtes un expert en critiques de livres. Pour le livre "{title}" de {author}, générez UNE question pertinente qui aide les lecteurs à mieux comprendre le livre.
+    'fr': """Vous êtes un expert en critiques de livres. Pour le livre "{title}" de {author}, la langue de publication est {language}, générez UNE question pertinente qui aide les lecteurs à mieux comprendre le livre.
 
-Règles:
-1. Retournez UNIQUEMENT la question, sans introduction ni explication
-2. Concentrez-vous sur le contenu du livre, pas seulement sur le titre
-3. Faites en sorte que la question soit pratique et réflexive
-4. Gardez-la concise (15-25 mots)
-5. Soyez créatif et générez une question différente à chaque fois, même pour le même livre""",
+    Règles:
+    1. Retournez UNIQUEMENT la question, sans introduction ni explication
+    2. Concentrez-vous sur le contenu du livre, pas seulement sur le titre
+    3. Faites en sorte que la question soit pratique et réflexive
+    4. Gardez-la concise (30-200 mots)
+    5. Soyez créatif et générez une question différente à chaque fois, même pour le même livre""",
 
-    # 日语
-    'ja': """あなたは本のレビューの専門家です。{author}著の本「{title}」について、読者が本の核心的な考え、実用的な応用、または独自の視点をよりよく理解するのに役立つような、1つの洞察に富んだ質問を生成してください。
+    # 德语
+    'de': """Sie sind ein Experte für Buchrezensionen. Für das Buch "{title}" von {author}, Veröffentlichungssprache ist {language}, generieren Sie EINE aufschlussreiche Frage, die den Lesern hilft, das Buch besser zu verstehen.
 
-ルール：
-1. 質問のみを返し、導入や説明は不要です
-2. 本の内容に焦点を当て、タイトルだけに焦点を当てないでください
-3. 質問を実用的で考えさせられるようにしてください
-4. 15〜25文字以内に保ちます
-5. 創造的に、同じ本でも毎回異なる質問を生成してください""",
+    Regeln:
+    1. Geben Sie NUR die Frage zurück, ohne Einleitung oder Erklärung
+    2. Konzentrieren Sie sich auf den Inhalt des Buches, nicht nur auf den Titel
+    3. Machen Sie die Frage praktisch und nachdenklich
+    4. Halten Sie sie kurz (30-200 Wörter)
+    5. Seien Sie kreativ und generieren Sie jedes Mal eine andere Frage, auch für dasselbe Buch""",
 
-    # 荷兰语
-    'nl': """U bent een expert in boekrecensies. Voor het boek "{title}" van {author} genereert u ÉÉN inzichtelijke vraag die lezers helpt om het boek beter te begrijpen.
+    # 西班牙语
+    'es': """Eres un experto en reseñas de libros. Para el libro "{title}" de {author}, El idioma de publicación es {language}, genera UNA pregunta perspicaz que ayude a los lectores a entender mejor el libro.
 
-Regels:
-1. Retourneer ALLEEN de vraag, zonder inleiding of uitleg
-2. Concentreer u op de inhoud van het boek, niet alleen op de titel
-3. Maak de vraag praktisch en nadenkend
-4. Houd het kort (15-25 woorden)
-5. Wees creatief en genereer elke keer een andere vraag, zelfs voor hetzelfde boek""",
-
-    # 挪威语
-    'no': """Du er en ekspert i bokanmeldelser. For boken "{title}" av {author}, generer ÉT innsiktsfullt spørsmål som hjelper lesere med å forstå boken bedre.
-
-Regler:
-1. Returner KUN spørsmålet, uten introduksjon eller forklaring
-2. Fokuser på bokens innhold, ikke bare tittelen
-3. Gjør spørsmålet praktisk og tankevekkende
-4. Hold det kort (15-25 ord)
-5. Vær kreativ og generer et annet spørsmål hver gang, selv for samme bok""",
+    Reglas:
+    1. Devuelve SOLO la pregunta, sin introducción ni explicación
+    2. Concéntrate en el contenido del libro, no solo en el título
+    3. Haz que la pregunta sea práctica y reflexiva
+    4. Mantenla breve (30-200 palabras)
+    5. Sé creativo y genera una pregunta diferente cada vez, incluso para el mismo libro""",
 
     # 葡萄牙语
-    'pt': """Você é um especialista em resenhas de livros. Para o livro "{title}" de {author}, gere UMA pergunta perspicaz que ajude os leitores a entender melhor o livro.
+    'pt': """Você é um especialista em resenhas de livros. Para o livro "{title}" de {author}, publicação idioma é {language}, gere UMA pergunta perspicaz que ajude os leitores a entender melhor o livro.
 
-Regras:
-1. Retorne APENAS a pergunta, sem introdução ou explicação
-2. Concentre-se no conteúdo do livro, não apenas no título
-3. Faça a pergunta prática e reflexiva
-4. Mantenha-a breve (15-25 palavras)
-5. Seja criativo e gere uma pergunta diferente cada vez, mesmo para o mesmo livro""",
+    Regras:
+    1. Retorne APENAS a pergunta, sem introdução ou explicação
+    2. Concentre-se no conteúdo do livro, não apenas no título
+    3. Faça a pergunta prática e reflexiva
+    4. Mantenha-a breve (30-200 palavras)
+    5. Seja criativo e gere uma pergunta diferente cada vez, mesmo para o mesmo livro""",
 
-    # 俄语
-    'ru': """Вы эксперт в области рецензий на книги. Для книги "{title}" автора {author} сгенерируйте ОДИН проницательный вопрос, который поможет читателям лучше понять книгу.
+    # 荷兰语
+    'nl': """U bent een expert in boekrecensies. Voor het boek "{title}" van {author}, publiceren taal is {language}, genereert u ÉÉN inzichtelijke vraag die lezers helpt om het boek beter te begrijpen.
 
-Правила:
-1. Верните ТОЛЬКО вопрос, без введения или объяснения
-2. Сосредоточьтесь на содержании книги, а не только на названии
-3. Сделайте вопрос практичным и провокационным
-4. Сдерживайте его кратким (15-25 слов)
-5. Будьте креативны и генерируйте разные вопросы каждый раз, даже для одной и той же книги""",
+    Regels:
+    1. Retourneer ALLEEN de vraag, zonder inleiding of uitleg
+    2. Concentreer u op de inhoud van het boek, niet alleen op de titel
+    3. Maak de vraag praktisch en nadenkend
+    4. Houd het kort (30-200 woorden)
+    5. Wees creatief en genereer elke keer een andere vraag, zelfs voor hetzelfde boek""",
+
+    # 丹麦语
+    'da': """Du er en ekspert i boganmeldelser. For bogen "{title}" af {author},publiceringssprog er {language}, generér ÉT indsigtfuldt spørgsmål, der hjælper læserne med at forstå bogen bedre.
+
+    Regler:
+    1. Returner KUN spørgsmålet, uden introduktion eller forklaring
+    2. Fokuser på bogens indhold, ikke kun titlen
+    3. Gør spørgsmålet praktisk og tankevækkende
+    4. Hold det kort (30-200 ord)
+    5. Vær kreativ og generer et andet spørsmål hver gang, selv for samme bog""",
+
+    # 芬兰语
+    'fi': """Olet kirja-arvostelun asiantuntija. Kirjalle "{title}" kirjailijana {author}, julkaisukieli on {language}, luo YKSI oivaltava kysymys, joka auttaa lukijoita ymmärtämään kirjaa paremmin.
+
+    Säännöt:
+    1. Palauta VAIN kysymys, ilman johdantoa tai selitystä
+    2. Keskity kirjan sisältöön, älä pelkästään otsikkoon
+    3. Tee kysymyksestä käytännöllinen ja ajatuksia herättävä
+    4. Pidä se lyhyenä (30-200 sanaa)
+    5. Ole luova ja luo eri kysymys joka kerta, myös samalle kirjalle""",
+
+    # 挪威语
+    'no': """Du er en ekspert i bokanmeldelser. For boken "{title}" av {author}, publiceringsspråk er {language}, generer ÉT innsiktsfullt spørsmål som hjelper lesere med å forstå boken bedre.
+
+    Regler:
+    1. Returner KUN spørsmålet, uten introduksjon eller forklaring
+    2. Fokuser på bokens innhold, ikke bare tittelen
+    3. Gjør spørsmålet praktisk og tankevekkende
+    4. Hold det kort (30-200 ord)
+    5. Vær kreativ og generer et annet spørsmål hver gang, selv for samme bok""",
 
     # 瑞典语
-    'sv': """Du är en expert på bokrecensioner. För boken "{title}" av {author}, generera EN insiktsfull fråga som hjälper läsarna att förstå boken bättre.
+    'sv': """Du är en expert på bokrecensioner. För boken "{title}" av {author}, publicerings språk är {language}, generera EN insiktsfull fråga som hjälper läsarna att förstå boken bättre.
 
-Regler:
-1. Returnera ENDAST frågan, utan introduktion eller förklaring
-2. Fokusera på bokens innehåll, inte bara titeln
-3. Gör frågan praktisk och tankeväckande
-4. Håll den kort (15-25 ord)
-5. Var kreativ och generera en annan fråga varje gång, även för samma bok""",
+    Regler:
+    1. Returnera ENDAST frågan, utan introduktion eller förklaring
+    2. Fokusera på bokens innehåll, inte bara titeln
+    3. Gör frågan praktisk och tankeväckande
+    4. Håll den kort (30-200 ord)
+    5. Var kreativ och generera en annan fråga varje gång, även för samma bok""",
+
+    # 俄语
+    'ru': """Вы эксперт в области рецензий на книги. Для книги "{title}" автора {author}, публикация язык {language}, сгенерируйте ОДИН проницательный вопрос, который поможет читателям лучше понять книгу.
+
+    Правила:
+    1. Верните ТОЛЬКО вопрос, без введения или объяснения
+    2. Сосредоточьтесь на содержании книги, а не только на названии
+    3. Сделайте вопрос практичным и провокационным
+    4. Сдерживайте его кратким (30-200 слов)
+    5. Будьте креативны и генерируйте разные вопросы каждый раз, даже для одной и той же книги""",
+
+    # 日语
+    'ja': """あなたは本のレビューの専門家です。{author}著の本「{title}」公開言語は「{language}」について、読者が本の核心的な考え、実用的な応用、または独自の視点をよりよく理解するのに役立つような、1つの洞察に富んだ質問を生成してください。
+
+    ルール：
+    1. 質問のみを返し、導入や説明は不要です
+    2. 本の内容に焦点を当て、タイトルだけに焦点を当てないでください
+    3. 質問を実用的で考えさせられるようにしてください
+    4. 30〜200文字以内に保ちます
+    5. 創造的に、同じ本でも毎回異なる質問を生成してください""",
 
     # 简体中文
-    'zh': """你是一位专业的图书点评人。请为《{title}》（作者：{author}）生成一个有见地的问题，帮助读者更好地理解这本书的核心思想、实用价值或独特观点。
-
-规则：
-1. 只返回问题本身，不要加任何介绍或解释
-2. 关注书籍的实质内容，而不是仅仅分析标题
-3. 问题要实用且发人深省
-4. 保持简洁（15-25字）
-5. 保持创意，即使是同一本书，每次也要生成不同的问题""",
+    'zh': """你是一位专业的图书点评人。请为《{title}》（作者：{author},出版语言：{language}）生成一个有见地的问题，帮助读者更好地理解这本书的核心思想、实用价值或独特观点。
+    规则：
+    1. 只返回问题本身，不要加任何介绍或解释
+    2. 关注书籍的实质内容，而不是仅仅分析标题
+    3. 问题要实用且发人深省
+    4. 保持简洁（30-200字）
+    5. 保持创意，即使是同一本书，每次也要生成不同的问题""",
 
     # 繁体中文
-    'zht': """你是一位專業的圖書點評人。請為《{title}》（作者：{author}）生成一個有見地的問題，幫助讀者更好地理解這本書的核心思想、實用價值或獨特觀點。
+    'zht': """你是一位專業的圖書點評人。請為《{title}》（作者：{author},出版語言：{language}）生成一個有見地的問題，幫助讀者更好地理解這本書的核心思想、實用價值或獨特觀點。
 
-規則：
-1. 只返回問題本身，不要加任何介紹或解釋
-2. 關注書籍的實質內容，而不是僅僅分析標題
-3. 問題要實用且發人深省
-4. 保持簡潔（15-25字）
-5. 保持創意，即使是同一本書，每次也要生成不同的問題""",
+    規則：
+    1. 只返回問題本身，不要加任何介紹或解釋
+    2. 關注書籍的實質內容，而不是僅僅分析標題
+    3. 問題要實用且發人深省
+    4. 保持簡潔（30-200字）
+    5. 保持創意，即使是同一本書，每次也要生成不同的問題""",
 
     # 粤语
-    'yue': """你係一位專業嘅圖書點評人。請為《{title}》（作者：{author}）生成一個有見地嘅問題，幫助讀者更好噉理解呢本書嘅核心思想、實用價值或獨特觀點。
+    'yue': """你係一位專業嘅圖書點評人。請為《{title}》（作者：{author},出版語言：{language}）生成一個有見地嘅問題，幫助讀者更好噉理解呢本書嘅核心思想、實用價值或獨特觀點。
 
-規則：
-1. 淨係返回問題本身，唔好加任何介紹或解釋
-2. 關注書籍嘅實質內容，而唔係淨係分析標題
-3. 問題要實用同發人深省
-4. 保持簡潔（15-25字）
-5. 保持創意，即使係同一本書，每次都要生成唔同嘅問題""",
+    規則：
+    1. 淨係返回問題本身，唔好加任何介紹或解釋
+    2. 關注書籍嘅實質內容，而唔係淨係分析標題
+    3. 問題要實用同發人深省
+    4. 保持簡潔（30-200字）
+    5. 保持創意，即使係同一本書，每次都要生成唔同嘅問題""",
 }
 
 # 语言包
+# 语言顺序：英、法、德、西、葡、荷、丹、芬、挪、瑞、俄、日、简、繁、粤
 TRANSLATIONS = {
     # 英语 (en)
     'en': {
@@ -222,7 +225,7 @@ TRANSLATIONS = {
         'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
         'language_label': 'Interface Language:',
         'send_button': 'Send',
-        'suggest_button': 'Suggest?',
+        'suggest_button': 'Random Question',
         'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
@@ -265,70 +268,87 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Please set your Auth Token in the configuration dialog.',
         'invalid_token_title': 'Invalid Token Format',
         'invalid_token_message': 'The token format is invalid. It should start with "xai-" or "Bearer xai-".',
+        'invalid_token': 'Please check your API token validable in the plugin settings.',
         'token_too_short_message': 'Token is too short. Please check and enter the complete token.',
-        'auth_token_none_message': 'No auth token, Ask Grok can not work.'
+        'auth_token_none_message': 'No auth token, Ask Grok can not work.',
+        'error': 'Error',
+        'error_preparing_request': 'Error preparing request',
+        # 随机问题
+        'empty_suggestion': 'Received empty suggestion',
+        'process_suggestion_error': 'Error processing suggestion',
+        'unknown_error': 'Unknown error occurred',
+        'suggestion_error': 'Failed to generate suggestion',
+        'book_title_check':'book metadata need to contain title'
+     },
+
+    # 法语 (fr)
+    'fr': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Poser des questions sur un livre avec Grok',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Configuration',
+        'token_label': 'Token d\'autorisation X.AI :',
+        'token_help': 'Format : Bearer xai-xxx ou simplement xai-xxx (à partir de <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Modèle :',
+        'model_placeholder': 'Par défaut : grok-3-latest',
+        'template_label': 'Modèle de prompt :',
+        'template_placeholder': 'Exemple de modèle :\nÀ propos du livre "{title}" : Auteur : {author}, Éditeur : {publisher}, Date de publication : {pubdate}, Langue : {language}, Série : {series}, Ma question est : {query}',
+        'language_label': 'Langue de l\'interface :',
+        'send_button': 'Envoyer',
+        'shortcut_enter': 'Ctrl + Entrée',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Erreur : ',
+        'about': 'À propos',
+        'about_title': 'À propos',
+        'base_url_label': 'URL de base de l\'API :',
+        'base_url_placeholder': 'Par défaut : https://api.x.ai/v1',
+        'metadata_title': 'Titre',
+        'metadata_authors': 'Auteur',
+        'metadata_publisher': 'Éditeur',
+        'metadata_pubdate': 'Date de publication',
+        'metadata_language': 'Langue',
+        'metadata_series': 'Série',
+        'input_placeholder': 'Saisissez votre question ici...',
+        'menu_title': 'Demander',
+        'menu_ask_grok': 'Poser une question à Grok',
+        'ok_button': 'OK',
+        'save_button': 'Enregistrer',
+        'save_success': 'Paramètres enregistrés',
+        'response_placeholder': 'La réponse de Grok apparaîtra ici',
+        'loading_text': 'Demande en cours',
+        'suggest_button': 'Question aléatoire',
+        'shortcuts_tab': 'Raccourcis',
+        'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Raccourcis',
+        'loading':'Chargement',
+        'network_error': 'Erreur réseau, veuillez vérifier votre connexion',
+        'request_timeout': 'La requête a pris trop de temps, terminée automatiquement',
+        'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
+        'sending': 'Envoi...',
+        'requesting': 'Requête, veuillez patienter',
+        'formatting': 'Requête réussie, mise en forme',
+        'no_metadata': 'Aucune métadonnée disponible',
+        'metadata': 'Métadonnées',
+        'no_series': 'Pas de série',
+        'unknown': 'Inconnu',
+        'question_too_long':'La question est trop longue, impossible de répondre',
+        'auth_token_required_title': 'Jeton d\'authentification requis',
+        'auth_token_required_message': 'Veuillez définir votre jeton d\'authentification dans la boîte de dialogue de configuration [Ask Grok].',
+        'invalid_token_title': 'Format de jeton non valide',
+        'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-" ou "Bearer xai-".',
+        'invalid_token': 'Veuillez vérifier vos jetons API dans les paramètres du plugin.',
+        'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.',
+        'auth_token_none_message': 'Aucun jeton d\'authentification, Ask Grok ne peut pas fonctionner.',
+        'error': 'Erreur',
+        'error_preparing_request': 'Erreur lors de la préparation de la requête',
+        'empty_suggestion': 'Reçu une suggestion vide',
+        'process_suggestion_error': 'Erreur lors du traitement de la suggestion',
+        'unknown_error': 'Une erreur inconnue s\'est produite.',
+        'suggestion_error': 'Erreur lors de la génération de la suggestion',
+        'book_title_check':'les métadonnées du livre doivent contenir le titre'
     },
 
-    # 丹麦语 (da)
-    'da': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Stil spørgsmål om en bog med Grok',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Indstillinger',
-        'token_label': 'X.AI Autorisationstoken:',
-        'token_help': 'Format: Bearer xai-xxx eller bare xai-xxx (fra <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Model:',
-        'model_placeholder': 'Standard: grok-3-latest',
-        'template_label': 'Promptskabelon:',
-        'template_placeholder': 'Eksempel på skabelon:\nOm bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
-        'language_label': 'Grænsefladesprog:',
-        'send_button': 'Send',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Fejl: ',
-        'about': 'Om',
-        'about_title': 'Om',
-        'base_url_label': 'API Base-URL:',
-        'base_url_placeholder': 'Standard: https://api.x.ai/v1',
-        'metadata_title': 'Otsikko',
-        'metadata_authors': 'Kirjailija',
-        'metadata_publisher': 'Kustantaja',
-        'metadata_pubdate': 'Julkaisupäivä',
-        'metadata_language': 'Kieli',
-        'metadata_series': 'Sarja',
-        'input_placeholder': 'Skriv dit spørgsmål her...',
-        'menu_title': 'Spørg',
-        'menu_ask_grok': 'Spørg Grok',
-        'ok_button': 'OK',
-        'save_button': 'Gem',
-        'save_success': 'Indstillinger gemt',
-        'response_placeholder': 'Groks svar vil blive vist her',
-        'loading_text': 'Spørger',
-        'suggest_button': 'Forslag?',
-        'shortcuts_tab': 'Genveje',
-        'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Genveje',
-        'loading':'Indlæser',
-        'network_error': 'Netværksfejl, tjek venligst din forbindelse',
-        'request_timeout': 'Anmodningen tog for lang tid, afbrudt automatisk',
-        'request_failed': 'Anmodningen fejlede, prøv igen senere',
-        'sending': 'Sender...',
-        'requesting': 'Anmoder, vent venligst',
-        'formatting': 'Anmodning succesfuld, formatterer',
-        'no_metadata': 'Ingen metadata tilgængelig',
-        'metadata': 'Metadata',
-        'no_series': 'Ingen serie',
-        'unknown': 'Ukendt',
-        'question_too_long':'Spørgsmål for langt, kan ikke svare',
-        'auth_token_required_title': 'Godkendelsestoken påkrævet',
-        'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].',
-        'invalid_token_title': 'Ugyldigt token-format',
-        'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-" eller "Bearer xai-".',
-        'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.',
-        'auth_token_none_message': 'Ingen godkendelsestoken, Ask Grok kan ikke virke.'
-    },
-    
     # 德语 (de)
     'de': {
         'plugin_name': 'Ask Grok',
@@ -364,7 +384,7 @@ TRANSLATIONS = {
         'save_success': 'Einstellungen gespeichert',
         'response_placeholder': 'Groks Antwort wird hier angezeigt',
         'loading_text': 'Frage',
-        'suggest_button': 'Vorschlag?',
+        'suggest_button': 'Zufällige Frage',
         'shortcuts_tab': 'Tastenkombinationen',
         'shortcut_open_dialog': 'Fragenfenster öffnen',
         'author_name': 'Sheldon',
@@ -385,8 +405,16 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Bitte legen Sie das Authentifizierungstoken in der Konfigurationsdialogbox [Ask Grok] fest.',
         'invalid_token_title': 'Ungültiges Token-Format',
         'invalid_token_message': 'Das Token-Format ist ungültig. Es sollte mit "xai-" oder "Bearer xai-" beginnen.',
+        'invalid_token': 'Bitte prüfen Sie Ihre API-Token in den Plugin-Einstellungen.',
         'token_too_short_message': 'Token ist zu kurz. Bitte prüfen und den ganzen Token eingeben.',
-        'auth_token_none_message': 'Kein Authentifizierungstoken, Ask Grok kann nicht funktionieren.'
+        'auth_token_none_message': 'Kein Authentifizierungstoken, Ask Grok kann nicht funktionieren.',
+        'error': 'Fehler',
+        'error_preparing_request': 'Fehler beim Vorbereiten der Anfrage',
+        'empty_suggestion': 'Empfand leere Vorschläge',
+        'process_suggestion_error': 'Fehler bei der Verarbeitung des Vorschlags',
+        'unknown_error': 'Unbekannter Fehler aufgetreten',
+        'suggestion_error': 'Fehler beim Generieren der Vorschläge',
+        'book_title_check':'Buchmetadaten müssen den Titel enthalten'
     },
     
     # 西班牙语 (es)
@@ -424,7 +452,7 @@ TRANSLATIONS = {
         'save_success': 'Configuración guardada',
         'response_placeholder': 'La respuesta de Grok aparecerá aquí',
         'loading_text': 'Preguntando',
-        'suggest_button': 'Sugerir?',
+        'suggest_button': 'Pregunta aleatoria',
         'shortcuts_tab': 'Atajos',
         'shortcut_open_dialog': 'Abrir diálogo de preguntas',
         'author_name': 'Sheldon',
@@ -445,308 +473,16 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Por favor, establezca su token de autenticación en el cuadro de diálogo de configuración de [Ask Grok].',
         'invalid_token_title': 'Formato de token inválido',
         'invalid_token_message': 'El formato del token es inválido. Debe comenzar con "xai-" o "Bearer xai-".',
+        'invalid_token': 'Por favor, verifique sus tokens API en la configuración del plugin.',
         'token_too_short_message': 'Token es demasiado corto. Por favor, verifique y entre el token completo.',
-        'auth_token_none_message': 'No hay token de autenticación, Ask Grok no puede funcionar.'
-    },
-    
-    # 芬兰语 (fi)
-    'fi': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Kysy kirjasta Grokin avulla',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Asetukset',
-        'token_label': 'X.AI Valtuutusavain:',
-        'token_help': 'Muoto: Bearer xai-xxx tai pelkkä xai-xxx (käyttäen <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Malli:',
-        'model_placeholder': 'Oletus: grok-3-latest',
-        'template_label': 'Kehotepohja:',
-        'template_placeholder': 'Esimerkkipohja:\nKirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
-        'language_label': 'Käyttöliittymän kieli:',
-        'send_button': 'Lähetä',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Virhe: ',
-        'about': 'Tietoja',
-        'about_title': 'Tietoja',
-        'base_url_label': 'API-perus-URL:',
-        'base_url_placeholder': 'Oletus: https://api.x.ai/v1',
-        'metadata_title': 'Otsikko',
-        'metadata_authors': 'Kirjailija',
-        'metadata_publisher': 'Kustantaja',
-        'metadata_pubdate': 'Julkaisupäivä',
-        'metadata_language': 'Kieli',
-        'metadata_series': 'Sarja',
-        'input_placeholder': 'Kirjoita kysymyksesi tähän...',
-        'menu_title': 'Kysy',
-        'menu_ask_grok': 'Kysy Grok',
-        'ok_button': 'OK',
-        'save_button': 'Tallenna',
-        'save_success': 'Asetukset tallennettu',
-        'response_placeholder': 'Grokin vastaus näkyy tässä',
-        'loading_text': 'Kysytään',
-        'suggest_button': 'Ehdota?',
-        'shortcuts_tab': 'Pikanäppäimet',
-        'shortcut_open_dialog': 'Avaa kysymysikkuna',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Pikanäppäimet',
-        'loading':'Ladataan',
-        'network_error': 'Verkkovirhe, tarkista yhteytesi',
-        'request_timeout': 'Pyyntö kesti liian kauan, automaattisesti keskeytetty',
-        'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
-        'sending': 'Lähetetään...',
-        'requesting': 'Pyyntö, odota hetki',
-        'formatting': 'Pyyntö onnistui, muotoillaan',
-        'no_metadata': 'Ei metatietoa saatavilla',
-        'metadata': 'Metatieto',
-        'no_series': 'Ei sarjaa',
-        'unknown': 'Tuntematon',
-        'question_too_long':'Kysymys on liian pitkä, ei voida vastata',
-        'auth_token_required_title': 'Todennustunniste vaaditaan',
-        'auth_token_required_message': 'Aseta todennustunniste [Ask Grok] -asetusikkunassa.',
-        'invalid_token_title': 'Virheellinen tunnisteen muoto',
-        'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-" tai "Bearer xai-".',
-        'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.',
-        'auth_token_none_message': 'Tunnistetta ei ole asetettu, Ask Grok ei toimi.'
-    },
-    
-    # 法语 (fr)
-    'fr': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Poser des questions sur un livre avec Grok',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Configuration',
-        'token_label': 'Token d\'autorisation X.AI :',
-        'token_help': 'Format : Bearer xai-xxx ou simplement xai-xxx (à partir de <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Modèle :',
-        'model_placeholder': 'Par défaut : grok-3-latest',
-        'template_label': 'Modèle de prompt :',
-        'template_placeholder': 'Exemple de modèle :\nÀ propos du livre "{title}" : Auteur : {author}, Éditeur : {publisher}, Date de publication : {pubdate}, Langue : {language}, Série : {series}, Ma question est : {query}',
-        'language_label': 'Langue de l\'interface :',
-        'send_button': 'Envoyer',
-        'shortcut_enter': 'Ctrl + Entrée',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Erreur : ',
-        'about': 'À propos',
-        'about_title': 'À propos',
-        'base_url_label': 'URL de base de l\'API :',
-        'base_url_placeholder': 'Par défaut : https://api.x.ai/v1',
-        'metadata_title': 'Titre',
-        'metadata_authors': 'Auteur',
-        'metadata_publisher': 'Éditeur',
-        'metadata_pubdate': 'Date de publication',
-        'metadata_language': 'Langue',
-        'metadata_series': 'Série',
-        'input_placeholder': 'Saisissez votre question ici...',
-        'menu_title': 'Demander',
-        'menu_ask_grok': 'Poser une question à Grok',
-        'ok_button': 'OK',
-        'save_button': 'Enregistrer',
-        'save_success': 'Paramètres enregistrés',
-        'response_placeholder': 'La réponse de Grok apparaîtra ici',
-        'loading_text': 'Demande en cours',
-        'suggest_button': 'Suggérer?',
-        'shortcuts_tab': 'Raccourcis',
-        'shortcut_open_dialog': 'Ouvrir la fenêtre de questions',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Raccourcis',
-        'loading':'Chargement',
-        'network_error': 'Erreur réseau, veuillez vérifier votre connexion',
-        'request_timeout': 'La requête a pris trop de temps, terminée automatiquement',
-        'request_failed': 'La requête a échoué, veuillez réessayer plus tard',
-        'sending': 'Envoi...',
-        'requesting': 'Requête, veuillez patienter',
-        'formatting': 'Requête réussie, mise en forme',
-        'no_metadata': 'Aucune métadonnée disponible',
-        'metadata': 'Métadonnées',
-        'no_series': 'Pas de série',
-        'unknown': 'Inconnu',
-        'question_too_long':'La question est trop longue, impossible de répondre',
-        'auth_token_required_title': 'Jeton d\'authentification requis',
-        'auth_token_required_message': 'Veuillez définir votre jeton d\'authentification dans la boîte de dialogue de configuration [Ask Grok].',
-        'invalid_token_title': 'Format de jeton non valide',
-        'invalid_token_message': 'Le format du jeton n\'est pas valide. Il doit commencer par "xai-" ou "Bearer xai-".',
-        'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.',
-        'auth_token_none_message': 'Aucun jeton d\'authentification, Ask Grok ne peut pas fonctionner.'
-    },
-    
-    # 日语 (ja)
-    'ja': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Grokを使って本について質問する',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': '設定',
-        'token_label': 'X.AI Authorization Token:',
-        'token_help': '形式: Bearer xai-xxx または xai-xxx (から <a href="https://console.x.ai">console.x.ai</a> を使用)',
-        'model_label': 'Model:',
-        'model_placeholder': 'Default: grok-3-latest',
-        'template_label': 'プロンプトテンプレート:',
-        'template_placeholder': 'テンプレート例:\n『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
-        'language_label': 'インターフェース言語:',
-        'send_button': '送信',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'エラー：',
-        'about': '概要',
-        'about_title': '概要',
-        'base_url_label': 'API Base URL:',
-        'base_url_placeholder': 'Default: https://api.x.ai/v1',
-        'metadata_title': 'タイトル',
-        'metadata_authors': '著者',
-        'metadata_publisher': '出版社',
-        'metadata_pubdate': '出版日',
-        'metadata_language': '言語',
-        'metadata_series': 'シリーズ',
-        'input_placeholder': 'ここに質問を入力してください...',
-        'menu_title': '質問',
-        'menu_ask_grok': 'Grok に質問する',
-        'ok_button': 'OK',
-        'save_button': '保存',
-        'save_success': '設定を保存しました',
-        'response_placeholder': 'Grokの回答がここに表示されます',
-        'loading_text': '質問中',
-        'suggest_button': '提案?',
-        'shortcuts_tab': 'ショートカット',
-        'shortcut_open_dialog': '質問ウィンドウを開く',
-        'author_name': 'シェルドン',
-        'shortcuts_title': 'ショートカット',
-        'loading':'読み込み中',
-        'network_error': 'ネットワークエラー、接続を確認してください',
-        'request_timeout': 'リクエストが時間超過、自動終了しました',
-        'request_failed': 'リクエストが失敗しました、後で再度試してください',
-        'sending': '送信中...',
-        'requesting': 'リクエスト中、少々お待ちください',
-        'formatting': 'リクエスト成功、フォーマット中',
-        'no_metadata': 'メタデータはありません',
-        'metadata': 'メタデータ',
-        'no_series': 'シリーズなし',
-        'unknown': '不明',
-        'question_too_long':'問題が長すぎ、答えられない',
-        'auth_token_required_title': '認証トークンが必要です',
-        'auth_token_required_message': '認証トークンを設定してください。',
-        'invalid_token_title': '無効なトークン形式',
-        'invalid_token_message': 'トークンの形式が無効です。"xai-"または"Bearer xai-"で始まる必要があります。',
-        'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。',
-        'auth_token_none_message': '認証トークンがありません、Ask Grokは動作しません。'
-    },
-    
-    # 荷兰语 (nl)
-    'nl': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Stel vragen over een boek met Grok',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Instellingen',
-        'token_label': 'X.AI Autorisatietoken:',
-        'token_help': 'Formaat: Bearer xai-xxx of gewoon xai-xxx (van <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Model:',
-        'model_placeholder': 'Standaard: grok-3-latest',
-        'template_label': 'Promptsjabloon:',
-        'template_placeholder': 'Voorbeeldsjabloon:\nOver het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
-        'language_label': 'Interfacetaal:',
-        'send_button': 'Verzenden',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Fout: ',
-        'about': 'Over',
-        'about_title': 'Over',
-        'base_url_label': 'API Basis-URL:',
-        'base_url_placeholder': 'Standaard: https://api.x.ai/v1',
-        'metadata_title': 'Titel',
-        'metadata_authors': 'Auteur',
-        'metadata_publisher': 'Uitgever',
-        'metadata_pubdate': 'Publicatiedatum',
-        'metadata_language': 'Taal',
-        'metadata_series': 'Serie',
-        'input_placeholder': 'Voer hier uw vraag in...',
-        'menu_title': 'Vraag',
-        'menu_ask_grok': 'Vraag aan Grok',
-        'ok_button': 'OK',
-        'save_button': 'Opslaan',
-        'save_success': 'Instellingen opgeslagen',
-        'response_placeholder': 'Het antwoord van Grok verschijnt hier',
-        'loading_text': 'Vragen',
-        'suggest_button': 'Suggestie?',
-        'shortcuts_tab': 'Sneltoetsen',
-        'shortcut_open_dialog': 'Vraagdialoog openen',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Sneltoetsen',
-        'loading':'Laden',
-        'network_error': 'Netwerkfout, controleer uw verbinding',
-        'request_timeout': 'Verzoek duurde te lang, automatisch beëindigd',
-        'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
-        'sending': 'Verzenden...',
-        'requesting': 'Verzoek, even geduld',
-        'formatting': 'Verzoek succesvol, formatteren',
-        'no_metadata': 'Geen metadata beschikbaar',
-        'metadata': 'Metagegevens',
-        'no_series': 'Geen serie',
-        'unknown': 'Onbekend',
-        'question_too_long':'Vraag is te lang, kan niet worden beantwoord',
-        'auth_token_required_title': 'Auth Token vereist',
-        'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].',
-        'invalid_token_title': 'Ongeldig tokenformaat',
-        'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-" of "Bearer xai-".',
-        'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.',
-        'auth_token_none_message': 'Auth Token is niet ingesteld, Ask Grok kan niet werken.'
-    },
-    
-    # 挪威语 (no)
-    'no': {
-        'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Still spørsmål om en bok med Grok',
-        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Innstillinger',
-        'token_label': 'X.AI Autorisasjonstoken:',
-        'token_help': 'Format: Bearer xai-xxx eller bare xai-xxx (fra <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Modell:',
-        'model_placeholder': 'Standard: grok-3-latest',
-        'template_label': 'Promptmal:',
-        'template_placeholder': 'Eksempel på mal:\nOm boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
-        'language_label': 'Grensesnittspråk:',
-        'send_button': 'Send',
-        'shortcut_enter': 'Ctrl + Enter',
-        'shortcut_return': 'Command + Return',
-        'error_prefix': 'Feil: ',
-        'about': 'Om',
-        'about_title': 'Om',
-        'base_url_label': 'API Base-URL:',
-        'base_url_placeholder': 'Standard: https://api.x.ai/v1',
-        'metadata_title': 'Tittel',
-        'metadata_authors': 'Forfatter',
-        'metadata_publisher': 'Forlag',
-        'metadata_pubdate': 'Utgivelsesdato',
-        'metadata_language': 'Språk',
-        'metadata_series': 'Serie',
-        'input_placeholder': 'Skriv spørsmålet ditt her...',
-        'menu_title': 'Spør',
-        'menu_ask_grok': 'Spør Grok',
-        'ok_button': 'OK',
-        'save_button': 'Lagre',
-        'save_success': 'Innstillinger lagret',
-        'response_placeholder': 'Groks svar vil bli vist her',
-        'loading_text': 'Spør',
-        'suggest_button': 'Forslag?',
-        'shortcuts_tab': 'Hurtigtaster',
-        'shortcut_open_dialog': 'Åpne spørsmålsdialog',
-        'author_name': 'Sheldon',
-        'shortcuts_title': 'Hurtigtaster',
-        'loading':'Laster',
-        'network_error': 'Nettverksfeil, sjekk tilkoblingen din',
-        'request_timeout': 'Forespørselen tok for lang tid, automatisk avbrutt',
-        'request_failed': 'Forespørselen feilet, prøv igjen senere',
-        'sending': 'Sender...',
-        'requesting': 'Forespørsel, vent litt',
-        'formatting': 'Forespørsel vellykket, formatterer',
-        'no_metadata': 'Ingen metadata tilgjengelig',
-        'metadata': 'Metadata',
-        'no_series': 'Ingen serie',
-        'unknown': 'Ukjent',
-        'question_too_long':'Spørsmålet er for langt, kan ikke besvares',
-        'auth_token_required_title': 'Autorisasjonstoken kreves',
-        'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].',
-        'invalid_token_title': 'Ugyldig tokenformat',
-        'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-" eller "Bearer xai-".',
-        'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.',
-        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok fungerar inte.'
+        'auth_token_none_message': 'No hay token de autenticación, Ask Grok no puede funcionar.',
+        'error': 'Error',
+        'error_preparing_request': 'Error al preparar la solicitud',
+        'empty_suggestion': 'Recibido sugerencia vacía',
+        'process_suggestion_error': 'Error al procesar la sugerencia',
+        'unknown_error': 'Se produjo un error desconocido.',
+        'suggestion_error': 'Error al generar la sugerencia',
+        'book_title_check':'As metadados do livro devem conter o título'
     },
     
     # 葡萄牙语 (pt)
@@ -784,7 +520,7 @@ TRANSLATIONS = {
         'save_success': 'Configurações salvas',
         'response_placeholder': 'A resposta do Grok aparecerá aqui',
         'loading_text': 'Perguntando',
-        'suggest_button': 'Sugerir?',
+        'suggest_button': 'Pergunta aleatória',
         'shortcuts_tab': 'Atalhos',
         'shortcut_open_dialog': 'Abrir diálogo de perguntas',
         'author_name': 'Sheldon',
@@ -805,68 +541,288 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Defina o seu Token de Autenticação na caixa de diálogo de configuração [Ask Grok].',
         'invalid_token_title': 'Formato de Token Inválido',
         'invalid_token_message': 'O formato do token é inválido. Deve começar com "xai-" ou "Bearer xai-".',
+        'invalid_token': 'Verifique os seus tokens de API nas definições do plugin.',
         'token_too_short_message': 'O token é muito curto. Verifique e insira o token completo.',
-        'auth_token_none_message': 'Token de autenticação não definido, Ask Grok não pode funcionar.'
+        'auth_token_none_message': 'Token de autenticação não definido, Ask Grok não pode funcionar.',
+        'error': 'Erro',
+        'error_preparing_request': 'Erro ao preparar a requisição',
+        'empty_suggestion': 'Recebeu uma sugestão vazia',
+        'process_suggestion_error': 'Erro ao processar a sugestão',
+        'unknown_error': 'Erro desconhecido',
+        'suggestion_error': 'Erro ao gerar a sugestão',
+        'book_title_check':'As metadados do livro devem conter o título'
     },
-    
-    # 俄语 (ru)
-    'ru': {
+
+    # 荷兰语 (nl)
+    'nl': {
         'plugin_name': 'Ask Grok',
-        'plugin_desc': 'Задавать вопросы о книге с помощью Grok',
+        'plugin_desc': 'Stel vragen over een boek met Grok',
         'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
-        'config_title': 'Настройки',
-        'token_label': 'Токен авторизации X.AI:',
-        'token_help': 'Формат: Bearer xai-xxx или просто xai-xxx (из <a href="https://console.x.ai">console.x.ai</a>)',
-        'model_label': 'Модель:',
-        'model_placeholder': 'По умолчанию: grok-3-latest',
-        'template_label': 'Шаблон запроса:',
-        'template_placeholder': 'Пример шаблона:\nО книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
-        'language_label': 'Язык интерфейса:',
-        'send_button': 'Отправить',
+        'config_title': 'Instellingen',
+        'token_label': 'X.AI Autorisatietoken:',
+        'token_help': 'Formaat: Bearer xai-xxx of gewoon xai-xxx (van <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Model:',
+        'model_placeholder': 'Standaard: grok-3-latest',
+        'template_label': 'Promptsjabloon:',
+        'template_placeholder': 'Voorbeeldsjabloon:\nOver het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
+        'language_label': 'Interfacetaal:',
+        'send_button': 'Verzenden',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
-        'error_prefix': 'Ошибка: ',
-        'about': 'О программе',
-        'about_title': 'О программе',
-        'base_url_label': 'Базовый URL API:',
-        'base_url_placeholder': 'По умолчанию: https://api.x.ai/v1',
-        'metadata_title': 'Название',
-        'metadata_authors': 'Автор',
-        'metadata_publisher': 'Издательство',
-        'metadata_pubdate': 'Дата публикации',
-        'metadata_language': 'Язык',
-        'metadata_series': 'Серия',
-        'input_placeholder': 'Введите ваш вопрос здесь...',
-        'menu_title': 'Спросить',
-        'menu_ask_grok': 'Спросить у Grok',
+        'error_prefix': 'Fout: ',
+        'about': 'Over',
+        'about_title': 'Over',
+        'base_url_label': 'API Basis-URL:',
+        'base_url_placeholder': 'Standaard: https://api.x.ai/v1',
+        'metadata_title': 'Titel',
+        'metadata_authors': 'Auteur',
+        'metadata_publisher': 'Uitgever',
+        'metadata_pubdate': 'Publicatiedatum',
+        'metadata_language': 'Taal',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Voer hier uw vraag in...',
+        'menu_title': 'Vraag',
+        'menu_ask_grok': 'Vraag aan Grok',
         'ok_button': 'OK',
-        'save_button': 'Сохранить',
-        'save_success': 'Настройки сохранены',
-        'response_placeholder': 'Ответ Grok появится здесь',
-        'loading_text': 'Спрашиваю',
-        'suggest_button': 'Предложить?',
-        'shortcuts_tab': 'Горячие клавиши',
-        'shortcut_open_dialog': 'Открыть диалог вопросов',
-        'author_name': 'Шелдон',
-        'shortcuts_title': 'Горячие клавиши',
-        'loading':'Загрузка',
-        'network_error': 'Ошибка сети, проверьте подключение',
-        'request_timeout': 'Запрос занял слишком много времени, автоматически прерван',
-        'request_failed': 'Запрос не удался, попробуйте еще раз позже',
-        'sending': 'Отправка...',
-        'requesting': 'Запрос, пожалуйста, подождите',
-        'formatting': 'Запрос успешен, форматирую',
-        'no_metadata': 'Нет метаданных',
-        'metadata': 'Метаданные',
-        'no_series': 'Нет серии',
-        'unknown': 'Неизвестно',
-        'question_too_long':'Вопрос слишком длинный, не может быть обработан',
-        'auth_token_required_title': 'Требуется токен аутентификации',
-        'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].',
-        'invalid_token_title': 'Неверный формат токена',
-        'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-" или "Bearer xai-".',
-        'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.',
-        'auth_token_none_message': 'Токен аутентификации не установлен, Ask Grok не может работать.'
+        'save_button': 'Opslaan',
+        'save_success': 'Instellingen opgeslagen',
+        'response_placeholder': 'Het antwoord van Grok verschijnt hier',
+        'loading_text': 'Vragen',
+        'suggest_button': 'Willekeurige vraag',
+        'shortcuts_tab': 'Sneltoetsen',
+        'shortcut_open_dialog': 'Vraagdialoog openen',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Sneltoetsen',
+        'loading':'Laden',
+        'network_error': 'Netwerkfout, controleer uw verbinding',
+        'request_timeout': 'Verzoek duurde te lang, automatisch beëindigd',
+        'request_failed': 'Verzoek mislukt, probeer het later opnieuw',
+        'sending': 'Verzenden...',
+        'requesting': 'Verzoek, even geduld',
+        'formatting': 'Verzoek succesvol, formatteren',
+        'no_metadata': 'Geen metadata beschikbaar',
+        'metadata': 'Metagegevens',
+        'no_series': 'Geen serie',
+        'unknown': 'Onbekend',
+        'question_too_long':'Vraag is te lang, kan niet worden beantwoord',
+        'auth_token_required_title': 'Auth Token vereist',
+        'auth_token_required_message': 'Stel uw Auth Token in via het configuratievenster van [Ask Grok].',
+        'invalid_token_title': 'Ongeldig tokenformaat',
+        'invalid_token_message': 'Het tokenformaat is ongeldig. Het moet beginnen met "xai-" of "Bearer xai-".',
+        'invalid_token': 'Controleer uw API-tokens in de plugin-instellingen.',
+        'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.',
+        'auth_token_none_message': 'Auth Token is niet ingesteld, Ask Grok kan niet werken.',
+        'error': 'Fout',
+        'error_preparing_request': 'Fout bij het voorbereiden van de verzoek',
+        'empty_suggestion': 'De lege suggestie ontvangen',
+        'process_suggestion_error': 'Fout bij het verwerken van de suggestie',
+        'unknown_error': 'Onbekende fout',
+        'suggestion_error': 'Fout bij het genereren van de suggestie',
+        'book_title_check':'Bogmetadata skal indeholde titel'
+    },
+    
+    # 丹麦语 (da)
+    'da': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Stil spørgsmål om en bog med Grok',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Indstillinger',
+        'token_label': 'X.AI Autorisationstoken:',
+        'token_help': 'Format: Bearer xai-xxx eller bare xai-xxx (fra <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Model:',
+        'model_placeholder': 'Standard: grok-3-latest',
+        'template_label': 'Promptskabelon:',
+        'template_placeholder': 'Eksempel på skabelon:\nOm bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
+        'language_label': 'Grænsefladesprog:',
+        'send_button': 'Send',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Fejl: ',
+        'about': 'Om',
+        'about_title': 'Om',
+        'base_url_label': 'API Base-URL:',
+        'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Otsikko',
+        'metadata_authors': 'Kirjailija',
+        'metadata_publisher': 'Kustantaja',
+        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_language': 'Kieli',
+        'metadata_series': 'Sarja',
+        'input_placeholder': 'Skriv dit spørgsmål her...',
+        'menu_title': 'Spørg',
+        'menu_ask_grok': 'Spørg Grok',
+        'ok_button': 'OK',
+        'save_button': 'Gem',
+        'save_success': 'Indstillinger gemt',
+        'response_placeholder': 'Groks svar vil blive vist her',
+        'loading_text': 'Spørger',
+        'suggest_button': 'Willekeurige vraag',
+        'shortcuts_tab': 'Genveje',
+        'shortcut_open_dialog': 'Åbn spørgsmålsvindue',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Genveje',
+        'loading':'Indlæser',
+        'network_error': 'Netværksfejl, tjek venligst din forbindelse',
+        'request_timeout': 'Anmodningen tog for lang tid, afbrudt automatisk',
+        'request_failed': 'Anmodningen fejlede, prøv igen senere',
+        'sending': 'Sender...',
+        'requesting': 'Anmoder, vent venligst',
+        'formatting': 'Anmodning succesfuld, formatterer',
+        'no_metadata': 'Ingen metadata tilgængelig',
+        'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukendt',
+        'question_too_long':'Spørgsmål for langt, kan ikke svare',
+        'auth_token_required_title': 'Godkendelsestoken påkrævet',
+        'auth_token_required_message': 'Indstil venligst dit godkendelsestoken i konfigurationsdialogboksen [Ask Grok].',
+        'invalid_token_title': 'Ugyldigt token-format',
+        'invalid_token_message': 'Token-formatet er ugyldigt. Det skal starte med "xai-" eller "Bearer xai-".',
+        'invalid_token': 'Bitte prüfen Sie Ihre API-Token in den Plugin-Einstellungen.',
+        'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.',
+        'auth_token_none_message': 'Ingen godkendelsestoken, Ask Grok kan ikke virke.',
+        'error': 'Fehler',
+        'error_preparing_request': 'Fehler beim Vorbereiten der Anfrage',
+        'empty_suggestion': 'Empfand leere Vorschläge',
+        'process_suggestion_error': 'Fehler beim Verarbeiten der Vorschläge',
+        'unknown_error': 'Tuntematon virhe tapahtui',
+        'suggestion_error': 'Fejl ved generering af forslag',
+        'book_title_check':'Bogmetadata skal indeholde titel'
+    },
+    
+    # 芬兰语 (fi)
+    'fi': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Kysy kirjasta Grokin avulla',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Asetukset',
+        'token_label': 'X.AI Valtuutusavain:',
+        'token_help': 'Muoto: Bearer xai-xxx tai pelkkä xai-xxx (käyttäen <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Malli:',
+        'model_placeholder': 'Oletus: grok-3-latest',
+        'template_label': 'Kehotepohja:',
+        'template_placeholder': 'Esimerkkipohja:\nKirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
+        'language_label': 'Käyttöliittymän kieli:',
+        'send_button': 'Lähetä',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Virhe: ',
+        'about': 'Tietoja',
+        'about_title': 'Tietoja',
+        'base_url_label': 'API-perus-URL:',
+        'base_url_placeholder': 'Oletus: https://api.x.ai/v1',
+        'metadata_title': 'Otsikko',
+        'metadata_authors': 'Kirjailija',
+        'metadata_publisher': 'Kustantaja',
+        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_language': 'Kieli',
+        'metadata_series': 'Sarja',
+        'input_placeholder': 'Kirjoita kysymyksesi tähän...',
+        'menu_title': 'Kysy',
+        'menu_ask_grok': 'Kysy Grok',
+        'ok_button': 'OK',
+        'save_button': 'Tallenna',
+        'save_success': 'Asetukset tallennettu',
+        'response_placeholder': 'Grokin vastaus näkyy tässä',
+        'loading_text': 'Kysytään',
+        'suggest_button': 'Satunnainen kysymys',
+        'shortcuts_tab': 'Pikanäppäimet',
+        'shortcut_open_dialog': 'Avaa kysymysikkuna',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Pikanäppäimet',
+        'loading':'Ladataan',
+        'network_error': 'Verkkovirhe, tarkista yhteytesi',
+        'request_timeout': 'Pyyntö kesti liian kauan, automaattisesti keskeytetty',
+        'request_failed': 'Pyyntö epäonnistui, yritä uudelleen myöhemmin',
+        'sending': 'Lähetetään...',
+        'requesting': 'Pyyntö, odota hetki',
+        'formatting': 'Pyyntö onnistui, muotoillaan',
+        'no_metadata': 'Ei metatietoa saatavilla',
+        'metadata': 'Metatieto',
+        'no_series': 'Ei sarjaa',
+        'unknown': 'Tuntematon',
+        'question_too_long':'Kysymys on liian pitkä, ei voida vastata',
+        'auth_token_required_title': 'Todennustunniste vaaditaan',
+        'auth_token_required_message': 'Aseta todennustunniste [Ask Grok] -asetusikkunassa.',
+        'invalid_token_title': 'Virheellinen tunnisteen muoto',
+        'invalid_token_message': 'Tunnisteen muoto on virheellinen. Sen pitäisi alkaa "xai-" tai "Bearer xai-".',
+        'invalid_token': 'Veuillez vérifier vos jetons API dans les paramètres du plugin.',
+        'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.',
+        'auth_token_none_message': 'Tunnistetta ei ole asetettu, Ask Grok ei toimi.',
+        'error': 'Virhe',
+        'error_preparing_request': 'Virhe pyynnön valmistelussa',
+        'empty_suggestion': 'Reçu une suggestion vide',
+        'process_suggestion_error': 'Ehdotuksen käsittelyssä tapahtui virhe',
+        'unknown_error': 'Tuntematon virhe tapahtui.',
+        'suggestion_error': 'Fout bij het genereren van een suggestie',
+        'book_title_check':'De metagegevens van het boek moeten de titel bevatten'
+    },
+    
+    # 挪威语 (no)
+    'no': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Still spørsmål om en bok med Grok',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Innstillinger',
+        'token_label': 'X.AI Autorisasjonstoken:',
+        'token_help': 'Format: Bearer xai-xxx eller bare xai-xxx (fra <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Modell:',
+        'model_placeholder': 'Standard: grok-3-latest',
+        'template_label': 'Promptmal:',
+        'template_placeholder': 'Eksempel på mal:\nOm boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
+        'language_label': 'Grensesnittspråk:',
+        'send_button': 'Send',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Feil: ',
+        'about': 'Om',
+        'about_title': 'Om',
+        'base_url_label': 'API Base-URL:',
+        'base_url_placeholder': 'Standard: https://api.x.ai/v1',
+        'metadata_title': 'Tittel',
+        'metadata_authors': 'Forfatter',
+        'metadata_publisher': 'Forlag',
+        'metadata_pubdate': 'Utgivelsesdato',
+        'metadata_language': 'Språk',
+        'metadata_series': 'Serie',
+        'input_placeholder': 'Skriv spørsmålet ditt her...',
+        'menu_title': 'Spør',
+        'menu_ask_grok': 'Spør Grok',
+        'ok_button': 'OK',
+        'save_button': 'Lagre',
+        'save_success': 'Innstillinger lagret',
+        'response_placeholder': 'Groks svar vil bli vist her',
+        'loading_text': 'Spør',
+        'suggest_button': 'Tilfeldig spørsmål',
+        'shortcuts_tab': 'Hurtigtaster',
+        'shortcut_open_dialog': 'Åpne spørsmålsdialog',
+        'author_name': 'Sheldon',
+        'shortcuts_title': 'Hurtigtaster',
+        'loading':'Laster',
+        'network_error': 'Nettverksfeil, sjekk tilkoblingen din',
+        'request_timeout': 'Forespørselen tok for lang tid, automatisk avbrutt',
+        'request_failed': 'Forespørselen feilet, prøv igjen senere',
+        'sending': 'Sender...',
+        'requesting': 'Forespørsel, vent litt',
+        'formatting': 'Forespørsel vellykket, formatterer',
+        'no_metadata': 'Ingen metadata tilgjengelig',
+        'metadata': 'Metadata',
+        'no_series': 'Ingen serie',
+        'unknown': 'Ukjent',
+        'question_too_long':'Spørsmålet er for langt, kan ikke besvares',
+        'auth_token_required_title': 'Autorisasjonstoken kreves',
+        'auth_token_required_message': 'Angi aut.token i konfigurasjonsdialogboksen [Ask Grok].',
+        'invalid_token_title': 'Ugyldig tokenformat',
+        'invalid_token_message': 'Tokenformatet er ugyldig. Det skal starte med "xai-" eller "Bearer xai-".',
+        'invalid_token': 'Verifique os seus tokens de API nas definições do plugin.',
+        'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.',
+        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok fungerar inte.',
+        'error': 'feil',
+        'error_preparing_request': 'Feil under forberedelse av forespørsel',
+        'empty_suggestion': 'Det tomme forslaget mottatt',
+        'process_suggestion_error': 'Feil under behandling av forslag',
+        'unknown_error': 'Ukjent feil',
+        'suggestion_error': 'Feil under generering av forslag',
+        'book_title_check':'Bokens metadata må inneholde tittel'
     },
     
     # 瑞典语 (sv)
@@ -904,7 +860,7 @@ TRANSLATIONS = {
         'save_success': 'Inställningar sparade',
         'response_placeholder': 'Groks svar kommer att visas här',
         'loading_text': 'Frågar',
-        'suggest_button': 'Föreslå?',
+        'suggest_button': 'Slumpmässig fråga',
         'shortcuts_tab': 'Genvägar',
         'shortcut_open_dialog': 'Öppna frågedialog',
         'author_name': 'Sheldon',
@@ -925,10 +881,155 @@ TRANSLATIONS = {
         'auth_token_required_message': 'Vänligen ange din autentiseringstoken i konfigurationsdialogrutan [Ask Grok].',
         'invalid_token_title': 'Ogiltigt tokenformat',
         'invalid_token_message': 'Tokenformatet är ogiltigt. Det måste börja med "xai-" eller "Bearer xai-".',
+        'invalid_token': 'Kontrollera dina API-tokens i plugin-inställningarna.',
         'token_too_short_message': 'Token är för kort. Kontrollera och ange den fullständiga tokenen.',
-        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok kan inte fungera.'
+        'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok kan inte fungera.',
+        'error': 'Fel',
+        'error_preparing_request': 'Fel under förberedelse av förfrågan',
+        'empty_suggestion': 'Fick ett tomt förslag',
+        'process_suggestion_error': 'Fel under behandling av förslag',
+        'unknown_error': 'Okänd fel',
+        'suggestion_error': 'Fel under generering av förslag',
+        'book_title_check':'Bokens metadata måste innehålla titel'
+    },
+
+    # 俄语 (ru)
+    'ru': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Задавать вопросы о книге с помощью Grok',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': 'Настройки',
+        'token_label': 'Токен авторизации X.AI:',
+        'token_help': 'Формат: Bearer xai-xxx или просто xai-xxx (из <a href="https://console.x.ai">console.x.ai</a>)',
+        'model_label': 'Модель:',
+        'model_placeholder': 'По умолчанию: grok-3-latest',
+        'template_label': 'Шаблон запроса:',
+        'template_placeholder': 'Пример шаблона:\nО книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
+        'language_label': 'Язык интерфейса:',
+        'send_button': 'Отправить',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'Ошибка: ',
+        'about': 'О программе',
+        'about_title': 'О программе',
+        'base_url_label': 'Базовый URL API:',
+        'base_url_placeholder': 'По умолчанию: https://api.x.ai/v1',
+        'metadata_title': 'Название',
+        'metadata_authors': 'Автор',
+        'metadata_publisher': 'Издательство',
+        'metadata_pubdate': 'Дата публикации',
+        'metadata_language': 'Язык',
+        'metadata_series': 'Серия',
+        'input_placeholder': 'Введите ваш вопрос здесь...',
+        'menu_title': 'Спросить',
+        'menu_ask_grok': 'Спросить у Grok',
+        'ok_button': 'OK',
+        'save_button': 'Сохранить',
+        'save_success': 'Настройки сохранены',
+        'response_placeholder': 'Ответ Grok появится здесь',
+        'loading_text': 'Спрашиваю',
+        'suggest_button': 'Случайный вопрос',
+        'shortcuts_tab': 'Горячие клавиши',
+        'shortcut_open_dialog': 'Открыть диалог вопросов',
+        'author_name': 'Шелдон',
+        'shortcuts_title': 'Горячие клавиши',
+        'loading':'Загрузка',
+        'network_error': 'Ошибка сети, проверьте подключение',
+        'request_timeout': 'Запрос занял слишком много времени, автоматически прерван',
+        'request_failed': 'Запрос не удался, попробуйте еще раз позже',
+        'sending': 'Отправка...',
+        'requesting': 'Запрос, пожалуйста, подождите',
+        'formatting': 'Запрос успешен, форматирую',
+        'no_metadata': 'Нет метаданных',
+        'metadata': 'Метаданные',
+        'no_series': 'Нет серии',
+        'unknown': 'Неизвестно',
+        'question_too_long':'Вопрос слишком длинный, не может быть обработан',
+        'auth_token_required_title': 'Требуется токен аутентификации',
+        'auth_token_required_message': 'Установите токен аутентификации в диалоговом окне конфигурации [Ask Grok].',
+        'invalid_token_title': 'Неверный формат токена',
+        'invalid_token_message': 'Неверный формат токена. Он должен начинаться с "xai-" или "Bearer xai-".',
+        'invalid_token': 'Проверьте ваши токены API в настройках плагина.',
+        'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.',
+        'auth_token_none_message': 'Токен аутентификации не установлен, Ask Grok не может работать.',
+        'error': 'Ошибка',
+        'error_preparing_request': 'Ошибка при подготовке запроса',
+        'empty_suggestion': 'Получено пустое предложение',
+        'process_suggestion_error': 'Ошибка при обработке предложения',
+        'unknown_error': 'Неизвестная ошибка',
+        'suggestion_error': 'Ошибка при генерации предложения',
+        'book_title_check':'book_info должен содержать title-атрибут',
+        'book_title_check':'Метаданные книги должны включать название'
     },
     
+    # 日语 (ja)
+    'ja': {
+        'plugin_name': 'Ask Grok',
+        'plugin_desc': 'Grokを使って本について質問する',
+        'shortcut': 'Command+L' if sys.platform == 'darwin' else 'Ctrl+L',
+        'config_title': '設定',
+        'token_label': 'X.AI Authorization Token:',
+        'token_help': '形式: Bearer xai-xxx または xai-xxx (から <a href="https://console.x.ai">console.x.ai</a> を使用)',
+        'model_label': 'Model:',
+        'model_placeholder': 'Default: grok-3-latest',
+        'template_label': 'プロンプトテンプレート:',
+        'template_placeholder': 'テンプレート例:\n『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
+        'language_label': 'インターフェース言語:',
+        'send_button': '送信',
+        'shortcut_enter': 'Ctrl + Enter',
+        'shortcut_return': 'Command + Return',
+        'error_prefix': 'エラー：',
+        'about': '概要',
+        'about_title': '概要',
+        'base_url_label': 'API Base URL:',
+        'base_url_placeholder': 'Default: https://api.x.ai/v1',
+        'metadata_title': 'タイトル',
+        'metadata_authors': '著者',
+        'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日',
+        'metadata_language': '言語',
+        'metadata_series': 'シリーズ',
+        'input_placeholder': 'ここに質問を入力してください...',
+        'menu_title': '質問',
+        'menu_ask_grok': 'Grok に質問する',
+        'ok_button': 'OK',
+        'save_button': '保存',
+        'save_success': '設定を保存しました',
+        'response_placeholder': 'Grokの回答がここに表示されます',
+        'loading_text': '質問中',
+        'suggest_button': 'ランダムな質問',
+        'shortcuts_tab': 'ショートカット',
+        'shortcut_open_dialog': '質問ウィンドウを開く',
+        'author_name': 'シェルドン',
+        'shortcuts_title': 'ショートカット',
+        'loading':'読み込み中',
+        'network_error': 'ネットワークエラー、接続を確認してください',
+        'request_timeout': 'リクエストが時間超過、自動終了しました',
+        'request_failed': 'リクエストが失敗しました、後で再度試してください',
+        'sending': '送信中...',
+        'requesting': 'リクエスト中、少々お待ちください',
+        'formatting': 'リクエスト成功、フォーマット中',
+        'no_metadata': 'メタデータはありません',
+        'metadata': 'メタデータ',
+        'no_series': 'シリーズなし',
+        'unknown': '不明',
+        'question_too_long':'問題が長すぎ、答えられない',
+        'auth_token_required_title': '認証トークンが必要です',
+        'auth_token_required_message': '認証トークンを設定してください。',
+        'invalid_token_title': '無効なトークン形式',
+        'invalid_token_message': 'トークンの形式が無効です。"xai-"または"Bearer xai-"で始まる必要があります。',
+        'invalid_token': '認証トークンを設定してください。',
+        'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。',
+        'auth_token_none_message': '認証トークンがありません、Ask Grokは動作しません。',
+        'error': 'エラー',
+        'error_preparing_request': 'リクエストの準備中にエラーが発生しました',
+        'empty_suggestion': '空の提案を受け取りました',
+        'process_suggestion_error': '提案の処理中にエラーが発生しました',
+        'unknown_error': '不明なエラーが発生しました',
+        'suggestion_error': '提案の生成中にエラーが発生しました',
+        'book_title_check':'書籍のメタデータにはタイトルを含める必要があります'
+    },
+
     # 简体中文 (zh)
     'zh': {
         'plugin_name': 'Ask Grok',
@@ -943,7 +1044,7 @@ TRANSLATIONS = {
         'template_placeholder': '示例模板：\n关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
         'language_label': '界面语言:',
         'send_button': '发送',
-        'suggest_button': '建议？',
+        'suggest_button': '随机问题',
         'loading': '加载中',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
@@ -986,8 +1087,16 @@ TRANSLATIONS = {
         'auth_token_required_message': '请在 [Ask Grok] 的配置对话框中设置授权令牌。',
         'invalid_token_title': '令牌格式无效',
         'invalid_token_message': '令牌格式无效，应以 "xai-" 或 "Bearer xai-" 开头。',
+        'invalid_token': '请在配置对话框中检查 API 令牌的有效性。',
         'token_too_short_message': '令牌过短。请检查并输入完整令牌。',
-        'auth_token_none_message': '授权令牌未设置，Ask Grok 无法工作。'
+        'auth_token_none_message': '授权令牌未设置，Ask Grok 无法工作。',
+        'error': '错误',
+        'error_preparing_request': '请求准备失败',
+        'empty_suggestion': '收到空建议',
+        'process_suggestion_error': '处理建议时出错',
+        'unknown_error': '未知错误',
+        'suggestion_error': '生成建议时出错',
+        'book_title_check':'书籍元数据必须包含标题'
     },
     
     # 繁体中文 (zht)
@@ -1004,7 +1113,7 @@ TRANSLATIONS = {
         'template_placeholder': '範本示例：\n關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
-        'suggest_button': '建議？',
+        'suggest_button': '隨機問題',
         'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
@@ -1047,8 +1156,16 @@ TRANSLATIONS = {
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
         'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
+        'invalid_token': '請在配置對話框中檢查 API 令牌的有效性。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
-        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。'
+        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。',
+        'error': '錯誤',
+        'error_preparing_request': '請求準備失敗',
+        'empty_suggestion': '收到空建議',
+        'process_suggestion_error': '處理建議時出錯',
+        'unknown_error': '未知錯誤',
+        'suggestion_error': '生成建議時出錯',
+        'book_title_check':'書籍元資料必須包含標題'
     },
     
     # 粤语 (yue)
@@ -1065,7 +1182,7 @@ TRANSLATIONS = {
         'template_placeholder': '範本示例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
-        'suggest_button': '建議？',
+        'suggest_button': '隨機問題',
         'loading': 'Loading',
         'shortcut_enter': 'Ctrl + Enter',
         'shortcut_return': 'Command + Return',
@@ -1108,8 +1225,16 @@ TRANSLATIONS = {
         'auth_token_required_message': '請在 [Ask Grok] 的配置對話框中設置授權令牌。',
         'invalid_token_title': '令牌格式無效',
         'invalid_token_message': '令牌格式無效，應以 "xai-" 或 "Bearer xai-" 開頭。',
+        'invalid_token': '請在配置對話框中檢查 API 令牌的有效性。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
-        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。'
+        'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。',
+        'error': '錯誤',
+        'error_preparing_request': '請求準備失敗',
+        'empty_suggestion': '收到空建議',
+        'process_suggestion_error': '處理建議時出錯',
+        'unknown_error': '未知錯誤',
+        'suggestion_error': '生成建議時出錯',
+        'book_title_check':'書籍元資料必須包含標題'
     }
 }
 

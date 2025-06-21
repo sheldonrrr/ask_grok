@@ -127,7 +127,7 @@ class ConfigDialog(QWidget):
         self.setLayout(layout)
         
         # 语言选择
-        self.lang_label = QLabel(self.i18n['language_label'])
+        self.lang_label = QLabel(self.i18n.get('language_label', 'Language'))
         layout.addWidget(self.lang_label)
         
         self.lang_combo = QComboBox(self)

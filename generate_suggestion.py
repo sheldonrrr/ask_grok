@@ -4,81 +4,76 @@
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from .config import get_prefs, ConfigDialog
-from .i18n import SUGGESTION_TEMPLATES
+from .i18n import get_translation, SUGGESTION_TEMPLATES
 import logging
 
 logger = logging.getLogger(__name__)
 
 class SuggestionWorker(QThread):
-    """生成建议的工作线程"""
+    """生成随机问题的工作线程"""
     result = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     finished = pyqtSignal()
     
-    def __init__(self, api, book_info):
+    def __init__(self, api, book_info, i18n=None):
         super().__init__(None)  # 不设置父对象，避免随父对象一起销毁
         self.api = api
+        self.i18n = i18n or {}
+        
+        # 验证 book_info 是否包含 title 属性
+        if not hasattr(book_info, 'title'):
+            error_msg = self.i18n.get("book_info_check", "book_info need to contain title attribute")
+            raise ValueError(error_msg)
+            
         self.book_info = book_info
         self._is_cancelled = False
-        self._is_finished = False  # 新增：标记线程是否完成
-        
+        self._is_finished = False  # 标记线程是否完成
+
     def run(self):
         try:
-            # 记录开始生成建议
-            logger.info("开始生成问题建议...")
+            # 记录开始生成随机问题
+            logger.info("开始生成随机问题...")
             
-            # 准备书籍信息
-            title = getattr(self.book_info, 'title', 'Unknown')
-            authors = getattr(self.book_info, 'authors', [])
-            author_str = ', '.join(authors) if authors else 'Unknown'
-            publisher = getattr(self.book_info, 'publisher', 'Unknown')
-            
-            # 获取出版日期
+            # 准备书籍信息，使用 getattr 安全获取属性
             try:
-                pubdate = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else 'Unknown'
-            except (AttributeError, ValueError):
-                pubdate = 'Unknown'
-                
-            # 获取语言
-            language = getattr(self.book_info, 'language', 'Unknown')
-            
-            # 获取系列信息
-            series = getattr(self.book_info, 'series', '')
-            series_index = getattr(self.book_info, 'series_index', '')
+                title = str(getattr(self.book_info, 'title', 'Unknown'))
+                authors = getattr(self.book_info, 'authors', [])
+                author_str = ', '.join(map(str, authors)) if authors and isinstance(authors, (list, tuple)) else 'Unknown'
+                language = str(getattr(self.book_info, 'language', 'Unknown'))
+            except Exception as e:
+                error_msg = f"获取书籍信息时出错: {str(e)}"
+                logger.error(error_msg)
+                self.error_occurred.emit(error_msg)
+                return
             
             # 记录书籍信息
-            logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 出版社: {publisher}, "
-                      f"出版日期: {pubdate}, 语言: {language}, 系列: {series} ({series_index})")
+            logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 语言: {language}")
             
             # 准备提示词
             template = SUGGESTION_TEMPLATES.get(get_prefs()['language'], SUGGESTION_TEMPLATES['en'])
             
             # 记录使用的模板
-            logger.info(f"使用的问题建议模板: {template}")
+            logger.info(f"使用的问题随机问题模板: {template}")
             
             # 格式化提示词，包含完整的书籍信息
             prompt = template.format(
                 title=title,
                 author=author_str,
-                publisher=publisher,
-                pubdate=pubdate,
                 language=language,
-                series=series,
-                series_index=series_index if series_index else ''
             )
             
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
             
-            # 调用 API 获取建议，确保传递 lang_code 参数
-            logger.info("正在调用 API 获取建议...")
+            # 调用 API 获取随机问题，确保传递 lang_code 参数
+            logger.info("正在调用 API 获取随机问题...")
             suggestion = self.api.ask_stream(prompt, lang_code=get_prefs()['language'])
             
-            # 记录 API 返回的建议
+            # 记录 API 返回的随机问题
             if suggestion:
-                logger.info(f"成功获取到建议: {suggestion[:200]}...")  # 只记录前200个字符
+                logger.info(f"成功获取到随机问题: {suggestion[:200]}...")  # 只记录前200个字符
             else:
-                logger.warning("API 返回了空建议")
+                logger.warning("API 返回了空随机问题")
             
             if not self._is_cancelled and suggestion:
                 self.result.emit(suggestion)
@@ -100,13 +95,13 @@ class SuggestionWorker(QThread):
         return self._is_finished
 
 class SuggestionHandler(QObject):
-    """处理生成建议的逻辑"""
+    """处理生成随机问题的逻辑"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.response_area = None
         self.input_area = None
         self.suggest_button = None
-        self.i18n = None
+        self.i18n = {} # 初始化为空字典
         self._worker = None
         self._loading_timer = None
         self._request_cancelled = False
@@ -114,15 +109,21 @@ class SuggestionHandler(QObject):
         self._original_button_text = ''
         self._response_text = ''
         self.api = None
-        self._cleanup_timer = None  # 新增：用于定期检查线程状态
+        self._cleanup_timer = None
 
-    def setup(self, response_area, input_area, suggest_button, i18n, api):
+    def setup(self, response_area, input_area, suggest_button, api, i18n):
         """设置处理器需要的UI组件和国际化文本"""
         self.response_area = response_area
         self.input_area = input_area
         self.suggest_button = suggest_button
-        self.i18n = i18n
         self.api = api
+
+        # 确保 i18n 是字典
+        if not isinstance(i18n, dict):
+            logger.warning(f"i18n 参数不是字典类型: {type(i18n)}")
+            self.i18n = {}
+        else:
+            self.i18n = i18n
         
         # 初始化状态
         self._request_cancelled = False
@@ -138,7 +139,7 @@ class SuggestionHandler(QObject):
         self.i18n = i18n
         # 更新按钮文本
         if self.suggest_button.isEnabled():
-            self.suggest_button.setText(self.i18n.get('suggest_button', 'Suggest?'))
+            self.suggest_button.setText(self.i18n.get('suggest_button', 'Random Question'))
 
     def _setup_loading_animation(self):
         """设置加载动画定时器"""
@@ -158,10 +159,14 @@ class SuggestionHandler(QObject):
 
     def _stop_loading_timer(self):
         """停止加载动画定时器"""
-        if self._loading_timer and self._loading_timer.isActive():
-            self._loading_timer.stop()
-            self._loading_timer.deleteLater()
-            self._loading_timer = None
+        try:
+            if hasattr(self, '_loading_timer') and self._loading_timer is not None:
+                if self._loading_timer.isActive():
+                    self._loading_timer.stop()
+                self._loading_timer.deleteLater()
+                self._loading_timer = None
+        except Exception as e:
+            logger.error(f"停止加载定时器时出错: {str(e)}")
 
     def _check_response_timeout(self):
         """检查是否超时"""
@@ -175,49 +180,67 @@ class SuggestionHandler(QObject):
 
     def _restore_ui_state(self, restore_input=False):
         """恢复UI状态"""
-        self.suggest_button.setEnabled(True)
-        self.suggest_button.setText(self._original_button_text)
-        self.suggest_button.setStyleSheet("")
-        
-        # 是否恢复原始输入
-        if restore_input and self._original_input:
-            self.input_area.setPlainText(self._original_input)
+        if not self.suggest_button:
+            return
+            
+        try:
+            self.suggest_button.setEnabled(True)
+            # 使用 i18n 获取按钮文本
+            self.suggest_button.setText(self.i18n.get('suggest_button', 'Random Question') if hasattr(self, 'i18n') else 'Random Question')
+            self.suggest_button.setStyleSheet("")
+            
+            # 是否恢复原始输入
+            if restore_input and self._original_input and self.input_area:
+                self.input_area.setPlainText(self._original_input)
+        except Exception as e:
+            logger.error(f"恢复UI状态时出错: {str(e)}")
 
     def _on_suggestion_received(self, suggestion):
-        """处理接收到的建议"""
-        if not self._request_cancelled:
-            self._stop_loading_timer()
-            self._request_cancelled = True
-        self._response_text = suggestion
+        """处理接收到的随机问题"""
+        try:
+            if not self._request_cancelled:
+                self._stop_loading_timer()
+                self._request_cancelled = True
+                
+            if not suggestion:
+                error_msg = self.i18n.get('empty_suggestion', 'Received empty suggestion')
+                logger.warning(error_msg)
+                if self.response_area:
+                    self.response_area.setText(error_msg)
+                return
+                
+            self._response_text = str(suggestion)
             
-        # 清空输出区域的加载动画
-        self.response_area.clear()
-        
-        # 更新输入框内容
-        self.input_area.setPlainText(suggestion)
-
-        # 恢复 UI 状态
-        self._restore_ui_state()
+            # 更新UI
+            if self.response_area:
+                self.response_area.clear()
+            
+            if self.input_area:
+                self.input_area.setPlainText(self._response_text)
+                
+        except Exception as e:
+            error_msg = f"处理建议时出错: {str(e)}"
+            logger.error(error_msg)
+            if self.response_area:
+                self.response_area.setText(self.i18n.get('process_suggestion_error', 'Error processing suggestion'))
+        finally:
+            # 确保UI状态总是能被恢复
+            self._restore_ui_state()
 
     def _on_error(self, error):
         """处理错误"""
         if not self._request_cancelled:
             self._request_cancelled = True
             self._stop_loading_timer()
-            
-            # 先显示错误信息
-            error_text = f"{self.i18n.get('error_prefix', 'Error: ')}{str(error)}"
+        
+        if self.response_area and hasattr(self, 'i18n') and isinstance(self.i18n, dict):
+            # 只显示一个错误提示
+            error_text = self.i18n['suggestion_error']
+            if error and str(error).strip():
+                error_text = f"{error_text}: {str(error).strip()}"
             self.response_area.setText(error_text)
-            
-            # 恢复 UI 状态并保留原始输入
-            self._restore_ui_state(restore_input=True)
-            
-            # 延迟显示请求失败状态
-            def delayed_show_failed():
-                if not self._response_text:  # 确保在这个时间点还没有响应
-                    self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please check your network'))
-            
-            QTimer.singleShot(2000, delayed_show_failed)
+        
+        self._restore_ui_state(restore_input=True)
 
     def _on_worker_finished(self):
         """工作线程完成的处理"""
@@ -261,17 +284,17 @@ class SuggestionHandler(QObject):
                 self._worker = None
 
     def generate(self, book_info):
-        """生成建议"""
+        """生成随机问题"""
         if not self.api:
-            logger.error("API object is not initialized. Suggestion generation failed.")
+            logger.error("API信息没有成功初始化，随机问题生成失败。")
             return
         if not book_info:
-            logger.error("Book info is not provided. Suggestion generation failed.")
+            logger.error("书籍信息未提供，随机问题生成失败。")
             return
         
         # 检查 auth token
         if not self.suggest_button.window()._check_auth_token():
-            logger.error("Auth token check failed. Suggestion generation failed.")
+            logger.error("Auth token检查失败，随机问题生成失败。")
             return
 
         # 保存原始状态
@@ -303,7 +326,7 @@ class SuggestionHandler(QObject):
         if self._worker:
             self._cleanup_worker()
             
-        self._worker = SuggestionWorker(self.api, book_info)
+        self._worker = SuggestionWorker(self.api, book_info, i18n=self.i18n)
         self._worker.result.connect(self._on_suggestion_received)
         self._worker.error_occurred.connect(self._on_error)
         self._worker.finished.connect(self._on_worker_finished)

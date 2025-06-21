@@ -5,7 +5,7 @@ import json
 import requests
 import os
 import sys
-from typing import Generator
+from typing import Generator, Optional, Dict, Any, Tuple
 import logging
 
 # 添加一个 logger
@@ -13,10 +13,23 @@ logger = logging.getLogger(__name__)
 
 from calibre_plugins.ask_grok.i18n import get_translation
 
+class GrokAPIError(Exception):
+    """自定义 API 错误异常类"""
+    def __init__(self, message: str, status_code: Optional[int] = None, error_type: Optional[str] = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.error_type = error_type
+        self.message = message
+
+    def __str__(self) -> str:
+        if self.status_code:
+            return f"{self.message} (Status: {self.status_code})"
+        return self.message
+
 class APIClient:
     """X.AI API 客户端"""
     
-    def _prepare_request(self, prompt: str) -> tuple:
+    def _prepare_request(self, prompt: str) -> Tuple[Dict[str, str], Dict[str, Any]]:
         """准备 API 请求的共同部分
         
         Args:
@@ -27,19 +40,28 @@ class APIClient:
         """
         # 处理 token
         token = self.auth_token
-        token = token.strip()  # 移除首尾空白字符
-        
-        # 记录原始 token 用于调试
-        logger.debug(f"原始 Token: {token}")
-        
-        # 确保 token 不为空
-        if not token:
-            raise ValueError("Authentication token is empty")
+        if not token or not token.strip():
+            raise GrokAPIError("Authentication token is empty", error_type="auth_error")
             
-        # 确保 token 以 xai- 开头（不区分大小写）
-        if not token.lower().startswith('xai-') and not token.lower().startswith('bearer xai-'):
-            logger.warning(f"Token format warning: token should start with 'xai-', current token: {token}")
-            
+        token = token.strip()
+        
+        # 记录原始 token 用于调试（脱敏处理）
+        logger.debug(f"Token length: {len(token)}")
+        
+        # 检查 token 格式
+        if not (token.lower().startswith('xai-') or token.lower().startswith('bearer xai-')):
+            raise GrokAPIError(
+                "Invalid token format. Token must start with 'xai-' or 'Bearer xai-'",
+                error_type="auth_error"
+            )
+        
+        # 检查 token 长度
+        if len(token) < 64:  # 假设最小长度为 64
+            raise GrokAPIError(
+                "Token is too short. Please check and enter the complete token.",
+                error_type="auth_error"
+            )
+        
         # 确保 token 有 Bearer 前缀
         if not token.startswith('Bearer '):
             token = f'Bearer {token}'
@@ -76,6 +98,9 @@ class APIClient:
         Returns:
             str: API 返回的完整回答
             
+        Raises:
+            GrokAPIError: 当 API 请求失败时抛出
+            
         Note:
             这个方法不使用流式请求，更适合处理长文本和需要完整响应的场景
         """
@@ -84,37 +109,32 @@ class APIClient:
         logger.info(f"请求语言代码: {lang_code}")
         logger.info(f"原始提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
         
-        # 确保 token 不为空
-        if not self.auth_token or not self.auth_token.strip():
-            logger.error("Error: Authentication token is empty")
-            raise ValueError("Authentication token is not set")
-            
-        # 准备请求
-        logger.info("准备请求头和请求数据...")
-        headers, data = self._prepare_request(prompt)
-        data["stream"] = False  # 非流式请求
-        
-        # 记录请求详情（敏感信息已脱敏）
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            auth = safe_headers['Authorization']
-            if len(auth) > 20:  # 只显示前10个和后5个字符
-                safe_headers['Authorization'] = f"{auth[:10]}...{auth[-5:]}"
-        
-        logger.info(f"请求头: {safe_headers}")
-        logger.info(f"请求数据 (前500字符): {str(data)[:500]}{'...' if len(str(data)) > 500 else ''}")
-        logger.info(f"请求数据大小: {len(str(data))} 字节")
-        
-        # 记录完整的系统提示词
-        if 'messages' in data and len(data['messages']) > 0:
-            for i, msg in enumerate(data['messages']):
-                if msg.get('role') == 'system':
-                    logger.info(f"系统提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-                elif msg.get('role') == 'user':
-                    logger.info(f"用户提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-        
-        # 发送请求
         try:
+            # 准备请求
+            logger.info("准备请求头和请求数据...")
+            headers, data = self._prepare_request(prompt)
+            data["stream"] = False  # 非流式请求
+            
+            # 记录请求详情（敏感信息已脱敏）
+            safe_headers = headers.copy()
+            if 'Authorization' in safe_headers:
+                auth = safe_headers['Authorization']
+                if len(auth) > 20:  # 只显示前10个和后5个字符
+                    safe_headers['Authorization'] = f"{auth[:10]}...{auth[-5:]}"
+            
+            logger.info(f"请求头: {safe_headers}")
+            logger.info(f"请求数据 (前500字符): {str(data)[:500]}{'...' if len(str(data)) > 500 else ''}")
+            logger.info(f"请求数据大小: {len(str(data))} 字节")
+            
+            # 记录完整的系统提示词
+            if 'messages' in data and len(data['messages']) > 0:
+                for i, msg in enumerate(data['messages']):
+                    if msg.get('role') == 'system':
+                        logger.info(f"系统提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
+                    elif msg.get('role') == 'user':
+                        logger.info(f"用户提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
+            
+            # 发送请求
             logger.info("正在发送请求到 API...")
             response = requests.post(
                 "https://api.x.ai/v1/chat/completions",
@@ -131,30 +151,70 @@ class APIClient:
             result = response.json()
             
             # 记录完整的响应（敏感信息已脱敏）
-            logger.debug(f"完整 API 响应: {result}")
+            logger.debug(f"API 响应: {result}")
             
             # 提取回答
             if 'choices' in result and len(result['choices']) > 0:
                 answer = result['choices'][0].get('message', {}).get('content', '')
+                if not answer:
+                    raise GrokAPIError("API 返回了空的回答")
+                    
                 logger.info(f"成功获取到回答，长度: {len(answer)} 字符")
                 logger.debug(f"回答内容 (前500字符): {answer[:500]}{'...' if len(answer) > 500 else ''}")
                 return answer
             else:
-                logger.error(f"API 响应中未找到有效的回答: {result}")
-                raise ValueError("API 响应中未找到有效的回答")
+                raise GrokAPIError("API 响应中未找到有效的回答")
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"请求 API 时发生错误: {str(e)}")
+            status_code = None
+            error_message = str(e)
+            
+            # 尝试从响应中提取更多错误信息
             if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
                 try:
-                    error_detail = e.response.json()
-                    logger.error(f"API 错误详情: {error_detail}")
+                    error_data = e.response.json()
+                    error_message = error_data.get('error', {}).get('message', str(e))
+                    logger.error(f"API 错误详情: {error_data}")
                 except:
-                    logger.error(f"API 错误响应内容: {e.response.text[:1000]}")
-            raise
+                    error_message = e.response.text[:500]  # 限制错误消息长度
+                    logger.error(f"API 错误响应: {error_message}")
+            else:
+                logger.error(f"请求 API 时发生错误: {error_message}")
+            
+            if status_code == 401:
+                raise GrokAPIError(
+                    "认证失败，请检查您的 API token 是否正确",
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 403:
+                raise GrokAPIError(
+                    "权限被拒绝，您的 API token 可能无效或已过期",
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 429:
+                raise GrokAPIError(
+                    "请求过于频繁，请稍后再试",
+                    status_code=status_code,
+                    error_type="rate_limit"
+                )
+            else:
+                raise GrokAPIError(
+                    f"API 请求失败: {error_message}",
+                    status_code=status_code,
+                    error_type="api_error"
+                )
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"解析 API 响应时发生 JSON 解码错误: {str(e)}")
+            raise GrokAPIError("处理 API 响应时发生错误: 无效的 JSON 响应")
             
         except Exception as e:
-            logger.error(f"处理 API 响应时发生错误: {str(e)}", exc_info=True)
+            logger.error(f"处理 API 请求时发生未知错误: {str(e)}", exc_info=True)
+            if not isinstance(e, GrokAPIError):
+                raise GrokAPIError(f"发生未知错误: {str(e)}")
             raise
             
         finally:
