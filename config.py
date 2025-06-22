@@ -356,7 +356,7 @@ class ConfigDialog(QWidget):
             self.save_success_label.setText(self.i18n['save_success'])
         
         # 更新模板内容
-        self.template_edit.setText(get_default_template(lang_code))
+        self.template_edit.setPlainText(get_default_template(lang_code))
         
         # 发出语言改变信号
         self.language_changed.emit(lang_code)

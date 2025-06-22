@@ -279,6 +279,7 @@ TRANSLATIONS = {
         'unknown_error': 'Unknown error occurred',
         'suggestion_error': 'Failed to generate suggestion',
         'book_title_check':'book metadata need to contain title',
+        'avoid_repeat_question': 'Also, please make sure the new question is different from this one: ',
         # API请求后的错误提示
         'empty_answer':'API returned an empty answer',
         'invalid_response':'Invalid response format from API',
@@ -359,6 +360,7 @@ TRANSLATIONS = {
         'unknown_error': 'Une erreur inconnue s\'est produite.',
         'suggestion_error': 'Erreur lors de la génération de la suggestion',
         'book_title_check':'les métadonnées du livre doivent contenir le titre',
+        'avoid_repeat_question': 'Assurez-vous également que la nouvelle question est différente de celle-ci:',
         # API请求后的错误提示
         'empty_answer': 'La réponse de l\'API est vide',
         'invalid_response':'Format de réponse invalide de l\'API',
@@ -437,6 +439,7 @@ TRANSLATIONS = {
         'unknown_error': 'Unbekannter Fehler aufgetreten',
         'suggestion_error': 'Fehler beim Generieren der Vorschläge',
         'book_title_check':'Buchmetadaten müssen den Titel enthalten',
+        'avoid_repeat_question': 'Stellen Sie außerdem sicher, dass sich die neue Frage von dieser unterscheidet:',
         # API请求后的错误提示
         'empty_answer': 'Die API hat eine leere Antwort zurückgegeben',
         'invalid_response':'Format der API-Antwort ist ungültig',
@@ -515,6 +518,7 @@ TRANSLATIONS = {
         'unknown_error': 'Se produjo un error desconocido.',
         'suggestion_error': 'Error al generar la sugerencia',
         'book_title_check':'As metadados do livro devem conter o título',
+        'avoid_repeat_question': 'También, por favor, asegúrate de que la nueva pregunta sea diferente de esta:',
         # API请求后的错误提示
         'empty_answer': 'La API devolvió una respuesta vacía',
         'invalid_response':'Formato de respuesta inválido de la API',
@@ -593,6 +597,7 @@ TRANSLATIONS = {
         'unknown_error': 'Erro desconhecido',
         'suggestion_error': 'Erro ao gerar a sugestão',
         'book_title_check':'As metadados do livro devem conter o título',
+        'avoid_repeat_question': ' Além disso, certifique-se de que a nova pergunta é diferente desta:',
         # API请求后的错误提示
         'empty_answer': 'A API retornou uma resposta vazia',
         'invalid_response':'Formato de resposta inválido de a API',
@@ -671,6 +676,7 @@ TRANSLATIONS = {
         'unknown_error': 'Onbekende fout',
         'suggestion_error': 'Fout bij het genereren van de suggestie',
         'book_title_check':'Bogmetadata skal indeholde titel',
+        'avoid_repeat_question': ' Zorg er ook voor dat de nieuwe vraag anders is dan deze:',
         # API请求后的错误提示
         'empty_answer': 'De API heeft een leeg antwoord teruggestuurd',
         'invalid_response':'Ongeldig antwoord van de API',
@@ -749,6 +755,7 @@ TRANSLATIONS = {
         'unknown_error': 'Tuntematon virhe tapahtui',
         'suggestion_error': 'Fejl ved generering af forslag',
         'book_title_check':'Bogmetadata skal indeholde titel',
+        'avoid_repeat_question': 'Sørg også for, at det nye spørgsmål er forskelligt fra dette:',
         # API请求后的错误提示
         'empty_answer': 'API\'en returnerede et tomt svar',
         'invalid_response':'Ugyldigt svar fra API',
@@ -827,6 +834,7 @@ TRANSLATIONS = {
         'unknown_error': 'Tuntematon virhe tapahtui.',
         'suggestion_error': 'Fout bij het genereren van een suggestie',
         'book_title_check':'De metagegevens van het boek moeten de titel bevatten',
+        'avoid_repeat_question': 'Varmista myös, että uusi kysymys on eri kuin tämä:',
         # API请求后的错误提示
         'empty_answer': 'API palautti tyhjän vastauksen',
         'invalid_response':'Virheellinen vastaus API',
@@ -905,6 +913,7 @@ TRANSLATIONS = {
         'unknown_error': 'Ukjent feil',
         'suggestion_error': 'Feil under generering av forslag',
         'book_title_check':'Bokens metadata må inneholde tittel',
+        'avoid_repeat_question': 'Sørg også for at det nye spørsmålet er forskjellig fra dette:',
         # API请求后的错误提示
         'empty_answer': 'API-et returnerte et tomt svar',
         'invalid_response':'Ugyldig svar fra API',
@@ -983,6 +992,7 @@ TRANSLATIONS = {
         'unknown_error': 'Okänd fel',
         'suggestion_error': 'Fel under generering av förslag',
         'book_title_check':'Bokens metadata måste innehålla titel',
+        'avoid_repeat_question': ' Se också till att den nya frågan skiljer sig från denna:',
         # API请求后的错误提示
         'empty_answer': 'API:et returnerade ett tomt svar',
         'invalid_response':'Ogiltigt svar från API',
@@ -1062,6 +1072,7 @@ TRANSLATIONS = {
         'suggestion_error': 'Ошибка при генерации предложения',
         'book_title_check':'book_info должен содержать title-атрибут',
         'book_title_check':'Метаданные книги должны включать название',
+        'avoid_repeat_question': 'Следует также убедиться, что новая вопрос отличается от этого:',
         # API请求后的错误提示
         'empty_answer': 'API вернул пустой ответ',
         'invalid_response':'Неверный ответ от API',
@@ -1140,6 +1151,7 @@ TRANSLATIONS = {
         'unknown_error': '不明なエラーが発生しました',
         'suggestion_error': '提案の生成中にエラーが発生しました',
         'book_title_check':'書籍のメタデータにはタイトルを含める必要があります',
+        'avoid_repeat_question': '新しい質問がこの質問と異なることを確認してください:',
         # API请求后的错误提示
         'empty_answer': 'APIが空のレスポンスを返しました',
         'invalid_response':'APIからの無効なレスポンス',
@@ -1219,6 +1231,8 @@ TRANSLATIONS = {
         'unknown_error': '未知错误',
         'suggestion_error': '生成建议时出错',
         'book_title_check':'书籍元数据必须包含标题',
+        'avoid_repeat_question': '请确保新问题与当前问题不同:',
+        # API请求后的错误提示
         'empty_answer': 'API 返回了空的回答',
         'invalid_response':'API 返回了无效的响应',
         'auth_error_401': '未授权的 token',
@@ -1297,6 +1311,8 @@ TRANSLATIONS = {
         'unknown_error': '未知錯誤',
         'suggestion_error': '生成建議時出錯',
         'book_title_check':'書籍元資料必須包含標題',
+        'avoid_repeat_question': '請確保新問題與當前問題不同:',
+        # API请求后的错误提示
         'empty_answer': 'API 返回了空的回答',
         'invalid_response':'API 返回了無效嘅 JSON 個應答',
         'auth_error_401': '未授權的 token',
@@ -1375,6 +1391,7 @@ TRANSLATIONS = {
         'unknown_error': '未知錯誤',
         'suggestion_error': '生成建議時出錯',
         'book_title_check':'書籍元資料必須包含標題',
+        'avoid_repeat_question': '請確保新問題與當前問題不同:',
         # API请求后的错误提示
         'empty_answer': 'API 返回了空的回答',
         'invalid_response':'API 返回了無效嘅 JSON 個應答',

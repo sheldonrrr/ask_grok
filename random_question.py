@@ -15,7 +15,7 @@ class SuggestionWorker(QThread):
     error_occurred = pyqtSignal(str)
     finished = pyqtSignal()
     
-    def __init__(self, api, book_info, i18n=None):
+    def __init__(self, api, book_info, i18n=None, current_question=None):
         super().__init__(None)  # 不设置父对象，避免随父对象一起销毁
         self.api = api
         self.i18n = i18n or {}
@@ -26,6 +26,7 @@ class SuggestionWorker(QThread):
             raise ValueError(error_msg)
             
         self.book_info = book_info
+        self.current_question = current_question  # 保存当前问题
         self._is_cancelled = False
         self._is_finished = False  # 标记线程是否完成
 
@@ -61,6 +62,11 @@ class SuggestionWorker(QThread):
                 author=author_str,
                 language=language,
             )
+            
+            # 如果存在当前问题，添加到提示词中以避免重复
+            if self.current_question and self.current_question.strip():
+                avoid_repeat = self.i18n.get("avoid_repeat_question", " Also, please make sure the new question is different from this one:").format(self.current_question.strip())
+                prompt += avoid_repeat
             
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
@@ -328,11 +334,19 @@ class SuggestionHandler(QObject):
         # 设置加载动画
         self._setup_loading_animation()
         
+        # 获取当前问题
+        current_question = self.input_area.toPlainText().strip()
+        
         # 创建并启动工作线程
         if self._worker:
             self._cleanup_worker()
             
-        self._worker = SuggestionWorker(self.api, book_info, i18n=self.i18n)
+        self._worker = SuggestionWorker(
+            self.api, 
+            book_info, 
+            i18n=self.i18n,
+            current_question=current_question if current_question != self._original_input else None
+        )
         self._worker.result.connect(self._on_suggestion_received)
         self._worker.error_occurred.connect(self._on_error)
         self._worker.finished.connect(self._on_worker_finished)
