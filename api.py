@@ -295,9 +295,25 @@ class APIClient:
             
             status_code = response.status_code
             
-            # 处理常见错误
-            status_code = response.status_code
-            if status_code == 401:
+            # 处理成功响应
+            if status_code == 200:
+                # 成功响应
+                result = response.json()
+                if 'choices' in result and len(result['choices']) > 0:
+                    answer = result['choices'][0].get('message', {}).get('content', '')
+                    if not answer:
+                        raise GrokAPIError(
+                            self.i18n.get('empty_answer', 'API returned an empty answer'),
+                            error_type="api_error"
+                        )
+                    return answer
+                else:
+                    raise GrokAPIError(
+                        self.i18n.get('invalid_response', 'Invalid response format from API'),
+                        error_type="api_error"
+                    )
+            # 处理错误响应
+            elif status_code == 401:
                 error_msg = self.i18n.get('auth_error_401', 'Unauthorized token')
                 raise GrokAPIError(
                     error_msg,
@@ -319,7 +335,7 @@ class APIClient:
                     error_type="rate_limit"
                 )
             else:
-                error_msg = self.i18n.get('Invalid token', 'Please check your API token in the plugin settings.')
+                error_msg = self.i18n.get('invalid_token_message', 'Please check your API token validable in the plugin settings.')
                 raise GrokAPIError(
                     error_msg,
                     status_code=status_code,

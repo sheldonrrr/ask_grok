@@ -281,6 +281,7 @@ TRANSLATIONS = {
         'book_title_check':'book metadata need to contain title',
         # API请求后的错误提示
         'empty_answer':'API returned an empty answer',
+        'invalid_response':'Invalid response format from API',
         'auth_error_401':'Unauthorized token',
         'auth_error_403':'Forbidden token',
         'rate_limit':'Request too frequent, please try again later',# 429
@@ -360,6 +361,7 @@ TRANSLATIONS = {
         'book_title_check':'les métadonnées du livre doivent contenir le titre',
         # API请求后的错误提示
         'empty_answer': 'La réponse de l\'API est vide',
+        'invalid_response':'Format de réponse invalide de l\'API',
         'auth_error_401': 'Token non autorisé',
         'auth_error_403': 'Accès refusé',
         'rate_limit': 'Trop de requêtes, veuillez réessayer plus tard',
@@ -437,6 +439,7 @@ TRANSLATIONS = {
         'book_title_check':'Buchmetadaten müssen den Titel enthalten',
         # API请求后的错误提示
         'empty_answer': 'Die API hat eine leere Antwort zurückgegeben',
+        'invalid_response':'Format der API-Antwort ist ungültig',
         'auth_error_401': 'Nicht autorisiertes Token',
         'auth_error_403': 'Zugriff verweigert',
         'rate_limit': 'Zu viele Anfragen, bitte versuchen Sie es später erneut',
@@ -514,6 +517,7 @@ TRANSLATIONS = {
         'book_title_check':'As metadados do livro devem conter o título',
         # API请求后的错误提示
         'empty_answer': 'La API devolvió una respuesta vacía',
+        'invalid_response':'Formato de respuesta inválido de la API',
         'auth_error_401': 'Token no autorizado',
         'auth_error_403': 'Acceso denegado',
         'rate_limit': 'Demasiadas solicitudes, por favor intente de nuevo más tarde',
@@ -591,6 +595,7 @@ TRANSLATIONS = {
         'book_title_check':'As metadados do livro devem conter o título',
         # API请求后的错误提示
         'empty_answer': 'A API retornou uma resposta vazia',
+        'invalid_response':'Formato de resposta inválido de a API',
         'auth_error_401': 'Token não autorizado',
         'auth_error_403': 'Acesso negado',
         'rate_limit': 'Muitas solicitações, por favor tente novamente mais tarde',
@@ -668,6 +673,7 @@ TRANSLATIONS = {
         'book_title_check':'Bogmetadata skal indeholde titel',
         # API请求后的错误提示
         'empty_answer': 'De API heeft een leeg antwoord teruggestuurd',
+        'invalid_response':'Ongeldig antwoord van de API',
         'auth_error_401': 'Niet-geautoriseerd token',
         'auth_error_403': 'Toegang geweigerd',
         'rate_limit': 'Te veel verzoeken, probeer het later opnieuw',
@@ -745,6 +751,7 @@ TRANSLATIONS = {
         'book_title_check':'Bogmetadata skal indeholde titel',
         # API请求后的错误提示
         'empty_answer': 'API\'en returnerede et tomt svar',
+        'invalid_response':'Ugyldigt svar fra API',
         'auth_error_401': 'Uautoriseret token',
         'auth_error_403': 'Adgang nægtet',
         'rate_limit': 'For mange anmodninger, prøv igen senere',
@@ -822,6 +829,7 @@ TRANSLATIONS = {
         'book_title_check':'De metagegevens van het boek moeten de titel bevatten',
         # API请求后的错误提示
         'empty_answer': 'API palautti tyhjän vastauksen',
+        'invalid_response':'Virheellinen vastaus API',
         'auth_error_401': 'Luvaton token',
         'auth_error_403': 'Pääsy evätty',
         'rate_limit': 'Liian monta pyyntöä, yritä myöhemmin uudelleen',
@@ -899,6 +907,7 @@ TRANSLATIONS = {
         'book_title_check':'Bokens metadata må inneholde tittel',
         # API请求后的错误提示
         'empty_answer': 'API-et returnerte et tomt svar',
+        'invalid_response':'Ugyldig svar fra API',
         'auth_error_401': 'Uautorisert token',
         'auth_error_403': 'Tilgang nektet',
         'rate_limit': 'For mange forespørsler, vennligst prøv igjen senere',
@@ -976,6 +985,7 @@ TRANSLATIONS = {
         'book_title_check':'Bokens metadata måste innehålla titel',
         # API请求后的错误提示
         'empty_answer': 'API:et returnerade ett tomt svar',
+        'invalid_response':'Ogiltigt svar från API',
         'auth_error_401': 'Obehörig token',
         'auth_error_403': 'Åtkomst nekad',
         'rate_limit': 'För många förfrågningar, försök igen senare',
@@ -1054,6 +1064,7 @@ TRANSLATIONS = {
         'book_title_check':'Метаданные книги должны включать название',
         # API请求后的错误提示
         'empty_answer': 'API вернул пустой ответ',
+        'invalid_response':'Неверный ответ от API',
         'auth_error_401': 'Неавторизованный токен',
         'auth_error_403': 'Доступ запрещен',
         'rate_limit': 'Слишком много запросов, попробуйте позже',
@@ -1131,6 +1142,7 @@ TRANSLATIONS = {
         'book_title_check':'書籍のメタデータにはタイトルを含める必要があります',
         # API请求后的错误提示
         'empty_answer': 'APIが空のレスポンスを返しました',
+        'invalid_response':'APIからの無効なレスポンス',
         'auth_error_401': '認証されていないトークン',
         'auth_error_403': 'アクセスが拒否されました',
         'rate_limit': 'リクエストが多すぎます。後でもう一度お試しください',
@@ -1208,6 +1220,7 @@ TRANSLATIONS = {
         'suggestion_error': '生成建议时出错',
         'book_title_check':'书籍元数据必须包含标题',
         'empty_answer': 'API 返回了空的回答',
+        'invalid_response':'API 返回了无效的响应',
         'auth_error_401': '未授权的 token',
         'auth_error_403': '禁止访问',
         'rate_limit': '请求过于频繁，请稍后再试',
@@ -1285,6 +1298,7 @@ TRANSLATIONS = {
         'suggestion_error': '生成建議時出錯',
         'book_title_check':'書籍元資料必須包含標題',
         'empty_answer': 'API 返回了空的回答',
+        'invalid_response':'API 返回了無效嘅 JSON 個應答',
         'auth_error_401': '未授權的 token',
         'auth_error_403': '禁止訪問',
         'rate_limit': '請求過於頻繁，請稍後再試',
@@ -1363,6 +1377,7 @@ TRANSLATIONS = {
         'book_title_check':'書籍元資料必須包含標題',
         # API请求后的错误提示
         'empty_answer': 'API 返回了空的回答',
+        'invalid_response':'API 返回了無效嘅 JSON 個應答',
         'auth_error_401': '未授权的 token',
         'auth_error_403': '禁止访问',
         'rate_limit': '请求过于频繁，请稍后再试',
