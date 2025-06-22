@@ -233,8 +233,11 @@ class ConfigDialog(QWidget):
         self.template_edit.setPlaceholderText(self.i18n['template_placeholder'])
         self.template_edit.setFixedHeight(180)
         
-        # 禁用自动换行，使用水平滚动条
-        self.template_edit.setLineWrapMode(QPlainTextEdit.NoWrap)
+        # 支持自动换行
+        try:
+            self.template_edit.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
+        except AttributeError:
+            self.template_edit.setLineWrapMode(1)  # 回退到整数值
         
         # 设置边距和滚动条策略
         self.template_edit.setViewportMargins(0, 0, 0, 0)

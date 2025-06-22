@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QTextCursor
 import markdown2
 import bleach
 import logging
+from threading import Thread
+from PyQt5.QtCore import pyqtSignal, QObject
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,11 @@ class MarkdownWorker(QThread):
         """标记取消状态，让线程自然结束"""
         self._is_cancelled = True
 
-
+# 在类外部或类级别定义信号类
+class ResponseSignals(QObject):
+    update_ui = pyqtSignal(str, bool)
+    error_occurred = pyqtSignal(str, str)
+    request_finished = pyqtSignal()
 
 class ResponseHandler(QObject):
     stop_time_signal = pyqtSignal()
@@ -53,7 +57,7 @@ class ResponseHandler(QObject):
         self._loading_timer = None
         self.api = None
         self._markdown_worker = None
-        self.signal = None
+        self.signal = ResponseSignals()
 
     def setup(self, response_area, send_button, i18n, api):
         """设置处理器需要的UI组件和国际化文本"""
@@ -107,23 +111,32 @@ class ResponseHandler(QObject):
 
     def start_async_request(self, prompt):
         """开始异步请求 API"""
-        from threading import Thread
-        from PyQt5.QtCore import pyqtSignal, QObject
-        
-        # 定义一个信号类用于线程间通信
-        class Signal(QObject):
-            update_ui = pyqtSignal(str, bool)
-            error_occurred = pyqtSignal(str)
-            request_finished = pyqtSignal()
-        
-        self.signal = Signal()
+        # 连接信号
         self.signal.update_ui.connect(self._update_ui_from_signal)
         self.signal.error_occurred.connect(self.handle_error)
         self.signal.request_finished.connect(self._restore_button_state)
         
-        thread = Thread(target=self.start_request, args=(prompt,))
+        def run_request():
+            try:
+                response = self.api.ask(prompt)
+                self.signal.update_ui.emit(response, True)
+            except Exception as e:
+                error_type = getattr(e, 'error_type', 'unknown')
+                self.signal.error_occurred.emit(str(e), error_type)
+            finally:
+                self.signal.request_finished.emit()
+                # 断开信号连接，避免重复连接
+                try:
+                    self.signal.update_ui.disconnect()
+                    self.signal.error_occurred.disconnect()
+                    self.signal.request_finished.disconnect()
+                except:
+                    pass
+        
+        thread = Thread(target=run_request)
+        thread.daemon = True
         thread.start()
-        # 立即显示加载动画
+        
         self._setup_loading_animation()
 
     def prepare_close(self):
@@ -250,11 +263,12 @@ class ResponseHandler(QObject):
             
         return error_html
 
-    def handle_error(self, error_msg):
+    def handle_error(self, error_msg, error_type='unknown'):
         """处理错误信息
         
         Args:
             error_msg: 错误信息，可以是字符串或异常对象
+            error_type: 错误类型，如 'auth_error', 'api_error' 等
         """
         self._stop_loading_timer()
         
@@ -263,39 +277,33 @@ class ResponseHandler(QObject):
         request_failed = self.i18n.get('request_failed', 'Request failed, please try again later')
         invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token validable in settings.')
         
-        # 处理不同类型的错误
-        if hasattr(error_msg, 'error_type'):
-            if error_msg.error_type == "invalid_token":
-                # 认证错误
-                error_html = self._format_error_html(
-                    title=f"{error_prefix}{invalid_token}",
-                    message=str(error_msg),
-                    error_type='auth'
-                )
-            else:
-                # 其他API错误
-                error_html = self._format_error_html(
-                    title=f"{error_prefix}{request_failed}",
-                    message=str(error_msg),
-                    error_type='api'
-                )
-        elif 'template_error' in str(error_msg):
-            # 模板错误，直接显示错误信息
-            error_html = self._format_error_html(
-                title=str(error_msg),
-                message="",
-                error_type='default'
-            )
-        else:
-            # 默认错误处理
-            error_html = self._format_error_html(
-                title=f"{error_prefix}{request_failed}",
-                message="",
-                error_type='default'
-            )
+        # 处理错误信息
+        error_str = str(error_msg)
         
-        # 显示错误信息
-        self.response_area.setHtml(error_html)
+        # 根据错误类型设置标题和错误类型
+        if error_type == 'auth_error' or (hasattr(error_msg, 'error_type') and error_msg.error_type == 'auth_error'):
+            title = self.i18n.get('auth_error_title', 'Authentication Error')
+            error_type = 'auth'
+            message = error_str if error_str else invalid_token
+        elif 'template_error' in error_str:
+            title = error_str
+            message = ""
+            error_type = 'default'
+        else:
+            title = f"{error_prefix}{request_failed}"
+            message = error_str if error_str != title else ""
+            error_type = 'api' if error_type == 'unknown' else error_type
+        
+        # 生成错误HTML
+        error_html = self._format_error_html(
+            title=title,
+            message=message,
+            error_type=error_type
+        )
+        
+        # 更新UI
+        if self.response_area:
+            self.response_area.setHtml(error_html)
         
         # 恢复按钮状态
         self.send_button.setEnabled(True)
