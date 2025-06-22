@@ -278,11 +278,18 @@ class ResponseHandler(QObject):
                     message=str(error_msg),
                     error_type='api'
                 )
+        elif 'template_error' in str(error_msg):
+            # 模板错误，直接显示错误信息
+            error_html = self._format_error_html(
+                title=str(error_msg),
+                message="",
+                error_type='default'
+            )
         else:
             # 默认错误处理
             error_html = self._format_error_html(
                 title=f"{error_prefix}{request_failed}",
-                message=str(error_msg),
+                message="",
                 error_type='default'
             )
         

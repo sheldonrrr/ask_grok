@@ -10,52 +10,52 @@ from PyQt5.QtCore import Qt
 
 DEFAULT_TEMPLATES = {
     # 英语
-    'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, book in language: {language}, Series: {series}, My question is: {query}',
+    'en': 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Year: {pubyear}, book in language: {language}, Series: {series}, My question is: {query}',
     
     # 法语
-    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Date de publication: {pubdate}, livre en language: {language}, Série: {series}, Ma question est: {query}',
+    'fr': 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Année de publication: {pubyear}, livre en language: {language}, Série: {series}, Ma question est: {query}',
 
     # 德语
-    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Buchsprache: {language}, Serie: {series}, Meine Frage ist: {query}',
+    'de': 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsjahr: {pubyear}, Buch in language: {language}, Reihe: {series}, Meine Frage ist: {query}',
 
     # 西班牙语
-    'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, libro en language: {language}, Serie: {series}, Mi pregunta es: {query}',
+    'es': 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Año de publicación: {pubyear}, libro en language: {language}, Serie: {series}, Mi pregunta es: {query}',
 
     # 葡萄牙语
-    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, livro em language: {language}, Série: {series}, Minha pergunta é: {query}',
+    'pt': 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Ano de publicação: {pubyear}, livro em language: {language}, Série: {series}, Minha pergunta é: {query}',
 
     # 荷兰语
-    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, boek in language: {language}, Serie: {series}, Mijn vraag is: {query}',
+    'nl': 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiejaar: {pubyear}, boek in language: {language}, Serie: {series}, Mijn vraag is: {query}',
 
     # 丹麦语
-    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, bog i language: {language}, Serie: {series}, Mit spørgsmål er: {query}',
+    'da': 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesår: {pubyear}, bog i language: {language}, Serie: {series}, Mit spørgsmål er: {query}',
     
     # 芬兰语
-    'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, kirja i language: {language}, Sarja: {series}, Kysymykseni on: {query}',
+    'fi': 'Kirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisuvuosi: {pubyear}, kirjan kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
     
     # 挪威语
-    'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, bok på språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
+    'no': 'Om boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesår: {pubyear}, bok i language: {language}, Serie: {series}, Spørsmålet mitt er: {query}',
     
     # 瑞典语
-    'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, bok på språk: {language}, Serie: {series}, Min fråga är: {query}',
-
+    'sv': 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsår: {pubyear}, bok i language: {language}, Serie: {series}, Min fråga är: {query}',
+    
     # 俄语
-    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, книга на языке: {language}, Серия: {series}, Мой вопрос: {query}',
-
+    'ru': 'О книге "{title}": Автор: {author}, Издательство: {publisher}, Год издания: {pubyear}, книга на language: {language}, Серия: {series}, Мой вопрос: {query}',
+    
     # 日语
-    'ja': '『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語の本：{language}、シリーズ：{series}、質問：{query}',
+    'ja': '本について "{title}": 著者: {author}, 出版社: {publisher}, 出版年: {pubyear}, 言語: {language}, シリーズ: {series}, 質問: {query}',
     
     # 简体中文
-    'zh': '关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，书籍语言：{language}，系列：{series}，我的问题是：{query}',
+    'zh': '关于书籍 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 语言: {language}, 系列: {series}, 我的问题是: {query}',
     
     # 繁体中文
-    'zht': '關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，書本語言：{language}，系列：{series}，我的問題是：{query}',
+    'zht': '關於書籍 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 語言: {language}, 系列: {series}, 我的問題是: {query}',
     
     # 粤语
-    'yue': '關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，書本語言：{language}，系列：{series}，我問嘅係：{query}',
+    'yue': '關於本書 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 語言: {language}, 系列: {series}, 我嘅問題係: {query}',
 }
 
-# 建议按钮提示词模板
+# 随机问题按钮提示词模板
 # 语言顺序：英、法、德、西、葡、荷、丹、芬、挪、瑞、俄、日、简、繁、粤
 SUGGESTION_TEMPLATES = {
     # 英语
@@ -222,7 +222,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': 'Prompt Template:',
-        'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Date: {pubdate}, Language: {language}, Series: {series}, My question is: {query}',
+        'template_placeholder': 'Example template:\nAbout the book "{title}": Author: {author}, Publisher: {publisher}, Publication Year: {pubyear}, Language: {language}, Series: {series}, My question is: {query}',
         'language_label': 'Interface Language:',
         'send_button': 'Send',
         'suggest_button': 'Random Question',
@@ -239,7 +239,7 @@ TRANSLATIONS = {
         'metadata_title': 'Title',
         'metadata_authors': 'Author',
         'metadata_publisher': 'Publisher',
-        'metadata_pubdate': 'Publication Date',
+        'metadata_pubyear': 'Publication Date',
         'metadata_language': 'Language',
         'metadata_series': 'Series',
         'menu_title': 'Ask',
@@ -271,7 +271,7 @@ TRANSLATIONS = {
         'invalid_token': 'Please check your API token validable in the plugin settings.',
         'token_too_short_message': 'Token is too short. Please check and enter the complete token.',
         'auth_token_none_message': 'No auth token, Ask Grok can not work.',
-        'error': 'Error',
+        'error': 'Error:',
         'error_preparing_request': 'Error preparing request',
         # 随机问题
         'empty_suggestion': 'Received empty suggestion',
@@ -287,7 +287,9 @@ TRANSLATIONS = {
         'invalid_json':'Invalid JSON response',
         'unknown_error':'Unknown error',
         # 响应文字提示
-        'no_response':'No response'
+        'no_response':'No response',
+        # 发送按钮的模版文字出现错误的提示
+        'template_error':'Template error'
      },
 
     # 法语 (fr)
@@ -301,7 +303,7 @@ TRANSLATIONS = {
         'model_label': 'Modèle :',
         'model_placeholder': 'Par défaut : grok-3-latest',
         'template_label': 'Modèle de prompt :',
-        'template_placeholder': 'Exemple de modèle :\nÀ propos du livre "{title}" : Auteur : {author}, Éditeur : {publisher}, Date de publication : {pubdate}, Langue : {language}, Série : {series}, Ma question est : {query}',
+        'template_placeholder': 'Exemple de modèle :\nÀ propos du livre "{title}" : Auteur : {author}, Éditeur : {publisher}, Année de publication : {pubyear}, Langue : {language}, Série : {series}, Ma question est : {query}',
         'language_label': 'Langue de l\'interface :',
         'send_button': 'Envoyer',
         'shortcut_enter': 'Ctrl + Entrée',
@@ -314,7 +316,7 @@ TRANSLATIONS = {
         'metadata_title': 'Titre',
         'metadata_authors': 'Auteur',
         'metadata_publisher': 'Éditeur',
-        'metadata_pubdate': 'Date de publication',
+        'metadata_pubyear': 'Date de publication',
         'metadata_language': 'Langue',
         'metadata_series': 'Série',
         'input_placeholder': 'Saisissez votre question ici...',
@@ -349,7 +351,7 @@ TRANSLATIONS = {
         'invalid_token': 'Veuillez vérifier vos jetons API dans les paramètres du plugin.',
         'token_too_short_message': 'Le jeton est trop court. Veuillez vérifier et entrer le jeton complet.',
         'auth_token_none_message': 'Aucun jeton d\'authentification, Ask Grok ne peut pas fonctionner.',
-        'error': 'Erreur',
+        'error': 'Erreur:',
         'error_preparing_request': 'Erreur lors de la préparation de la requête',
         'empty_suggestion': 'Reçu une suggestion vide',
         'process_suggestion_error': 'Erreur lors du traitement de la suggestion',
@@ -363,7 +365,8 @@ TRANSLATIONS = {
         'rate_limit': 'Trop de requêtes, veuillez réessayer plus tard',
         'invalid_json': 'Réponse JSON invalide',
         'unknown_error': 'Erreur inconnue',
-        'no_response':'Aucune réponse'
+        'no_response':'Aucune réponse',
+        'template_error':'Erreur de template'
     },
 
     # 德语 (de)
@@ -377,7 +380,7 @@ TRANSLATIONS = {
         'model_label': 'Modell:',
         'model_placeholder': 'Standard: grok-3-latest',
         'template_label': 'Prompt-Vorlage:',
-        'template_placeholder': 'Beispielvorlage:\nÜber das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubdate}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
+        'template_placeholder': 'Beispielvorlage:\nÜber das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsdatum: {pubyear}, Sprache: {language}, Serie: {series}, Meine Frage ist: {query}',
         'language_label': 'Oberflächensprache:',
         'send_button': 'Senden',
         'shortcut_enter': 'Strg + Eingabe',
@@ -390,7 +393,7 @@ TRANSLATIONS = {
         'metadata_title': 'Titel',
         'metadata_authors': 'Autor',
         'metadata_publisher': 'Verlag',
-        'metadata_pubdate': 'Erscheinungsdatum',
+        'metadata_pubyear': 'Erscheinungsdatum',
         'metadata_language': 'Sprache',
         'metadata_series': 'Serie',
         'input_placeholder': 'Geben Sie hier Ihre Frage ein...',
@@ -425,7 +428,7 @@ TRANSLATIONS = {
         'invalid_token': 'Bitte prüfen Sie Ihre API-Token in den Plugin-Einstellungen.',
         'token_too_short_message': 'Token ist zu kurz. Bitte prüfen und den ganzen Token eingeben.',
         'auth_token_none_message': 'Kein Authentifizierungstoken, Ask Grok kann nicht funktionieren.',
-        'error': 'Fehler',
+        'error': 'Fehler:',
         'error_preparing_request': 'Fehler beim Vorbereiten der Anfrage',
         'empty_suggestion': 'Empfand leere Vorschläge',
         'process_suggestion_error': 'Fehler bei der Verarbeitung des Vorschlags',
@@ -439,7 +442,8 @@ TRANSLATIONS = {
         'rate_limit': 'Zu viele Anfragen, bitte versuchen Sie es später erneut',
         'invalid_json': 'Ungültige JSON-Antwort',
         'unknown_error': 'Unbekannter Fehler',
-        'no_response':'Keine Antwort'
+        'no_response':'Keine Antwort',
+        'template_error':'Fehler im Template'
     },
     
     # 西班牙语 (es)
@@ -453,7 +457,7 @@ TRANSLATIONS = {
         'model_label': 'Modelo:',
         'model_placeholder': 'Predeterminado: grok-3-latest',
         'template_label': 'Modelo de prompt:',
-        'template_placeholder': 'Ejemplo de modelo:\nSobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubdate}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
+        'template_placeholder': 'Ejemplo de modelo:\nSobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Fecha de publicación: {pubyear}, Idioma: {language}, Serie: {series}, Mi pregunta es: {query}',
         'language_label': 'Idioma de la interfaz:',
         'send_button': 'Enviar',
         'shortcut_enter': 'Ctrl + Intro',
@@ -466,7 +470,7 @@ TRANSLATIONS = {
         'metadata_title': 'Título',
         'metadata_authors': 'Autor',
         'metadata_publisher': 'Editorial',
-        'metadata_pubdate': 'Fecha de publicación',
+        'metadata_pubyear': 'Fecha de publicación',
         'metadata_language': 'Idioma',
         'metadata_series': 'Serie',
         'input_placeholder': 'Escriba su pregunta aquí...',
@@ -501,7 +505,7 @@ TRANSLATIONS = {
         'invalid_token': 'Por favor, verifique sus tokens API en la configuración del plugin.',
         'token_too_short_message': 'Token es demasiado corto. Por favor, verifique y entre el token completo.',
         'auth_token_none_message': 'No hay token de autenticación, Ask Grok no puede funcionar.',
-        'error': 'Error',
+        'error': 'Error:',
         'error_preparing_request': 'Error al preparar la solicitud',
         'empty_suggestion': 'Recibido sugerencia vacía',
         'process_suggestion_error': 'Error al procesar la sugerencia',
@@ -515,7 +519,8 @@ TRANSLATIONS = {
         'rate_limit': 'Demasiadas solicitudes, por favor intente de nuevo más tarde',
         'invalid_json': 'Respuesta JSON no válida',
         'unknown_error': 'Error desconocido',
-        'no_response':'No hay respuesta'
+        'no_response':'No hay respuesta',
+        'template_error':'Error de template'
     },
     
     # 葡萄牙语 (pt)
@@ -529,7 +534,7 @@ TRANSLATIONS = {
         'model_label': 'Modelo:',
         'model_placeholder': 'Padrão: grok-3-latest',
         'template_label': 'Modelo de prompt:',
-        'template_placeholder': 'Exemplo de modelo:\nSobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubdate}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
+        'template_placeholder': 'Exemplo de modelo:\nSobre o livro "{title}": Autor: {author}, Editora: {publisher}, Data de publicação: {pubyear}, Idioma: {language}, Série: {series}, Minha pergunta é: {query}',
         'language_label': 'Idioma da interface:',
         'send_button': 'Enviar',
         'shortcut_enter': 'Ctrl + Enter',
@@ -542,7 +547,7 @@ TRANSLATIONS = {
         'metadata_title': 'Título',
         'metadata_authors': 'Autor',
         'metadata_publisher': 'Editora',
-        'metadata_pubdate': 'Data de publicação',
+        'metadata_pubyear': 'Data de publicação',
         'metadata_language': 'Idioma',
         'metadata_series': 'Série',
         'input_placeholder': 'Digite sua pergunta aqui...',
@@ -577,7 +582,7 @@ TRANSLATIONS = {
         'invalid_token': 'Verifique os seus tokens de API nas definições do plugin.',
         'token_too_short_message': 'O token é muito curto. Verifique e insira o token completo.',
         'auth_token_none_message': 'Token de autenticação não definido, Ask Grok não pode funcionar.',
-        'error': 'Erro',
+        'error': 'Erro:',
         'error_preparing_request': 'Erro ao preparar a requisição',
         'empty_suggestion': 'Recebeu uma sugestão vazia',
         'process_suggestion_error': 'Erro ao processar a sugestão',
@@ -591,7 +596,8 @@ TRANSLATIONS = {
         'rate_limit': 'Muitas solicitações, por favor tente novamente mais tarde',
         'invalid_json': 'Resposta JSON inválida',
         'unknown_error': 'Erro desconhecido',
-        'no_response':'Nenhuma resposta'
+        'no_response':'Nenhuma resposta',
+        'template_error':'Erro de template'
     },
 
     # 荷兰语 (nl)
@@ -605,7 +611,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Standaard: grok-3-latest',
         'template_label': 'Promptsjabloon:',
-        'template_placeholder': 'Voorbeeldsjabloon:\nOver het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubdate}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
+        'template_placeholder': 'Voorbeeldsjabloon:\nOver het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiedatum: {pubyear}, Taal: {language}, Serie: {series}, Mijn vraag is: {query}',
         'language_label': 'Interfacetaal:',
         'send_button': 'Verzenden',
         'shortcut_enter': 'Ctrl + Enter',
@@ -618,7 +624,7 @@ TRANSLATIONS = {
         'metadata_title': 'Titel',
         'metadata_authors': 'Auteur',
         'metadata_publisher': 'Uitgever',
-        'metadata_pubdate': 'Publicatiedatum',
+        'metadata_pubyear': 'Publicatiedatum',
         'metadata_language': 'Taal',
         'metadata_series': 'Serie',
         'input_placeholder': 'Voer hier uw vraag in...',
@@ -653,7 +659,7 @@ TRANSLATIONS = {
         'invalid_token': 'Controleer uw API-tokens in de plugin-instellingen.',
         'token_too_short_message': 'Het token is te kort. Controleer en voer het volledige token in.',
         'auth_token_none_message': 'Auth Token is niet ingesteld, Ask Grok kan niet werken.',
-        'error': 'Fout',
+        'error': 'Fout:',
         'error_preparing_request': 'Fout bij het voorbereiden van de verzoek',
         'empty_suggestion': 'De lege suggestie ontvangen',
         'process_suggestion_error': 'Fout bij het verwerken van de suggestie',
@@ -667,7 +673,8 @@ TRANSLATIONS = {
         'rate_limit': 'Te veel verzoeken, probeer het later opnieuw',
         'invalid_json': 'Ongeldig JSON-antwoord',
         'unknown_error': 'Onbekende fout',
-        'no_response':'Geen antwoord'
+        'no_response':'Geen antwoord',
+        'template_error':'Sjabloonfout'
     },
     
     # 丹麦语 (da)
@@ -681,7 +688,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Standard: grok-3-latest',
         'template_label': 'Promptskabelon:',
-        'template_placeholder': 'Eksempel på skabelon:\nOm bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubdate}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
+        'template_placeholder': 'Eksempel på skabelon:\nOm bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesdato: {pubyear}, Sprog: {language}, Serie: {series}, Mit spørgsmål er: {query}',
         'language_label': 'Grænsefladesprog:',
         'send_button': 'Send',
         'shortcut_enter': 'Ctrl + Enter',
@@ -694,7 +701,7 @@ TRANSLATIONS = {
         'metadata_title': 'Otsikko',
         'metadata_authors': 'Kirjailija',
         'metadata_publisher': 'Kustantaja',
-        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_pubyear': 'Julkaisupäivä',
         'metadata_language': 'Kieli',
         'metadata_series': 'Sarja',
         'input_placeholder': 'Skriv dit spørgsmål her...',
@@ -729,7 +736,7 @@ TRANSLATIONS = {
         'invalid_token': 'Bitte prüfen Sie Ihre API-Token in den Plugin-Einstellungen.',
         'token_too_short_message': 'Tokenet er for kort. Kontroller og indtast hele tokenet.',
         'auth_token_none_message': 'Ingen godkendelsestoken, Ask Grok kan ikke virke.',
-        'error': 'Fehler',
+        'error': 'Fehler:',
         'error_preparing_request': 'Fehler beim Vorbereiten der Anfrage',
         'empty_suggestion': 'Empfand leere Vorschläge',
         'process_suggestion_error': 'Fehler beim Verarbeiten der Vorschläge',
@@ -743,7 +750,8 @@ TRANSLATIONS = {
         'rate_limit': 'For mange anmodninger, prøv igen senere',
         'invalid_json': 'Ugyldigt JSON-svar',
         'unknown_error': 'Ukendt fejl',
-        'no_response':'Intet svar'
+        'no_response':'Intet svar',
+        'template_error':'Template fejl'
     },
     
     # 芬兰语 (fi)
@@ -757,7 +765,7 @@ TRANSLATIONS = {
         'model_label': 'Malli:',
         'model_placeholder': 'Oletus: grok-3-latest',
         'template_label': 'Kehotepohja:',
-        'template_placeholder': 'Esimerkkipohja:\nKirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubdate}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
+        'template_placeholder': 'Esimerkkipohja:\nKirjasta "{title}": Kirjailija: {author}, Kustantaja: {publisher}, Julkaisupäivä: {pubyear}, Kieli: {language}, Sarja: {series}, Kysymykseni on: {query}',
         'language_label': 'Käyttöliittymän kieli:',
         'send_button': 'Lähetä',
         'shortcut_enter': 'Ctrl + Enter',
@@ -770,7 +778,7 @@ TRANSLATIONS = {
         'metadata_title': 'Otsikko',
         'metadata_authors': 'Kirjailija',
         'metadata_publisher': 'Kustantaja',
-        'metadata_pubdate': 'Julkaisupäivä',
+        'metadata_pubyear': 'Julkaisupäivä',
         'metadata_language': 'Kieli',
         'metadata_series': 'Sarja',
         'input_placeholder': 'Kirjoita kysymyksesi tähän...',
@@ -805,7 +813,7 @@ TRANSLATIONS = {
         'invalid_token': 'Veuillez vérifier vos jetons API dans les paramètres du plugin.',
         'token_too_short_message': 'Tunnisteen on liian lyhyt. Tarkista ja kirjoita koko tunnisteen.',
         'auth_token_none_message': 'Tunnistetta ei ole asetettu, Ask Grok ei toimi.',
-        'error': 'Virhe',
+        'error': 'Virhe:',
         'error_preparing_request': 'Virhe pyynnön valmistelussa',
         'empty_suggestion': 'Reçu une suggestion vide',
         'process_suggestion_error': 'Ehdotuksen käsittelyssä tapahtui virhe',
@@ -819,7 +827,8 @@ TRANSLATIONS = {
         'rate_limit': 'Liian monta pyyntöä, yritä myöhemmin uudelleen',
         'invalid_json': 'Virheellinen JSON-vastaus',
         'unknown_error': 'Tuntematon virhe',
-        'no_response':'Ei vastausta'
+        'no_response':'Ei vastausta',
+        'template_error':'Mallipohjan virhe'
     },
     
     # 挪威语 (no)
@@ -833,7 +842,7 @@ TRANSLATIONS = {
         'model_label': 'Modell:',
         'model_placeholder': 'Standard: grok-3-latest',
         'template_label': 'Promptmal:',
-        'template_placeholder': 'Eksempel på mal:\nOm boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubdate}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
+        'template_placeholder': 'Eksempel på mal:\nOm boken "{title}": Forfatter: {author}, Forlag: {publisher}, Utgivelsesdato: {pubyear}, Språk: {language}, Serie: {series}, Mitt spørsmål er: {query}',
         'language_label': 'Grensesnittspråk:',
         'send_button': 'Send',
         'shortcut_enter': 'Ctrl + Enter',
@@ -846,7 +855,7 @@ TRANSLATIONS = {
         'metadata_title': 'Tittel',
         'metadata_authors': 'Forfatter',
         'metadata_publisher': 'Forlag',
-        'metadata_pubdate': 'Utgivelsesdato',
+        'metadata_pubyear': 'Utgivelsesdato',
         'metadata_language': 'Språk',
         'metadata_series': 'Serie',
         'input_placeholder': 'Skriv spørsmålet ditt her...',
@@ -881,7 +890,7 @@ TRANSLATIONS = {
         'invalid_token': 'Verifique os seus tokens de API nas definições do plugin.',
         'token_too_short_message': 'Tokenet er for kort. Vennligst sjekk og skriv inn hele tokenet.',
         'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok fungerar inte.',
-        'error': 'feil',
+        'error': 'feil:',
         'error_preparing_request': 'Feil under forberedelse av forespørsel',
         'empty_suggestion': 'Det tomme forslaget mottatt',
         'process_suggestion_error': 'Feil under behandling av forslag',
@@ -895,7 +904,8 @@ TRANSLATIONS = {
         'rate_limit': 'For mange forespørsler, vennligst prøv igjen senere',
         'invalid_json': 'Ugyldig JSON-svar',
         'unknown_error': 'Ukjent feil',
-        'no_response':'Ingen svar'
+        'no_response':'Ingen svar',
+        'template_error':'Mallipohjan feil'
     },
     
     # 瑞典语 (sv)
@@ -909,7 +919,7 @@ TRANSLATIONS = {
         'model_label': 'Modell:',
         'model_placeholder': 'Standard: grok-3-latest',
         'template_label': 'Promptmall:',
-        'template_placeholder': 'Exempel på mall:\nOm boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubdate}, Språk: {language}, Serie: {series}, Min fråga är: {query}',
+        'template_placeholder': 'Exempel på mall:\nOm boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsdatum: {pubyear}, Språk: {language}, Serie: {series}, Min fråga är: {query}',
         'language_label': 'Gränssnittsspråk:',
         'send_button': 'Skicka',
         'shortcut_enter': 'Ctrl + Enter',
@@ -922,7 +932,7 @@ TRANSLATIONS = {
         'metadata_title': 'Titel',
         'metadata_authors': 'Författare',
         'metadata_publisher': 'Förlag',
-        'metadata_pubdate': 'Utgivningsdatum',
+        'metadata_pubyear': 'Utgivningsdatum',
         'metadata_language': 'Språk',
         'metadata_series': 'Serie',
         'input_placeholder': 'Skriv din fråga här...',
@@ -957,7 +967,7 @@ TRANSLATIONS = {
         'invalid_token': 'Kontrollera dina API-tokens i plugin-inställningarna.',
         'token_too_short_message': 'Token är för kort. Kontrollera och ange den fullständiga tokenen.',
         'auth_token_none_message': 'Ingen autentiseringstoken, Ask Grok kan inte fungera.',
-        'error': 'Fel',
+        'error': 'Fel:',
         'error_preparing_request': 'Fel under förberedelse av förfrågan',
         'empty_suggestion': 'Fick ett tomt förslag',
         'process_suggestion_error': 'Fel under behandling av förslag',
@@ -971,7 +981,8 @@ TRANSLATIONS = {
         'rate_limit': 'För många förfrågningar, försök igen senare',
         'invalid_json': 'Ogiltigt JSON-svar',
         'unknown_error': 'Okänt fel',
-        'no_response':'Inget svar'
+        'no_response':'Inget svar',
+        'template_error':'Mallipohja-fel'
     },
 
     # 俄语 (ru)
@@ -985,7 +996,7 @@ TRANSLATIONS = {
         'model_label': 'Модель:',
         'model_placeholder': 'По умолчанию: grok-3-latest',
         'template_label': 'Шаблон запроса:',
-        'template_placeholder': 'Пример шаблона:\nО книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubdate}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
+        'template_placeholder': 'Пример шаблона:\nО книге "{title}": Автор: {author}, Издательство: {publisher}, Дата публикации: {pubyear}, Язык: {language}, Серия: {series}, Мой вопрос: {query}',
         'language_label': 'Язык интерфейса:',
         'send_button': 'Отправить',
         'shortcut_enter': 'Ctrl + Enter',
@@ -998,7 +1009,7 @@ TRANSLATIONS = {
         'metadata_title': 'Название',
         'metadata_authors': 'Автор',
         'metadata_publisher': 'Издательство',
-        'metadata_pubdate': 'Дата публикации',
+        'metadata_pubyear': 'Дата публикации',
         'metadata_language': 'Язык',
         'metadata_series': 'Серия',
         'input_placeholder': 'Введите ваш вопрос здесь...',
@@ -1033,7 +1044,7 @@ TRANSLATIONS = {
         'invalid_token': 'Проверьте ваши токены API в настройках плагина.',
         'token_too_short_message': 'Токен слишком короткий. Проверьте и введите полный токен.',
         'auth_token_none_message': 'Токен аутентификации не установлен, Ask Grok не может работать.',
-        'error': 'Ошибка',
+        'error': 'Ошибка:',
         'error_preparing_request': 'Ошибка при подготовке запроса',
         'empty_suggestion': 'Получено пустое предложение',
         'process_suggestion_error': 'Ошибка при обработке предложения',
@@ -1048,7 +1059,8 @@ TRANSLATIONS = {
         'rate_limit': 'Слишком много запросов, попробуйте позже',
         'invalid_json': 'Неверный JSON-ответ',
         'unknown_error': 'Неизвестная ошибка',
-        'no_response':'Нет ответа'
+        'no_response':'Нет ответа',
+        'template_error':'Шаблон-ошибка'
     },
     
     # 日语 (ja)
@@ -1062,7 +1074,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': 'プロンプトテンプレート:',
-        'template_placeholder': 'テンプレート例:\n『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubdate}、言語：{language}、シリーズ：{series}、質問：{query}',
+        'template_placeholder': 'テンプレート例:\n『{title}』について：著者：{author}、出版社：{publisher}、出版日：{pubyear}、言語：{language}、シリーズ：{series}、質問：{query}',
         'language_label': 'インターフェース言語:',
         'send_button': '送信',
         'shortcut_enter': 'Ctrl + Enter',
@@ -1075,7 +1087,7 @@ TRANSLATIONS = {
         'metadata_title': 'タイトル',
         'metadata_authors': '著者',
         'metadata_publisher': '出版社',
-        'metadata_pubdate': '出版日',
+        'metadata_pubyear': '出版日',
         'metadata_language': '言語',
         'metadata_series': 'シリーズ',
         'input_placeholder': 'ここに質問を入力してください...',
@@ -1110,7 +1122,7 @@ TRANSLATIONS = {
         'invalid_token': '認証トークンを設定してください。',
         'token_too_short_message': 'トークンが短すぎます。トークンを確認して完全なトークンを入力してください。',
         'auth_token_none_message': '認証トークンがありません、Ask Grokは動作しません。',
-        'error': 'エラー',
+        'error': 'エラー:',
         'error_preparing_request': 'リクエストの準備中にエラーが発生しました',
         'empty_suggestion': '空の提案を受け取りました',
         'process_suggestion_error': '提案の処理中にエラーが発生しました',
@@ -1124,7 +1136,8 @@ TRANSLATIONS = {
         'rate_limit': 'リクエストが多すぎます。後でもう一度お試しください',
         'invalid_json': '無効なJSONレスポンス',
         'unknown_error': '不明なエラー',
-        'no_response':'応答なし'
+        'no_response':'応答なし',
+        'template_error':'テンプレートエラー'
     },
 
     # 简体中文 (zh)
@@ -1138,7 +1151,7 @@ TRANSLATIONS = {
         'model_label': '模型:',
         'model_placeholder': '默认：grok-3-latest',
         'template_label': '提示词模板:',
-        'template_placeholder': '示例模板：\n关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，语言：{language}，系列：{series}，我的问题是：{query}',
+        'template_placeholder': '示例模板：\n关于《{title}》这本书的信息：作者：{author}，出版社：{publisher}，出版日期：{pubyear}，语言：{language}，系列：{series}，我的问题是：{query}',
         'language_label': '界面语言:',
         'send_button': '发送',
         'suggest_button': '随机问题',
@@ -1155,7 +1168,7 @@ TRANSLATIONS = {
         'metadata_title': '标题',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
-        'metadata_pubdate': '出版日期',
+        'metadata_pubyear': '出版日期',
         'metadata_language': '语言',
         'metadata_series': '系列',
         'menu_title': '询问',
@@ -1187,7 +1200,7 @@ TRANSLATIONS = {
         'invalid_token': '请在配置对话框中检查 API 令牌的有效性。',
         'token_too_short_message': '令牌过短。请检查并输入完整令牌。',
         'auth_token_none_message': '授权令牌未设置，Ask Grok 无法工作。',
-        'error': '错误',
+        'error': '错误:',
         'error_preparing_request': '请求准备失败',
         'empty_suggestion': '收到空建议',
         'process_suggestion_error': '处理建议时出错',
@@ -1200,7 +1213,8 @@ TRANSLATIONS = {
         'rate_limit': '请求过于频繁，请稍后再试',
         'invalid_json': '无效的 JSON 响应',
         'unknown_error': '未知错误',
-        'no_response':'无响应'
+        'no_response':'无响应',
+        'template_error':'模板文字读取错误'
     },
     
     # 繁体中文 (zht)
@@ -1214,7 +1228,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': '提示詞範本:',
-        'template_placeholder': '範本示例：\n關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我的問題是：{query}',
+        'template_placeholder': '範本示例：\n關於《{title}》這本書的資訊：作者：{author}，出版社：{publisher}，出版日期：{pubyear}，語言：{language}，系列：{series}，我的問題是：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '隨機問題',
@@ -1231,7 +1245,7 @@ TRANSLATIONS = {
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
-        'metadata_pubdate': '出版日期',
+        'metadata_pubyear': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
         'menu_title': '詢問',
@@ -1263,7 +1277,7 @@ TRANSLATIONS = {
         'invalid_token': '請在配置對話框中檢查 API 令牌的有效性。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
         'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。',
-        'error': '錯誤',
+        'error': '錯誤:',
         'error_preparing_request': '請求準備失敗',
         'empty_suggestion': '收到空建議',
         'process_suggestion_error': '處理建議時出錯',
@@ -1276,7 +1290,8 @@ TRANSLATIONS = {
         'rate_limit': '請求過於頻繁，請稍後再試',
         'invalid_json': '無效嘅 JSON 個應答',
         'unknown_error': '未知錯誤',
-        'no_response':'無應答'
+        'no_response':'無應答',
+        'template_error':'模板文字读取错误'
     },
     
     # 粤语 (yue)
@@ -1290,7 +1305,7 @@ TRANSLATIONS = {
         'model_label': 'Model:',
         'model_placeholder': 'Default: grok-3-latest',
         'template_label': '提示詞範本:',
-        'template_placeholder': '範本示例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubdate}，語言：{language}，系列：{series}，我想問嘅係：{query}',
+        'template_placeholder': '範本示例：\n關於《{title}》呢本書嘅資料：作者：{author}，出版社：{publisher}，出版日期：{pubyear}，語言：{language}，系列：{series}，我想問嘅係：{query}',
         'language_label': '界面語言:',
         'send_button': '發送',
         'suggest_button': '隨機問題',
@@ -1307,7 +1322,7 @@ TRANSLATIONS = {
         'metadata_title': '書名',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
-        'metadata_pubdate': '出版日期',
+        'metadata_pubyear': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
         'menu_title': '問嘢',
@@ -1339,7 +1354,7 @@ TRANSLATIONS = {
         'invalid_token': '請在配置對話框中檢查 API 令牌的有效性。',
         'token_too_short_message': '令牌過短。請檢查並輸入完整令牌。',
         'auth_token_none_message': '授權令牌未設置，Ask Grok 無法工作。',
-        'error': '錯誤',
+        'error': '錯誤:',
         'error_preparing_request': '請求準備失敗',
         'empty_suggestion': '收到空建議',
         'process_suggestion_error': '處理建議時出錯',
@@ -1353,7 +1368,8 @@ TRANSLATIONS = {
         'rate_limit': '请求过于频繁，请稍后再试',
         'invalid_json': '无效的 JSON 响应',
         'unknown_error': '未知错误',
-        'no_response':'無應答'
+        'no_response':'無應答',
+        'template_error':'模板文字读取错误'
     }
 }
 

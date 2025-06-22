@@ -539,8 +539,9 @@ class AskDialog(QDialog):
             metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)}")
         if self.book_info.publisher:
             metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
-        if self.book_info.pubdate:
-            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year}")  
+        if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+            year = str(self.book_info.pubdate.year) if hasattr(self.book_info.pubdate, 'year') else str(self.book_info.pubdate)
+            metadata_info.append(f"{self.i18n['metadata_pubyear']}-{year}")
         if self.book_info.language:
             metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
         if getattr(self.book_info, 'series', None):
@@ -754,8 +755,11 @@ class AskDialog(QDialog):
             # 安全地获取书籍的出版年份
             try:
                 pubyear = ''
-                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate and hasattr(self.book_info.pubdate, 'year'):
-                    pubyear = str(self.book_info.pubdate.year)
+                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+                    if hasattr(self.book_info.pubdate, 'year'):
+                        pubyear = str(self.book_info.pubdate.year)
+                    else:
+                        pubyear = str(self.book_info.pubdate)
                 else:
                     pubyear = self.i18n.get('unknown', 'Unknown')
             except Exception as e:
@@ -781,7 +785,7 @@ class AskDialog(QDialog):
                 'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'pubyear': pubyear.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
+                'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
                 'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
                 'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
             }
@@ -805,15 +809,8 @@ class AskDialog(QDialog):
         # 格式化提示词
         try:
             prompt = template.format(**template_vars)
-            # 添加日志
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f"Template variables: {template_vars}")
-            logger.info(f"Template: {template}")
-            logger.info(f"Final prompt: {prompt}")
-            logger.info(f"Prompt length: {len(prompt)}")
         except KeyError as e:
-            self.response_handler.handle_error(f"Template error: {str(e)}")
+            self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
             return
         
         # 如果提示词过长，可能会导致超时
