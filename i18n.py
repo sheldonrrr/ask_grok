@@ -278,7 +278,16 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Error processing suggestion',
         'unknown_error': 'Unknown error occurred',
         'suggestion_error': 'Failed to generate suggestion',
-        'book_title_check':'book metadata need to contain title'
+        'book_title_check':'book metadata need to contain title',
+        # API请求后的错误提示
+        'empty_answer':'API returned an empty answer',
+        'auth_error_401':'Unauthorized token',
+        'auth_error_403':'Forbidden token',
+        'rate_limit':'Request too frequent, please try again later',# 429
+        'invalid_json':'Invalid JSON response',
+        'unknown_error':'Unknown error',
+        # 响应文字提示
+        'no_response':'No response'
      },
 
     # 法语 (fr)
@@ -346,7 +355,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Erreur lors du traitement de la suggestion',
         'unknown_error': 'Une erreur inconnue s\'est produite.',
         'suggestion_error': 'Erreur lors de la génération de la suggestion',
-        'book_title_check':'les métadonnées du livre doivent contenir le titre'
+        'book_title_check':'les métadonnées du livre doivent contenir le titre',
+        # API请求后的错误提示
+        'empty_answer': 'La réponse de l\'API est vide',
+        'auth_error_401': 'Token non autorisé',
+        'auth_error_403': 'Accès refusé',
+        'rate_limit': 'Trop de requêtes, veuillez réessayer plus tard',
+        'invalid_json': 'Réponse JSON invalide',
+        'unknown_error': 'Erreur inconnue',
+        'no_response':'Aucune réponse'
     },
 
     # 德语 (de)
@@ -414,7 +431,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Fehler bei der Verarbeitung des Vorschlags',
         'unknown_error': 'Unbekannter Fehler aufgetreten',
         'suggestion_error': 'Fehler beim Generieren der Vorschläge',
-        'book_title_check':'Buchmetadaten müssen den Titel enthalten'
+        'book_title_check':'Buchmetadaten müssen den Titel enthalten',
+        # API请求后的错误提示
+        'empty_answer': 'Die API hat eine leere Antwort zurückgegeben',
+        'auth_error_401': 'Nicht autorisiertes Token',
+        'auth_error_403': 'Zugriff verweigert',
+        'rate_limit': 'Zu viele Anfragen, bitte versuchen Sie es später erneut',
+        'invalid_json': 'Ungültige JSON-Antwort',
+        'unknown_error': 'Unbekannter Fehler',
+        'no_response':'Keine Antwort'
     },
     
     # 西班牙语 (es)
@@ -482,7 +507,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Error al procesar la sugerencia',
         'unknown_error': 'Se produjo un error desconocido.',
         'suggestion_error': 'Error al generar la sugerencia',
-        'book_title_check':'As metadados do livro devem conter o título'
+        'book_title_check':'As metadados do livro devem conter o título',
+        # API请求后的错误提示
+        'empty_answer': 'La API devolvió una respuesta vacía',
+        'auth_error_401': 'Token no autorizado',
+        'auth_error_403': 'Acceso denegado',
+        'rate_limit': 'Demasiadas solicitudes, por favor intente de nuevo más tarde',
+        'invalid_json': 'Respuesta JSON no válida',
+        'unknown_error': 'Error desconocido',
+        'no_response':'No hay respuesta'
     },
     
     # 葡萄牙语 (pt)
@@ -550,7 +583,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Erro ao processar a sugestão',
         'unknown_error': 'Erro desconhecido',
         'suggestion_error': 'Erro ao gerar a sugestão',
-        'book_title_check':'As metadados do livro devem conter o título'
+        'book_title_check':'As metadados do livro devem conter o título',
+        # API请求后的错误提示
+        'empty_answer': 'A API retornou uma resposta vazia',
+        'auth_error_401': 'Token não autorizado',
+        'auth_error_403': 'Acesso negado',
+        'rate_limit': 'Muitas solicitações, por favor tente novamente mais tarde',
+        'invalid_json': 'Resposta JSON inválida',
+        'unknown_error': 'Erro desconhecido',
+        'no_response':'Nenhuma resposta'
     },
 
     # 荷兰语 (nl)
@@ -618,7 +659,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Fout bij het verwerken van de suggestie',
         'unknown_error': 'Onbekende fout',
         'suggestion_error': 'Fout bij het genereren van de suggestie',
-        'book_title_check':'Bogmetadata skal indeholde titel'
+        'book_title_check':'Bogmetadata skal indeholde titel',
+        # API请求后的错误提示
+        'empty_answer': 'De API heeft een leeg antwoord teruggestuurd',
+        'auth_error_401': 'Niet-geautoriseerd token',
+        'auth_error_403': 'Toegang geweigerd',
+        'rate_limit': 'Te veel verzoeken, probeer het later opnieuw',
+        'invalid_json': 'Ongeldig JSON-antwoord',
+        'unknown_error': 'Onbekende fout',
+        'no_response':'Geen antwoord'
     },
     
     # 丹麦语 (da)
@@ -686,7 +735,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Fehler beim Verarbeiten der Vorschläge',
         'unknown_error': 'Tuntematon virhe tapahtui',
         'suggestion_error': 'Fejl ved generering af forslag',
-        'book_title_check':'Bogmetadata skal indeholde titel'
+        'book_title_check':'Bogmetadata skal indeholde titel',
+        # API请求后的错误提示
+        'empty_answer': 'API\'en returnerede et tomt svar',
+        'auth_error_401': 'Uautoriseret token',
+        'auth_error_403': 'Adgang nægtet',
+        'rate_limit': 'For mange anmodninger, prøv igen senere',
+        'invalid_json': 'Ugyldigt JSON-svar',
+        'unknown_error': 'Ukendt fejl',
+        'no_response':'Intet svar'
     },
     
     # 芬兰语 (fi)
@@ -754,7 +811,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Ehdotuksen käsittelyssä tapahtui virhe',
         'unknown_error': 'Tuntematon virhe tapahtui.',
         'suggestion_error': 'Fout bij het genereren van een suggestie',
-        'book_title_check':'De metagegevens van het boek moeten de titel bevatten'
+        'book_title_check':'De metagegevens van het boek moeten de titel bevatten',
+        # API请求后的错误提示
+        'empty_answer': 'API palautti tyhjän vastauksen',
+        'auth_error_401': 'Luvaton token',
+        'auth_error_403': 'Pääsy evätty',
+        'rate_limit': 'Liian monta pyyntöä, yritä myöhemmin uudelleen',
+        'invalid_json': 'Virheellinen JSON-vastaus',
+        'unknown_error': 'Tuntematon virhe',
+        'no_response':'Ei vastausta'
     },
     
     # 挪威语 (no)
@@ -822,7 +887,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Feil under behandling av forslag',
         'unknown_error': 'Ukjent feil',
         'suggestion_error': 'Feil under generering av forslag',
-        'book_title_check':'Bokens metadata må inneholde tittel'
+        'book_title_check':'Bokens metadata må inneholde tittel',
+        # API请求后的错误提示
+        'empty_answer': 'API-et returnerte et tomt svar',
+        'auth_error_401': 'Uautorisert token',
+        'auth_error_403': 'Tilgang nektet',
+        'rate_limit': 'For mange forespørsler, vennligst prøv igjen senere',
+        'invalid_json': 'Ugyldig JSON-svar',
+        'unknown_error': 'Ukjent feil',
+        'no_response':'Ingen svar'
     },
     
     # 瑞典语 (sv)
@@ -890,7 +963,15 @@ TRANSLATIONS = {
         'process_suggestion_error': 'Fel under behandling av förslag',
         'unknown_error': 'Okänd fel',
         'suggestion_error': 'Fel under generering av förslag',
-        'book_title_check':'Bokens metadata måste innehålla titel'
+        'book_title_check':'Bokens metadata måste innehålla titel',
+        # API请求后的错误提示
+        'empty_answer': 'API:et returnerade ett tomt svar',
+        'auth_error_401': 'Obehörig token',
+        'auth_error_403': 'Åtkomst nekad',
+        'rate_limit': 'För många förfrågningar, försök igen senare',
+        'invalid_json': 'Ogiltigt JSON-svar',
+        'unknown_error': 'Okänt fel',
+        'no_response':'Inget svar'
     },
 
     # 俄语 (ru)
@@ -959,7 +1040,15 @@ TRANSLATIONS = {
         'unknown_error': 'Неизвестная ошибка',
         'suggestion_error': 'Ошибка при генерации предложения',
         'book_title_check':'book_info должен содержать title-атрибут',
-        'book_title_check':'Метаданные книги должны включать название'
+        'book_title_check':'Метаданные книги должны включать название',
+        # API请求后的错误提示
+        'empty_answer': 'API вернул пустой ответ',
+        'auth_error_401': 'Неавторизованный токен',
+        'auth_error_403': 'Доступ запрещен',
+        'rate_limit': 'Слишком много запросов, попробуйте позже',
+        'invalid_json': 'Неверный JSON-ответ',
+        'unknown_error': 'Неизвестная ошибка',
+        'no_response':'Нет ответа'
     },
     
     # 日语 (ja)
@@ -1027,7 +1116,15 @@ TRANSLATIONS = {
         'process_suggestion_error': '提案の処理中にエラーが発生しました',
         'unknown_error': '不明なエラーが発生しました',
         'suggestion_error': '提案の生成中にエラーが発生しました',
-        'book_title_check':'書籍のメタデータにはタイトルを含める必要があります'
+        'book_title_check':'書籍のメタデータにはタイトルを含める必要があります',
+        # API请求后的错误提示
+        'empty_answer': 'APIが空のレスポンスを返しました',
+        'auth_error_401': '認証されていないトークン',
+        'auth_error_403': 'アクセスが拒否されました',
+        'rate_limit': 'リクエストが多すぎます。後でもう一度お試しください',
+        'invalid_json': '無効なJSONレスポンス',
+        'unknown_error': '不明なエラー',
+        'no_response':'応答なし'
     },
 
     # 简体中文 (zh)
@@ -1096,7 +1193,14 @@ TRANSLATIONS = {
         'process_suggestion_error': '处理建议时出错',
         'unknown_error': '未知错误',
         'suggestion_error': '生成建议时出错',
-        'book_title_check':'书籍元数据必须包含标题'
+        'book_title_check':'书籍元数据必须包含标题',
+        'empty_answer': 'API 返回了空的回答',
+        'auth_error_401': '未授权的 token',
+        'auth_error_403': '禁止访问',
+        'rate_limit': '请求过于频繁，请稍后再试',
+        'invalid_json': '无效的 JSON 响应',
+        'unknown_error': '未知错误',
+        'no_response':'无响应'
     },
     
     # 繁体中文 (zht)
@@ -1165,7 +1269,14 @@ TRANSLATIONS = {
         'process_suggestion_error': '處理建議時出錯',
         'unknown_error': '未知錯誤',
         'suggestion_error': '生成建議時出錯',
-        'book_title_check':'書籍元資料必須包含標題'
+        'book_title_check':'書籍元資料必須包含標題',
+        'empty_answer': 'API 返回了空的回答',
+        'auth_error_401': '未授權的 token',
+        'auth_error_403': '禁止訪問',
+        'rate_limit': '請求過於頻繁，請稍後再試',
+        'invalid_json': '無效嘅 JSON 個應答',
+        'unknown_error': '未知錯誤',
+        'no_response':'無應答'
     },
     
     # 粤语 (yue)
@@ -1234,7 +1345,15 @@ TRANSLATIONS = {
         'process_suggestion_error': '處理建議時出錯',
         'unknown_error': '未知錯誤',
         'suggestion_error': '生成建議時出錯',
-        'book_title_check':'書籍元資料必須包含標題'
+        'book_title_check':'書籍元資料必須包含標題',
+        # API请求后的错误提示
+        'empty_answer': 'API 返回了空的回答',
+        'auth_error_401': '未授权的 token',
+        'auth_error_403': '禁止访问',
+        'rate_limit': '请求过于频繁，请稍后再试',
+        'invalid_json': '无效的 JSON 响应',
+        'unknown_error': '未知错误',
+        'no_response':'無應答'
     }
 }
 

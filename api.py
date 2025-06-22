@@ -3,9 +3,7 @@
 
 import json
 import requests
-import os
-import sys
-from typing import Generator, Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple
 import logging
 from .i18n import get_translation
 
@@ -28,6 +26,26 @@ class GrokAPIError(Exception):
 class APIClient:
     """X.AI API 客户端"""
     
+    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest", auth_token: str = None, i18n: Dict[str, str] = None):
+        """初始化 X.AI API 客户端
+        
+        Args:
+            api_base: API 基础 URL
+            model: 使用的模型名称
+            auth_token: 认证令牌（可选，如果为 None 会从配置中读取）
+            i18n: 国际化文本字典
+        """
+        self._api_base = api_base.rstrip('/')
+        self._model = model
+        # 存储默认值
+        self._default_prefs = {
+            'api_base_url': api_base,
+            'model': model,
+            'auth_token': auth_token or ''
+        }
+        # 初始化 i18n
+        self.i18n = i18n or get_translation('en')
+    
     def _prepare_request(self, prompt: str) -> Tuple[Dict[str, str], Dict[str, Any]]:
         """准备 API 请求的共同部分
         
@@ -44,18 +62,20 @@ class APIClient:
         logger.debug(f"Token length: {len(token)}")
         
         # 检查 token 格式
-        if not (token.lower().startswith('xai-') or token.lower().startswith('bearer xai-')):
-            raise GrokAPIError(
-                "Invalid token format. Token must start with 'xai-' or 'Bearer xai-'",
-                error_type="auth_error"
+        if not (token.lower().startswith('xai-') or token.lower().startswith('Bearer xai-')):
+            error_msg = self.i18n.get(
+                'invalid_token_format', 
+                'Invalid token format. Token must start with \'xai-\' or \'Bearer xai-\''
             )
+            raise GrokAPIError(error_msg, error_type="auth_error")
         
         # 检查 token 长度
         if len(token) < 64:  # 假设最小长度为 64
-            raise GrokAPIError(
-                "Token is too short. Please check and enter the complete token.",
-                error_type="auth_error"
+            error_msg = self.i18n.get(
+                'token_too_short_message',
+                'Token is too short. Please check and enter the complete token.'
             )
+            raise GrokAPIError(error_msg, error_type="auth_error")
         
         # 确保 token 有 Bearer 前缀
         if not token.startswith('Bearer '):
@@ -153,7 +173,7 @@ class APIClient:
             if 'choices' in result and len(result['choices']) > 0:
                 answer = result['choices'][0].get('message', {}).get('content', '')
                 if not answer:
-                    raise GrokAPIError("API 返回了空的回答")
+                    raise GrokAPIError(self.i18n.get('empty_answer','API returned an empty answer'))
                 
                 logger.info(f"成功获取到回答，长度: {len(answer)} 字符")
                 logger.debug(f"回答内容 (前500字符): {answer[:500]}{'...' if len(answer) > 500 else ''}")
@@ -171,60 +191,66 @@ class APIClient:
                 
         except requests.exceptions.RequestException as e:
             status_code = None
-            error_message = str(e)
+            error_msg = str(e)
             
             # 尝试从响应中提取更多错误信息
             if hasattr(e, 'response') and e.response is not None:
                 status_code = e.response.status_code
                 try:
                     error_data = e.response.json()
-                    error_message = error_data.get('error', {}).get('message', str(e))
+                    error_msg = error_data.get('error', {}).get('message', str(e))
                     logger.error(f"API 错误详情: {error_data}")
                 except:
-                    error_message = e.response.text[:500]  # 限制错误消息长度
-                    logger.error(f"API 错误响应: {error_message}")
+                    error_msg = e.response.text[:500]  # 限制错误消息长度
+                    logger.error(f"API 错误响应: {error_msg}")
             else:
-                logger.error(f"请求 API 时发生错误: {error_message}")
+                logger.error(f"请求 API 时发生错误: {error_msg}")
             
             if status_code == 401:
+                
+                # 支持i18n的提示字段
+                error_msg = self.i18n.get('auth_error_401','Unauthorized token')
                 raise GrokAPIError(
-                    "认证失败，请检查您的 API token 是否正确",
+                    error_msg,
                     status_code=status_code,
                     error_type="auth_error"
                 )
             elif status_code == 403:
+                error_msg = self.i18n.get('auth_error_403','Forbidden token')
                 raise GrokAPIError(
-                    "权限被拒绝，您的 API token 可能无效或已过期",
+                    error_msg,
                     status_code=status_code,
                     error_type="auth_error"
                 )
             elif status_code == 429:
+                error_msg = self.i18n.get('rate_limit','Request too frequent, please try again later')
                 raise GrokAPIError(
-                    "请求过于频繁，请稍后再试",
+                    error_msg,
                     status_code=status_code,
                     error_type="rate_limit"
                 )
             else:
+                error_msg = self.i18n.get('Invalid token','Please check your API token validable in the plugin settings.')
                 raise GrokAPIError(
-                    f"API 请求失败: {error_message}",
+                    error_msg,
                     status_code=status_code,
                     error_type="api_error"
                 )
             
         except json.JSONDecodeError as e:
             logger.error(f"解析 API 响应时发生 JSON 解码错误: {str(e)}")
-            raise GrokAPIError("处理 API 响应时发生错误: 无效的 JSON 响应")
+            raise GrokAPIError(self.i18n.get('Invalid JSON response','Invalid JSON response'))
             
         except Exception as e:
             logger.error(f"处理 API 请求时发生未知错误: {str(e)}", exc_info=True)
             if not isinstance(e, GrokAPIError):
-                raise GrokAPIError(f"发生未知错误: {str(e)}")
+                raise GrokAPIError(self.i18n.get('Unknown error','Unknown error'))
             raise
             
         finally:
             logger.info("=== API 请求处理完成 ===\n")
 
-    def ask_stream(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
+    def random_question(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
         """向 X.AI API 发送问题并获取回答（非流式请求，适用于短文本）
         
         Args:
@@ -256,6 +282,7 @@ class APIClient:
         headers, data = self._prepare_request(prompt)
         data["stream"] = False  # 非流式请求
         headers['Authorization'] = token  # 使用处理后的 token
+        status_code = None
         
         try:
             # 添加超时设置
@@ -263,49 +290,56 @@ class APIClient:
                 f"{self.api_base}/chat/completions",
                 headers=headers,
                 json=data,
-                timeout=60  # 增加到60秒
+                timeout=10
             )
             
+            status_code = response.status_code
+            
             # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
-            
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
+            status_code = response.status_code
+            if status_code == 401:
+                error_msg = self.i18n.get('auth_error_401', 'Unauthorized token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 403:
+                error_msg = self.i18n.get('auth_error_403', 'Forbidden token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 429:
+                error_msg = self.i18n.get('rate_limit', 'Request too frequent, please try again later')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="rate_limit"
+                )
             else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
-    
-    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
-        """初始化 X.AI API 客户端
+                error_msg = self.i18n.get('Invalid token', 'Please check your API token in the plugin settings.')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="api_error"
+                )
+        except json.JSONDecodeError as e:
+            error_msg = self.i18n.get('invalid_json', 'Invalid JSON response')
+            raise GrokAPIError(
+                error_msg,
+                error_type="parse_error"
+            )
         
-        Args:
-            api_base: API 基础 URL
-            model: 使用的模型名称
-        """
-        self._api_base = api_base.rstrip('/')
-        self._model = model
-        # 存储默认值
-        self._default_prefs = {
-            'api_base_url': api_base,
-            'model': model,
-            'auth_token': ''
-        }
+        except Exception as e:
+            error_msg = self.i18n.get('unknown_error', 'Unknown error')
+            raise GrokAPIError(
+                error_msg,
+                error_type="unknown_error"
+            )
+    
+
     
     @property
     def api_base(self):

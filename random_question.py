@@ -67,7 +67,7 @@ class SuggestionWorker(QThread):
             
             # 调用 API 获取随机问题，确保传递 lang_code 参数
             logger.info("正在调用 API 获取随机问题...")
-            suggestion = self.api.ask_stream(prompt, lang_code=get_prefs()['language'])
+            suggestion = self.api.random_question(prompt, lang_code=get_prefs()['language'])
             
             # 记录 API 返回的随机问题
             if suggestion:

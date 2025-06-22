@@ -134,8 +134,16 @@ class AskGrokPluginUI(InterfaceAction):
         
     def initialize_api(self):
         if not self.api:
-            # 现在 APIClient 会自己处理配置的加载
-            self.api = APIClient()
+            # 获取配置
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            i18n = get_translation(language)
+            
+            # 从配置获取 auth_token
+            auth_token = prefs.get('auth_token', '')
+            
+            # 创建 APIClient 实例
+            self.api = APIClient(auth_token=auth_token, i18n=i18n)
     
     def apply_settings(self):
         prefs = get_prefs()
@@ -374,7 +382,7 @@ class TabDialog(QDialog):
         super().reject()
 
 from calibre_plugins.ask_grok.response_handler import ResponseHandler
-from calibre_plugins.ask_grok.generate_suggestion import SuggestionHandler
+from calibre_plugins.ask_grok.random_question import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -745,8 +753,13 @@ class AskDialog(QDialog):
             
             # 安全地获取书籍的出版年份
             try:
-                pubyear = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
+                pubyear = ''
+                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate and hasattr(self.book_info.pubdate, 'year'):
+                    pubyear = str(self.book_info.pubdate.year)
+                else:
+                    pubyear = self.i18n.get('unknown', 'Unknown')
+            except Exception as e:
+                logger.error(f"获取出版年份时出错: {str(e)}")
                 pubyear = self.i18n.get('unknown', 'Unknown')
             
             # 安全地获取书籍的语言类别

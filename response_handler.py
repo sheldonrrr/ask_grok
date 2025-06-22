@@ -166,8 +166,7 @@ class ResponseHandler(QObject):
                     <div style="
                         text-align: left;
                         color: palette(text);
-                        font-size: 15px;
-                        margin-top: 10px;
+                        font-size: 13px;
                         font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {base_text}{self._animation_dots[self._animation_dot_index]}
@@ -198,6 +197,58 @@ class ResponseHandler(QObject):
         if self.response_area and not self._response_text:
             self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please try again later'))
 
+    def _format_error_html(self, title, message, error_type='default'):
+        """格式化错误信息为HTML
+        
+        Args:
+            title: 错误标题
+            message: 错误详细信息
+            error_type: 错误类型，可选值：'default', 'auth', 'api'
+            
+        Returns:
+            str: 格式化后的HTML字符串
+        """
+        # 基础样式
+        base_style = """
+            color: palette(text);
+            font-size: 13px;
+            margin: 15px 0;
+            padding: 10px;
+            font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        """
+        
+        # 根据错误类型添加特定样式
+        if error_type == 'auth':
+            style = base_style + """
+                background-color: #ffebee;
+                border-radius: 4px;
+                border-left: 4px solid #d32f2f;
+            """
+        else:  # default and other types
+            style = base_style + """
+                text-align: left;
+            """
+        
+        # 构建HTML
+        error_html = f"""
+            <div style="{style}">
+                {title}<br><br>
+                {message}
+            </div>
+        """
+        
+        # 如果是认证错误，添加额外提示
+        if error_type == 'auth':
+            auth_tip = self.i18n.get('invalid_token', 'Please check your API token validable in the plugin settings.') \
+                     if hasattr(self.i18n, 'get') else 'Please check your API token validable in the plugin settings.'
+            error_html += f"""
+                <div style="margin-top: 15px; color: #666; font-size: 12px;">
+                    {auth_tip}
+                </div>
+            """
+            
+        return error_html
+
     def handle_error(self, error_msg):
         """处理错误信息
         
@@ -206,67 +257,34 @@ class ResponseHandler(QObject):
         """
         self._stop_loading_timer()
         
-        # 默认错误信息
+        # 获取本地化错误信息
         error_prefix = self.i18n.get('error', 'Error: ')
         request_failed = self.i18n.get('request_failed', 'Request failed, please try again later')
-        invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token in settings.')
+        invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token validable in settings.')
         
-        # 检查错误类型
+        # 处理不同类型的错误
         if hasattr(error_msg, 'error_type'):
             if error_msg.error_type == "invalid_token":
                 # 认证错误
-                error_html = f"""
-                    <div style="
-                        color: palette(text);
-                        font-size: 13px;
-                        margin: 15px 0;
-                        padding: 10px;
-                        background-color: #ffebee;
-                        border-radius: 4px;
-                        border-left: 4px solid #d32f2f;
-                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                    ">
-                        <strong>{error_prefix}{invalid_token}</strong><br><br>
-                        {str(error_msg)}
-                    </div>
-                    <div style="margin-top: 15px; color: #666; font-size: 12px;">
-                        {self.i18n.get('invalid_token', 'Please check your API token validable in the plugin settings.') if hasattr(self.i18n, 'get') else 'Please check your API token in the plugin settings.'}
-                    </div>
-                """
+                error_html = self._format_error_html(
+                    title=f"{error_prefix}{invalid_token}",
+                    message=str(error_msg),
+                    error_type='auth'
+                )
             else:
                 # 其他API错误
-                error_html = f"""
-                    <div style="
-                        color: palette(text);
-                        font-size: 13px;
-                        margin: 15px 0;
-                        padding: 10px;
-                        background-color: #ffebee;
-                        border-radius: 4px;
-                        border-left: 4px solid #d32f2f;
-                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                    ">
-                        <strong>{error_prefix}{request_failed}</strong><br><br>
-                        {str(error_msg)}
-                    </div>
-                """
+                error_html = self._format_error_html(
+                    title=f"{error_prefix}{request_failed}",
+                    message=str(error_msg),
+                    error_type='api'
+                )
         else:
-            # 其他类型的错误
-            error_html = f"""
-                <div style="
-                    color: palette(text);
-                    font-size: 13px;
-                    margin: 15px 0;
-                    padding: 10px;
-                    background-color: #ffebee;
-                    border-radius: 4px;
-                    border-left: 4px solid #d32f2f;
-                    font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-                ">
-                    <strong>{error_prefix}{request_failed}</strong><br><br>
-                    {str(error_msg)}
-                </div>
-            """
+            # 默认错误处理
+            error_html = self._format_error_html(
+                title=f"{error_prefix}{request_failed}",
+                message=str(error_msg),
+                error_type='default'
+            )
         
         # 显示错误信息
         self.response_area.setHtml(error_html)
