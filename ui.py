@@ -594,7 +594,8 @@ class AskDialog(QDialog):
         # 设置按钮样式
         self.suggest_button.setStyleSheet("""
             QPushButton {
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
                 min-height: 1.2em;
                 max-height: 1.2em;
             }
@@ -629,7 +630,11 @@ class AskDialog(QDialog):
         # 设置发送按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);
@@ -664,9 +669,9 @@ class AskDialog(QDialog):
         self.response_area.document().setDefaultStyleSheet("""
             strong { font-weight: bold; }
             em { font-style: italic; }
-            h1 { font-size: 1.5em; margin: 0.5em 0; }
-            h2 { font-size: 1.3em; margin: 0.5em 0; }
-            h3 { font-size: 1.1em; margin: 0.5em 0; }
+            h1 { font-size: 1.2em; }
+            h2 { font-size: 1.1em; }
+            h3 { font-size: 1.1em; }
             code { 
                 background-color: palette(midlight); 
                 padding: 2px 4px; 

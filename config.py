@@ -3,8 +3,8 @@
 
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
-                           QLineEdit, QTextEdit, QComboBox, QPushButton,
-                           QHBoxLayout, Qt)
+                           QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
+                           QPushButton, QHBoxLayout)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 
@@ -286,7 +286,11 @@ class ConfigDialog(QWidget):
         # 设置按钮样式
         self.save_button.setStyleSheet("""
             QPushButton {
-                font-size: 12px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:hover:enabled {
                 background-color: #f5f5f5;

@@ -149,7 +149,10 @@ class SuggestionHandler(QObject):
         def update_loading():
             # 只在非取消状态且没有响应时显示加载动画
             if not self._response_text and not self._request_cancelled:
+                # 更新响应区域
                 self.response_area.setText(f"{loading_text}{dots[current_dot[0]]}")
+                # 更新按钮文本
+                self.suggest_button.setText(f"{loading_text}{dots[current_dot[0]]}")
                 current_dot[0] = (current_dot[0] + 1) % len(dots)
 
         self._loading_timer = QTimer(self)
@@ -312,7 +315,7 @@ class SuggestionHandler(QObject):
         self.suggest_button.setStyleSheet("""
             QPushButton {
                 color: palette(text);
-                padding: 2px 8px;
+                padding: 2px 12px;
                 min-height: 1.2em;
                 max-height: 1.2em;
                 min-width: 80px;

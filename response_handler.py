@@ -179,7 +179,8 @@ class ResponseHandler(QObject):
         
         self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(update_loading)
-        self._loading_timer.start(250)
+        self._loading_timer.start(300)  # 每300毫秒更新一次
+        
         # 立即更新一次
         update_loading()
 
@@ -354,11 +355,11 @@ class ResponseHandler(QObject):
         self.send_button.setText(text)
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 13px;
                 color: palette(text);
-                padding: 2px 8px;
-                width: auto;
-                height: auto;
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);
@@ -390,8 +391,11 @@ class ResponseHandler(QObject):
             self.send_button.setText('Send')
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 13px;
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:disabled {
                 color: #ccc;
