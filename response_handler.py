@@ -58,13 +58,56 @@ class MarkdownWorker(QThread):
         if self._is_cancelled:
             return
         try:
-            html = markdown2.markdown(self.text, extras=['fenced-code-blocks', 'tables', 'break-on-newline', 'header-ids', 'strike', 'task_list', 'markdown-in-html'])
+            # 使用markdown2转换markdown为HTML
+            html = markdown2.markdown(
+                self.text,
+                extras=[
+                    'fenced-code-blocks',
+                    'tables',
+                    'break-on-newline',
+                    'header-ids',
+                    'strike',
+                    'task_list',
+                    'markdown-in-html'
+                ]
+            )
+            
+            if self._is_cancelled:
+                return
+                
+            # 清理HTML，允许表格相关标签
+            allowed_tags = [
+                'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'pre', 'code', 'blockquote',
+                'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                'ul', 'ol', 'li',
+                'a', 'img', 'div', 'span'
+            ]
+            
+            allowed_attrs = {
+                'a': ['href', 'title', 'target'],
+                'img': ['src', 'alt', 'title'],
+                'th': ['align'],
+                'td': ['align'],
+                '*': ['class', 'id', 'style']
+            }
+            
+            # 清理HTML
+            safe_html = bleach.clean(
+                html,
+                tags=allowed_tags,
+                attributes=allowed_attrs,
+                strip=True
+            )
+            
             if not self._is_cancelled:
-                html = html.replace('<br />', '')
-                safe_html = bleach.clean(html, tags=['p', 'strong', 'em', 'h1', 'h2', 'h3', 'pre', 'code', 'blockquote', 'table', 'tr', 'th', 'td', 'ul', 'ol', 'li'], attributes=['id'])
                 self.result.emit(safe_html)
-        except Exception:
-            pass  # 忽略取消状态下的错误
+                
+        except Exception as e:
+            logger.error(f"Markdown渲染错误: {str(e)}")
+            if not self._is_cancelled:
+                self.result.emit(f'<div class="error">渲染Markdown时出错: {str(e)}</div>')
 
     def cancel(self):
         """标记取消状态，让线程自然结束"""

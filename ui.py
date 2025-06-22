@@ -783,41 +783,45 @@ class AskDialog(QDialog):
                 white-space: pre-wrap;
                 word-wrap: break-word;
             }
+            /* 基础表格样式 */
             table {
                 border-collapse: collapse;
                 width: 100%;
-                margin: 10px 0;
+                margin: 15px 0;
                 border: 1px solid palette(midlight);
+                font-size: 0.95em;
+                line-height: 1.5;
             }
+            /* 表格单元格 */
             th, td {
                 border: 1px solid palette(midlight);
-                padding: 8px;
+                padding: 8px 12px;
                 text-align: left;
+                vertical-align: top;
             }
-            th {
+            /* 表头样式 */
+            thead {
                 background-color: palette(light);
                 font-weight: bold;
             }
-            tr:nth-child(even) {
-                background-color: palette(light);
+            /* 表格行 */
+            tr {
+                border-bottom: 1px solid palette(midlight);
             }
-            thead, tbody {
-                display: table;
-                width: 100%;
+            /* 最后一行不需要下边框 */
+            tr:last-child {
+                border-bottom: none;
+            }
+            /* 斑马纹 */
+            tr:nth-child(even) {
+                background-color: rgba(0, 0, 0, 0.02);
             }
             blockquote { 
                 border-left: 4px solid palette(midlight); 
                 margin: 10px 0; 
                 padding: 0 10px; 
-                color: #333; 
-            }
-            table { 
-                border-collapse: collapse; 
-                margin: 10px 0; 
-            }
-            th, td { 
-                border: 1px solid palette(midlight); 
-                padding: 5px; 
+                color: #333;
+                background-color: rgba(0, 0, 0, 0.02);
             }
             ul, ol { 
                 margin: 10px 0; 
