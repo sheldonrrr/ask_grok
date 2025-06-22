@@ -240,15 +240,16 @@ class SuggestionHandler(QObject):
         if not self._request_cancelled:
             self._request_cancelled = True
             self._stop_loading_timer()
-        
+            
         if self.response_area and hasattr(self, 'i18n') and isinstance(self.i18n, dict):
             # 只显示一个错误提示
             error_text = self.i18n['suggestion_error']
             if error and str(error).strip():
                 error_text = f"{error_text}: {str(error).strip()}"
-            self.response_area.setText(error_text)
-        
+                self.response_area.setText(error_text)
+                
         self._restore_ui_state(restore_input=True)
+        self._cleanup_worker()  # 确保清理工作线程
 
     def _on_worker_finished(self):
         """工作线程完成的处理"""
@@ -282,14 +283,28 @@ class SuggestionHandler(QObject):
 
     def _cleanup_worker(self):
         """安全清理工作线程"""
-        if self._worker:
-            try:
-                if self._worker.is_finished():  # 只有在线程完成时才删除
-                    self._worker.deleteLater()
-            except RuntimeError:
-                pass  # 忽略已经被删除的情况
-            finally:
-                self._worker = None
+        if not self._worker:
+            return
+            
+        try:
+            # 先取消工作线程
+            self._worker.cancel()
+            
+            # 等待一小段时间让线程有机会自然结束
+            if not self._worker.wait(100):  # 等待100ms
+                # 如果线程还在运行，强制终止
+                self._worker.terminate()
+                self._worker.wait()  # 等待线程终止
+                
+            # 清理线程对象
+            self._worker.deleteLater()
+            
+        except Exception as e:
+            logger.warning(f"清理工作线程时出错: {str(e)}")
+        finally:
+            self._worker = None
+            self._stop_loading_timer()
+            self._stop_cleanup_timer()
 
     def generate(self, book_info):
         """生成随机问题"""
@@ -341,19 +356,21 @@ class SuggestionHandler(QObject):
         if self._worker:
             self._cleanup_worker()
             
+        # 总是传递当前问题，不进行与_original_input的比较
+        # 这样即使第二次点击，也会将当前显示的问题传递给API
         self._worker = SuggestionWorker(
             self.api, 
             book_info, 
             i18n=self.i18n,
-            current_question=current_question if current_question != self._original_input else None
+            current_question=current_question if current_question else None
         )
         self._worker.result.connect(self._on_suggestion_received)
         self._worker.error_occurred.connect(self._on_error)
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
         
-        # 设置超时检查
-        QTimer.singleShot(5000, self._check_response_timeout)
+        # 设置超时检查（增加到10秒）
+        QTimer.singleShot(10000, self._check_response_timeout)
 
     def prepare_close(self):
         """准备关闭，清理资源但不影响线程运行"""

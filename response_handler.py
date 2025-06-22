@@ -111,33 +111,66 @@ class ResponseHandler(QObject):
 
     def start_async_request(self, prompt):
         """开始异步请求 API"""
+        # 清理之前的请求状态
+        self.cleanup()
+        
+        # 创建新的信号对象，避免信号重复连接
+        self._current_signals = ResponseSignals()
+        
         # 连接信号
-        self.signal.update_ui.connect(self._update_ui_from_signal)
-        self.signal.error_occurred.connect(self.handle_error)
-        self.signal.request_finished.connect(self._restore_button_state)
+        self._current_signals.update_ui.connect(self._update_ui_from_signal)
+        self._current_signals.error_occurred.connect(self.handle_error)
+        self._current_signals.request_finished.connect(self._cleanup_request)
         
         def run_request():
             try:
                 response = self.api.ask(prompt)
-                self.signal.update_ui.emit(response, True)
+                if not self._request_cancelled:
+                    self._current_signals.update_ui.emit(response, True)
             except Exception as e:
-                error_type = getattr(e, 'error_type', 'unknown')
-                self.signal.error_occurred.emit(str(e), error_type)
+                if not self._request_cancelled:
+                    error_type = getattr(e, 'error_type', 'unknown')
+                    error_msg = str(e) or str(type(e).__name__)
+                    self._current_signals.error_occurred.emit(error_msg, error_type)
             finally:
-                self.signal.request_finished.emit()
-                # 断开信号连接，避免重复连接
-                try:
-                    self.signal.update_ui.disconnect()
-                    self.signal.error_occurred.disconnect()
-                    self.signal.request_finished.disconnect()
-                except:
-                    pass
+                if not self._request_cancelled:
+                    self._current_signals.request_finished.emit()
         
-        thread = Thread(target=run_request)
-        thread.daemon = True
-        thread.start()
+        # 启动请求线程
+        self._request_thread = Thread(target=run_request)
+        self._request_thread.daemon = True
+        self._request_cancelled = False
+        self._request_thread.start()
         
+        # 设置加载动画
         self._setup_loading_animation()
+        
+        # 设置超时检查
+        QTimer.singleShot(30000, self._check_request_timeout)
+    
+    def _check_request_timeout(self):
+        """检查请求是否超时"""
+        if hasattr(self, '_request_thread') and self._request_thread.is_alive():
+            self._request_cancelled = True
+            self.handle_error(self.i18n.get('request_timeout', 'Request timeout, please try again later'))
+    
+    def _cleanup_request(self):
+        """清理请求资源"""
+        # 断开信号连接
+        if hasattr(self, '_current_signals'):
+            try:
+                self._current_signals.update_ui.disconnect()
+                self._current_signals.error_occurred.disconnect()
+                self._current_signals.request_finished.disconnect()
+            except:
+                pass
+            self._current_signals = None
+        
+        # 恢复按钮状态
+        self._restore_button_state()
+        
+        # 停止加载动画
+        self._stop_loading_timer()
 
     def prepare_close(self):
         if self._markdown_worker:
