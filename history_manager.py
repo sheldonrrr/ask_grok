@@ -68,15 +68,20 @@ class HistoryManager:
         """
         try:
             # 确保作者列表是有序的
-            authors = tuple(sorted(metadata.get('authors', [])))
-            languages = tuple(sorted(metadata.get('languages', [])))
+            authors = tuple(sorted(str(a) for a in metadata.get('authors', [])))
+            languages = tuple(sorted(str(lang) for lang in metadata.get('languages', [])))
+            
+            # 处理出版日期，确保它是字符串
+            pubdate = metadata.get('pubdate', '')
+            if hasattr(pubdate, 'isoformat'):
+                pubdate = pubdate.isoformat()
             
             # 构建键值元组
             key_data = (
-                metadata.get('title', '').lower().strip(),
+                str(metadata.get('title', '')).lower().strip(),
                 authors,
-                metadata.get('publisher', '').lower().strip(),
-                metadata.get('pubdate') or '',
+                str(metadata.get('publisher', '')).lower().strip(),
+                pubdate,
                 languages
             )
             # 使用元组的字符串表示作为键

@@ -266,7 +266,7 @@ class AboutWidget(QWidget):
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.18</p>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.19</p>
             <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://github.com/sheldonrrr/ask_grok' 
                    style='color: palette(text); text-decoration: none;'>
@@ -283,6 +283,12 @@ class AboutWidget(QWidget):
                 <a href='https://t.me/sheldonrrr' 
                    style='color: palette(text); text-decoration: none;'>
                    Telegram: @sheldonrrr
+                </a>
+            </p>
+            <p style='color: palette(text); font-weight: normal; '>
+                <a href='imessage://sheldonrrr@gmail.com' 
+                   style='color: palette(text); text-decoration: none;'>
+                   iMessage: sheldonrrr@gmail.com
                 </a>
             </p>
         </div>
@@ -463,11 +469,25 @@ class AskDialog(QDialog):
         self.i18n = get_translation(language)
         
         # 准备书籍元数据用于历史记录
+        pubdate = book_info.get('pubdate', '')
+        # 处理日期对象，确保它是 YYYY-MM-DD 格式的字符串
+        if hasattr(pubdate, 'strftime'):
+            pubdate = pubdate.strftime('%Y-%m-%d')
+        elif isinstance(pubdate, str) and pubdate:
+            # 如果已经是字符串，尝试解析并格式化为 YYYY-MM-DD
+            try:
+                from calibre.utils.date import parse_date
+                pubdate = parse_date(pubdate).strftime('%Y-%m-%d')
+            except:
+                # 如果解析失败，尝试提取日期部分（格式如 YYYY-MM-DDTHH:MM:SS+HH:MM）
+                if 'T' in pubdate:
+                    pubdate = pubdate.split('T')[0]
+        
         self.book_metadata = {
             'title': book_info.get('title', ''),
             'authors': book_info.get('authors', []),
             'publisher': book_info.get('publisher', ''),
-            'pubdate': book_info.get('pubdate', ''),
+            'pubdate': pubdate,
             'languages': book_info.get('languages', [])
         }
         

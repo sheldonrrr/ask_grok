@@ -11,7 +11,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name=package_name,
-    version='1.1.18',
+    version='1.1.19',
     description='使用 X.AI Grok 询问关于当前书籍的问题',
     author='Sheldon',
     author_email='boy.liushaopeng@gmail.com',
