@@ -488,6 +488,47 @@ class AskDialog(QDialog):
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
 
+    def closeEvent(self, event):
+        # 保存窗口大小
+        prefs = get_prefs()
+        prefs['ask_dialog_width'] = self.width()
+        prefs['ask_dialog_height'] = self.height()
+        
+        # 清理资源
+        if hasattr(self.response_handler, 'cleanup'):
+            self.response_handler.cleanup()
+        if hasattr(self.suggestion_handler, 'cleanup'):
+            self.suggestion_handler.cleanup()
+            
+        event.accept()
+        
+    def copy_response(self):
+        """复制响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        response_text = self.response_area.toPlainText()
+        if response_text.strip():
+            clipboard.setText(response_text)
+            self._show_copy_tooltip(self.copy_response_btn, self.i18n.get('copied', 'Copied!'))
+            
+    def copy_question_response(self):
+        """复制问题和响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            return
+            
+        # 组合问题和答案，用分隔线隔开
+        text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
+        clipboard.setText(text)
+        self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _show_copy_tooltip(self, button, text):
+        """在按钮位置显示复制成功的提示"""
+        from PyQt5.QtWidgets import QToolTip
+        QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
+
     def on_resize(self, event):
         """窗口大小变化时的处理函数"""
         prefs = get_prefs()
@@ -647,10 +688,16 @@ class AskDialog(QDialog):
         
         layout.addLayout(action_layout)
         
+        # 创建响应区域容器
+        response_container = QWidget()
+        response_layout = QVBoxLayout(response_container)
+        response_layout.setContentsMargins(0, 0, 0, 0)
+        response_layout.setSpacing(5)
+        
         # 创建响应区域
         self.response_area = QTextBrowser()
         self.response_area.setOpenExternalLinks(True)  # 允许打开外部链接
-        self.response_area.setMinimumHeight(280)  # 设置最小高度，允许用户拉伸
+        self.response_area.setMinimumHeight(250)  # 设置最小高度，允许用户拉伸
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 
             Qt.TextInteractionFlag.TextSelectableByMouse
@@ -664,6 +711,56 @@ class AskDialog(QDialog):
             }
         """)
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
+        
+        # 创建按钮容器
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(5)
+        
+        # 复制响应按钮
+        self.copy_response_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
+        self.copy_response_btn.setStyleSheet("""
+            QPushButton {
+                padding: 3px 8px;
+                font-size: 12px;
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: palette(midlight);
+            }
+        """)
+        self.copy_response_btn.clicked.connect(self.copy_response)
+        
+        # 复制问题和响应按钮
+        self.copy_qr_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
+        self.copy_qr_btn.setStyleSheet("""
+            QPushButton {
+                padding: 3px 8px;
+                font-size: 12px;
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: palette(midlight);
+            }
+        """)
+        self.copy_qr_btn.clicked.connect(self.copy_question_response)
+        
+        # 添加按钮到布局
+        button_layout.addWidget(self.copy_response_btn)
+        button_layout.addWidget(self.copy_qr_btn)
+        button_layout.addStretch()
+        
+        # 将响应区域和按钮添加到容器
+        response_layout.addWidget(self.response_area)
+        response_layout.addWidget(button_container)
+        
+        # 添加到主布局
+        layout.addWidget(response_container)
         
         # 设置 Markdown 支持
         self.response_area.document().setDefaultStyleSheet("""
@@ -866,6 +963,33 @@ class AskDialog(QDialog):
                 return True
         return False
 
+    def copy_response(self):
+        """复制响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        response_text = self.response_area.toPlainText()
+        if response_text.strip():
+            clipboard.setText(response_text)
+            self._show_copy_tooltip(self.copy_response_btn, self.i18n.get('copied', 'Copied!'))
+            
+    def copy_question_response(self):
+        """复制问题和响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            return
+            
+        # 组合问题和答案，用分隔线隔开
+        text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
+        clipboard.setText(text)
+        self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _show_copy_tooltip(self, button, text):
+        """在按钮位置显示复制成功的提示"""
+        from PyQt5.QtWidgets import QToolTip
+        QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
+        
     def closeEvent(self, event):
         """处理窗口关闭事件"""
         # 准备关闭，让线程自然结束

@@ -291,7 +291,11 @@ TRANSLATIONS = {
         # 响应文字提示
         'no_response':'No response',
         # 发送按钮的模版文字出现错误的提示
-        'template_error':'Template error'
+        'template_error':'Template error',
+        # 复制按钮
+        'copy_response':'Copy Response',
+        'copy_question_response':'Copy Q&A',
+        'copied':'Copied!'        
      },
 
     # 法语 (fr)
@@ -370,7 +374,11 @@ TRANSLATIONS = {
         'invalid_json': 'Réponse JSON invalide',
         'unknown_error': 'Erreur inconnue',
         'no_response':'Aucune réponse',
-        'template_error':'Erreur de template'
+        'template_error':'Erreur de template',
+        # 复制提示
+        'copy_response':'Copier la réponse',
+        'copy_question_response':'Copier Q&A',
+        'copied':'Copié!'
     },
 
     # 德语 (de)
@@ -449,7 +457,11 @@ TRANSLATIONS = {
         'invalid_json': 'Ungültige JSON-Antwort',
         'unknown_error': 'Unbekannter Fehler',
         'no_response':'Keine Antwort',
-        'template_error':'Fehler im Template'
+        'template_error':'Fehler im Template',
+        # 复制提示
+        'copy_response':'Antwort kopieren',
+        'copy_question_response':'Q&A kopieren',
+        'copied':'Kopiert!'
     },
     
     # 西班牙语 (es)
@@ -528,7 +540,11 @@ TRANSLATIONS = {
         'invalid_json': 'Respuesta JSON no válida',
         'unknown_error': 'Error desconocido',
         'no_response':'No hay respuesta',
-        'template_error':'Error de template'
+        'template_error':'Error de template',
+        # 复制提示
+        'copy_response':'Copiar respuesta',
+        'copy_question_response':'Copiar Q&A',
+        'copied':'Copiado'
     },
     
     # 葡萄牙语 (pt)
@@ -607,7 +623,11 @@ TRANSLATIONS = {
         'invalid_json': 'Resposta JSON inválida',
         'unknown_error': 'Erro desconhecido',
         'no_response':'Nenhuma resposta',
-        'template_error':'Erro de template'
+        'template_error':'Erro de template',
+        # 复制提示
+        'copy_response':'Copiar resposta',
+        'copy_question_response':'Copiar Q&A',
+        'copied':'Copiado!'
     },
 
     # 荷兰语 (nl)
@@ -686,7 +706,11 @@ TRANSLATIONS = {
         'invalid_json': 'Ongeldig JSON-antwoord',
         'unknown_error': 'Onbekende fout',
         'no_response':'Geen antwoord',
-        'template_error':'Sjabloonfout'
+        'template_error':'Sjabloonfout',
+        # 复制提示
+        'copy_response':'Antwoord kopieren',
+        'copy_question_response':'Q&A kopieren',
+        'copied':'Kopieeret!'
     },
     
     # 丹麦语 (da)
@@ -765,7 +789,11 @@ TRANSLATIONS = {
         'invalid_json': 'Ugyldigt JSON-svar',
         'unknown_error': 'Ukendt fejl',
         'no_response':'Intet svar',
-        'template_error':'Template fejl'
+        'template_error':'Template fejl',
+        # 复制提示
+        'copy_response':'Kopiér svar',
+        'copy_question_response':'Kopiér Q&A',
+        'copied':'Kopieret'
     },
     
     # 芬兰语 (fi)
@@ -844,7 +872,11 @@ TRANSLATIONS = {
         'invalid_json': 'Virheellinen JSON-vastaus',
         'unknown_error': 'Tuntematon virhe',
         'no_response':'Ei vastausta',
-        'template_error':'Mallipohjan virhe'
+        'template_error':'Mallipohjan virhe',
+        # 复制提示
+        'copy_response':'Kopioi vastaus',
+        'copy_question_response':'Kopioi Q&A',
+        'copied':'Kopioitu'
     },
     
     # 挪威语 (no)
@@ -923,7 +955,11 @@ TRANSLATIONS = {
         'invalid_json': 'Ugyldig JSON-svar',
         'unknown_error': 'Ukjent feil',
         'no_response':'Ingen svar',
-        'template_error':'Mallipohjan feil'
+        'template_error':'Mallipohjan feil',
+        # 复制提示
+        'copy_response':'Kopier svar',
+        'copy_question_response':'Kopier Q&A',
+        'copied':'Kopiert'
     },
     
     # 瑞典语 (sv)
@@ -1002,7 +1038,11 @@ TRANSLATIONS = {
         'invalid_json': 'Ogiltigt JSON-svar',
         'unknown_error': 'Okänt fel',
         'no_response':'Inget svar',
-        'template_error':'Mallipohja-fel'
+        'template_error':'Mallipohja-fel',
+        # 复制提示
+        'copy_response':'Kopiera svar',
+        'copy_question_response':'Kopiera Q&A',
+        'copied':'Kopierat'
     },
 
     # 俄语 (ru)
@@ -1082,7 +1122,11 @@ TRANSLATIONS = {
         'invalid_json': 'Неверный JSON-ответ',
         'unknown_error': 'Неизвестная ошибка',
         'no_response':'Нет ответа',
-        'template_error':'Шаблон-ошибка'
+        'template_error':'Шаблон-ошибка',
+        # 复制提示
+        'copy_response':'Копировать ответ',
+        'copy_question_response':'Копировать Q&A',
+        'copied':'Копия'
     },
     
     # 日语 (ja)
@@ -1161,7 +1205,11 @@ TRANSLATIONS = {
         'invalid_json': '無効なJSONレスポンス',
         'unknown_error': '不明なエラー',
         'no_response':'応答なし',
-        'template_error':'テンプレートエラー'
+        'template_error':'テンプレートエラー',
+        # 复制提示
+        'copy_response':'コピー',
+        'copy_question_response':'Q&A コピー',
+        'copied':'コピーしました'
     },
 
     # 简体中文 (zh)
@@ -1241,7 +1289,11 @@ TRANSLATIONS = {
         'invalid_json': '无效的 JSON 响应',
         'unknown_error': '未知错误',
         'no_response':'无响应',
-        'template_error':'模板文字读取错误'
+        'template_error':'模板文字读取错误',
+        # 复制提示
+        'copy_response':'复制答案',
+        'copy_question_response':'复制问题和答案',
+        'copied':'已复制！'
     },
     
     # 繁体中文 (zht)
@@ -1321,7 +1373,11 @@ TRANSLATIONS = {
         'invalid_json': '無效嘅 JSON 個應答',
         'unknown_error': '未知錯誤',
         'no_response':'無應答',
-        'template_error':'模板文字读取错误'
+        'template_error':'模板文字读取错误',
+        # 复制提示
+        'copy_response':'複製答案',
+        'copy_question_response':'複製問題和答案',
+        'copied':'已複製！'
     },
     
     # 粤语 (yue)
@@ -1401,7 +1457,11 @@ TRANSLATIONS = {
         'invalid_json': '无效的 JSON 响应',
         'unknown_error': '未知错误',
         'no_response':'無應答',
-        'template_error':'模板文字读取错误'
+        'template_error':'模板文字读取错误',
+        # 复制提示
+        'copy_response':'複製答案',
+        'copy_question_response':'複製問題和答案',
+        'copied':'已複製！'
     }
 }
 
