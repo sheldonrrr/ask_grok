@@ -4,11 +4,11 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                            QLineEdit, QTextEdit, QComboBox, QPushButton,
-                           QHBoxLayout)
+                           QHBoxLayout, Qt)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 
-from calibre_plugins.ask_grok.i18n import TRANSLATIONS, get_default_template, get_translation
+from calibre_plugins.ask_grok.i18n import get_default_template, get_translation
 
 # 创建配置对象
 prefs = JSONConfig('plugins/ask_grok')
@@ -149,13 +149,60 @@ class ConfigDialog(QWidget):
         layout.addWidget(self.key_label)
         layout.addWidget(self.key_help)
         
-        self.auth_token_edit = QLineEdit(self)
+        # 使用 QTextEdit 替代 QLineEdit 以支持多行显示
+        self.auth_token_edit = QTextEdit(self)
+        # 设置样式表，使用调色板颜色以支持主题切换
+        self.auth_token_edit.setStyleSheet('''
+            QTextEdit {
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: palette(base);
+                color: palette(text);
+                selection-background-color: palette(highlight);
+                selection-color: palette(highlighted-text);
+            }
+            QTextEdit:focus {
+                border: 1px solid palette(highlight);
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: palette(window);
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: palette(mid);
+                min-height: 20px;
+                border-radius: 4px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: palette(dark);
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        ''')
+        
         # 显示时移除 Bearer 前缀
         auth_token = get_prefs()['auth_token']
         if auth_token.startswith('Bearer '):
             auth_token = auth_token[7:].strip()
         self.auth_token_edit.setText(auth_token)
-        self.auth_token_edit.setEchoMode(QLineEdit.Password)  # 设置为密码模式，显示掩码
+        
+        # 设置多行显示属性
+        try:
+            # 尝试使用 PyQt5 的枚举方式设置换行模式
+            self.auth_token_edit.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        except AttributeError:
+            # 如果枚举方式不可用，回退到整数值
+            self.auth_token_edit.setLineWrapMode(1)  # 1 对应 WidgetWidth
+            
+        self.auth_token_edit.setAcceptRichText(False)  # 不接受富文本
+        self.auth_token_edit.setTabChangesFocus(True)  # 按Tab键切换焦点
+        self.auth_token_edit.setMaximumHeight(66)  # 设置最大高度，大约3行文字的高度
+        self.auth_token_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # 需要时显示垂直滚动条
+        self.auth_token_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 不显示水平滚动条
+        
         layout.addWidget(self.auth_token_edit)
         
         # API Base URL 配置
@@ -228,13 +275,19 @@ class ConfigDialog(QWidget):
         
     def load_initial_values(self):
         """加载初始值"""
+        prefs = get_prefs()
         self.initial_values = {
-            'language': self.lang_combo.currentData(),
-            'auth_token': self.auth_token_edit.text(),
-            'api_base_url': self.base_url_edit.text(),
-            'model': self.model_edit.text(),
-            'template': self.template_edit.toPlainText()
+            'auth_token': prefs['auth_token'],
+            'api_base_url': prefs['api_base_url'],
+            'model': prefs['model'],
+            'template': prefs['template'],
+            'language': prefs.get('language', 'en')
         }
+        # 设置初始令牌值
+        auth_token = prefs['auth_token']
+        if auth_token.startswith('Bearer '):
+            auth_token = auth_token[7:].strip()
+        self.auth_token_edit.setPlainText(auth_token)
     
     def on_language_changed(self, index):
         """语言改变时的处理函数"""
@@ -275,7 +328,7 @@ class ConfigDialog(QWidget):
     def save_settings(self):
         """保存设置"""
         # 获取并清理 token
-        token = self.auth_token_edit.text().strip()
+        token = self.auth_token_edit.toPlainText().strip()
         
         # 检查 token 是否为空
         if not token:
@@ -337,7 +390,7 @@ class ConfigDialog(QWidget):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
         current_values = {
             'language': self.lang_combo.currentData(),
-            'auth_token': self.auth_token_edit.text(),
+            'auth_token': self.auth_token_edit.toPlainText(),
             'api_base_url': self.base_url_edit.text(),
             'model': self.model_edit.text(),
             'template': self.template_edit.toPlainText()
@@ -353,11 +406,15 @@ class ConfigDialog(QWidget):
         self.save_button.setEnabled(has_changes)
     def reset_to_initial_values(self):
         """重置到初始值"""
-        self.load_initial_values()
-        self.auth_token_edit.setText(self.initial_values['auth_token'])
+        self.lang_combo.setCurrentIndex(self.lang_combo.findData(self.initial_values['language']))
+        # 处理令牌输入框的特殊情况
+        auth_token = self.initial_values['auth_token']
+        if auth_token.startswith('Bearer '):
+            auth_token = auth_token[7:].strip()
+        self.auth_token_edit.setPlainText(auth_token)
         self.base_url_edit.setText(self.initial_values['api_base_url'])
         self.model_edit.setText(self.initial_values['model'])
-        self.template_edit.setText(self.initial_values['template'])
+        self.template_edit.setPlainText(self.initial_values['template'])
         self.save_button.setEnabled(False)
         self.save_success_label.setText('')
         self.save_success_label.hide()
