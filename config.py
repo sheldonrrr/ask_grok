@@ -4,7 +4,7 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                            QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
-                           QPushButton, QHBoxLayout)
+                           QPushButton, QHBoxLayout, QMessageBox)
 from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from calibre.utils.config import JSONConfig
 

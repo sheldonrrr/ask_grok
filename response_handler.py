@@ -7,12 +7,15 @@ import bleach
 import logging
 import os
 import sys
-from threading import Thread
-from PyQt5.QtCore import pyqtSignal, QObject
 import time
+from datetime import datetime
+from threading import Thread
 
 # 使用 Calibre 配置目录存储日志
 from calibre.utils.config import config_dir
+
+# 导入历史记录管理器
+from .history_manager import HistoryManager
 
 # 配置日志目录
 log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
@@ -137,13 +140,25 @@ class ResponseHandler(QObject):
         self.api = None
         self._markdown_worker = None
         self.signal = ResponseSignals()
+        self.history_manager = HistoryManager()
+        self.current_metadata = None  # 存储当前书籍的元数据
 
-    def setup(self, response_area, send_button, i18n, api):
-        """设置处理器需要的UI组件和国际化文本"""
+    def setup(self, response_area, send_button, i18n, api, input_area=None):
+        """
+        设置处理器需要的UI组件和国际化文本
+        
+        Args:
+            response_area: 显示响应的文本区域
+            send_button: 发送按钮
+            i18n: 国际化对象
+            api: API 客户端
+            input_area: 输入问题的文本区域
+        """
         self.response_area = response_area
         self.send_button = send_button
         self.i18n = i18n
         self.api = api
+        self.input_area = input_area  # 保存输入区域的引用
 
     def update_i18n(self, i18n):
         """更新国际化文本对象"""
@@ -480,11 +495,12 @@ class ResponseHandler(QObject):
         self.response_area.setHtml(html)
         self.response_area.setAlignment(Qt.AlignLeft)
 
-    def _update_ui_from_signal(self, text, is_response):
+    def _update_ui_from_signal(self, text, is_response, is_history=False):
         """通过信号更新UI，确保在主线程中执行
         
         :param text: 要显示的文本
         :param is_response: 是否为最终响应
+        :param is_history: 是否来自历史记录
         """
         import time
         update_start = time.time()
@@ -495,6 +511,19 @@ class ResponseHandler(QObject):
             md_start = time.time()
             self.set_markdown_response(text)
             logger.info(f"[Markdown Process] Markdown处理完成, 耗时: {(time.time() - md_start)*1000:.2f}ms")
+            
+            # 如果不是从历史记录加载的，保存到历史记录
+            if not is_history and hasattr(self, 'current_metadata') and self.current_metadata:
+                try:
+                    question = self.input_area.toPlainText()
+                    self.history_manager.save_history(
+                        self.current_metadata,
+                        question,
+                        text
+                    )
+                    logger.info("成功保存问询历史")
+                except Exception as e:
+                    logger.error(f"保存问询历史失败: {str(e)}")
             return
             
         # 处理非响应状态（如加载中）

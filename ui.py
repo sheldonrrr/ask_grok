@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+logger = logging.getLogger(__name__)
+
 from enum import auto
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox,
-                           QTextBrowser, QSizePolicy)   
+from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton, 
+                            QHBoxLayout, QLabel, QComboBox, QApplication, 
+                            QMessageBox, QScrollArea, QWidget, QSizePolicy, 
+                            QFrame, QSplitter, QStatusBar, QTextBrowser, QTabWidget, QDialogButtonBox, QToolButton, QMenu, QAction, QToolTip)
+from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
@@ -457,10 +462,23 @@ class AskDialog(QDialog):
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         
+        # 准备书籍元数据用于历史记录
+        self.book_metadata = {
+            'title': book_info.get('title', ''),
+            'authors': book_info.get('authors', []),
+            'publisher': book_info.get('publisher', ''),
+            'pubdate': book_info.get('pubdate', ''),
+            'languages': book_info.get('languages', [])
+        }
+        
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
         # 确保 SuggestionHandler 正确初始化
         self.suggestion_handler = SuggestionHandler(parent=self)
+        
+        # 设置当前书籍元数据到response_handler
+        if hasattr(self.response_handler, 'history_manager'):
+            self.response_handler.current_metadata = self.book_metadata
         
         # 读取保存窗口的大小
         prefs = get_prefs()
@@ -476,11 +494,20 @@ class AskDialog(QDialog):
         self.setup_ui()
         
         # 设置处理器
-        self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
+        self.response_handler.setup(
+            response_area=self.response_area,
+            send_button=self.send_button,
+            i18n=self.i18n,
+            api=self.api,
+            input_area=self.input_area  # 添加输入区域
+        )
         self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
+        
+        # 加载历史记录
+        self._load_history()
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
@@ -488,6 +515,42 @@ class AskDialog(QDialog):
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
 
+    def _load_history(self):
+        """加载历史记录"""
+        if not hasattr(self, 'book_metadata') or not self.book_metadata:
+            return
+            
+        try:
+            if hasattr(self.response_handler, 'history_manager'):
+                history = self.response_handler.history_manager.get_history(self.book_metadata)
+                if history:
+                    # 显示历史记录
+                    self.input_area.setPlainText(history['question'])
+                    # 标记为历史记录加载，避免重复保存
+                    self.response_handler._update_ui_from_signal(
+                        history['answer'], 
+                        is_response=True,
+                        is_history=True
+                    )
+                    logger.info(f"已加载历史记录，时间: {history.get('timestamp', '未知')}")
+        except Exception as e:
+            logger.error(f"加载历史记录失败: {str(e)}")
+    
+    def clear_history(self):
+        """清除当前书籍的历史记录"""
+        if not hasattr(self, 'book_metadata') or not self.book_metadata:
+            return
+            
+        try:
+            if hasattr(self.response_handler, 'history_manager'):
+                # 这里需要实现清除特定书籍历史记录的逻辑
+                # 由于当前设计是所有历史记录在一个文件中，我们需要更新文件内容
+                # 这需要修改HistoryManager类
+                self.statusBar.showMessage(self.i18n.get('clear_history_not_supported', 'Clear history for single book is not supported yet'))
+        except Exception as e:
+            logger.error(f"清除历史记录失败: {str(e)}")
+            self.statusBar.showMessage(self.i18n.get('clear_history_failed', 'Failed to clear history'))
+    
     def closeEvent(self, event):
         # 保存窗口大小
         prefs = get_prefs()
@@ -550,6 +613,10 @@ class AskDialog(QDialog):
         
         layout = QVBoxLayout()
         self.setLayout(layout)
+        
+        # 添加一个状态栏用于显示加载状态
+        self.statusBar = QStatusBar()
+        layout.addWidget(self.statusBar)
         
         # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
         info_area = QTextEdit()
