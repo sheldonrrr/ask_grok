@@ -3,12 +3,16 @@
 
 import json
 import requests
-from typing import Optional, Dict, Any, Tuple
+import urllib3
+from typing import Optional, Dict, Any, Tuple, Union
 import logging
 from .i18n import get_translation
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
+
+# 禁用不安全的请求警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class GrokAPIError(Exception):
     """自定义 API 错误异常类"""
@@ -26,7 +30,9 @@ class GrokAPIError(Exception):
 class APIClient:
     """X.AI API 客户端"""
     
-    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest", auth_token: str = None, i18n: Dict[str, str] = None):
+    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest", 
+                 auth_token: str = None, i18n: Dict[str, str] = None, 
+                 max_retries: int = 3, timeout: float = 30.0):
         """初始化 X.AI API 客户端
         
         Args:
@@ -34,9 +40,16 @@ class APIClient:
             model: 使用的模型名称
             auth_token: 认证令牌（可选，如果为 None 会从配置中读取）
             i18n: 国际化文本字典
+            max_retries: 最大重试次数
+            timeout: 请求超时时间（秒）
         """
         self._api_base = api_base.rstrip('/')
         self._model = model
+        self._timeout = timeout
+        
+        # 初始化连接池
+        self._session = self._create_session(max_retries, timeout)
+        
         # 存储默认值
         self._default_prefs = {
             'api_base_url': api_base,
@@ -45,6 +58,32 @@ class APIClient:
         }
         # 初始化 i18n
         self.i18n = i18n or get_translation('en')
+        
+    def _create_session(self, max_retries: int, timeout: float) -> requests.Session:
+        """创建带有连接池的 Session 对象"""
+        session = requests.Session()
+        
+        # 配置连接池
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=10,      # 连接池数量
+            pool_maxsize=10,         # 最大连接数
+            max_retries=max_retries, # 最大重试次数
+            pool_block=False         # 非阻塞模式
+        )
+        
+        # 为 http 和 https 都添加适配器
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        
+        return session
+        
+    def __del__(self):
+        """析构函数，确保会话被正确关闭"""
+        if hasattr(self, '_session'):
+            try:
+                self._session.close()
+            except:
+                pass
     
     def _prepare_request(self, prompt: str) -> Tuple[Dict[str, str], Dict[str, Any]]:
         """准备 API 请求的共同部分
@@ -152,12 +191,24 @@ class APIClient:
             
             # 发送请求
             logger.info("正在发送请求到 API...")
-            response = requests.post(
-                "https://api.x.ai/v1/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=30
-            )
+            try:
+                response = self._session.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=self._timeout,
+                    verify=False  # 禁用 SSL 验证（如果需要）
+                )
+            except requests.exceptions.SSLError as e:
+                logger.error(f"SSL 错误: {str(e)}")
+                # 重试时不验证 SSL
+                response = self._session.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=self._timeout,
+                    verify=False
+                )
             logger.info(f"收到 API 响应，状态码: {response.status_code}")
             
             # 检查响应状态

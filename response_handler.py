@@ -5,10 +5,46 @@ from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 import markdown2
 import bleach
 import logging
+import os
+import sys
 from threading import Thread
 from PyQt5.QtCore import pyqtSignal, QObject
+import time
+
+# 使用 Calibre 配置目录存储日志
+from calibre.utils.config import config_dir
+
+# 配置日志目录
+log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'ask_grok_response.log')
+
+# 获取根日志记录器
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# 检查是否已经添加过处理器，避免重复添加
+if not any(isinstance(h, logging.FileHandler) and h.baseFilename == log_file for h in root_logger.handlers):
+    # 创建文件处理器
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler.setLevel(logging.DEBUG)
+    
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG)
+    
+    # 创建格式化器
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # 添加处理器到根日志记录器
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
+logger.info('=' * 80)
+logger.info('Response Handler 初始化完成')
 
 class MarkdownWorker(QThread):
     result = pyqtSignal(str)
@@ -111,23 +147,39 @@ class ResponseHandler(QObject):
 
     def start_async_request(self, prompt):
         """开始异步请求 API"""
+        self._request_start_time = time.time()
+        logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}")
+        
         # 清理之前的请求状态
+        start_cleanup = time.time()
         self.cleanup()
+        logger.info(f"[Cleanup] 清理完成, 耗时: {(time.time() - start_cleanup)*1000:.2f}ms")
         
         # 创建新的信号对象，避免信号重复连接
         self._current_signals = ResponseSignals()
         
         # 连接信号
+        connect_start = time.time()
         self._current_signals.update_ui.connect(self._update_ui_from_signal)
         self._current_signals.error_occurred.connect(self.handle_error)
         self._current_signals.request_finished.connect(self._cleanup_request)
+        logger.info(f"[Signal Connect] 信号连接完成, 耗时: {(time.time() - connect_start)*1000:.2f}ms")
         
         def run_request():
             try:
+                logger.info(f"[API Request] 开始API请求, 时间: {time.strftime('%H:%M:%S')}")
+                api_start = time.time()
                 response = self.api.ask(prompt)
+                api_time = (time.time() - api_start) * 1000
+                logger.info(f"[API Response] 收到API响应, 耗时: {api_time:.2f}ms")
+                
                 if not self._request_cancelled:
+                    emit_start = time.time()
                     self._current_signals.update_ui.emit(response, True)
+                    logger.info(f"[Emit UI Update] 发送UI更新信号, 耗时: {(time.time() - emit_start)*1000:.2f}ms")
             except Exception as e:
+                error_time = time.strftime('%H:%M:%S')
+                logger.error(f"[API Error] 请求出错, 时间: {error_time}, 错误: {str(e)}")
                 if not self._request_cancelled:
                     error_type = getattr(e, 'error_type', 'unknown')
                     error_msg = str(e) or str(type(e).__name__)
@@ -135,18 +187,22 @@ class ResponseHandler(QObject):
             finally:
                 if not self._request_cancelled:
                     self._current_signals.request_finished.emit()
+                logger.info(f"[Request Finished] 请求处理完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
         
         # 启动请求线程
+        thread_start = time.time()
         self._request_thread = Thread(target=run_request)
         self._request_thread.daemon = True
         self._request_cancelled = False
         self._request_thread.start()
+        logger.info(f"[Thread Start] 启动请求线程, 耗时: {(time.time() - thread_start)*1000:.2f}ms")
         
         # 设置加载动画
         self._setup_loading_animation()
         
         # 设置超时检查
         QTimer.singleShot(30000, self._check_request_timeout)
+        logger.info(f"[Request Setup] 请求设置完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
     
     def _check_request_timeout(self):
         """检查请求是否超时"""
@@ -387,9 +443,15 @@ class ResponseHandler(QObject):
         :param text: 要显示的文本
         :param is_response: 是否为最终响应
         """
+        import time
+        update_start = time.time()
+        logger.info(f"[UI Update] 开始更新UI, 时间: {time.strftime('%H:%M:%S')}")
+        
         if is_response:
             # 如果是最终响应，设置Markdown响应
+            md_start = time.time()
             self.set_markdown_response(text)
+            logger.info(f"[Markdown Process] Markdown处理完成, 耗时: {(time.time() - md_start)*1000:.2f}ms")
             return
             
         # 处理非响应状态（如加载中）

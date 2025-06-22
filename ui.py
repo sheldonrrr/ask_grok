@@ -683,6 +683,30 @@ class AskDialog(QDialog):
                 padding: 10px; 
                 border-radius: 5px; 
                 margin: 10px 0; 
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin: 10px 0;
+                border: 1px solid palette(midlight);
+            }
+            th, td {
+                border: 1px solid palette(midlight);
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: palette(light);
+                font-weight: bold;
+            }
+            tr:nth-child(even) {
+                background-color: palette(light);
+            }
+            thead, tbody {
+                display: table;
+                width: 100%;
             }
             blockquote { 
                 border-left: 4px solid palette(midlight); 
