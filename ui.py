@@ -579,7 +579,7 @@ class AskDialog(QDialog):
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
         self.suggest_button.setMinimumWidth(80)
-        self.suggest_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
@@ -595,6 +595,8 @@ class AskDialog(QDialog):
         self.suggest_button.setStyleSheet("""
             QPushButton {
                 padding: 2px 8px;
+                min-height: 1.2em;
+                max-height: 1.2em;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);

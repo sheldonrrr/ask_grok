@@ -199,7 +199,7 @@ class ConfigDialog(QWidget):
             
         self.auth_token_edit.setAcceptRichText(False)  # 不接受富文本
         self.auth_token_edit.setTabChangesFocus(True)  # 按Tab键切换焦点
-        self.auth_token_edit.setMaximumHeight(66)  # 设置最大高度，大约3行文字的高度
+        self.auth_token_edit.setMaximumHeight(62)  # 设置最大高度，大约3行文字的高度
         self.auth_token_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # 需要时显示垂直滚动条
         self.auth_token_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 不显示水平滚动条
         
@@ -227,10 +227,39 @@ class ConfigDialog(QWidget):
         self.template_label = QLabel(self.i18n['template_label'])
         layout.addWidget(self.template_label)
         
-        self.template_edit = QTextEdit(self)
-        self.template_edit.setText(get_prefs()['template'])
+        # 使用 QPlainTextEdit 替代 QTextEdit，因为它的布局计算更稳定
+        self.template_edit = QPlainTextEdit(self)
+        self.template_edit.setPlainText(get_prefs()['template'])
         self.template_edit.setPlaceholderText(self.i18n['template_placeholder'])
         self.template_edit.setFixedHeight(180)
+        
+        # 禁用自动换行，使用水平滚动条
+        self.template_edit.setLineWrapMode(QPlainTextEdit.NoWrap)
+        
+        # 设置边距和滚动条策略
+        self.template_edit.setViewportMargins(0, 0, 0, 0)
+        self.template_edit.document().setDocumentMargin(6)  # 设置一个小的文档边距
+        
+        # 设置样式表
+        self.template_edit.setStyleSheet('''
+            QPlainTextEdit {
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: palette(base);
+                color: palette(text);
+            }
+            QPlainTextEdit:focus {
+                border: 1px solid palette(highlight);
+            }
+            QPlainTextEdit QScrollBar:vertical {
+                width: 8px;
+            }
+            QPlainTextEdit QScrollBar::handle:vertical {
+                background: palette(mid);
+                min-height: 20px;
+                border-radius: 4px;
+            }
+        ''')
         layout.addWidget(self.template_edit)
         
         # 添加一个弹性空间

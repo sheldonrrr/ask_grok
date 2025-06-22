@@ -307,11 +307,15 @@ class SuggestionHandler(QObject):
         # 更新UI状态
         self.suggest_button.setEnabled(False)
         self.suggest_button.setText(self.i18n.get('loading_text', 'Loading'))
+
+        # 保持与默认状态一致的样式，特别是高度相关设置
         self.suggest_button.setStyleSheet("""
             QPushButton {
-                font-size: 13px;
                 color: palette(text);
                 padding: 2px 8px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
         """)
         
