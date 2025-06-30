@@ -3,21 +3,89 @@
 
 import json
 import requests
-import os
-import sys
-from typing import Generator
+import urllib3
+from typing import Optional, Dict, Any, Tuple, Union
 import logging
+from .i18n import get_translation
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from i18n import get_translation
+# 禁用不安全的请求警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+class GrokAPIError(Exception):
+    """自定义 API 错误异常类"""
+    def __init__(self, message: str, status_code: Optional[int] = None, error_type: Optional[str] = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.error_type = error_type
+        self.message = message
+
+    def __str__(self) -> str:
+        if self.status_code:
+            return f"{self.message} (Status: {self.status_code})"
+        return self.message
 
 class APIClient:
     """X.AI API 客户端"""
     
-    def _prepare_request(self, prompt: str) -> tuple:
+    def __init__(self, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest", 
+                 auth_token: str = None, i18n: Dict[str, str] = None, 
+                 max_retries: int = 3, timeout: float = 30.0):
+        """初始化 X.AI API 客户端
+        
+        Args:
+            api_base: API 基础 URL
+            model: 使用的模型名称
+            auth_token: 认证令牌（可选，如果为 None 会从配置中读取）
+            i18n: 国际化文本字典
+            max_retries: 最大重试次数
+            timeout: 请求超时时间（秒）
+        """
+        self._api_base = api_base.rstrip('/')
+        self._model = model
+        self._timeout = timeout
+        
+        # 初始化连接池
+        self._session = self._create_session(max_retries, timeout)
+        
+        # 存储默认值
+        self._default_prefs = {
+            'api_base_url': api_base,
+            'model': model,
+            'auth_token': auth_token or ''
+        }
+        # 初始化 i18n
+        self.i18n = i18n or get_translation('en')
+        
+    def _create_session(self, max_retries: int, timeout: float) -> requests.Session:
+        """创建带有连接池的 Session 对象"""
+        session = requests.Session()
+        
+        # 配置连接池
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=10,      # 连接池数量
+            pool_maxsize=10,         # 最大连接数
+            max_retries=max_retries, # 最大重试次数
+            pool_block=False         # 非阻塞模式
+        )
+        
+        # 为 http 和 https 都添加适配器
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        
+        return session
+        
+    def __del__(self):
+        """析构函数，确保会话被正确关闭"""
+        if hasattr(self, '_session'):
+            try:
+                self._session.close()
+            except:
+                pass
+    
+    def _prepare_request(self, prompt: str) -> Tuple[Dict[str, str], Dict[str, Any]]:
         """准备 API 请求的共同部分
         
         Args:
@@ -26,22 +94,35 @@ class APIClient:
         Returns:
             tuple: (headers, data) 请求头和请求数据
         """
-        # 处理 token
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
         
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]
-            
-        # 确保 token 以 xai- 开头
-        if not token.startswith('xai-'):
-            logger.warning(f"Token format warning: token should start with 'xai-', current token: {token}")
+        token = self.auth_token
+
+        # 记录原始 token 用于调试（脱敏处理）
+        logger.debug(f"Token length: {len(token)}")
+        
+        # 检查 token 格式
+        if not (token.lower().startswith('xai-') or token.lower().startswith('Bearer xai-')):
+            error_msg = self.i18n.get(
+                'invalid_token_format', 
+                'Invalid token format. Token must start with \'xai-\' or \'Bearer xai-\''
+            )
+            raise GrokAPIError(error_msg, error_type="auth_error")
+        
+        # 检查 token 长度
+        if len(token) < 64:  # 假设最小长度为 64
+            error_msg = self.i18n.get(
+                'token_too_short_message',
+                'Token is too short. Please check and enter the complete token.'
+            )
+            raise GrokAPIError(error_msg, error_type="auth_error")
+        
+        # 确保 token 有 Bearer 前缀
+        if not token.startswith('Bearer '):
+            token = f'Bearer {token}'
             
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}"
+            "Authorization": token
         }
         
         data = {
@@ -61,15 +142,19 @@ class APIClient:
         
         return headers, data
     
-    def ask(self, prompt: str, lang_code: str = 'en') -> str:
+    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
         """向 X.AI API 发送问题并获取回答（非流式）
         
         Args:
             prompt: 问题文本
             lang_code: 语言代码，用于获取相应的翻译文本
+            return_dict: 是否返回字典类型，默认为 False 返回字符串
             
         Returns:
-            str: API 返回的完整回答
+            Union[str, dict]: 默认返回字符串，当 return_dict=True 时返回解析后的字典
+            
+        Raises:
+            GrokAPIError: 当 API 请求失败时抛出
             
         Note:
             这个方法不使用流式请求，更适合处理长文本和需要完整响应的场景
@@ -79,58 +164,51 @@ class APIClient:
         logger.info(f"请求语言代码: {lang_code}")
         logger.info(f"原始提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
         
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
-        # 记录原始 token
-        logger.debug(f"原始 Token: {self.auth_token}")
-        
-        token = self.auth_token
-        token = ''.join(token.split())  # 移除所有空白字符
-        logger.debug(f"移除空白字符后: {token}")
-        
-        token = token.encode('utf-8').decode('utf-8-sig')  # 移除可能的 BOM
-        logger.debug(f"移除 BOM 后: {token}")
-        
-        # 处理 Bearer 前缀
-        if token.startswith('Bearer'):
-            token = token[6:]  # 移除 'Bearer'
-            logger.debug(f"移除 Bearer 前缀后: {token}")
-        
-        # 准备请求
-        logger.info("准备请求头和请求数据...")
-        headers, data = self._prepare_request(prompt)
-        data["stream"] = False  # 非流式请求
-        
-        # 记录请求详情（敏感信息已脱敏）
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            auth = safe_headers['Authorization']
-            if len(auth) > 20:  # 只显示前10个和后5个字符
-                safe_headers['Authorization'] = f"{auth[:10]}...{auth[-5:]}"
-        
-        logger.info(f"请求头: {safe_headers}")
-        logger.info(f"请求数据 (前500字符): {str(data)[:500]}{'...' if len(str(data)) > 500 else ''}")
-        logger.info(f"请求数据大小: {len(str(data))} 字节")
-        
-        # 记录完整的系统提示词
-        if 'messages' in data and len(data['messages']) > 0:
-            for i, msg in enumerate(data['messages']):
-                if msg.get('role') == 'system':
-                    logger.info(f"系统提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-                elif msg.get('role') == 'user':
-                    logger.info(f"用户提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
-        
-        # 发送请求
         try:
+            # 准备请求
+            logger.info("准备请求头和请求数据...")
+            headers, data = self._prepare_request(prompt)
+            data["stream"] = False  # 非流式请求
+            
+            # 记录请求详情（敏感信息已脱敏）
+            safe_headers = headers.copy()
+            if 'Authorization' in safe_headers:
+                auth = safe_headers['Authorization']
+                if len(auth) > 20:  # 只显示前10个和后5个字符
+                    safe_headers['Authorization'] = f"{auth[:10]}...{auth[-5:]}"
+            
+            logger.info(f"请求头: {safe_headers}")
+            logger.info(f"请求数据 (前500字符): {str(data)[:500]}{'...' if len(str(data)) > 500 else ''}")
+            logger.info(f"请求数据大小: {len(str(data))} 字节")
+            
+            # 记录完整的系统提示词
+            if 'messages' in data and len(data['messages']) > 0:
+                for i, msg in enumerate(data['messages']):
+                    if msg.get('role') == 'system':
+                        logger.info(f"系统提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
+                    elif msg.get('role') == 'user':
+                        logger.info(f"用户提示词: {msg.get('content', '')[:500]}{'...' if len(msg.get('content', '')) > 500 else ''}")
+            
+            # 发送请求
             logger.info("正在发送请求到 API...")
-            response = requests.post(
-                "https://api.x.ai/v1/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=30
-            )
+            try:
+                response = self._session.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=self._timeout,
+                    verify=False  # 禁用 SSL 验证（如果需要）
+                )
+            except requests.exceptions.SSLError as e:
+                logger.error(f"SSL 错误: {str(e)}")
+                # 重试时不验证 SSL
+                response = self._session.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers=headers,
+                    json=data,
+                    timeout=self._timeout,
+                    verify=False
+                )
             logger.info(f"收到 API 响应，状态码: {response.status_code}")
             
             # 检查响应状态
@@ -140,89 +218,104 @@ class APIClient:
             result = response.json()
             
             # 记录完整的响应（敏感信息已脱敏）
-            logger.debug(f"完整 API 响应: {result}")
+            logger.debug(f"API 响应: {result}")
             
             # 提取回答
             if 'choices' in result and len(result['choices']) > 0:
                 answer = result['choices'][0].get('message', {}).get('content', '')
+                if not answer:
+                    raise GrokAPIError(self.i18n.get('empty_answer','API returned an empty answer'))
+                
                 logger.info(f"成功获取到回答，长度: {len(answer)} 字符")
                 logger.debug(f"回答内容 (前500字符): {answer[:500]}{'...' if len(answer) > 500 else ''}")
+                
+                if return_dict:
+                    try:
+                        import json
+                        return json.loads(answer)
+                    except json.JSONDecodeError:
+                        logger.warning("返回的内容不是有效的 JSON 格式，返回原始字符串")
+                        return answer
                 return answer
             else:
-                logger.error(f"API 响应中未找到有效的回答: {result}")
-                raise ValueError("API 响应中未找到有效的回答")
+                raise GrokAPIError("API 响应中未找到有效的回答")
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"请求 API 时发生错误: {str(e)}")
+            status_code = None
+            error_msg = str(e)
+            
+            # 尝试从响应中提取更多错误信息
             if hasattr(e, 'response') and e.response is not None:
+                status_code = e.response.status_code
                 try:
-                    error_detail = e.response.json()
-                    logger.error(f"API 错误详情: {error_detail}")
+                    error_data = e.response.json()
+                    error_msg = error_data.get('error', {}).get('message', str(e))
+                    logger.error(f"API 错误详情: {error_data}")
                 except:
-                    logger.error(f"API 错误响应内容: {e.response.text[:1000]}")
-            raise
+                    error_msg = e.response.text[:500]  # 限制错误消息长度
+                    logger.error(f"API 错误响应: {error_msg}")
+            else:
+                logger.error(f"请求 API 时发生错误: {error_msg}")
+            
+            if status_code == 401:
+                
+                # 支持i18n的提示字段
+                error_msg = self.i18n.get('auth_error_401','Unauthorized token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 403:
+                error_msg = self.i18n.get('auth_error_403','Forbidden token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 429:
+                error_msg = self.i18n.get('rate_limit','Request too frequent, please try again later')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="rate_limit"
+                )
+            else:
+                error_msg = self.i18n.get('Invalid token','Please check your API token validable in the plugin settings.')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="api_error"
+                )
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"解析 API 响应时发生 JSON 解码错误: {str(e)}")
+            raise GrokAPIError(self.i18n.get('Invalid JSON response','Invalid JSON response'))
             
         except Exception as e:
-            logger.error(f"处理 API 响应时发生错误: {str(e)}", exc_info=True)
+            logger.error(f"处理 API 请求时发生未知错误: {str(e)}", exc_info=True)
+            if not isinstance(e, GrokAPIError):
+                raise GrokAPIError(self.i18n.get('Unknown error','Unknown error'))
             raise
             
         finally:
             logger.info("=== API 请求处理完成 ===\n")
-        
-        try:
-            # 添加超时设置
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
-                headers=headers,
-                json=data,
-                timeout=60  # 增加到60秒
-            )
-            logger.info(f"Response status code: {response.status_code}")
-            logger.info(f"Response content: {response.text}")
-            
-            # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
-            
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
-    
-    def ask_stream(self, prompt: str, lang_code: str = 'en') -> str:
-        """向 X.AI API 发送问题并获取回答（流式请求，适用于短文本）
+
+    def random_question(self, prompt: str, lang_code: str = 'en', return_dict: bool = False) -> str:
+        """向 X.AI API 发送问题并获取回答（非流式请求，适用于短文本）
         
         Args:
             prompt: 问题文本
             lang_code: 语言代码，用于获取相应的翻译文本
+            return_dict: 是否返回字典类型，默认为 False 返回字符串
             
         Returns:
-            str: API 返回的完整回答
+            Union[str, dict]: 默认返回字符串，当 return_dict=True 时返回解析后的字典
         
         Note:
             这个方法不使用流式请求，更适合处理短文本和快速响应的场景
         """
         
-        # 确保 token 格式正确：
-        # 1. 移除所有空白字符（包括空格、tab、换行符等）
-        # 2. 移除 BOM 标记
-        # 3. 处理 Bearer 前缀，确保格式正确
         # 记录原始 token
         logger.debug(f"Original token: {self.auth_token}")
         
@@ -240,6 +333,7 @@ class APIClient:
         headers, data = self._prepare_request(prompt)
         data["stream"] = False  # 非流式请求
         headers['Authorization'] = token  # 使用处理后的 token
+        status_code = None
         
         try:
             # 添加超时设置
@@ -247,42 +341,102 @@ class APIClient:
                 f"{self.api_base}/chat/completions",
                 headers=headers,
                 json=data,
-                timeout=60  # 增加到60秒
+                timeout=10
             )
             
-            # 处理常见错误
-            if response.status_code == 400:
-                error_data = response.json()
-                error_message = error_data.get('error', {}).get('message', 'Bad request')
-                logger.error(f"API bad request: {error_message}")
-                translation = get_translation(lang_code)
-                raise Exception(f"{translation.get('error_prefix', 'Error:')} {error_message}")
+            status_code = response.status_code
             
-            response.raise_for_status()
-            
-            result = response.json()
-            if result.get("choices") and result["choices"][0].get("message", {}).get("content"):
-                return result["choices"][0]["message"]["content"]
+            # 处理成功响应
+            if status_code == 200:
+                # 成功响应
+                result = response.json()
+                if 'choices' in result and len(result['choices']) > 0:
+                    answer = result['choices'][0].get('message', {}).get('content', '')
+                    if not answer:
+                        raise GrokAPIError(
+                            self.i18n.get('empty_answer', 'API returned an empty answer'),
+                            error_type="api_error"
+                        )
+                    return answer
+                else:
+                    raise GrokAPIError(
+                        self.i18n.get('invalid_response', 'Invalid response format from API'),
+                        error_type="api_error"
+                    )
+            # 处理错误响应
+            elif status_code == 401:
+                error_msg = self.i18n.get('auth_error_401', 'Unauthorized token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 403:
+                error_msg = self.i18n.get('auth_error_403', 'Forbidden token')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="auth_error"
+                )
+            elif status_code == 429:
+                error_msg = self.i18n.get('rate_limit', 'Request too frequent, please try again later')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="rate_limit"
+                )
             else:
-                logger.error(f"Unexpected API response format: {result}")
-                translation = get_translation(lang_code)
-                error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: Unexpected response format"
-                raise Exception(error_message)
-                                
-        except requests.exceptions.RequestException as e:
-            translation = get_translation(lang_code)
-            error_message = f"{translation.get('error_prefix', 'Error:')} {translation.get('request_failed', 'API request failed')}: {str(e)}"
-            logger.error(error_message)
-            raise Exception(error_message)
-    
-    def __init__(self, auth_token: str, api_base: str = "https://api.x.ai/v1", model: str = "grok-3-latest"):
-        """初始化 X.AI API 客户端
+                error_msg = self.i18n.get('invalid_token_message', 'Please check your API token validable in the plugin settings.')
+                raise GrokAPIError(
+                    error_msg,
+                    status_code=status_code,
+                    error_type="api_error"
+                )
+        except json.JSONDecodeError as e:
+            error_msg = self.i18n.get('invalid_json', 'Invalid JSON response')
+            raise GrokAPIError(
+                error_msg,
+                error_type="parse_error"
+            )
         
-        Args:
-            auth_token: API 认证令牌
-            api_base: API 基础 URL
-            model: 使用的模型名称
-        """
-        self.auth_token = auth_token
-        self.api_base = api_base.rstrip('/')
-        self.model = model
+        except Exception as e:
+            error_msg = self.i18n.get('unknown_error', 'Unknown error')
+            raise GrokAPIError(
+                error_msg,
+                error_type="unknown_error"
+            )
+    
+
+    
+    @property
+    def api_base(self):
+        """动态获取最新的 API 基础 URL"""
+        prefs = self._get_latest_prefs()
+        return prefs.get('api_base_url', self._default_prefs['api_base_url']).rstrip('/')
+    
+    @property
+    def model(self):
+        """动态获取最新的模型名称"""
+        prefs = self._get_latest_prefs()
+        return prefs.get('model', self._default_prefs['model'])
+    
+    @property
+    def auth_token(self):
+        """动态获取最新的 auth_token"""
+        prefs = self._get_latest_prefs()
+        return prefs.get('auth_token', self._default_prefs['auth_token'])
+    
+    def _get_latest_prefs(self):
+        """直接从配置文件读取最新的配置"""
+        from calibre.utils.config import JSONConfig
+        try:
+            # 直接创建一个新的 JSONConfig 实例，确保获取最新的配置
+            prefs = JSONConfig('plugins/ask_grok')
+            # 确保所有必要的键都存在
+            for key, default in self._default_prefs.items():
+                if key not in prefs:
+                    prefs[key] = default
+            return prefs
+        except Exception as e:
+            logger.error(f"Error loading preferences: {str(e)}")
+            return self._default_prefs

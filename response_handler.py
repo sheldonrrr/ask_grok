@@ -2,13 +2,52 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QTextCursor
 import markdown2
 import bleach
 import logging
+import os
+import sys
+import time
+from datetime import datetime
+from threading import Thread
+
+# 使用 Calibre 配置目录存储日志
+from calibre.utils.config import config_dir
+
+# 导入历史记录管理器
+from .history_manager import HistoryManager
+
+# 配置日志目录
+log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'ask_grok_response.log')
+
+# 获取根日志记录器
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
+
+# 检查是否已经添加过处理器，避免重复添加
+if not any(isinstance(h, logging.FileHandler) and h.baseFilename == log_file for h in root_logger.handlers):
+    # 创建文件处理器
+    file_handler = logging.FileHandler(log_file, encoding='utf-8')
+    file_handler.setLevel(logging.DEBUG)
+    
+    # 创建控制台处理器
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG)
+    
+    # 创建格式化器
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    
+    # 添加处理器到根日志记录器
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(console_handler)
 
 logger = logging.getLogger(__name__)
+logger.info('=' * 80)
+logger.info('Response Handler 初始化完成')
 
 class MarkdownWorker(QThread):
     result = pyqtSignal(str)
@@ -22,19 +61,66 @@ class MarkdownWorker(QThread):
         if self._is_cancelled:
             return
         try:
-            html = markdown2.markdown(self.text, extras=['fenced-code-blocks', 'tables', 'break-on-newline', 'header-ids', 'strike', 'task_list', 'markdown-in-html'])
+            # 使用markdown2转换markdown为HTML
+            html = markdown2.markdown(
+                self.text,
+                extras=[
+                    'fenced-code-blocks',
+                    'tables',
+                    'break-on-newline',
+                    'header-ids',
+                    'strike',
+                    'task_list',
+                    'markdown-in-html'
+                ]
+            )
+            
+            if self._is_cancelled:
+                return
+                
+            # 清理HTML，允许表格相关标签
+            allowed_tags = [
+                'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'pre', 'code', 'blockquote',
+                'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                'ul', 'ol', 'li',
+                'a', 'img', 'div', 'span'
+            ]
+            
+            allowed_attrs = {
+                'a': ['href', 'title', 'target'],
+                'img': ['src', 'alt', 'title'],
+                'th': ['align'],
+                'td': ['align'],
+                '*': ['class', 'id', 'style']
+            }
+            
+            # 清理HTML
+            safe_html = bleach.clean(
+                html,
+                tags=allowed_tags,
+                attributes=allowed_attrs,
+                strip=True
+            )
+            
             if not self._is_cancelled:
-                html = html.replace('<br />', '')
-                safe_html = bleach.clean(html, tags=['p', 'strong', 'em', 'h1', 'h2', 'h3', 'pre', 'code', 'blockquote', 'table', 'tr', 'th', 'td', 'ul', 'ol', 'li'], attributes=['id'])
                 self.result.emit(safe_html)
-        except Exception:
-            pass  # 忽略取消状态下的错误
+                
+        except Exception as e:
+            logger.error(f"Markdown渲染错误: {str(e)}")
+            if not self._is_cancelled:
+                self.result.emit(f'<div class="error">渲染Markdown时出错: {str(e)}</div>')
 
     def cancel(self):
         """标记取消状态，让线程自然结束"""
         self._is_cancelled = True
 
-
+# 在类外部或类级别定义信号类
+class ResponseSignals(QObject):
+    update_ui = pyqtSignal(str, bool)
+    error_occurred = pyqtSignal(str, str)
+    request_finished = pyqtSignal()
 
 class ResponseHandler(QObject):
     stop_time_signal = pyqtSignal()
@@ -53,14 +139,26 @@ class ResponseHandler(QObject):
         self._loading_timer = None
         self.api = None
         self._markdown_worker = None
-        self.signal = None
+        self.signal = ResponseSignals()
+        self.history_manager = HistoryManager()
+        self.current_metadata = None  # 存储当前书籍的元数据
 
-    def setup(self, response_area, send_button, i18n, api):
-        """设置处理器需要的UI组件和国际化文本"""
+    def setup(self, response_area, send_button, i18n, api, input_area=None):
+        """
+        设置处理器需要的UI组件和国际化文本
+        
+        Args:
+            response_area: 显示响应的文本区域
+            send_button: 发送按钮
+            i18n: 国际化对象
+            api: API 客户端
+            input_area: 输入问题的文本区域
+        """
         self.response_area = response_area
         self.send_button = send_button
         self.i18n = i18n
         self.api = api
+        self.input_area = input_area  # 保存输入区域的引用
 
     def update_i18n(self, i18n):
         """更新国际化文本对象"""
@@ -99,31 +197,94 @@ class ResponseHandler(QObject):
         except Exception as e:
             self._stop_loading_timer()
             self._is_loading = False  # 停止加载
-            self.signal.error_occurred.emit(str(e))
+            # 直接传递异常对象，而不是字符串
+            self.signal.error_occurred.emit(e)
         finally:
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
 
     def start_async_request(self, prompt):
         """开始异步请求 API"""
-        from threading import Thread
-        from PyQt5.QtCore import pyqtSignal, QObject
+        self._request_start_time = time.time()
+        logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}")
         
-        # 定义一个信号类用于线程间通信
-        class Signal(QObject):
-            update_ui = pyqtSignal(str, bool)
-            error_occurred = pyqtSignal(str)
-            request_finished = pyqtSignal()
+        # 清理之前的请求状态
+        start_cleanup = time.time()
+        self.cleanup()
+        logger.info(f"[Cleanup] 清理完成, 耗时: {(time.time() - start_cleanup)*1000:.2f}ms")
         
-        self.signal = Signal()
-        self.signal.update_ui.connect(self._update_ui_from_signal)
-        self.signal.error_occurred.connect(self.handle_error)
-        self.signal.request_finished.connect(self._restore_button_state)
+        # 创建新的信号对象，避免信号重复连接
+        self._current_signals = ResponseSignals()
         
-        thread = Thread(target=self.start_request, args=(prompt,))
-        thread.start()
-        # 立即显示加载动画
+        # 连接信号
+        connect_start = time.time()
+        self._current_signals.update_ui.connect(self._update_ui_from_signal)
+        self._current_signals.error_occurred.connect(self.handle_error)
+        self._current_signals.request_finished.connect(self._cleanup_request)
+        logger.info(f"[Signal Connect] 信号连接完成, 耗时: {(time.time() - connect_start)*1000:.2f}ms")
+        
+        def run_request():
+            try:
+                logger.info(f"[API Request] 开始API请求, 时间: {time.strftime('%H:%M:%S')}")
+                api_start = time.time()
+                response = self.api.ask(prompt)
+                api_time = (time.time() - api_start) * 1000
+                logger.info(f"[API Response] 收到API响应, 耗时: {api_time:.2f}ms")
+                
+                if not self._request_cancelled:
+                    emit_start = time.time()
+                    self._current_signals.update_ui.emit(response, True)
+                    logger.info(f"[Emit UI Update] 发送UI更新信号, 耗时: {(time.time() - emit_start)*1000:.2f}ms")
+            except Exception as e:
+                error_time = time.strftime('%H:%M:%S')
+                logger.error(f"[API Error] 请求出错, 时间: {error_time}, 错误: {str(e)}")
+                if not self._request_cancelled:
+                    error_type = getattr(e, 'error_type', 'unknown')
+                    error_msg = str(e) or str(type(e).__name__)
+                    self._current_signals.error_occurred.emit(error_msg, error_type)
+            finally:
+                if not self._request_cancelled:
+                    self._current_signals.request_finished.emit()
+                logger.info(f"[Request Finished] 请求处理完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
+        
+        # 启动请求线程
+        thread_start = time.time()
+        self._request_thread = Thread(target=run_request)
+        self._request_thread.daemon = True
+        self._request_cancelled = False
+        self._request_thread.start()
+        logger.info(f"[Thread Start] 启动请求线程, 耗时: {(time.time() - thread_start)*1000:.2f}ms")
+        
+        # 设置加载动画
         self._setup_loading_animation()
+        
+        # 设置超时检查
+        QTimer.singleShot(30000, self._check_request_timeout)
+        logger.info(f"[Request Setup] 请求设置完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
+    
+    def _check_request_timeout(self):
+        """检查请求是否超时"""
+        if hasattr(self, '_request_thread') and self._request_thread.is_alive():
+            self._request_cancelled = True
+            self.handle_error(self.i18n.get('request_timeout', 'Request timeout, please try again later'))
+    
+    def _cleanup_request(self):
+        """清理请求资源"""
+        # 断开信号连接
+        if hasattr(self, '_current_signals'):
+            try:
+                self._current_signals.update_ui.disconnect()
+                self._current_signals.error_occurred.disconnect()
+                self._current_signals.request_finished.disconnect()
+            except:
+                pass
+            self._current_signals = None
+        
+        # 恢复按钮状态
+        self._restore_button_state()
+        
+        # 停止加载动画
+        self._stop_loading_timer()
 
     def prepare_close(self):
         if self._markdown_worker:
@@ -165,8 +326,7 @@ class ResponseHandler(QObject):
                     <div style="
                         text-align: left;
                         color: palette(text);
-                        font-size: 15px;
-                        margin-top: 10px;
+                        font-size: 13px;
                         font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {base_text}{self._animation_dots[self._animation_dot_index]}
@@ -179,7 +339,8 @@ class ResponseHandler(QObject):
         
         self._loading_timer = QTimer(self)
         self._loading_timer.timeout.connect(update_loading)
-        self._loading_timer.start(250)
+        self._loading_timer.start(300)  # 每300毫秒更新一次
+        
         # 立即更新一次
         update_loading()
 
@@ -195,27 +356,108 @@ class ResponseHandler(QObject):
     def _show_request_failed(self):
         """显示请求失败状态"""
         if self.response_area and not self._response_text:
-            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please check your network'))
+            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please try again later'))
 
-    def handle_error(self, error_msg):
-        """处理错误信息"""
-        self._stop_loading_timer()
-        error_prefix = self.i18n.get('error_prefix', 'Error: ')
-        request_failed = self.i18n.get('request_failed', 'Request failed, please check your network')
+    def _format_error_html(self, title, message, error_type='default'):
+        """格式化错误信息为HTML
         
-        # 显示错误信息
-        self.response_area.setHtml(f"""
-            <div style="
-                color: #cc0000;
-                font-size: 13px;
-                margin-top: 10px;
-                font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            ">
-                {error_prefix}{request_failed}<br>
-                {error_msg}
+        Args:
+            title: 错误标题
+            message: 错误详细信息
+            error_type: 错误类型，可选值：'default', 'auth', 'api'
+            
+        Returns:
+            str: 格式化后的HTML字符串
+        """
+        # 基础样式
+        base_style = """
+            color: palette(text);
+            font-size: 13px;
+            margin: 15px 0;
+            padding: 10px;
+            font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        """
+        
+        # 根据错误类型添加特定样式
+        if error_type == 'auth':
+            style = base_style + """
+                background-color: #ffebee;
+                border-radius: 4px;
+                border-left: 4px solid #d32f2f;
+            """
+        else:  # default and other types
+            style = base_style + """
+                text-align: left;
+            """
+        
+        # 构建HTML
+        error_html = f"""
+            <div style="{style}">
+                {title}<br><br>
+                {message}
             </div>
-        """)
+        """
+        
+        # 如果是认证错误，添加额外提示
+        if error_type == 'auth':
+            auth_tip = self.i18n.get('invalid_token', 'Please check your API token validable in the plugin settings.') \
+                     if hasattr(self.i18n, 'get') else 'Please check your API token validable in the plugin settings.'
+            error_html += f"""
+                <div style="margin-top: 15px; color: #666; font-size: 12px;">
+                    {auth_tip}
+                </div>
+            """
+            
+        return error_html
+
+    def handle_error(self, error_msg, error_type='unknown'):
+        """处理错误信息
+        
+        Args:
+            error_msg: 错误信息，可以是字符串或异常对象
+            error_type: 错误类型，如 'auth_error', 'api_error' 等
+        """
+        self._stop_loading_timer()
+        
+        # 获取本地化错误信息
+        error_prefix = self.i18n.get('error', 'Error: ')
+        request_failed = self.i18n.get('request_failed', 'Request failed, please try again later')
+        invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token validable in settings.')
+        
+        # 处理错误信息
+        error_str = str(error_msg)
+        
+        # 根据错误类型设置标题和错误类型
+        if error_type == 'auth_error' or (hasattr(error_msg, 'error_type') and error_msg.error_type == 'auth_error'):
+            title = self.i18n.get('auth_error_title', 'Authentication Error')
+            error_type = 'auth'
+            message = error_str if error_str else invalid_token
+        elif 'template_error' in error_str:
+            title = error_str
+            message = ""
+            error_type = 'default'
+        else:
+            title = f"{error_prefix}{request_failed}"
+            message = error_str if error_str != title else ""
+            error_type = 'api' if error_type == 'unknown' else error_type
+        
+        # 生成错误HTML
+        error_html = self._format_error_html(
+            title=title,
+            message=message,
+            error_type=error_type
+        )
+        
+        # 更新UI
+        if self.response_area:
+            self.response_area.setHtml(error_html)
+        
+        # 恢复按钮状态
         self.send_button.setEnabled(True)
+        if hasattr(self, 'i18n') and self.i18n is not None:
+            self.send_button.setText(self.i18n.get('send_button', 'Send'))
+        else:
+            self.send_button.setText('Send')
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""
@@ -253,26 +495,46 @@ class ResponseHandler(QObject):
         self.response_area.setHtml(html)
         self.response_area.setAlignment(Qt.AlignLeft)
 
-    def _update_ui_from_signal(self, text, is_response):
+    def _update_ui_from_signal(self, text, is_response, is_history=False):
         """通过信号更新UI，确保在主线程中执行
         
         :param text: 要显示的文本
         :param is_response: 是否为最终响应
+        :param is_history: 是否来自历史记录
         """
+        import time
+        update_start = time.time()
+        logger.info(f"[UI Update] 开始更新UI, 时间: {time.strftime('%H:%M:%S')}")
+        
         if is_response:
             # 如果是最终响应，设置Markdown响应
+            md_start = time.time()
             self.set_markdown_response(text)
+            logger.info(f"[Markdown Process] Markdown处理完成, 耗时: {(time.time() - md_start)*1000:.2f}ms")
+            
+            # 如果不是从历史记录加载的，保存到历史记录
+            if not is_history and hasattr(self, 'current_metadata') and self.current_metadata:
+                try:
+                    question = self.input_area.toPlainText()
+                    self.history_manager.save_history(
+                        self.current_metadata,
+                        question,
+                        text
+                    )
+                    logger.info("成功保存问询历史")
+                except Exception as e:
+                    logger.error(f"保存问询历史失败: {str(e)}")
             return
             
         # 处理非响应状态（如加载中）
         self.send_button.setText(text)
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 13px;
                 color: palette(text);
-                padding: 2px 8px;
-                width: auto;
-                height: auto;
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);
@@ -304,8 +566,11 @@ class ResponseHandler(QObject):
             self.send_button.setText('Send')
         self.send_button.setStyleSheet("""
             QPushButton {
-                font-size: 13px;
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:disabled {
                 color: #ccc;

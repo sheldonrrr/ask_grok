@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+logger = logging.getLogger(__name__)
+
 from enum import auto
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
-                           QLabel, QTextEdit, QPushButton, QTabWidget, QWidget, QDialogButtonBox,
-                           QTextBrowser)
+from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton, 
+                            QHBoxLayout, QLabel, QComboBox, QApplication, 
+                            QMessageBox, QScrollArea, QWidget, QSizePolicy, 
+                            QFrame, QSplitter, QStatusBar, QTextBrowser, QTabWidget, QDialogButtonBox, QToolButton, QMenu, QAction, QToolTip)
+from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
@@ -32,7 +37,7 @@ import calibre_plugins.ask_grok.ui as ask_grok_plugin
 plugin_instance = None
 
 def get_suggestion_template(lang_code):
-    """获取指定语言的建议提示词模板"""
+    """获取指定语言的随机问题提示词模板"""
     return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
 
 class AskGrokPluginUI(InterfaceAction):
@@ -51,7 +56,8 @@ class AskGrokPluginUI(InterfaceAction):
         self.gui = parent
         # 初始化 i18n
         prefs = get_prefs()
-        self.i18n = get_translation(prefs.get('language', 'en'))
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 保存插件实例到全局变量
         global plugin_instance
@@ -124,23 +130,30 @@ class AskGrokPluginUI(InterfaceAction):
         
     def about_to_show_menu(self):
         # 更新菜单项的文本
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.config_action.setText(self.i18n['config_title'])
         self.ask_action.setText(self.i18n['menu_title'])
         self.about_action.setText(self.i18n['about_title'])
         
     def initialize_api(self):
         if not self.api:
+            # 获取配置
             prefs = get_prefs()
-            self.api = APIClient(
-                auth_token=prefs['auth_token'],
-                api_base=prefs['api_base_url'],
-                model=prefs['model']
-            )
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            i18n = get_translation(language)
+            
+            # 从配置获取 auth_token
+            auth_token = prefs.get('auth_token', '')
+            
+            # 创建 APIClient 实例
+            self.api = APIClient(auth_token=auth_token, i18n=i18n)
     
     def apply_settings(self):
         prefs = get_prefs()
-        self.i18n = get_translation(prefs.get('language', 'en'))
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.initialize_api()
 
     def show_configuration(self):
@@ -189,7 +202,9 @@ class AskGrokPluginUI(InterfaceAction):
             }
             
             # 更新文本
-            self.i18n = get_translation(get_prefs().get('language', 'en'))
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            self.i18n = get_translation(language)
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts_title'])
@@ -208,7 +223,9 @@ class AskGrokConfigWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -222,7 +239,9 @@ class AboutWidget(QWidget):
     """关于页面组件"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -240,28 +259,36 @@ class AboutWidget(QWidget):
         
     def update_content(self):
         """更新关于页面内容"""
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.about_label.setText(f"""
         <div style='text-align: center'>
             <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.15</p>
+            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.19</p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://github.com/sheldonrrr/ask_grok' 
+                <a href='http://simp.ly/publish/FwMSSr' 
                    style='color: palette(text); text-decoration: none;'>
-                   GitHub: Release & Issues
+                   User Manual
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://www.mobileread.com/forums/showthread.php?p=4503254#post4503254' 
+                <a href='http://simp.ly/publish/xYW5Tr' 
                    style='color: palette(text); text-decoration: none;'>
-                   MobileRead: calibre's Forum
+                   About Ask Grok
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://t.me/sheldonrrr' 
+                <a href='https://youtu.be/QdeZgkT1fpw' 
                    style='color: palette(text); text-decoration: none;'>
-                   Telegram: @sheldonrrr
+                   Learn How to User in YouTube
+                </a>
+            </p>
+            <p style='color: palette(text); font-weight: normal; '>
+                <a href='' 
+                   style='color: palette(text); text-decoration: none;'>
+                   iMessage: sheldonrrr@gmail.com
                 </a>
             </p>
         </div>
@@ -271,7 +298,9 @@ class TabDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
@@ -332,7 +361,9 @@ class TabDialog(QDialog):
         ask_grok_plugin.plugin_instance.update_menu_texts()
         
         # 更新 response_handler 和 suggestion_handler 的 i18n 对象
-        if hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and ask_grok_plugin.plugin_instance.ask_dialog:
+        if (hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
+            ask_grok_plugin.plugin_instance.ask_dialog and
+            hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler')):
             ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
             ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
@@ -362,7 +393,7 @@ class TabDialog(QDialog):
         super().reject()
 
 from calibre_plugins.ask_grok.response_handler import ResponseHandler
-from calibre_plugins.ask_grok.generate_suggestion import SuggestionHandler
+from calibre_plugins.ask_grok.random_question import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -433,12 +464,41 @@ class AskDialog(QDialog):
         self.gui = gui
         self.book_info = book_info
         self.api = api
-        from calibre_plugins.ask_grok.config import get_prefs
-        self.i18n = get_translation(get_prefs().get('language', 'en'))
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+        
+        # 准备书籍元数据用于历史记录
+        pubdate = book_info.get('pubdate', '')
+        # 处理日期对象，确保它是 YYYY-MM-DD 格式的字符串
+        if hasattr(pubdate, 'strftime'):
+            pubdate = pubdate.strftime('%Y-%m-%d')
+        elif isinstance(pubdate, str) and pubdate:
+            # 如果已经是字符串，尝试解析并格式化为 YYYY-MM-DD
+            try:
+                from calibre.utils.date import parse_date
+                pubdate = parse_date(pubdate).strftime('%Y-%m-%d')
+            except:
+                # 如果解析失败，尝试提取日期部分（格式如 YYYY-MM-DDTHH:MM:SS+HH:MM）
+                if 'T' in pubdate:
+                    pubdate = pubdate.split('T')[0]
+        
+        self.book_metadata = {
+            'title': book_info.get('title', ''),
+            'authors': book_info.get('authors', []),
+            'publisher': book_info.get('publisher', ''),
+            'pubdate': book_info.get('pubdate', ''),
+            'languages': book_info.get('languages', [])
+        }
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
-        self.suggestion_handler = SuggestionHandler(self)
+        # 确保 SuggestionHandler 正确初始化
+        self.suggestion_handler = SuggestionHandler(parent=self)
+        
+        # 设置当前书籍元数据到response_handler
+        if hasattr(self.response_handler, 'history_manager'):
+            self.response_handler.current_metadata = self.book_metadata
         
         # 读取保存窗口的大小
         prefs = get_prefs()
@@ -454,17 +514,103 @@ class AskDialog(QDialog):
         self.setup_ui()
         
         # 设置处理器
-        self.response_handler.setup(self.response_area, self.send_button, self.i18n, self.api)
-        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.i18n, self.api)
+        self.response_handler.setup(
+            response_area=self.response_area,
+            send_button=self.send_button,
+            i18n=self.i18n,
+            api=self.api,
+            input_area=self.input_area  # 添加输入区域
+        )
+        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
+        
+        # 加载历史记录
+        self._load_history()
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
         
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
+
+    def _load_history(self):
+        """加载历史记录"""
+        if not hasattr(self, 'book_metadata') or not self.book_metadata:
+            return
+            
+        try:
+            if hasattr(self.response_handler, 'history_manager'):
+                history = self.response_handler.history_manager.get_history(self.book_metadata)
+                if history:
+                    # 显示历史记录
+                    self.input_area.setPlainText(history['question'])
+                    # 标记为历史记录加载，避免重复保存
+                    self.response_handler._update_ui_from_signal(
+                        history['answer'], 
+                        is_response=True,
+                        is_history=True
+                    )
+                    logger.info(f"已加载历史记录，时间: {history.get('timestamp', '未知')}")
+        except Exception as e:
+            logger.error(f"加载历史记录失败: {str(e)}")
+    
+    def clear_history(self):
+        """清除当前书籍的历史记录"""
+        if not hasattr(self, 'book_metadata') or not self.book_metadata:
+            return
+            
+        try:
+            if hasattr(self.response_handler, 'history_manager'):
+                # 这里需要实现清除特定书籍历史记录的逻辑
+                # 由于当前设计是所有历史记录在一个文件中，我们需要更新文件内容
+                # 这需要修改HistoryManager类
+                self.statusBar.showMessage(self.i18n.get('clear_history_not_supported', 'Clear history for single book is not supported yet'))
+        except Exception as e:
+            logger.error(f"清除历史记录失败: {str(e)}")
+            self.statusBar.showMessage(self.i18n.get('clear_history_failed', 'Failed to clear history'))
+    
+    def closeEvent(self, event):
+        # 保存窗口大小
+        prefs = get_prefs()
+        prefs['ask_dialog_width'] = self.width()
+        prefs['ask_dialog_height'] = self.height()
+        
+        # 清理资源
+        if hasattr(self.response_handler, 'cleanup'):
+            self.response_handler.cleanup()
+        if hasattr(self.suggestion_handler, 'cleanup'):
+            self.suggestion_handler.cleanup()
+            
+        event.accept()
+        
+    def copy_response(self):
+        """复制响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        response_text = self.response_area.toPlainText()
+        if response_text.strip():
+            clipboard.setText(response_text)
+            self._show_copy_tooltip(self.copy_response_btn, self.i18n.get('copied', 'Copied!'))
+            
+    def copy_question_response(self):
+        """复制问题和响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            return
+            
+        # 组合问题和答案，用分隔线隔开
+        text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
+        clipboard.setText(text)
+        self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _show_copy_tooltip(self, button, text):
+        """在按钮位置显示复制成功的提示"""
+        from PyQt5.QtWidgets import QToolTip
+        QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
 
     def on_resize(self, event):
         """窗口大小变化时的处理函数"""
@@ -487,6 +633,10 @@ class AskDialog(QDialog):
         
         layout = QVBoxLayout()
         self.setLayout(layout)
+        
+        # 添加一个状态栏用于显示加载状态
+        self.statusBar = QStatusBar()
+        layout.addWidget(self.statusBar)
         
         # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
         info_area = QTextEdit()
@@ -517,15 +667,16 @@ class AskDialog(QDialog):
             metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)}")
         if self.book_info.publisher:
             metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
-        if self.book_info.pubdate:
-            metadata_info.append(f"{self.i18n['metadata_pubdate']}-{self.book_info.pubdate.year}")
+        if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+            year = str(self.book_info.pubdate.year) if hasattr(self.book_info.pubdate, 'year') else str(self.book_info.pubdate)
+            metadata_info.append(f"{self.i18n['metadata_pubyear']}-{year}")
         if self.book_info.language:
             metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
         if getattr(self.book_info, 'series', None):
             metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}")
         
         if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
-            metadata_info.append(f"{self.i18n.get('no_metadata', '暂无 Metadata')}.")
+            metadata_info.append(f"{self.i18n.get('no_metadata', 'No metadata available')}.")
         
         info_area.setHtml("<br>".join(metadata_info))
         layout.addWidget(info_area)
@@ -552,12 +703,13 @@ class AskDialog(QDialog):
         # 创建操作区域
         action_layout = QHBoxLayout()
         
-        # 创建建议按钮
+        # 创建随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        self.suggest_button.setFixedWidth(80)  # 设置固定宽度
+        self.suggest_button.setMinimumWidth(80)
+        self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
-        # 创建建议动作和快捷键
+        # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
         self.suggest_action.setShortcut(QKeySequence("Ctrl+Shift+S" if not sys.platform == 'darwin' else "Cmd+Shift+S"))
 
@@ -570,7 +722,10 @@ class AskDialog(QDialog):
         # 设置按钮样式
         self.suggest_button.setStyleSheet("""
             QPushButton {
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);
@@ -588,7 +743,8 @@ class AskDialog(QDialog):
         # 创建发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
-        self.send_button.setFixedWidth(80)  # 设置固定宽度
+        self.send_button.setMinimumWidth(80)
+        self.send_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
@@ -599,10 +755,14 @@ class AskDialog(QDialog):
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
 
-        # 设置按钮样式
+        # 设置发送按钮样式
         self.send_button.setStyleSheet("""
             QPushButton {
-                padding: 2px 8px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
             }
             QPushButton:hover:enabled {
                 background-color: palette(midlight);
@@ -615,10 +775,16 @@ class AskDialog(QDialog):
         
         layout.addLayout(action_layout)
         
+        # 创建响应区域容器
+        response_container = QWidget()
+        response_layout = QVBoxLayout(response_container)
+        response_layout.setContentsMargins(0, 0, 0, 0)
+        response_layout.setSpacing(5)
+        
         # 创建响应区域
         self.response_area = QTextBrowser()
         self.response_area.setOpenExternalLinks(True)  # 允许打开外部链接
-        self.response_area.setMinimumHeight(280)  # 设置最小高度，允许用户拉伸
+        self.response_area.setMinimumHeight(250)  # 设置最小高度，允许用户拉伸
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 
             Qt.TextInteractionFlag.TextSelectableByMouse
@@ -633,13 +799,63 @@ class AskDialog(QDialog):
         """)
         self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
         
+        # 创建按钮容器
+        button_container = QWidget()
+        button_layout = QHBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(5)
+        
+        # 复制响应按钮
+        self.copy_response_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
+        self.copy_response_btn.setStyleSheet("""
+            QPushButton {
+                padding: 3px 8px;
+                font-size: 12px;
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: palette(midlight);
+            }
+        """)
+        self.copy_response_btn.clicked.connect(self.copy_response)
+        
+        # 复制问题和响应按钮
+        self.copy_qr_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
+        self.copy_qr_btn.setStyleSheet("""
+            QPushButton {
+                padding: 3px 8px;
+                font-size: 12px;
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: palette(midlight);
+            }
+        """)
+        self.copy_qr_btn.clicked.connect(self.copy_question_response)
+        
+        # 添加按钮到布局
+        button_layout.addWidget(self.copy_response_btn)
+        button_layout.addWidget(self.copy_qr_btn)
+        button_layout.addStretch()
+        
+        # 将响应区域和按钮添加到容器
+        response_layout.addWidget(self.response_area)
+        response_layout.addWidget(button_container)
+        
+        # 添加到主布局
+        layout.addWidget(response_container)
+        
         # 设置 Markdown 支持
         self.response_area.document().setDefaultStyleSheet("""
             strong { font-weight: bold; }
             em { font-style: italic; }
-            h1 { font-size: 1.5em; margin: 0.5em 0; }
-            h2 { font-size: 1.3em; margin: 0.5em 0; }
-            h3 { font-size: 1.1em; margin: 0.5em 0; }
+            h1 { font-size: 1.2em; }
+            h2 { font-size: 1.1em; }
+            h3 { font-size: 1.1em; }
             code { 
                 background-color: palette(midlight); 
                 padding: 2px 4px; 
@@ -651,20 +867,48 @@ class AskDialog(QDialog):
                 padding: 10px; 
                 border-radius: 5px; 
                 margin: 10px 0; 
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            /* 基础表格样式 */
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin: 15px 0;
+                border: 1px solid palette(midlight);
+                font-size: 0.95em;
+                line-height: 1.5;
+            }
+            /* 表格单元格 */
+            th, td {
+                border: 1px solid palette(midlight);
+                padding: 8px 12px;
+                text-align: left;
+                vertical-align: top;
+            }
+            /* 表头样式 */
+            thead {
+                background-color: palette(light);
+                font-weight: bold;
+            }
+            /* 表格行 */
+            tr {
+                border-bottom: 1px solid palette(midlight);
+            }
+            /* 最后一行不需要下边框 */
+            tr:last-child {
+                border-bottom: none;
+            }
+            /* 斑马纹 */
+            tr:nth-child(even) {
+                background-color: rgba(0, 0, 0, 0.02);
             }
             blockquote { 
                 border-left: 4px solid palette(midlight); 
                 margin: 10px 0; 
                 padding: 0 10px; 
-                color: #333; 
-            }
-            table { 
-                border-collapse: collapse; 
-                margin: 10px 0; 
-            }
-            th, td { 
-                border: 1px solid palette(midlight); 
-                padding: 5px; 
+                color: #333;
+                background-color: rgba(0, 0, 0, 0.02);
             }
             ul, ol { 
                 margin: 10px 0; 
@@ -675,7 +919,7 @@ class AskDialog(QDialog):
         layout.addWidget(self.response_area)
     
     def generate_suggestion(self):
-        """生成问题建议"""
+        """生成问题随机问题"""
         if not self.api:
             return
             
@@ -685,7 +929,12 @@ class AskDialog(QDialog):
         """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
         
-        if not get_prefs().get('auth_token'):
+        # 从配置中获取 token
+        prefs = get_prefs()
+        token = prefs.get('auth_token', '') if hasattr(prefs, 'get') and callable(prefs.get) else ''
+        
+        # 检查 token 是否为空
+        if not token or not token.strip():
             # 显示提示信息
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
@@ -695,68 +944,79 @@ class AskDialog(QDialog):
             )
             
             # 创建并显示配置对话框
-            config_dialog = ConfigDialog(self)
+            config_dialog = ConfigDialog(self.gui)  # 使用 self.gui 而不是 self
             config_dialog.show()
             return False
-        return True
-    
-    def send_question(self):
-        # 首先检查 API 和 auth token
-        if not self.api:
-            return
-            
-        if not self._check_auth_token():
-            return
-            
-        question = self.input_area.toPlainText()
-        # 标准化换行符并确保使用 UTF-8 编码
-        question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
         
-        # 准备模板变量
-        try:
-            # 安全地获取作者列表
-            authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-            author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
+        return True
+
+    def send_question(self):
+        """发送问题"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("=== 开始处理用户问题 ===")
+        
+        # 检查 token 是否有效
+        if not self._check_auth_token():
+            logger.error("Token 验证失败")
+            return
             
-            # 安全地获取出版年份
+        try:
+            # 获取输入的问题
+            question = self.input_area.toPlainText()
+            # 标准化换行符并确保使用 UTF-8 编码
+            question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
+        
+            # 准备模板变量
+
+            # 安全地获取书籍的作者或作者列表
             try:
-                pubdate = str(self.book_info.pubdate.year) if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
+                authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
+                author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
             except AttributeError:
-                pubdate = self.i18n.get('unknown', 'Unknown')
-                
-            # 安全地获取语言名称
+                author_str = self.i18n.get('unknown', 'Unknown')
+            
+            # 安全地获取书籍的出版年份
+            try:
+                pubyear = ''
+                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+                    if hasattr(self.book_info.pubdate, 'year'):
+                        pubyear = str(self.book_info.pubdate.year)
+                    else:
+                        pubyear = str(self.book_info.pubdate)
+                else:
+                    pubyear = self.i18n.get('unknown', 'Unknown')
+            except Exception as e:
+                logger.error(f"获取出版年份时出错: {str(e)}")
+                pubyear = self.i18n.get('unknown', 'Unknown')
+            
+            # 安全地获取书籍的语言类别
             try:
                 language = self.book_info.language
                 language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
             except (AttributeError, KeyError) as e:
                 language_name = self.i18n.get('unknown', 'Unknown')
-
-            # 安全地获取出版时间
-            try:
-                pubdate = self.book_info.pubdate.strftime('%Y-%m-%d') if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                pubdate = self.i18n.get('unknown', 'Unknown')
             
-            # 安全地获取系列名称
+            # 安全地获取书籍的系列名
             try:
                 series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
             except AttributeError:
                 series = self.i18n.get('unknown', 'Unknown')
             
+            # 准备模板变量
+            logger.info("准备模板变量...")
             template_vars = {
                 'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'pubdate': pubdate.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubdate else '',
+                'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
                 'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
                 'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
             }
+            logger.info(f"模板变量准备完成: {template_vars}")
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error preparing template variables: {str(e)}")
-            self.response_handler.handle_error(f"Error preparing request: {str(e)}")
+            self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
         
         # 获取配置的模板
@@ -766,24 +1026,22 @@ class AskDialog(QDialog):
         
         # 如果模板为空，使用默认模板
         if not template:
-            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication date: {pubdate}\nLanguage: {language}\nSeries: {series}"
+            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
+        
+        logger.info(f"使用的模板: {template}")
         
         # 检查并替换模板中的变量名，确保用户输入能够正确插入
         if '{query}' not in template and '{question}' in template:
+            logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
             template = template.replace('{question}', '{query}')
         
         # 格式化提示词
         try:
+            logger.info("正在格式化提示词...")
             prompt = template.format(**template_vars)
-            # 添加日志
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(f"Template variables: {template_vars}")
-            logger.info(f"Template: {template}")
-            logger.info(f"Final prompt: {prompt}")
-            logger.info(f"Prompt length: {len(prompt)}")
+            logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
         except KeyError as e:
-            self.response_handler.handle_error(f"Template error: {str(e)}")
+            self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
             return
         
         # 如果提示词过长，可能会导致超时
@@ -796,7 +1054,13 @@ class AskDialog(QDialog):
         self.send_button.setText(self.i18n.get('sending', 'Sending...'))
         
         # 开始异步请求
-        self.response_handler.start_async_request(prompt)
+        logger.info("开始异步请求...")
+        try:
+            self.response_handler.start_async_request(prompt)
+            logger.info("异步请求已启动")
+        except Exception as e:
+            logger.error(f"启动异步请求时出错: {str(e)}")
+            self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
@@ -808,6 +1072,33 @@ class AskDialog(QDialog):
                 return True
         return False
 
+    def copy_response(self):
+        """复制响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        response_text = self.response_area.toPlainText()
+        if response_text.strip():
+            clipboard.setText(response_text)
+            self._show_copy_tooltip(self.copy_response_btn, self.i18n.get('copied', 'Copied!'))
+            
+    def copy_question_response(self):
+        """复制问题和响应内容到剪贴板"""
+        clipboard = QApplication.clipboard()
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            return
+            
+        # 组合问题和答案，用分隔线隔开
+        text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
+        clipboard.setText(text)
+        self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _show_copy_tooltip(self, button, text):
+        """在按钮位置显示复制成功的提示"""
+        from PyQt5.QtWidgets import QToolTip
+        QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
+        
     def closeEvent(self, event):
         """处理窗口关闭事件"""
         # 准备关闭，让线程自然结束

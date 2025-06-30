@@ -8,10 +8,38 @@ __docformat__ = 'restructuredtext en'
 from calibre.customize import InterfaceActionBase
 import os
 import sys
+import json
+import logging
 from calibre_plugins.ask_grok import i18n
 
+# 配置日志
+import tempfile
+import os
+from calibre.utils.config import config_dir
+
+# 创建插件日志目录
+log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, 'ask_grok_debug.log')
+
+# 配置日志
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(log_file, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+logger.info(f'Ask Grok 插件启动，日志文件位置: {log_file}')
+
+PLUGIN_ICON = 'images/icon.png'
+PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # 添加 lib 目录到 Python 路径
-lib_dir = os.path.join(os.path.dirname(__file__), 'lib')
+lib_dir = os.path.join(PLUGIN_DIR, 'lib')
 if lib_dir not in sys.path:
     sys.path.insert(0, lib_dir)
 
@@ -20,7 +48,7 @@ class AskGrokPlugin(InterfaceActionBase):
     description         = 'Ask Grok about this book'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 1, 15)
+    version             = (1, 1, 19)
     minimum_calibre_version = (0, 7, 53)
     icon                = 'images/ask_grok.png'
 

@@ -13,31 +13,18 @@
 - 单次的输入输出对话界面
 - 可配置更改API密钥
 - 可配置提交的提示词模板
-- 可预览的界面快捷键
-- 可预览的插件版本信息
+- 自动显示当前书籍的最近查询历史
+- 支持复制回答，复制问题和回答
 
 ## 安装
 
-### 安装方法（1/2）：通过GitHub下载zip插件文件进行安装
-
-1. 在[发布页](https://github.com/sheldonrrr/ask_grok/releases)下载最新版本。
+在[发布页](https://github.com/sheldonrrr/ask_grok/releases)下载最新版本。
 
 导入文件到calibre的自定义插件：
 
 1.1. 在calibre中选择"首选项" -> "插件" -> "从文件加载插件"
 1.2. 选择下载的插件文件进行安装
-1.3. 安装完成后，重启Calibre
-
-### 安装方法（2/2）：通过calibre官方的插件市场进行安装
-
-此方法需要该插件被添加到calibre插件索引之后才可以搜索到，如果可以搜索，我将在这里更新进入索引的日期
-
-2.1. 打开calibre的`首选项`
-2.2. 打开`插件`
-2.3. 打开`获取新的插件`
-2.4. 在`按名称筛选`中输入`Ask Grok`
-2.5. 选中插件进行安装
-2.6. 重启calibre
+1.3. 安装完成后，重启calibre
 
 ## 获取Grok API Key
 
@@ -45,9 +32,9 @@
   - 如果没有团队，创建团队
   - 选择并进入页面：API Keys
   - 点击按钮：Create API Keys
-  - 输入API Key的命名，建议是：calibre_Ask_Grok
+  - 输入API Key的命名
   - 点击按钮：Save
-  - 创建成功后会得到一个Key值：`Bearer x-ai *****`，或`x-ai *****`
+  - 创建成功后会得到一个Key值：`x-ai *****`
   - 复制该Key
 
 ## 配置API Key
@@ -59,11 +46,11 @@
 
 ## 界面使用
 
-1. 在 Calibre 书库中选择一本书
+1. 在 calibre 书库中选择一本书
 2. 点击工具栏中的 "Ask Grok" 按钮
 3. 在弹出的对话框中输入你的问题
 4. 点击"发送"获取Grok的回答
-5. 点击"建议？"，请求AI生成问题
+5. 点击"随机问题"，请求AI生成问题
 
 ## 快捷键
 - [全局]询问： Command + L
@@ -87,7 +74,7 @@
 
 ## 依赖要求
 
-- Calibre 7.25 或更高版本
+- calibre 7.25 或更高版本
 - 外部 Python 模块：
   - requests
   - bleach
@@ -112,12 +99,28 @@
 
 ## 隐私处理
 
-- 发送请求给Grok时，插件会调用书籍的Metadata信息，其中包含：书名、作者、出版社，但不会包含可能含有用户自定义信息的 Tags、Comments等
-- Grok API Key在输入后会保存一份Json文件到本地，不会传输到服务器
-- 使用Python中的requests module，不会经过第三方服务器
-- 本插件的隐私处理会依赖于Grok自身的隐私处理政策，由于仍然还没支持Private Chat：是的，Grok会使用你提交的数据进行模型训练
-- 插件支持从本地的环境变量中获取API Key，在本地的环境变量中设置`XAI_AUTH_TOKEN`即可
+- 您输入的Grok API Key会保存一份Json文件到本地文件夹，不会传输到任何第三方服务器上
+- 发送请求给Grok时，插件会调用书籍的Metadata信息，用户在界面中看到的Metadata信息，就是插件会提交给Grok的Metadata信息
+- 本插件的隐私处理会依赖于Grok自身的隐私处理政策，由于插件还没支持默认开启Private Chat，所以Grok会使用你提交的数据进行模型训练
 
-> **Grok官方声明**：Private Chat 是私密的，不会出现在用户历史记录中，也不会用于模型训练。出于安全目的，Grok 可能会安全地保留这些数据长达 30 天。
-> 
-> *原文：Grok Private Chat is private and won't appear in user's history or be used to train models. Grok may securely retain it for up to 30 days for safety purposes.*
+# 故障排查
+
+如果持续出现`请求失败`或其他无法使用情况，请彻底删除Ask Grok及相关的配置文件后重新安装最新版插件即可解决。
+
+彻底删除Ask Grok的本地配置文件和插件文件夹：
+- calibre Preference
+- Miscellaneous
+- Open calibre Configuration Folder(Button)
+- Plugins(Open this folder)
+- Delete all things with `ask_grok` as prefix
+- Install Plugin's Latest Version
+- Restart calibre
+
+Ask Grok的配置文件说明：
+- Ask Grok.zip/Ask Grok 文件夹: 插件文件夹，删除后插件即会被删除
+- ask_grok.json: 插件配置文件，删除后插件的配置信息即会被删除
+- ask_grok.logs 文件夹: 插件日志文件夹，删除后插件的日志信息即会被删除
+- ask_grok_latest_history.json: 插件最近查询历史文件，删除后插件的最近查询历史信息即会被删除
+
+注意！
+- 反馈时无需提供您的Grok API Key，请注意保密，一旦泄漏，您的Grok API Key将存在被滥用的风险
