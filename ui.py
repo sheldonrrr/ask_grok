@@ -268,25 +268,25 @@ class AboutWidget(QWidget):
             <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
             <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.19</p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://github.com/sheldonrrr/ask_grok' 
+                <a href='http://simp.ly/publish/FwMSSr' 
                    style='color: palette(text); text-decoration: none;'>
-                   GitHub: Release & Issues
+                   User Manual
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://www.mobileread.com/forums/showthread.php?p=4503254#post4503254' 
+                <a href='http://simp.ly/publish/xYW5Tr' 
                    style='color: palette(text); text-decoration: none;'>
-                   MobileRead: calibre's Forum
+                   About Ask Grok
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://t.me/sheldonrrr' 
+                <a href='https://youtu.be/QdeZgkT1fpw' 
                    style='color: palette(text); text-decoration: none;'>
-                   Telegram: @sheldonrrr
+                   Learn How to User in YouTube
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
-                <a href='imessage://sheldonrrr@gmail.com' 
+                <a href='' 
                    style='color: palette(text); text-decoration: none;'>
                    iMessage: sheldonrrr@gmail.com
                 </a>
@@ -487,7 +487,7 @@ class AskDialog(QDialog):
             'title': book_info.get('title', ''),
             'authors': book_info.get('authors', []),
             'publisher': book_info.get('publisher', ''),
-            'pubdate': pubdate,
+            'pubdate': book_info.get('pubdate', ''),
             'languages': book_info.get('languages', [])
         }
         
@@ -952,8 +952,13 @@ class AskDialog(QDialog):
 
     def send_question(self):
         """发送问题"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("=== 开始处理用户问题 ===")
+        
         # 检查 token 是否有效
         if not self._check_auth_token():
+            logger.error("Token 验证失败")
             return
             
         try:
@@ -999,6 +1004,7 @@ class AskDialog(QDialog):
                 series = self.i18n.get('unknown', 'Unknown')
             
             # 准备模板变量
+            logger.info("准备模板变量...")
             template_vars = {
                 'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                 'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
@@ -1008,6 +1014,7 @@ class AskDialog(QDialog):
                 'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
                 'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
             }
+            logger.info(f"模板变量准备完成: {template_vars}")
         except Exception as e:
             self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
@@ -1021,13 +1028,18 @@ class AskDialog(QDialog):
         if not template:
             template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
         
+        logger.info(f"使用的模板: {template}")
+        
         # 检查并替换模板中的变量名，确保用户输入能够正确插入
         if '{query}' not in template and '{question}' in template:
+            logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
             template = template.replace('{question}', '{query}')
         
         # 格式化提示词
         try:
+            logger.info("正在格式化提示词...")
             prompt = template.format(**template_vars)
+            logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
         except KeyError as e:
             self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
             return
@@ -1042,7 +1054,13 @@ class AskDialog(QDialog):
         self.send_button.setText(self.i18n.get('sending', 'Sending...'))
         
         # 开始异步请求
-        self.response_handler.start_async_request(prompt)
+        logger.info("开始异步请求...")
+        try:
+            self.response_handler.start_async_request(prompt)
+            logger.info("异步请求已启动")
+        except Exception as e:
+            logger.error(f"启动异步请求时出错: {str(e)}")
+            self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
