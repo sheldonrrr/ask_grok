@@ -108,13 +108,13 @@
 如果持续出现`请求失败`或其他无法使用情况，请彻底删除Ask Grok及相关的配置文件后重新安装最新版插件即可解决。
 
 彻底删除Ask Grok的本地配置文件和插件文件夹：
-- calibre Preference
-- Miscellaneous
-- Open calibre Configuration Folder(Button)
-- Plugins(Open this folder)
-- Delete all things with `ask_grok` as prefix
-- Install Plugin's Latest Version
-- Restart calibre
+- calibre 首选项
+- 杂项
+- 打开`calibre 配置`文件夹
+- 打开`Plugins`文件夹
+- 删除所有带有`ask_grok`前缀的文件或文件夹
+- 重新安装最新版插件
+- 重启calibre
 
 Ask Grok的配置文件说明：
 - Ask Grok.zip/Ask Grok 文件夹: 插件文件夹，删除后插件即会被删除
