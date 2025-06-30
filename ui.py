@@ -282,7 +282,7 @@ class AboutWidget(QWidget):
             <p style='color: palette(text); font-weight: normal; '>
                 <a href='https://youtu.be/QdeZgkT1fpw' 
                    style='color: palette(text); text-decoration: none;'>
-                   Learn How to User in YouTube
+                   Learn How to Use in YouTube
                 </a>
             </p>
             <p style='color: palette(text); font-weight: normal; '>
