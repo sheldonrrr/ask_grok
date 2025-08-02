@@ -4,7 +4,7 @@
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from .config import get_prefs, ConfigDialog
-from .i18n import get_translation, SUGGESTION_TEMPLATES
+from .i18n import get_translation, get_suggestion_template
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class SuggestionWorker(QThread):
             logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 语言: {language}")
             
             # 准备提示词
-            template = SUGGESTION_TEMPLATES.get(get_prefs()['language'], SUGGESTION_TEMPLATES['en'])
+            template = get_suggestion_template(get_prefs()['language'])
             
             # 记录使用的模板
             logger.info(f"使用的问题随机问题模板: {template}")
@@ -71,6 +71,13 @@ class SuggestionWorker(QThread):
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
             
+            # 记录当前使用的 AI 模型
+            try:
+                model_name = self.api.model_display_name
+                logger.info(f"当前使用的 AI 模型: {model_name}")
+            except Exception as e:
+                logger.warning(f"获取模型信息失败: {str(e)}")
+                
             # 调用 API 获取随机问题，确保传递 lang_code 参数
             logger.info("正在调用 API 获取随机问题...")
             suggestion = self.api.random_question(prompt, lang_code=get_prefs()['language'])
@@ -183,7 +190,7 @@ class SuggestionHandler(QObject):
             if self._worker:
                 self._worker.cancel()
             # 直接显示请求失败状态
-            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please check your network'))
+            self.response_area.setText(self.i18n.get('request_failed', 'Request failed'))
             self._restore_ui_state()
 
     def _restore_ui_state(self, restore_input=False):

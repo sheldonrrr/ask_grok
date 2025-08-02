@@ -1,8 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QGroupBox, QFrame, QScrollArea
 from PyQt5.QtCore import Qt
-from calibre_plugins.ask_grok.i18n import get_translation
+from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_grok.config import get_prefs
 import sys
+
+# Shortcut for ask: Command + L(macOS), Ctrl + L(other)
+# Shortcut for config: Command + K(macOS), Ctrl + K(other)
+# Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
+# Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
 
 class ShortcutsWidget(QWidget):
     """快捷键展示组件"""
@@ -10,6 +15,12 @@ class ShortcutsWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.labels = []  # 保存所有标签的引用
+        
+        # 获取当前语言的翻译
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+        
         self.init_ui()
         
     def init_ui(self):
@@ -19,11 +30,29 @@ class ShortcutsWidget(QWidget):
         main_layout.setContentsMargins(20, 20, 20, 20)
         self.setLayout(main_layout)
         
-        # 创建网格布局用于对齐快捷键
-        self.grid_layout = QGridLayout()
-        self.grid_layout.setSpacing(10)
-        self.grid_layout.setColumnStretch(1, 1)  # 让第二列（快捷键）可以拉伸
-        main_layout.addLayout(self.grid_layout)
+        # 创建滚动区域以支持内容过多时滚动
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+        
+        # 创建内容容器
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(15)
+        
+        # 创建单个快捷键组 - 使用虚线边框而不是内阴影
+        shortcuts_group = QGroupBox()
+        shortcuts_group.setStyleSheet("QGroupBox { border: 1px dashed #cccccc; padding: 10px; }")
+        shortcuts_layout = QGridLayout(shortcuts_group)
+        shortcuts_layout.setColumnStretch(1, 1)
+        shortcuts_layout.setSpacing(10)
+        content_layout.addWidget(shortcuts_group)
+        self.shortcuts_group = shortcuts_group
+        self.shortcuts_layout = shortcuts_layout
+        
+        # 设置滚动区域的内容
+        scroll_area.setWidget(content_widget)
+        main_layout.addWidget(scroll_area)
         
         # 添加弹性空间
         main_layout.addStretch()
@@ -34,43 +63,74 @@ class ShortcutsWidget(QWidget):
         """更新快捷键显示"""
         # 清除现有标签
         for label in self.labels:
-            self.grid_layout.removeWidget(label)
             label.deleteLater()
         self.labels.clear()
         
         # 判断当前系统
         is_mac = sys.platform == 'darwin'
-        modifier = 'Command' if is_mac else 'Ctrl'
+        modifier_display = '⌘' if is_mac else 'Ctrl'
+        enter_key = '↩' if is_mac else 'Enter'
         
         # 获取当前语言的翻译
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-        i18n = get_translation(language)
+        self.i18n = get_translation(language)
         
-        # 定义快捷键列表
+        # 不设置组标题，保持空白
+        self.shortcuts_group.setTitle("")
+        
+        # 定义所有快捷键
         shortcuts = [
-            (i18n['menu_ask_grok'], f'{modifier}+L'),  # 打开询问窗口
+            (self.i18n.get('menu_ask', 'Ask {model}').format(model='Grok'), f'{modifier_display}+L'),
+            (self.i18n.get('config_title', 'Configuration'), f'{modifier_display}+K'),
+            (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
+            (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
         ]
         
-        # 创建快捷键标签
+        # 创建快捷键标签样式
         label_style = """
             QLabel {
-                font-size: 1em;
+                font-size: 13px;
                 color: palette(text);
+                padding: 2px;
             }
         """
         
-        for row, (action, key) in enumerate(shortcuts):
-            # 创建动作标签（左侧）
-            action_label = QLabel(f"{action}:")
-            action_label.setStyleSheet(label_style)
-            self.grid_layout.addWidget(action_label, row, 0, Qt.AlignLeft | Qt.AlignVCenter)
+        # 添加快捷键
+        self._add_shortcuts_to_layout(shortcuts, self.shortcuts_layout, label_style)
+    
+    def _add_shortcuts_to_layout(self, shortcuts, layout, style):
+        """将快捷键添加到指定布局中"""
+        # 添加标题行
+        header_style = style + "font-weight: bold;"
+        
+        action_header = QLabel(self.i18n.get('action', 'Action'))
+        action_header.setStyleSheet(header_style)
+        layout.addWidget(action_header, 0, 0)
+        
+        shortcut_header = QLabel(self.i18n.get('shortcut', 'Shortcut Key'))
+        shortcut_header.setStyleSheet(header_style)
+        layout.addWidget(shortcut_header, 0, 1)
+        
+        self.labels.extend([action_header, shortcut_header])
+        
+        # 添加分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        layout.addWidget(separator, 1, 0, 1, 2)
+        self.labels.append(separator)
+        
+        # 添加快捷键行
+        for row, (action, key) in enumerate(shortcuts, 2):  # 从第2行开始（第0行是标题，第1行是分隔线）
+            action_label = QLabel(action)
+            action_label.setStyleSheet(style)
+            layout.addWidget(action_label, row, 0)
             
-            # 创建快捷键标签（右侧）
             key_label = QLabel(f"<b>{key}</b>")
             key_label.setTextFormat(Qt.RichText)
-            key_label.setStyleSheet(label_style)
-            self.grid_layout.addWidget(key_label, row, 1, Qt.AlignLeft | Qt.AlignVCenter)
+            key_label.setStyleSheet(style)
+            layout.addWidget(key_label, row, 1)
             
             self.labels.extend([action_label, key_label])
     

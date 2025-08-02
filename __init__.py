@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __license__   = 'GPL v3'
-__copyright__ = '2024, Sheldon'
+__copyright__ = '2025, Sheldon'
 __docformat__ = 'restructuredtext en'
 
 from calibre.customize import InterfaceActionBase
@@ -10,7 +10,25 @@ import os
 import sys
 import json
 import logging
-from calibre_plugins.ask_grok import i18n
+
+# 首先设置插件目录和lib路径
+PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 添加 lib 目录到 Python 路径，确保在导入任何第三方库之前
+lib_dir = os.path.join(PLUGIN_DIR, 'lib')
+if lib_dir not in sys.path:
+    sys.path.insert(0, lib_dir)
+    print(f'已添加lib目录到Python路径: {lib_dir}')
+
+# 版本信息
+VERSION = (1, 1, 20)
+VERSION_STRING = '.'.join(map(str, VERSION))
+VERSION_DISPLAY = f'v{VERSION_STRING}'
+PLUGIN_NAME = 'Ask Grok'
+PLUGIN_DESCRIPTION = 'Ask questions about a book using AI'
+AUTHOR = 'Sheldon'
+AUTHOR_EMAIL = 'sheldonrrr@gmail.com'
+KEYWORDS = 'bookAI readingAI x.AI GrokAI GeminiAI'
 
 # 配置日志
 import tempfile
@@ -36,20 +54,14 @@ logger = logging.getLogger(__name__)
 logger.info(f'Ask Grok 插件启动，日志文件位置: {log_file}')
 
 PLUGIN_ICON = 'images/icon.png'
-PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# 添加 lib 目录到 Python 路径
-lib_dir = os.path.join(PLUGIN_DIR, 'lib')
-if lib_dir not in sys.path:
-    sys.path.insert(0, lib_dir)
 
 class AskGrokPlugin(InterfaceActionBase):
-    name                = 'Ask Grok'
-    description         = 'Ask Grok about this book'
+    name                = PLUGIN_NAME
+    description         = PLUGIN_DESCRIPTION
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 1, 19)
-    minimum_calibre_version = (0, 7, 53)
+    version             = VERSION
+    minimum_calibre_version = (7, 0)
     icon                = 'images/ask_grok.png'
 
     # Declare the main action associated with this plugin
@@ -87,3 +99,20 @@ class AskGrokPlugin(InterfaceActionBase):
         if getattr(self, 'actual_plugin_object', None) is not None:
             return self.actual_plugin_object.save_settings(config_widget)
         raise NotImplementedError()
+
+
+# 添加图标加载函数
+def get_icons(icon_name):
+    """
+    获取插件图标
+    """
+    from PyQt5.QtGui import QIcon
+    import os
+    
+    # 使用绝对路径加载图标
+    icon_path = os.path.join(PLUGIN_DIR, icon_name)
+    if os.path.exists(icon_path):
+        return QIcon(icon_path)
+    
+    # 如果文件不存在，返回空图标
+    return QIcon()

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
+from PyQt5.QtWidgets import QApplication
 import markdown2
 import bleach
 import logging
@@ -121,6 +122,8 @@ class ResponseSignals(QObject):
     update_ui = pyqtSignal(str, bool)
     error_occurred = pyqtSignal(str, str)
     request_finished = pyqtSignal()
+    # 新增流式响应的信号
+    stream_update = pyqtSignal(str)
 
 class ResponseHandler(QObject):
     stop_time_signal = pyqtSignal()
@@ -204,7 +207,7 @@ class ResponseHandler(QObject):
             self.signal.request_finished.emit()
 
     def start_async_request(self, prompt):
-        """开始异步请求 API"""
+        """开始异步请求 API㕼可以处理普通请求和流式请求"""
         self._request_start_time = time.time()
         logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}")
         
@@ -221,20 +224,58 @@ class ResponseHandler(QObject):
         self._current_signals.update_ui.connect(self._update_ui_from_signal)
         self._current_signals.error_occurred.connect(self.handle_error)
         self._current_signals.request_finished.connect(self._cleanup_request)
+        # 连接流式响应信号
+        self._current_signals.stream_update.connect(self._handle_stream_update)
         logger.info(f"[Signal Connect] 信号连接完成, 耗时: {(time.time() - connect_start)*1000:.2f}ms")
+        
+        # 初始化流式响应相关变量
+        self._init_stream_variables()
         
         def run_request():
             try:
+                # 记录当前使用的 AI 模型
+                try:
+                    model_name = self.api.model_display_name
+                    logger.info(f"[API Model] 当前使用的 AI 模型: {model_name}")
+                except Exception as e:
+                    logger.warning(f"[API Model] 获取模型信息失败: {str(e)}")
+                
                 logger.info(f"[API Request] 开始API请求, 时间: {time.strftime('%H:%M:%S')}")
                 api_start = time.time()
-                response = self.api.ask(prompt)
+                
+                # 检查当前模型是否支持流式传输
+                model_supports_streaming = hasattr(self.api._ai_model, 'supports_streaming') and self.api._ai_model.supports_streaming()
+                streaming_enabled = self.api._ai_model.config.get('enable_streaming', True)  # 默认启用
+                
+                logger.info(f"[模型检测] 当前模型: {self.api.model_name}, 支持流式传输: {model_supports_streaming}, 启用流式传输: {streaming_enabled}")
+                
+                if model_supports_streaming and streaming_enabled:
+                    # 使用流式请求
+                    logger.info(f"[流式请求] 开始使用流式请求处理 {self.api.model_name} 模型")
+                    
+                    def stream_callback(chunk):
+                        if not self._request_cancelled:
+                            logger.info(f"[流式回调] 收到流式片段, 长度: {len(chunk)} 字符")
+                            self._current_signals.stream_update.emit(chunk)
+                    
+                    # 调用API时传入回调函数
+                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback)
+                    logger.info(f"[流式请求完成] 收到完整响应, 长度: {len(response)} 字符")
+                    
+                    # 在流式请求完成后，发送完整响应
+                    if not self._request_cancelled:
+                        logger.info(f"[流式请求完成] 发送最终累积响应到UI, 长度: {len(self._stream_response)} 字符")
+                        self._current_signals.update_ui.emit(self._stream_response, True)
+                else:
+                    # 使用普通请求
+                    logger.info(f"[普通请求] 使用普通请求处理 {self.api.model_name} 模型")
+                    response = self.api.ask(prompt)
+                    if not self._request_cancelled:
+                        self._current_signals.update_ui.emit(response, True)
+                
                 api_time = (time.time() - api_start) * 1000
                 logger.info(f"[API Response] 收到API响应, 耗时: {api_time:.2f}ms")
                 
-                if not self._request_cancelled:
-                    emit_start = time.time()
-                    self._current_signals.update_ui.emit(response, True)
-                    logger.info(f"[Emit UI Update] 发送UI更新信号, 耗时: {(time.time() - emit_start)*1000:.2f}ms")
             except Exception as e:
                 error_time = time.strftime('%H:%M:%S')
                 logger.error(f"[API Error] 请求出错, 时间: {error_time}, 错误: {str(e)}")
@@ -259,23 +300,138 @@ class ResponseHandler(QObject):
         self._setup_loading_animation()
         
         # 设置超时检查
-        QTimer.singleShot(30000, self._check_request_timeout)
+        self._timeout_timer = QTimer()
+        self._timeout_timer.setSingleShot(True)
+        self._timeout_timer.timeout.connect(self._check_request_timeout)
+        self._timeout_timer.start(60000)  # 增加超时时间到60秒
         logger.info(f"[Request Setup] 请求设置完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
+    
+    # 初始化流式响应相关变量
+    def _init_stream_variables(self):
+        """初始化流式响应相关变量"""
+        self._stream_response = ""
+        self._stream_buffer = ""
+        self._last_update_time = 0
+        self._update_interval = 0.1  # 100ms更新间隔
+        self._update_timer = QTimer()
+        self._update_timer.setSingleShot(True)
+        self._update_timer.timeout.connect(self._process_stream_buffer)
+    
+    def _handle_stream_update(self, chunk):
+        """处理流式响应更新
+        
+        :param chunk: 流式响应片段
+        """
+        logger.info(f"[Stream Update] 收到流式响应片段: {len(chunk)} 字符")
+        
+        if not chunk or self._request_cancelled:
+            logger.warning("[Stream Update] 片段为空或请求已取消，忽略此片段")
+            return
+        
+        # 初始化流式响应变量（如果还没有初始化）
+        if not hasattr(self, '_update_timer'):
+            self._init_stream_variables()
+            
+        # 累积响应内容
+        self._stream_response += chunk
+        self._stream_buffer += chunk
+        logger.info(f"[Stream Update] 当前累积响应长度: {len(self._stream_response)} 字符")
+        
+        # 停止加载动画，因为我们已经开始收到响应
+        self._stop_loading_timer()
+        
+        # 控制更新频率，避免闪烁
+        current_time = time.time()
+        if current_time - self._last_update_time >= self._update_interval:
+            # 如果超过更新间隔，立即处理
+            self._process_stream_buffer()
+        else:
+            # 否则设置定时器延迟处理
+            if not self._update_timer.isActive():
+                remaining_time = int((self._last_update_time + self._update_interval - current_time) * 1000)
+                self._update_timer.start(max(10, remaining_time))  # 至少10ms
+    
+    def _process_stream_buffer(self):
+        """处理累积的流式响应缓冲区"""
+        if not self._stream_buffer or self._request_cancelled:
+            return
+            
+        logger.info(f"[Stream Process] 处理缓冲区内容, 长度: {len(self._stream_buffer)} 字符")
+        self._stream_buffer = ""  # 清空缓冲区
+        self._last_update_time = time.time()
+        
+        try:
+            # 使用markdown2转换完整的累积响应为HTML
+            html = markdown2.markdown(
+                self._stream_response,
+                extras=[
+                    'fenced-code-blocks',
+                    'tables',
+                    'break-on-newline',
+                    'header-ids',
+                    'strike',
+                    'task_list',
+                    'markdown-in-html'
+                ]
+            )
+            
+            # 清理HTML，允许表格相关标签
+            allowed_tags = [
+                'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'pre', 'code', 'blockquote',
+                'table', 'thead', 'tbody', 'tr', 'th', 'td',
+                'ul', 'ol', 'li',
+                'a', 'img', 'div', 'span'
+            ]
+            
+            allowed_attrs = {
+                'a': ['href', 'title', 'target'],
+                'img': ['src', 'alt', 'title'],
+                'th': ['align'],
+                'td': ['align'],
+                '*': ['class', 'id', 'style']
+            }
+            
+            # 清理HTML
+            safe_html = bleach.clean(
+                html,
+                tags=allowed_tags,
+                attributes=allowed_attrs,
+                strip=True
+            )
+            
+            # 更新UI
+            self._set_html_response(safe_html)
+            
+            # 停止加载动画，因为我们已经开始收到响应
+            self._stop_loading_timer()
+            
+        except Exception as e:
+            logger.error(f"[Stream Update] 处理流式响应时出错: {str(e)}")
     
     def _check_request_timeout(self):
         """检查请求是否超时"""
-        if hasattr(self, '_request_thread') and self._request_thread.is_alive():
-            self._request_cancelled = True
-            self.handle_error(self.i18n.get('request_timeout', 'Request timeout, please try again later'))
+        if hasattr(self, '_request_start_time') and self._request_start_time and not self._request_cancelled:
+            elapsed = time.time() - self._request_start_time
+            if elapsed > 60:  # 60秒超时
+                self.handle_error("Request took too long, automatically terminated", "timeout")
     
     def _cleanup_request(self):
         """清理请求资源"""
+        # 取消超时检查定时器
+        if hasattr(self, '_timeout_timer') and self._timeout_timer is not None:
+            self._timeout_timer.stop()
+            self._timeout_timer = None
+            
         # 断开信号连接
         if hasattr(self, '_current_signals'):
             try:
                 self._current_signals.update_ui.disconnect()
                 self._current_signals.error_occurred.disconnect()
                 self._current_signals.request_finished.disconnect()
+                # 断开流式响应信号
+                self._current_signals.stream_update.disconnect()
             except:
                 pass
             self._current_signals = None
@@ -356,7 +512,7 @@ class ResponseHandler(QObject):
     def _show_request_failed(self):
         """显示请求失败状态"""
         if self.response_area and not self._response_text:
-            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please try again later'))
+            self.response_area.setText(self.i18n.get('request_failed', 'Request failed'))
 
     def _format_error_html(self, title, message, error_type='default'):
         """格式化错误信息为HTML
@@ -421,7 +577,7 @@ class ResponseHandler(QObject):
         
         # 获取本地化错误信息
         error_prefix = self.i18n.get('error', 'Error: ')
-        request_failed = self.i18n.get('request_failed', 'Request failed, please try again later')
+        request_failed = self.i18n.get('request_failed', 'Request failed')
         invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token validable in settings.')
         
         # 处理错误信息
@@ -492,8 +648,23 @@ class ResponseHandler(QObject):
 
     def _set_html_response(self, html):
         """设置HTML响应并确保正确的样式"""
-        self.response_area.setHtml(html)
-        self.response_area.setAlignment(Qt.AlignLeft)
+        logger.info(f"[Set HTML] 更新UI显示, HTML长度: {len(html)} 字符")
+        try:
+            # 设置HTML内容
+            self.response_area.setHtml(html)
+            self.response_area.setAlignment(Qt.AlignLeft)
+            
+            # 滚动到文档底部，显示最新内容
+            scrollbar = self.response_area.verticalScrollBar()
+            if scrollbar:
+                scrollbar.setValue(scrollbar.maximum())
+            
+            # 强制更新UI
+            QApplication.processEvents()
+            logger.info("[Set HTML] UI更新成功，已滚动到最新内容")
+        except Exception as e:
+            logger.error(f"[Set HTML] 更新UI时出错: {str(e)}")
+
 
     def _update_ui_from_signal(self, text, is_response, is_history=False):
         """通过信号更新UI，确保在主线程中执行

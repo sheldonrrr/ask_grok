@@ -1,8 +1,6 @@
 # Ask Grok
 
-[English](README.md) | [简体中文](README_zh.md)
-
-A simple calibre plugin that allows users to ask questions about books using Grok.
+A simple calibre plugin that allows users to ask questions about books using various AI models including Grok, Google Gemini, and DeepSeek.
 
 ## Preview
 
@@ -20,7 +18,18 @@ A simple calibre plugin that allows users to ask questions about books using Gro
 
 ## Installation
 
-Download the latest version in [releases page](https://github.com/sheldonrrr/ask_grok/releases).
+### Install from calibre Plugin Index (Recommended)
+
+Ask Grok is now available in the official calibre Plugin Index:
+
+1. In calibre, select "Preferences" -> "Plugins" -> "Get new plugins"
+2. Search for "Ask Grok" in the search box
+3. Select the plugin and click "Install"
+4. After installation, restart calibre
+
+### Manual Installation
+
+Alternatively, you can download the latest version from the [releases page](https://github.com/sheldonrrr/ask_grok/releases).
 
 Import the file to calibre custom plugins:
 
@@ -28,36 +37,30 @@ Import the file to calibre custom plugins:
 2. Select the downloaded plugin file to install
 3. After installation, restart calibre
 
-## Get Grok API Key
+## Get API Keys
 
-  - Go to Grok backend configuration address: https://console.x.ai/
-  - Create a team if you don't have one
-  - Select and enter the page: API Keys
-  - Click the button: Create API Keys
-  - Enter API Key naming
-  - Click the button: Save
-  - After successful creation, you will get a Key value: `x-ai *****`
-  - Copy this Key
+Grok(x.AI) https://console.x.ai/
+Google Gemini https://aistudio.google.com/
+DeepSeek https://platform.deepseek.com/
 
 ## Configure API Key
 
   - Click the Ask Grok dropdown menu in the menu bar, select `Configure`
-  - Enter the API Key into the `X.AI Authorization Token` input box
+  - Select the AI model you want to use (Grok, Google Gemini, or DeepSeek)
+  - Enter the corresponding API Key into the API Key input box
   - Click the `Save` button
-  - A `Save successful` text prompt will appear
+  - Done
 
 ## Interface Usage
 
 1. Select a book in the calibre library
 2. Click the "Ask Grok" button in the toolbar
 3. Enter your question in the popup dialog
-4. Click "Send" to get Grok's answer
-5. Click "Random Question" to request AI-generated questions
-
-## Shortcuts
-- [Global] Ask: Command + L
+4. Click "Send" to get an answer from your configured AI model (Grok, Google Gemini, or DeepSeek)
+5. Click "Random Question" to request AI-generated questions based on your selected language
 
 ## Language Support
+
 - Danish (da)
 - German (de)
 - English (en)
@@ -83,6 +86,7 @@ Import the file to calibre custom plugins:
   - markdown2
 
 ### Built-in Python Modules Used
+
 - PyQt5 (Qt GUI Framework)
   - QtWidgets: QDialog, QVBoxLayout, QHBoxLayout, QLabel, etc.
   - QtCore: Qt, QTimer
@@ -95,17 +99,13 @@ Import the file to calibre custom plugins:
   - datetime: Time operations
   - threading: Thread management
 
-## Grok API Key Notes
-
-- API call count depends on the account's permissions
-
 ## Privacy Handling
 
-- The Grok API Key is saved as a Json file locally after input and is not transmitted to the server
-- When sending requests to Grok, the plugin will use the book's Metadata information submitted to Grok
-- The plugin's privacy handling will depend on Grok's own privacy policy. Since Private Chat is not yet supported: yes, Grok will use your submitted data for model training
+- The AI providers' API Keys (Grok, Google Gemini, DeepSeek) are saved as a Json file locally after input and are not transmitted to any third-party servers
+- When sending requests to AI providers, the plugin will use the book's Metadata information submitted to the selected AI provider
+- The plugin's privacy handling will depend on each AI provider's own privacy policy.
 
-# Troubleshooting
+## Troubleshooting
 
 If you continue to experience `Request failed` or other issues, please delete the Ask Grok and related configuration files and then re-install the latest version of the plugin.
 
@@ -125,4 +125,4 @@ About Ask Grok Configuration Files:
 - ask_grok_latest_history.json: Plugin recent query history file, delete it to remove the plugin's recent query history information
 
 Note!
-- When providing feedback, please do not provide your Grok API Key, please keep it confidential, once leaked, your Grok API Key may be abused.
+- When providing feedback, please do not provide your AI provider's API Key, please keep it confidential, once leaked, your AI provider's API Key may be abused.
