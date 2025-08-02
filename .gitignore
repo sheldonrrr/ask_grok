@@ -179,14 +179,4 @@ cython_debug/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-<<<<<<< Updated upstream
 Thumbs.db
-=======
-Thumbs.db
-
-# PRD with API Key
-PRD_1.1.20.md
-
-# Windsurf directory
-.windsurf/
->>>>>>> Stashed changes
