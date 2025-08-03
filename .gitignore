@@ -180,3 +180,25 @@ cython_debug/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Windsurf directory
+.windsurf/
+
+# macOS additional files
+.AppleDouble
+.LSOverride
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Project specific
+*.zip
+ask_grok_latest_history.json
