@@ -40,7 +40,8 @@ class APIClient:
     _MODEL_TO_PROVIDER = {
         'grok': AIProvider.AI_GROK,
         'gemini': AIProvider.AI_GEMINI,
-        'deepseek': AIProvider.AI_DEEPSEEK
+        'deepseek': AIProvider.AI_DEEPSEEK,
+        'custom': AIProvider.AI_CUSTOM
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 

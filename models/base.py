@@ -13,6 +13,7 @@ class AIProvider(Enum):
     AI_GROK = auto()      # x.AI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
+    AI_CUSTOM = auto()    # Custom (Local or Remote API)
 
 
 class ModelConfig:
@@ -62,6 +63,13 @@ DEFAULT_MODELS = {
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
         default_model_name="deepseek-chat"
+    ),
+    AIProvider.AI_CUSTOM: ModelConfig(
+        provider=AIProvider.AI_CUSTOM,
+        display_name="Custom",
+        api_key_label="API Key:",
+        default_api_base_url="http://localhost:11434",
+        default_model_name="llama3"
     )
 }
 

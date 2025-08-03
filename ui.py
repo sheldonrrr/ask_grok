@@ -1109,7 +1109,9 @@ class AskDialog(QDialog):
         self.suggestion_handler.generate(self.book_info)
 
     def _check_auth_token(self):
-        """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
+        """检查 auth token 是否已设置，如果未设置则显示配置对话框
+        对于Custom模型，API Key是可选的，不强制要求
+        """
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
         import logging
         logger = logging.getLogger(__name__)
@@ -1123,6 +1125,11 @@ class AskDialog(QDialog):
         # 安全记录日志，隐藏API Key
         safe_model_config = safe_log_config(model_config)
         logger.debug(f"检查模型 {selected_model} 的API Key，配置: {safe_model_config}")
+        
+        # 如果是Custom模型，不强制要求API Key
+        if selected_model == 'custom':
+            logger.debug("Custom模型不强制要求API Key，跳过验证")
+            return True
         
         # 根据模型类型获取 token
         token = ''

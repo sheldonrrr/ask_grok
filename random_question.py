@@ -322,10 +322,19 @@ class SuggestionHandler(QObject):
             logger.error("书籍信息未提供，随机问题生成失败。")
             return
         
-        # 检查 auth token
-        if not self.suggest_button.window()._check_auth_token():
-            logger.error("Auth token检查失败，随机问题生成失败。")
-            return
+        # 检查当前选中的模型
+        from calibre_plugins.ask_grok.config import get_prefs
+        prefs = get_prefs()
+        selected_model = prefs.get('selected_model', 'grok')
+        
+        # 如果是Custom模型，不需要检查API Key
+        if selected_model == 'custom':
+            logger.debug("Custom模型不强制要求API Key，跳过验证")
+        else:
+            # 对于其他模型，检查 auth token
+            if not self.suggest_button.window()._check_auth_token():
+                logger.error("Auth token检查失败，随机问题生成失败。")
+                return
 
         # 保存原始状态
         self._original_button_text = self.suggest_button.text()

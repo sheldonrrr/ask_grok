@@ -13,6 +13,7 @@ from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
 from .models.gemini import GeminiModel
 from .models.deepseek import DeepseekModel
+from .models.custom import CustomModel
 from calibre.utils.config import JSONConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_all_languages
@@ -41,6 +42,7 @@ def get_current_model_config(provider: AIProvider) -> ModelConfig:
 GROK_CONFIG = get_current_model_config(AIProvider.AI_GROK)
 GEMINI_CONFIG = get_current_model_config(AIProvider.AI_GEMINI)
 DEEPSEEK_CONFIG = get_current_model_config(AIProvider.AI_DEEPSEEK)
+CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 
 # 默认配置
 prefs.defaults['selected_model'] = 'grok'  # 当前选中的模型
@@ -64,6 +66,14 @@ prefs.defaults['models'] = {
         'api_base_url': DEEPSEEK_CONFIG.default_api_base_url,
         'model': DEEPSEEK_CONFIG.default_model_name,
         'display_name': DEEPSEEK_CONFIG.display_name,        
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'custom': {
+        'api_key': '',
+        'api_base_url': CUSTOM_CONFIG.default_api_base_url,
+        'model': CUSTOM_CONFIG.default_model_name,
+        'display_name': CUSTOM_CONFIG.display_name,
+        'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
     }
 }
@@ -159,6 +169,9 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'custom':
+            provider = AIProvider.AI_CUSTOM
+            model_config = get_current_model_config(provider)
         
         if model_config:
             # API Key/Token 输入框
@@ -200,6 +213,20 @@ class ModelConfigWidget(QWidget):
             self.model_edit.setText(self.config.get('model', model_config.default_model_name))
             self.model_edit.textChanged.connect(self.on_config_changed)
             model_layout.addRow(self.i18n.get('model_label', 'Model:'), self.model_edit)
+            
+            # 流式传输选项
+            self.enable_streaming_checkbox = QCheckBox(self.i18n.get('enable_streaming', 'Enable streaming'))
+            self.enable_streaming_checkbox.setChecked(self.config.get('enable_streaming', True))
+            self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
+            model_layout.addRow("", self.enable_streaming_checkbox)
+            
+            # Custom模型特有选项
+            if self.model_id == 'custom':
+                # 禁用SSL验证选项
+                self.disable_ssl_verify_checkbox = QCheckBox(self.i18n.get('disable_ssl_verify', 'Disable SSL verification'))
+                self.disable_ssl_verify_checkbox.setChecked(self.config.get('disable_ssl_verify', False))
+                self.disable_ssl_verify_checkbox.stateChanged.connect(self.on_config_changed)
+                model_layout.addRow("", self.disable_ssl_verify_checkbox)
             
             # 添加重置按钮
             reset_button = QPushButton(self.i18n.get('reset_button', 'Reset to Default'))
@@ -248,6 +275,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_DEEPSEEK
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
             config['display_name'] = 'Deepseek'  # 设置固定的显示名称
+        elif self.model_id == 'custom':
+            provider = AIProvider.AI_CUSTOM
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Custom'  # 设置固定的显示名称
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
@@ -258,6 +289,13 @@ class ModelConfigWidget(QWidget):
             config['enable_streaming'] = self.enable_streaming_checkbox.isChecked()
         else:
             config['enable_streaming'] = True  # 默认启用
+            
+        # Custom模型特有选项
+        if self.model_id == 'custom':
+            if hasattr(self, 'disable_ssl_verify_checkbox'):
+                config['disable_ssl_verify'] = self.disable_ssl_verify_checkbox.isChecked()
+            else:
+                config['disable_ssl_verify'] = False  # 默认启用SSL验证
         
         # 安全记录日志，不显示敏感信息
         safe_config = safe_log_config(config)
@@ -340,6 +378,9 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'deepseek':
                 from .models import DeepseekModel
                 model_config = DeepseekModel
+            elif self.model_id == 'custom':
+                from .models import CustomModel
+                model_config = CustomModel
                 
             if model_config:
                 default_api_base_url = getattr(model_config, 'DEFAULT_API_BASE_URL', '')
@@ -359,6 +400,8 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GEMINI
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
+        elif self.model_id == 'custom':
+            provider = AIProvider.AI_CUSTOM
         else:
             # 未知模型，无法重置
             return
@@ -374,6 +417,10 @@ class ModelConfigWidget(QWidget):
             # 如果存在流式传输选项，则设置为默认值（通常为True）
             if hasattr(self, 'enable_streaming_checkbox'):
                 self.enable_streaming_checkbox.setChecked(True)
+                
+            # 重置Custom模型的特殊配置
+            if self.model_id == 'custom' and hasattr(self, 'disable_ssl_verify_checkbox'):
+                self.disable_ssl_verify_checkbox.setChecked(False)  # 默认启用SSL验证
         
         # 触发配置变更信号
         self.on_config_changed()
@@ -400,6 +447,7 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('grok', GrokModel)
         AIModelFactory.register_model('gemini', GeminiModel)
         AIModelFactory.register_model('deepseek', DeepseekModel)
+        AIModelFactory.register_model('custom', CustomModel)
         
         self.setup_ui()
         self.load_initial_values()
@@ -510,7 +558,8 @@ class ConfigDialog(QWidget):
         model_mapping = {
             AIProvider.AI_GROK: 'grok',
             AIProvider.AI_GEMINI: 'gemini',
-            AIProvider.AI_DEEPSEEK: 'deepseek'
+            AIProvider.AI_DEEPSEEK: 'deepseek',
+            AIProvider.AI_CUSTOM: 'custom'
         }
         # 按照默认模型顺序添加到下拉框
         for provider, model_id in model_mapping.items():
