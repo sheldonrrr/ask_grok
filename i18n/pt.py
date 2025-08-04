@@ -139,4 +139,6 @@ class PortugueseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Personalizado',
+            'model_enable_streaming': 'Ativar streaming',
+            'model_disable_ssl_verify': 'Desativar verificação SSL',
         }

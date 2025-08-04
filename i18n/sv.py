@@ -51,6 +51,7 @@ class SwedishTranslation(BaseTranslation):
             'copy_response': 'Kopiera svar',
             'copy_question_response': 'Kopiera F&&S',
             'copied': 'Kopierad!',
+            'close_button': 'Stäng',
             
             # UI - Konfigurationsfält
             'token_label': 'API-nyckel:',
@@ -65,7 +66,7 @@ class SwedishTranslation(BaseTranslation):
             'using_model': 'Modell',
             'current_ai': 'Aktuell AI:',
             'action': 'Åtgärd',
-            'återställ_button': 'Återställ',
+            'reset_button': 'Återställ',
             'prompt_template': 'Promptmall',
             'ask_prompts': 'Frågeprompts',
             'random_questions_prompts': 'Slumpmässiga frågeprompts',
@@ -139,4 +140,6 @@ class SwedishTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Anpassad',
+            'model_enable_streaming': 'Aktivera streaming',
+            'model_disable_ssl_verify': 'Inaktivera SSL-verifiering',
         }

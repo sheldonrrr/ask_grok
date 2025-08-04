@@ -51,6 +51,7 @@ class JapaneseTranslation(BaseTranslation):
             'copy_response': '回答をコピー',
             'copy_question_response': '問答をコピー',
             'copied': 'コピー完了！',
+            'close_button': '閉じる',
             
             # UI - 設定フィールド
             'token_label': 'APIキー:',
@@ -139,4 +140,6 @@ class JapaneseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'カスタム',
+            'model_enable_streaming': 'ストリーミングを有効にする',
+            'model_disable_ssl_verify': 'SSL認証を無効にする',
         }

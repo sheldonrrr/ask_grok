@@ -51,6 +51,7 @@ class DutchTranslation(BaseTranslation):
             'copy_response': 'Antwoord kopiëren',
             'copy_question_response': 'V&&A kopiëren',
             'copied': 'Gekopieerd!',
+            'close_button': 'Sluiten',
             
             # UI - Configuratievelden
             'token_label': 'API-sleutel:',
@@ -139,4 +140,6 @@ class DutchTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Aangepast',
+            'model_enable_streaming': 'Streaming inschakelen',
+            'model_disable_ssl_verify': 'SSL-verificatie uitschakelen',
         }

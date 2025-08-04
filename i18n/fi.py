@@ -51,6 +51,7 @@ class FinnishTranslation(BaseTranslation):
             'copy_response': 'Kopioi vastaus',
             'copy_question_response': 'Kopioi K&&V',
             'copied': 'Kopioitu!',
+            'close_button': 'Sulje',
             
             # UI - Asetuskentät
             'token_label': 'API-avain:',
@@ -139,4 +140,6 @@ class FinnishTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Mukautettu',
+            'model_enable_streaming': 'Ota streaming käyttöön',
+            'model_disable_ssl_verify': 'Poista SSL-vahvistus käytöstä',
         }

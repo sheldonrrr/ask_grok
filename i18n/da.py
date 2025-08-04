@@ -51,6 +51,7 @@ class DanishTranslation(BaseTranslation):
             'copy_response': 'Kopiér svar',
             'copy_question_response': 'Kopiér S&&S',
             'copied': 'Kopieret!',
+            'close_button': 'Luk',
             
             # UI - Configuration fields
             'token_label': 'API-nøgle:',
@@ -139,4 +140,6 @@ class DanishTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Brugerdefineret',
+            'model_enable_streaming': 'Aktiver streaming',
+            'model_disable_ssl_verify': 'Deaktiver SSL-verifikation',
         }

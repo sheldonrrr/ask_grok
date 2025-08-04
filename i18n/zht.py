@@ -139,4 +139,6 @@ class TraditionalChineseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定義',
+            'model_enable_streaming': '啟用流式傳輸',
+            'model_disable_ssl_verify': '禁用SSL驗證',
         }

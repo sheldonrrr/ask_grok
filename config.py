@@ -219,7 +219,7 @@ class ModelConfigWidget(QWidget):
             model_layout.addRow(self.i18n.get('model_label', 'Model:'), self.model_edit)
 
             # 流式传输选项
-            self.enable_streaming_checkbox = QCheckBox(self.i18n.get('enable_streaming', 'Enable streaming'))
+            self.enable_streaming_checkbox = QCheckBox(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
             self.enable_streaming_checkbox.setChecked(self.config.get('enable_streaming', True))
             self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
             model_layout.addRow("", self.enable_streaming_checkbox)
@@ -227,7 +227,7 @@ class ModelConfigWidget(QWidget):
             # Custom模型特有选项
             if self.model_id == 'custom':
                 # 禁用SSL验证选项
-                self.disable_ssl_verify_checkbox = QCheckBox(self.i18n.get('disable_ssl_verify', 'Disable SSL verification'))
+                self.disable_ssl_verify_checkbox = QCheckBox(self.i18n.get('model_disable_ssl_verify', 'Disable SSL Verify'))
                 self.disable_ssl_verify_checkbox.setChecked(self.config.get('disable_ssl_verify', False))
                 self.disable_ssl_verify_checkbox.stateChanged.connect(self.on_config_changed)
 
@@ -235,6 +235,8 @@ class ModelConfigWidget(QWidget):
             
             # 添加重置按钮
             reset_button = QPushButton(self.i18n.get('reset_button', 'Reset to Default'))
+            reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
+            reset_button.setProperty('isResetButton', True)  # 添加属性标记
             reset_button.clicked.connect(self.reset_model_params)
             reset_button.setStyleSheet("""
                 QPushButton {
@@ -316,7 +318,8 @@ class ModelConfigWidget(QWidget):
         """更新模型配置控件的文本"""
         import logging
         logger = logging.getLogger(__name__)
-    
+        logger.debug(f"更新模型{self.model_id}的配置控件文本")
+
         # 定义已知标签的翻译
         known_labels = {
             'api_key': self.i18n.get('api_key_label', 'API Key:'),
@@ -324,6 +327,15 @@ class ModelConfigWidget(QWidget):
             'model': self.i18n.get('model_label', 'Model:')
         }
         
+        # 更新复选框文本
+        if hasattr(self, 'enable_streaming_checkbox'):
+            self.enable_streaming_checkbox.setText(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
+            logger.debug("更新了流式传输复选框文本")
+            
+        if hasattr(self, 'disable_ssl_verify_checkbox'):
+            self.disable_ssl_verify_checkbox.setText(self.i18n.get('model_disable_ssl_verify', 'Disable SSL Verify'))
+            logger.debug("更新了SSL验证复选框文本")
+            
         for label in self.findChildren(QLabel):
             # 先检查objectName
             if hasattr(label, 'objectName') and label.objectName():
@@ -800,9 +812,44 @@ class ConfigDialog(QWidget):
         self.on_config_changed()
     
     def update_model_name_display(self):
-        """更新模型名称显示 - 空方法，保持兼容性"""
-        # 我们已经移除了 model_name_label，所以这个方法现在什么也不做
-        pass
+        """更新模型下拉框中的模型名称显示，使用当前语言的翻译"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug("更新模型名称显示")
+        
+        # 保存当前选中的模型ID
+        current_model_id = self.model_combo.currentData()
+        
+        # 暂时阻断信号，防止触发on_model_changed
+        self.model_combo.blockSignals(True)
+        
+        # 清空下拉框
+        self.model_combo.clear()
+        
+        # 使用DEFAULT_MODELS字典来动态添加模型
+        model_mapping = {
+            AIProvider.AI_GROK: 'grok',
+            AIProvider.AI_GEMINI: 'gemini',
+            AIProvider.AI_DEEPSEEK: 'deepseek',
+            AIProvider.AI_CUSTOM: 'custom'
+        }
+        
+        # 按照默认模型顺序添加到下拉框，使用翻译后的名称
+        for provider, model_id in model_mapping.items():
+            if provider in DEFAULT_MODELS:
+                # 获取翻译后的模型名称
+                display_name_key = f"model_display_name_{model_id}"
+                translated_name = self.i18n.get(display_name_key, DEFAULT_MODELS[provider].display_name)
+                logger.debug(f"模型 {model_id} 的翻译名称: {translated_name}")
+                self.model_combo.addItem(translated_name, model_id)
+        
+        # 恢复之前选中的模型
+        index = self.model_combo.findData(current_model_id)
+        if index >= 0:
+            self.model_combo.setCurrentIndex(index)
+        
+        # 恢复信号连接
+        self.model_combo.blockSignals(False)
     
     def load_initial_values(self):
         """加载初始值"""
@@ -884,6 +931,9 @@ class ConfigDialog(QWidget):
         # 更新界面文字
         self.retranslate_ui()
         
+        # 更新模型下拉框中的显示名称
+        self.update_model_name_display()
+        
         # 手动更新所有Reset按钮的文本和工具提示
         # 通过对象名称或属性识别Reset按钮，而不是通过文本匹配
         for button in self.findChildren(QPushButton):
@@ -899,25 +949,41 @@ class ConfigDialog(QWidget):
                 button.setText(self.i18n.get('reset_button', 'Reset to Default'))
                 logger.debug(f"更新了Reset按钮文本为: {button.text()}")
         
-        # 更新模型配置控件中的Reset按钮
+        # 更新模型配置控件中的文本和Reset按钮
         if hasattr(self, 'model_widgets'):
             for model_id, widget in self.model_widgets.items():
                 if hasattr(widget, 'i18n'):
                     widget.i18n = self.i18n  # 更新i18n字典
+                    # 调用模型配置控件的retranslate_ui方法更新所有文本
+                    if hasattr(widget, 'retranslate_ui') and callable(widget.retranslate_ui):
+                        widget.retranslate_ui()
+                        logger.debug(f"调用了模型 {model_id} 的retranslate_ui方法更新文本")
+                    
+                    # 对所有按钮进行额外检查，确保重置按钮文本被正确更新
+                    reset_text = self.i18n.get('reset_button', 'Reset to Default')
+                    reset_tooltip = self.i18n.get('reset_tooltip', 'Reset to default value')
+                    
                     for button in widget.findChildren(QPushButton):
-                        # 检查按钮的objectName或其他属性来识别Reset按钮
+                        # 检查按钮的objectName
                         if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
-                            button.setText(self.i18n.get('reset_button', 'Reset to Default'))
-                            button.setToolTip(self.i18n.get('reset_tooltip', 'Reset to default value'))
-                            logger.debug(f"更新了模型 {model_id} 的Reset按钮文本为: {button.text()}")
-                        # 如果按钮没有objectName，则尝试使用其他方式识别
-                        elif button.property('isResetButton') or (
-                              hasattr(button, 'toolTip') and 
-                              ('reset' in button.toolTip().lower() or 
-                               'default' in button.toolTip().lower())):
-                            button.setText(self.i18n.get('reset_button', 'Reset to Default'))
-                            button.setToolTip(self.i18n.get('reset_tooltip', 'Reset to default value'))
-                            logger.debug(f"更新了模型 {model_id} 的Reset按钮文本为: {button.text()}")
+                            button.setText(reset_text)
+                            button.setToolTip(reset_tooltip)
+                            logger.debug(f"基于objectName更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
+                        # 检查按钮的isResetButton属性
+                        elif button.property('isResetButton'):
+                            button.setText(reset_text)
+                            button.setToolTip(reset_tooltip)
+                            logger.debug(f"基于属性更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
+                        # 检查按钮的工具提示
+                        elif hasattr(button, 'toolTip') and ('reset' in button.toolTip().lower() or 'default' in button.toolTip().lower()):
+                            button.setText(reset_text)
+                            button.setToolTip(reset_tooltip)
+                            logger.debug(f"基于工具提示更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
+                        # 检查按钮的当前文本
+                        elif button.text() in ['Reset to Default', 'Reset', '重置', 'Réinitialiser', 'リセット', 'Nollaa', 'Tilbakestill', 'Nulstil', 'Återställ']:
+                            button.setText(reset_text)
+                            button.setToolTip(reset_tooltip)
+                            logger.debug(f"基于当前文本更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
         
         # 更新模板内容
         self.template_edit.setPlainText(get_default_template(lang_code))
@@ -1148,6 +1214,10 @@ class ConfigDialog(QWidget):
                 if hasattr(widget, 'i18n'):
                     widget.i18n = self.i18n
                     logger.debug(f"更新了模型{model_id}的配置控件")
+        
+        # 更新模型下拉框中的显示名称
+        self.update_model_name_display()
+        logger.debug("更新了模型下拉框中的显示名称")
     
     def save_settings(self):
         """保存设置"""

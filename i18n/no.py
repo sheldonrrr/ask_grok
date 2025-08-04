@@ -51,6 +51,7 @@ class NorwegianTranslation(BaseTranslation):
             'copy_response': 'Kopier svar',
             'copy_question_response': 'Kopier S&&S',
             'copied': 'Kopiert!',
+            'close_button': 'Lukk',
             
             # UI - Konfigurasjonsfelter
             'token_label': 'API-nøkkel:',
@@ -139,4 +140,6 @@ class NorwegianTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Tilpasset',
+            'model_enable_streaming': 'Aktiver streaming',
+            'model_disable_ssl_verify': 'Deaktiver SSL-verifisering',
         }
