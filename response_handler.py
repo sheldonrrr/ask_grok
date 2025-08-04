@@ -23,28 +23,8 @@ log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, 'ask_grok_response.log')
 
-# 获取根日志记录器
-root_logger = logging.getLogger()
-root_logger.setLevel(logging.DEBUG)
-
-# 检查是否已经添加过处理器，避免重复添加
-if not any(isinstance(h, logging.FileHandler) and h.baseFilename == log_file for h in root_logger.handlers):
-    # 创建文件处理器
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
-    file_handler.setLevel(logging.DEBUG)
-    
-    # 创建控制台处理器
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.DEBUG)
-    
-    # 创建格式化器
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    
-    # 添加处理器到根日志记录器
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
+# 使用已配置的日志系统，不再重复配置根日志记录器
+# 只创建当前模块的日志记录器
 
 logger = logging.getLogger(__name__)
 logger.info('=' * 80)

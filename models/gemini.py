@@ -258,14 +258,93 @@ class GeminiModel(BaseAIModel):
                                             continue
                                     
                                 # 检查是否长时间没有收到新内容
-                                if time.time() - last_chunk_time > 10:  # 10秒没有新内容，记录日志
-                                    logger.warning(f"流式传输超过10秒没有新内容, 当前已收到 {chunk_count} 块, 总长度: {len(full_content)}")
-                                    last_chunk_time = time.time()  # 重置计时器避免重复日志
+                                current_time = time.time()
+                                if current_time - last_chunk_time > 10:  # 10秒没有新内容
+                                    # 计算无响应时间
+                                    no_response_time = current_time - last_chunk_time
+                                    logger.warning(f"流式传输 {no_response_time:.1f} 秒没有新内容, 当前已收到 {chunk_count} 块, 总长度: {len(full_content)}")
+                                    
+                                    # 如果超过30秒没有响应，可能是连接问题，主动抛出异常以触发恢复机制
+                                    if no_response_time > 30 and full_content:  # 只有在已有内容的情况下才触发
+                                        logger.warning("超过30秒无响应，主动触发恢复机制")
+                                        raise requests.exceptions.ReadTimeout("流式传输超过30秒没有新内容，可能是连接问题")
+                                    
+                                    last_chunk_time = current_time  # 重置计时器避免重复日志
                         except Exception as e:
                             logger.error(f"流式处理异常: {str(e)}")
-                            # 如果已经有内容，不抛出异常，返回已收到的内容
+                            # 记录异常时的状态
+                            logger.warning(f"异常发生时状态: 已接收 {chunk_count} 块, 总长度: {len(full_content)}")
+                            
+                            # 如果已经有内容，尝试恢复连接
                             if full_content:
-                                logger.warning(f"尽管有异常，但返回已收到的 {len(full_content)} 字符内容")
+                                logger.info("尝试恢复连接以获取完整响应...")
+                                try:
+                                    # 保存当前已接收的内容
+                                    current_content = full_content
+                                    
+                                    # 重新构建请求，添加标记表示这是恢复请求
+                                    recovery_data = self.prepare_request_data(prompt, **kwargs)
+                                    
+                                    # 添加恢复标记，让模型知道这是继续之前的对话
+                                    if 'contents' in recovery_data and len(recovery_data['contents']) > 0:
+                                        # 如果最后一个内容是用户消息，添加一个系统消息表示继续
+                                        recovery_data['contents'].append({
+                                            "role": "user",
+                                            "parts": [{"text": "请继续你之前的回答，不要重复已经提供的内容。"}]
+                                        })
+                                    
+                                    # 设置更长的超时时间
+                                    recovery_timeout = kwargs.get('timeout', 300) + 60
+                                    
+                                    logger.info(f"发起恢复请求，超时时间: {recovery_timeout}秒")
+                                    
+                                    # 发起恢复请求
+                                    with requests.post(
+                                        url,
+                                        headers=headers,
+                                        json=recovery_data,
+                                        params=params,
+                                        timeout=recovery_timeout,
+                                        stream=True
+                                    ) as recovery_response:
+                                        recovery_response.raise_for_status()
+                                        logger.info(f"恢复连接成功，状态码: {recovery_response.status_code}")
+                                        
+                                        # 处理恢复响应
+                                        for line in recovery_response.iter_lines():
+                                            if line:
+                                                line = line.decode('utf-8')
+                                                
+                                                if line.startswith('data: '):
+                                                    line = line[6:]
+                                                    
+                                                    if line.strip() == "[DONE]":
+                                                        logger.info("恢复请求收到结束标记 [DONE]")
+                                                        break
+                                                    
+                                                    try:
+                                                        chunk_data = json.loads(line)
+                                                        
+                                                        if 'candidates' in chunk_data and chunk_data['candidates']:
+                                                            candidate = chunk_data['candidates'][0]
+                                                            if 'content' in candidate:
+                                                                content = candidate['content']
+                                                                if 'parts' in content and content['parts']:
+                                                                    for part in content['parts']:
+                                                                        if 'text' in part and part['text']:
+                                                                            chunk_text = part['text']
+                                                                            full_content += chunk_text
+                                                                            stream_callback(chunk_text)
+                                                                            chunk_count += 1
+                                                                            last_chunk_time = time.time()
+                                                    except json.JSONDecodeError as je:
+                                                        logger.error(f"恢复请求JSON解析错误: {str(je)}")
+                                                        continue
+                                        
+                                        logger.info(f"恢复请求完成，新增内容长度: {len(full_content) - len(current_content)}")
+                                except Exception as recovery_e:
+                                    logger.error(f"恢复连接失败: {str(recovery_e)}")
+                                    logger.warning(f"将返回已接收的 {len(full_content)} 字符内容")
                             else:
                                 raise  # 如果没有内容，抛出异常
                     
