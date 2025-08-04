@@ -206,14 +206,18 @@ class ModelConfigWidget(QWidget):
             self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
                 default_api_base_url=model_config.default_api_base_url
             ))
+            self.api_base_edit.setMinimumHeight(25)  # 设置最小高度
+            self.api_base_edit.setMinimumWidth(base_width)  # 设置最小宽度
             model_layout.addRow(self.i18n.get('base_url_label', 'Base URL:'), self.api_base_edit)
             
             # 模型名称输入框
             self.model_edit = QLineEdit(self)
             self.model_edit.setText(self.config.get('model', model_config.default_model_name))
             self.model_edit.textChanged.connect(self.on_config_changed)
+            self.model_edit.setMinimumHeight(25)  # 设置最小高度
+            self.model_edit.setMinimumWidth(base_width)  # 设置最小宽度
             model_layout.addRow(self.i18n.get('model_label', 'Model:'), self.model_edit)
-            
+
             # 流式传输选项
             self.enable_streaming_checkbox = QCheckBox(self.i18n.get('enable_streaming', 'Enable streaming'))
             self.enable_streaming_checkbox.setChecked(self.config.get('enable_streaming', True))
@@ -226,6 +230,7 @@ class ModelConfigWidget(QWidget):
                 self.disable_ssl_verify_checkbox = QCheckBox(self.i18n.get('disable_ssl_verify', 'Disable SSL verification'))
                 self.disable_ssl_verify_checkbox.setChecked(self.config.get('disable_ssl_verify', False))
                 self.disable_ssl_verify_checkbox.stateChanged.connect(self.on_config_changed)
+
                 model_layout.addRow("", self.disable_ssl_verify_checkbox)
             
             # 添加重置按钮
@@ -579,22 +584,20 @@ class ConfigDialog(QWidget):
         if index >= 0:
             self.model_combo.setCurrentIndex(index)
         
-        # 添加滚动区域以确保模型配置完全可见
-        model_scroll = QScrollArea()
-        model_scroll.setWidgetResizable(True)
-        model_scroll.setFrameShape(QScrollArea.NoFrame)
-        model_scroll.setMinimumHeight(200)  # 设置最小高度以确保内容可见
+        # 直接使用布局，不使用滚动区域或容器
+        # 这样可以确保全部内容都能正确显示，不会出现二级滚动条
         
-        # 创建模型配置容器
-        self.models_container = QWidget()
+        # 创建模型配置布局
         self.models_layout = QVBoxLayout()
-        self.models_container.setLayout(self.models_layout)
+        # 设置合适的边距和间距
+        self.models_layout.setContentsMargins(10, 10, 10, 10)
+        self.models_layout.setSpacing(10)
         
         # 添加模型配置控件
         self.setup_model_widgets()
         
-        model_scroll.setWidget(self.models_container)
-        model_layout.addWidget(model_scroll)
+        # 直接将布局添加到模型组布局中
+        model_layout.addLayout(self.models_layout)
         model_group.setLayout(model_layout)
         
         # 添加间距
@@ -701,11 +704,12 @@ class ConfigDialog(QWidget):
         logger = logging.getLogger(__name__)
         
         # 确保 models_layout 已经初始化
-        if not hasattr(self, 'models_layout'):
-            # 如果 models_layout 不存在，创建一个新的
-            self.models_container = QWidget()
+        if not hasattr(self, 'models_layout') or self.models_layout is None:
+            # 创建模型配置布局
             self.models_layout = QVBoxLayout()
-            self.models_container.setLayout(self.models_layout)
+            # 设置合适的边距和间距
+            self.models_layout.setContentsMargins(10, 10, 10, 10)
+            self.models_layout.setSpacing(10)
         
         # 在清空控件前，保存所有当前模型的配置
         current_configs = {}
@@ -721,16 +725,8 @@ class ConfigDialog(QWidget):
                         current_configs[model_id] = self.initial_values['models'][model_id]
                         logger.debug(f"使用初始值作为模型 {model_id} 的配置: {safe_log_config(current_configs[model_id])}")
         
-        # 清空现有控件
-        for i in reversed(range(self.models_layout.count())): 
-            widget = self.models_layout.itemAt(i).widget()
-            if widget:  # 确保widget不是None
-                widget.setParent(None)
-        
-        # 移除之前添加的拉伸空间，防止元素偏移
-        if self.models_layout.count() > 0 and self.models_layout.itemAt(self.models_layout.count()-1).spacerItem():
-            self.models_layout.removeItem(self.models_layout.itemAt(self.models_layout.count()-1))
-        
+        # 清除当前布局中的所有元素
+        self.clear_layout(self.models_layout)
         self.model_widgets = {}
         
         # 获取当前选中的模型
@@ -760,14 +756,27 @@ class ConfigDialog(QWidget):
         # 创建模型配置控件
         widget = ModelConfigWidget(model_id, model_config, self.i18n)
         widget.config_changed.connect(self.on_config_changed)
-        widget.setMinimumHeight(150)  # 设置最小高度，防止元素偏移
+        # 不设置最小高度，让控件根据内容自动调整大小
         
         # 保存控件引用
         self.model_widgets[model_id] = widget
         
         # 添加到布局
         self.models_layout.addWidget(widget)
-        self.models_layout.addStretch()
+        # 移除addStretch，防止Reset按钮被推到不可见区域
+    
+    def clear_layout(self, layout):
+        """清除布局中的所有元素"""
+        if layout is None:
+            return
+            
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self.clear_layout(item.layout())
+                item.layout().deleteLater()
     
     def on_model_changed(self, index):
         """当选择的模型改变时"""
@@ -780,6 +789,10 @@ class ConfigDialog(QWidget):
         
         # 设置模型组件 - 这里会保存当前模型的配置并加载新选中模型的配置
         self.setup_model_widgets()
+        
+        # 模型切换时仅需要更新内容，不需要重新添加布局
+        # setup_model_widgets 已经处理了布局初始化和清除工作
+        
         self.update_model_name_display()
         
         # 切换模型不会自动触发保存按钮的启用，需要用户实际修改配置
