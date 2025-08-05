@@ -4,7 +4,7 @@
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from .config import get_prefs, ConfigDialog
-from .i18n import get_translation, SUGGESTION_TEMPLATES
+from .i18n import get_translation, get_suggestion_template
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class SuggestionWorker(QThread):
             logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 语言: {language}")
             
             # 准备提示词
-            template = SUGGESTION_TEMPLATES.get(get_prefs()['language'], SUGGESTION_TEMPLATES['en'])
+            template = get_suggestion_template(get_prefs()['language'])
             
             # 记录使用的模板
             logger.info(f"使用的问题随机问题模板: {template}")
@@ -71,6 +71,13 @@ class SuggestionWorker(QThread):
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
             
+            # 记录当前使用的 AI 模型
+            try:
+                model_name = self.api.model_display_name
+                logger.info(f"当前使用的 AI 模型: {model_name}")
+            except Exception as e:
+                logger.warning(f"获取模型信息失败: {str(e)}")
+                
             # 调用 API 获取随机问题，确保传递 lang_code 参数
             logger.info("正在调用 API 获取随机问题...")
             suggestion = self.api.random_question(prompt, lang_code=get_prefs()['language'])
@@ -183,7 +190,7 @@ class SuggestionHandler(QObject):
             if self._worker:
                 self._worker.cancel()
             # 直接显示请求失败状态
-            self.response_area.setText(self.i18n.get('request_failed', 'Request failed, please check your network'))
+            self.response_area.setText(self.i18n.get('request_failed', 'Request failed'))
             self._restore_ui_state()
 
     def _restore_ui_state(self, restore_input=False):
@@ -315,10 +322,19 @@ class SuggestionHandler(QObject):
             logger.error("书籍信息未提供，随机问题生成失败。")
             return
         
-        # 检查 auth token
-        if not self.suggest_button.window()._check_auth_token():
-            logger.error("Auth token检查失败，随机问题生成失败。")
-            return
+        # 检查当前选中的模型
+        from calibre_plugins.ask_grok.config import get_prefs
+        prefs = get_prefs()
+        selected_model = prefs.get('selected_model', 'grok')
+        
+        # 如果是Custom模型，不需要检查API Key
+        if selected_model == 'custom':
+            logger.debug("Custom模型不强制要求API Key，跳过验证")
+        else:
+            # 对于其他模型，检查 auth token
+            if not self.suggest_button.window()._check_auth_token():
+                logger.error("Auth token检查失败，随机问题生成失败。")
+                return
 
         # 保存原始状态
         self._original_button_text = self.suggest_button.text()

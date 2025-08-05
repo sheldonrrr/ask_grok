@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 from setuptools import setup, find_packages
 
 package_name = "Ask Grok"
@@ -11,16 +12,16 @@ if sys.version_info < (2, 7):
 
 setup(
     name=package_name,
-    version='1.1.19',
-    description='使用 X.AI Grok 询问关于当前书籍的问题',
+    version='1.2.0',
+    description='Ask AI about your books',
     author='Sheldon',
-    author_email='boy.liushaopeng@gmail.com',
+    author_email='sheldonrrr@gmail.com',
     packages=['ask_grok'],
     include_package_data=True,
     platforms=['windows', 'osx', 'linux'],
-    install_requires=[],
+    install_requires=['requests'],
     zip_safe=False,
-    keywords='bookAI readingAI grokbook ebook epub',
+    keywords='bookAI readingAI x.AI GrokAI GeminiAI',
     package_data={
         'ask_grok': ['images/*.png', 'lib/*']
     }

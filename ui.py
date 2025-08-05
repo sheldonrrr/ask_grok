@@ -5,19 +5,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 from enum import auto
+from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton, 
                             QHBoxLayout, QLabel, QComboBox, QApplication, 
                             QMessageBox, QScrollArea, QWidget, QSizePolicy, 
-                            QFrame, QSplitter, QStatusBar, QTextBrowser, QTabWidget, QDialogButtonBox, QToolButton, QMenu, QAction, QToolTip)
+                            QFrame, QSplitter, QStatusBar, QTextBrowser, QTabWidget, QDialogButtonBox, QToolButton, QMenu, QAction, QToolTip, QGroupBox)
 from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
 from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_grok.api import APIClient
-from calibre_plugins.ask_grok.i18n import get_translation, SUGGESTION_TEMPLATES
+from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_grok.shortcuts_widget import ShortcutsWidget
+from calibre_plugins.ask_grok import VERSION_DISPLAY
 from calibre.utils.resources import get_path as I
 import sys
 import os
@@ -36,9 +38,10 @@ import calibre_plugins.ask_grok.ui as ask_grok_plugin
 # 存储插件实例的全局变量
 plugin_instance = None
 
-def get_suggestion_template(lang_code):
+def get_suggestion_template_from_ui(lang_code):
     """获取指定语言的随机问题提示词模板"""
-    return SUGGESTION_TEMPLATES.get(lang_code, SUGGESTION_TEMPLATES['en'])
+    from .i18n import get_suggestion_template
+    return get_suggestion_template(lang_code)
 
 class AskGrokPluginUI(InterfaceAction):
     name = 'Ask Grok'
@@ -58,6 +61,9 @@ class AskGrokPluginUI(InterfaceAction):
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
+        
+        # 保存对话框实例的引用
+        self.ask_dialog = None
         
         # 保存插件实例到全局变量
         global plugin_instance
@@ -94,13 +100,13 @@ class AskGrokPluginUI(InterfaceAction):
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
 
-        # # 根据操作系统设置快捷键，暂时注销，之后找其他办法实现
-        # if sys.platform == 'darwin':  # macOS
-        #     shortcut = QKeySequence("Command+K")
-        # else:
-        #     shortcut = QKeySequence("Ctrl+K")
-        # self.config_action.setShortcut(shortcut)
-        # self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
+        # 根据操作系统设置快捷键
+        if sys.platform == 'darwin':  # macOS
+            shortcut = QKeySequence("Command+K")
+        else:
+            shortcut = QKeySequence("Ctrl+K")
+        self.config_action.setShortcut(shortcut)
+        self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
         
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
@@ -109,7 +115,7 @@ class AskGrokPluginUI(InterfaceAction):
         self.menu.addSeparator()
 
         #添加快捷键菜单项
-        self.shortcuts_action = QAction(self.i18n['shortcuts_title'], self)
+        self.shortcuts_action = QAction(self.i18n['shortcuts'], self)
         self.shortcuts_action.triggered.connect(self.show_shortcuts)
         self.menu.addAction(self.shortcuts_action)      
 
@@ -117,7 +123,7 @@ class AskGrokPluginUI(InterfaceAction):
         self.menu.addSeparator()
         
         # 添加关于菜单项
-        self.about_action = QAction(self.i18n['about_title'], self)
+        self.about_action = QAction(self.i18n['about'], self)
         self.about_action.triggered.connect(self.show_about)
         self.menu.addAction(self.about_action)
         
@@ -135,27 +141,39 @@ class AskGrokPluginUI(InterfaceAction):
         self.i18n = get_translation(language)
         self.config_action.setText(self.i18n['config_title'])
         self.ask_action.setText(self.i18n['menu_title'])
-        self.about_action.setText(self.i18n['about_title'])
+        self.about_action.setText(self.i18n['about'])
         
     def initialize_api(self):
-        if not self.api:
-            # 获取配置
+        try:
+            # 初始化 API 客户端
             prefs = get_prefs()
-            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-            i18n = get_translation(language)
+            language = prefs.get('language', 'en')
+            self.i18n = get_translation(language)
             
-            # 从配置获取 auth_token
-            auth_token = prefs.get('auth_token', '')
+            # 创建新的 API 客户端，不再需要传递 api_base、model 和 auth_token 参数
+            # 因为这些参数现在由 AIModelFactory 根据配置动态创建
+            self.api = APIClient(i18n=self.i18n)
             
-            # 创建 APIClient 实例
-            self.api = APIClient(auth_token=auth_token, i18n=i18n)
+            # 记录当前使用的模型
+            model_name = self.api.model_name
+            model_display_name = self.api.model_display_name
+            logger.info(f"API 客户端初始化成功，使用模型: {model_display_name} ({model_name})")
+        except Exception as e:
+            logger.error(f"初始化 API 客户端时出错: {str(e)}")
     
     def apply_settings(self):
+        # 应用新的设置
         prefs = get_prefs()
-        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        language = prefs.get('language', 'en')
         self.i18n = get_translation(language)
-        self.initialize_api()
-
+        
+        # 重新加载 API 模型
+        if self.api:
+            self.api.reload_model()
+            model_name = self.api.model_name
+            model_display_name = self.api.model_display_name
+            logger.info(f"设置已应用，当前使用模型: {model_display_name} ({model_name})")
+    
     def show_configuration(self):
         """显示配置对话框"""
         dlg = TabDialog(self.gui)
@@ -177,6 +195,13 @@ class AskGrokPluginUI(InterfaceAction):
         
         # 显示对话框
         d = AskDialog(self.gui, mi, self.api)
+        
+        # 保存对话框实例的引用
+        self.ask_dialog = d
+        
+        # 对话框关闭时清除引用
+        d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
+        
         d.exec_()
     
     def show_about(self):
@@ -190,8 +215,15 @@ class AskGrokPluginUI(InterfaceAction):
         dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
         dlg.exec_()
 
-    def update_menu_texts(self):
-        """更新菜单项的文本"""
+    def update_menu_texts(self, language=None):
+        """更新菜单项的文本
+        
+        Args:
+            language: 可选参数，指定要使用的语言。如果不指定，则从配置中读取。
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
             # 保存原始状态
             original_texts = {
@@ -201,25 +233,33 @@ class AskGrokPluginUI(InterfaceAction):
                 'about': self.about_action.text()
             }
             
+            # 如果没有指定语言，从配置中读取
+            if language is None:
+                prefs = get_prefs()
+                language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            
+            logger.debug(f"更新菜单文本，使用语言: {language}")
+            
             # 更新文本
-            prefs = get_prefs()
-            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
             self.i18n = get_translation(language)
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
-            self.shortcuts_action.setText(self.i18n['shortcuts_title'])
-            self.about_action.setText(self.i18n['about_title'])
+            self.shortcuts_action.setText(self.i18n['shortcuts'])
+            self.about_action.setText(self.i18n['about'])
             
         except Exception as e:
             # 发生错误时恢复原始状态
+            logger.error(f"更新菜单文本时出错: {str(e)}")
             self.ask_action.setText(original_texts['ask'])
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
             self.about_action.setText(original_texts['about'])
-            raise e
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
+    # 定义一个与 ConfigDialog 相同的语言变更信号
+    language_changed = pyqtSignal(str)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.gui = parent
@@ -234,6 +274,22 @@ class AskGrokConfigWidget(QWidget):
         # 复用现有的 ConfigDialog
         self.config_dialog = ConfigDialog(self.gui)
         layout.addWidget(self.config_dialog)
+        
+        # 连接 ConfigDialog 的语言变更信号，并转发出去
+        self.config_dialog.language_changed.connect(self.on_language_changed)
+    
+    def on_language_changed(self, lang_code):
+        """当语言改变时更新界面并转发信号"""
+        # 更新自身的语言
+        self.i18n = get_translation(lang_code)
+        
+        # 在日志中输出语言变更信息
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"语言已切换为: {lang_code}")
+        
+        # 转发语言变更信号
+        self.language_changed.emit(lang_code)
 
 class AboutWidget(QWidget):
     """关于页面组件"""
@@ -263,34 +319,40 @@ class AboutWidget(QWidget):
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         self.about_label.setText(f"""
-        <div style='text-align: center'>
-            <h1 style='margin-bottom: 10px'>{self.i18n['plugin_name']}</h1>
-            <p style='font-weight: normal;'>{self.i18n['plugin_desc']}</p>
-            <p style='color: palette(text); font-weight: normal; margin: 20px 0 10px 0;'>v1.1.19</p>
-            <p style='color: palette(text); font-weight: normal; '>
-                <a href='http://simp.ly/publish/FwMSSr' 
-                   style='color: palette(text); text-decoration: none;'>
-                   User Manual
-                </a>
-            </p>
-            <p style='color: palette(text); font-weight: normal; '>
-                <a href='http://simp.ly/publish/xYW5Tr' 
-                   style='color: palette(text); text-decoration: none;'>
-                   About Ask Grok
-                </a>
-            </p>
-            <p style='color: palette(text); font-weight: normal; '>
-                <a href='https://youtu.be/QdeZgkT1fpw' 
-                   style='color: palette(text); text-decoration: none;'>
-                   Learn How to Use in YouTube
-                </a>
-            </p>
-            <p style='color: palette(text); font-weight: normal; '>
-                <a href='' 
-                   style='color: palette(text); text-decoration: none;'>
-                   iMessage: sheldonrrr@gmail.com
-                </a>
-            </p>
+        <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
+            <div style='font-size: 24px; font-weight: bold; color: #333333; margin: 10px 0;'>Ask Grok</div>
+            <div style='font-size: 14px; color: #555555; margin-bottom: 15px; line-height: 1.4;'>{self.i18n['plugin_desc']}</div>
+            <div style='font-size: 13px; color: #666666; margin-bottom: 25px;'>{VERSION_DISPLAY}</div>
+            
+            <div style='display: flex; flex-direction: column; align-items: center; margin: 15px 0;'>
+                <div style='margin: 8px 0;'>
+                    <a href='http://simp.ly/publish/FwMSSr' 
+                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       {self.i18n.get('user_manual', 'User Manual')} ↗
+                    </a>
+                </div>
+                
+                <div style='margin: 8px 0;'>
+                    <a href='http://simp.ly/publish/xYW5Tr' 
+                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       {self.i18n.get('about_plugin', 'Why Ask Grok?')} ↗
+                    </a>
+                </div>
+                
+                <div style='margin: 8px 0;'>
+                    <a href='https://youtu.be/QdeZgkT1fpw' 
+                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       {self.i18n.get('learn_how_to_use', 'How to Use')} ↗
+                    </a>
+                </div>
+                
+                <div style='margin: 8px 0;'>
+                    <a href='imessage://sheldonrrr@gmail.com' 
+                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       {self.i18n.get('email', 'iMessage')}: sheldonrrr@gmail.com
+                    </a>
+                </div>
+            </div>
         </div>
         """)
 
@@ -310,17 +372,19 @@ class TabDialog(QDialog):
         # 创建标签页
         self.tab_widget = QTabWidget()
 
-        # 创建配置页面
+        # 创建General页面
         self.config_widget = AskGrokConfigWidget(self.gui)
-        self.tab_widget.addTab(self.config_widget, self.i18n['config_title'])
+        self.tab_widget.addTab(self.config_widget, self.i18n['general_tab'])
+        
+        # 语言变更信号已在下方连接到config_widget.config_dialog.language_changed
 
         # 创建快捷键页面
         self.shortcuts_widget = ShortcutsWidget(self)
-        self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts_tab'])
+        self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
         # 创建关于页面
         self.about_widget = AboutWidget()
-        self.tab_widget.addTab(self.about_widget, self.i18n['about_title'])
+        self.tab_widget.addTab(self.about_widget, self.i18n['about'])
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -329,46 +393,100 @@ class TabDialog(QDialog):
         # 创建按钮布局
         button_box = QDialogButtonBox(QDialogButtonBox.Close)
         button_box.rejected.connect(self.reject)
+        # 设置关闭按钮的文本
+        close_button = button_box.button(QDialogButtonBox.Close)
+        if close_button:
+            close_button.setText(self.i18n.get('close_button', 'Close'))
         layout.addWidget(button_box)
         
         self.setLayout(layout)
         
         # 连接配置对话框的信号
         self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
-        
+    
         # 连接语言切换信号
-        self.config_widget.config_dialog.language_changed.connect(self.on_language_changed)
+        self.config_widget.language_changed.connect(self.on_language_changed)
     
     def on_language_changed(self, new_language):
         """当语言改变时更新所有组件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"TabDialog接收到语言变更信号: {new_language}")
+        
         self.i18n = get_translation(new_language)
         
         # 更新窗口标题
         self.setWindowTitle(self.i18n['config_title'])
+        logger.debug(f"更新窗口标题为: {self.i18n['config_title']}")
         
         # 更新标签页标题
-        self.tab_widget.setTabText(0, self.i18n['config_title'])
-        self.tab_widget.setTabText(1, self.i18n['shortcuts_tab'])
-        self.tab_widget.setTabText(2, self.i18n['about_title'])
+        self.tab_widget.setTabText(0, self.i18n['general_tab'])
+        self.tab_widget.setTabText(1, self.i18n['shortcuts'])
+        self.tab_widget.setTabText(2, self.i18n['about'])
+        logger.debug("已更新标签页标题")
+        
+        # 更新关闭按钮文本
+        for button_box in self.findChildren(QDialogButtonBox):
+            close_button = button_box.button(QDialogButtonBox.Close)
+            if close_button:
+                close_button.setText(self.i18n.get('close_button', 'Close'))
+                logger.debug("已更新关闭按钮文本")
+        
+        # 确保 ConfigDialog 实例也更新了语言
+        if hasattr(self.config_widget, 'config_dialog'):
+            logger.debug("更新ConfigDialog实例的语言")
+            self.config_widget.config_dialog.i18n = self.i18n
+            self.config_widget.config_dialog.retranslate_ui()
         
         # 更新快捷键页面
+        logger.debug("更新快捷键页面")
         self.shortcuts_widget.update_shortcuts()
         
         # 更新关于页面
+        logger.debug("更新关于页面")
         self.about_widget.update_content()
         
-        # 通知主界面更新菜单
-        ask_grok_plugin.plugin_instance.update_menu_texts()
+        # 通知主界面更新菜单，直接传递新语言参数
+        logger.debug(f"通知主界面更新菜单，语言: {new_language}")
+        ask_grok_plugin.plugin_instance.update_menu_texts(new_language)
         
-        # 更新 response_handler 和 suggestion_handler 的 i18n 对象
+        # 更新主对话框的界面语言
         if (hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
-            ask_grok_plugin.plugin_instance.ask_dialog and
-            hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler')):
-            ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
-            ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
+            ask_grok_plugin.plugin_instance.ask_dialog):
+            logger.debug(f"更新主对话框的界面语言为: {new_language}")
+            # 如果存在update_language方法，直接调用
+            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'update_language'):
+                ask_grok_plugin.plugin_instance.ask_dialog.update_language(new_language)
+            
+            # 更新 response_handler 和 suggestion_handler 的 i18n 对象
+            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler'):
+                logger.debug("更新对话框组件的i18n对象")
+                ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
+                ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 重新加载模型，确保使用最新选择的模型
+        from calibre_plugins.ask_grok.api import api
+        api.reload_model()
+        logger.debug("已重新加载模型")
+        
+        # 更新已打开的AskDialog实例的模型信息
+        try:
+            if (hasattr(ask_grok_plugin, 'plugin_instance') and 
+                ask_grok_plugin.plugin_instance and 
+                hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
+                ask_grok_plugin.plugin_instance.ask_dialog):
+                
+                logger.debug("正在更新已打开的AskDialog实例的模型信息")
+                ask_grok_plugin.plugin_instance.ask_dialog.update_model_info()
+                logger.debug("已更新AskDialog实例的模型信息")
+        except Exception as e:
+            logger.error(f"更新AskDialog实例的模型信息时出错: {str(e)}")
+        
         # 获取最新的语言设置
         new_language = get_prefs().get('language', 'en')
         # 更新界面
@@ -378,7 +496,7 @@ class TabDialog(QDialog):
         """处理按键事件"""
         if event.key() == Qt.Key_Escape:
             # 如果配置页面有未保存的更改，先重置字段
-            if self.config_widget.config_dialog.save_button.isEnabled():
+            if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog') and self.config_widget.config_dialog.save_button.isEnabled():
                 self.config_widget.config_dialog.reset_to_initial_values()
             # 关闭窗口
             self.reject()
@@ -388,7 +506,7 @@ class TabDialog(QDialog):
     def reject(self):
         """处理关闭按钮"""
         # 如果配置页面有未保存的更改，先重置字段
-        if self.config_widget.config_dialog.save_button.isEnabled():
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog') and self.config_widget.config_dialog.save_button.isEnabled():
             self.config_widget.config_dialog.reset_to_initial_values()
         super().reject()
 
@@ -495,6 +613,22 @@ class AskDialog(QDialog):
         self.response_handler = ResponseHandler(self)
         # 确保 SuggestionHandler 正确初始化
         self.suggestion_handler = SuggestionHandler(parent=self)
+        
+        # 连接语言变更信号
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug("连接AskDialog到语言变更信号")
+        
+        # 获取TabDialog实例并连接语言变更信号
+        try:
+            from calibre_plugins.ask_grok import ask_grok_plugin
+            if hasattr(ask_grok_plugin, 'plugin_instance') and ask_grok_plugin.plugin_instance:
+                # 将当前对话框保存到插件实例中，方便其他组件访问
+                ask_grok_plugin.plugin_instance.ask_dialog = self
+                logger.debug("已将AskDialog实例保存到插件实例中")
+        except Exception as e:
+            logger.error(f"连接语言变更信号时出错: {str(e)}")
+        
         
         # 设置当前书籍元数据到response_handler
         if hasattr(self.response_handler, 'history_manager'):
@@ -619,6 +753,38 @@ class AskDialog(QDialog):
         prefs['ask_dialog_height'] = self.height()
         super().resizeEvent(event)
 
+    def update_model_info(self):
+        """更新模型信息显示
+        在配置更改后调用此方法，更新界面上显示的模型信息
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 确保模型已经重新加载
+            self.api.reload_model()
+            
+            # 获取最新的模型显示名称
+            model_display_name = self.api.model_display_name
+            logger.debug(f"更新模型信息: {model_display_name}")
+            
+            # 更新状态栏中的模型信息标签
+            if hasattr(self, 'model_info_label') and self.model_info_label:
+                self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
+                logger.debug("已更新状态栏模型信息标签")
+            else:
+                logger.warning("无法更新模型信息标签: 标签不存在")
+            
+            # 更新窗口标题
+            if hasattr(self, 'book_info') and self.book_info:
+                self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
+                logger.debug("已更新窗口标题")
+            else:
+                logger.warning("无法更新窗口标题: 书籍信息不可用")
+                
+        except Exception as e:
+            logger.error(f"更新模型信息时出错: {str(e)}")
+    
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
@@ -627,15 +793,30 @@ class AskDialog(QDialog):
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
     def setup_ui(self):
-        self.setWindowTitle(f"{self.i18n['menu_title']} - {self.book_info.title}")
+        # 确保模型已经加载
+        self.api.reload_model()
+        
+        # 获取当前使用的模型显示名称
+        model_display_name = self.api.model_display_name
+        
+        # 更新窗口标题，包含模型信息
+        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
         self.setMinimumWidth(500)
         self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
         
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 添加一个状态栏用于显示加载状态
+        # 添加一个状态栏用于显示加载状态和模型信息
         self.statusBar = QStatusBar()
+        
+        # 添加模型信息到状态栏
+        # 确保显示正确的模型名称，而不是 "Unknown Model"
+        model_display_name = self.api.model_display_name
+        self.model_info_label = QLabel(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
+        self.model_info_label.setStyleSheet("color: #666; font-size: 12px; padding-right: 10px;")
+        self.statusBar.addPermanentWidget(self.model_info_label)
+        
         layout.addWidget(self.statusBar)
         
         # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
@@ -711,7 +892,7 @@ class AskDialog(QDialog):
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
-        self.suggest_action.setShortcut(QKeySequence("Ctrl+Shift+S" if not sys.platform == 'darwin' else "Cmd+Shift+S"))
+        self.suggest_action.setShortcut(QKeySequence("Ctrl+R" if not sys.platform == 'darwin' else "Cmd+R"))
 
         # 设置快捷键的范围为窗口级别的
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
@@ -822,7 +1003,9 @@ class AskDialog(QDialog):
         self.copy_response_btn.clicked.connect(self.copy_response)
         
         # 复制问题和响应按钮
-        self.copy_qr_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
+        copy_qa_text = self.i18n.get('copy_question_response', 'Copy Q&A')
+        copy_qa_text = copy_qa_text.replace('&', '&&')
+        self.copy_qr_btn = QPushButton(copy_qa_text)
         self.copy_qr_btn.setStyleSheet("""
             QPushButton {
                 padding: 3px 8px;
@@ -926,12 +1109,36 @@ class AskDialog(QDialog):
         self.suggestion_handler.generate(self.book_info)
 
     def _check_auth_token(self):
-        """检查 auth token 是否已设置，如果未设置则显示配置对话框"""
+        """检查 auth token 是否已设置，如果未设置则显示配置对话框
+        对于Custom模型，API Key是可选的，不强制要求
+        """
         from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
+        import logging
+        logger = logging.getLogger(__name__)
         
-        # 从配置中获取 token
+        # 从配置中获取 token（从选中的模型配置中获取）
         prefs = get_prefs()
-        token = prefs.get('auth_token', '') if hasattr(prefs, 'get') and callable(prefs.get) else ''
+        selected_model = prefs.get('selected_model', 'grok')
+        models_config = prefs.get('models', {})
+        model_config = models_config.get(selected_model, {})
+        
+        # 安全记录日志，隐藏API Key
+        safe_model_config = safe_log_config(model_config)
+        logger.debug(f"检查模型 {selected_model} 的API Key，配置: {safe_model_config}")
+        
+        # 如果是Custom模型，不强制要求API Key
+        if selected_model == 'custom':
+            logger.debug("Custom模型不强制要求API Key，跳过验证")
+            return True
+        
+        # 根据模型类型获取 token
+        token = ''
+        if selected_model == 'grok':
+            token = model_config.get('auth_token', '')
+        elif selected_model == 'gemini':
+            token = model_config.get('api_key', '')
+        elif selected_model == 'deepseek':
+            token = model_config.get('api_key', '')
         
         # 检查 token 是否为空
         if not token or not token.strip():
@@ -939,8 +1146,8 @@ class AskDialog(QDialog):
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.information(
                 self,
-                self.i18n.get('auth_token_required_title', 'Auth Token Required'),
-                self.i18n.get('auth_token_required_message', 'Please set your Auth Token in the configuration dialog.')
+                self.i18n.get('auth_token_required_title', 'API Key Required'),
+                self.i18n.get('auth_token_required_message', 'Please set your API Key in the configuration dialog.')
             )
             
             # 创建并显示配置对话框
@@ -1099,6 +1306,52 @@ class AskDialog(QDialog):
         from PyQt5.QtWidgets import QToolTip
         QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
         
+    def update_language(self, new_language=None):
+        """更新界面语言"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 如果没有指定语言，从配置中获取
+        if not new_language:
+            from calibre_plugins.ask_grok.config import get_prefs
+            prefs = get_prefs()
+            new_language = prefs.get('language', 'en')
+        
+        logger.debug(f"AskDialog 更新语言为: {new_language}")
+        
+        # 更新i18n对象
+        from .i18n import get_translation
+        self.i18n = get_translation(new_language)
+        
+        # 更新窗口标题
+        model_display_name = self.api.model_display_name
+        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.get('title', '')}")
+        
+        # 更新发送按钮文本
+        if hasattr(self, 'send_button'):
+            self.send_button.setText(self.i18n.get('send', 'Send'))
+        
+        # 更新输入区域占位符文本
+        if hasattr(self, 'input_area'):
+            self.input_area.setPlaceholderText(self.i18n.get('ask_placeholder', 'Ask about this book...'))
+        
+        # 更新模型信息标签
+        if hasattr(self, 'model_info_label'):
+            self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
+        
+        # 更新复制按钮文本
+        if hasattr(self, 'copy_response_btn'):
+            self.copy_response_btn.setToolTip(self.i18n.get('copy_response', 'Copy response'))
+        
+        if hasattr(self, 'copy_qr_btn'):
+            self.copy_qr_btn.setToolTip(self.i18n.get('copy_qr', 'Copy Q&R'))
+        
+        # 更新随机问题按钮文本
+        if hasattr(self, 'random_question_btn'):
+            self.random_question_btn.setToolTip(self.i18n.get('random_question', 'Random question'))
+        
+        logger.debug("AskDialog 界面语言更新完成")
+    
     def closeEvent(self, event):
         """处理窗口关闭事件"""
         # 准备关闭，让线程自然结束
