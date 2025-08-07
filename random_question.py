@@ -195,24 +195,36 @@ class SuggestionHandler(QObject):
 
     def _restore_ui_state(self, restore_input=False):
         """恢复UI状态"""
+        logger.debug(f"_restore_ui_state called with restore_input={restore_input}")
         if not self.suggest_button:
+            logger.debug("suggest_button不存在")
             return
             
         try:
+            logger.debug("恢复按钮状态")
             self.suggest_button.setEnabled(True)
             # 使用 i18n 获取按钮文本
-            self.suggest_button.setText(self.i18n.get('suggest_button', 'Random Question') if hasattr(self, 'i18n') else 'Random Question')
+            button_text = self.i18n.get('suggest_button', 'Random Question') if hasattr(self, 'i18n') else 'Random Question'
+            logger.debug(f"设置按钮文本为: {button_text}")
+            self.suggest_button.setText(button_text)
             self.suggest_button.setStyleSheet("")
             
             # 是否恢复原始输入
             if restore_input and self._original_input and self.input_area:
+                logger.debug(f"恢复原始输入: {self._original_input[:100]}")
                 self.input_area.setPlainText(self._original_input)
+            elif restore_input:
+                logger.debug("无法恢复原始输入: 条件不满足")
+        except Exception as e:
+            logger.error(f"恢复UI状态时出错: {str(e)}")
         except Exception as e:
             logger.error(f"恢复UI状态时出错: {str(e)}")
 
     def _on_suggestion_received(self, suggestion):
         """处理接收到的随机问题"""
         try:
+            logger.debug(f"_on_suggestion_received called with suggestion: {suggestion[:100] if suggestion else 'None'}")
+            
             if not self._request_cancelled:
                 self._stop_loading_timer()
                 self._request_cancelled = True
@@ -225,13 +237,20 @@ class SuggestionHandler(QObject):
                 return
                 
             self._response_text = str(suggestion)
+            logger.debug(f"_response_text set to: {self._response_text[:100]}")
             
             # 更新UI
+            logger.debug(f"开始更新UI，input_area是否存在: {self.input_area is not None}")
             if self.response_area:
                 self.response_area.clear()
+                logger.debug("已清空response_area")
             
             if self.input_area:
+                logger.debug(f"设置input_area文本: {self._response_text[:100]}")
                 self.input_area.setPlainText(self._response_text)
+                logger.debug("已设置input_area文本")
+            else:
+                logger.debug("input_area不存在")
                 
         except Exception as e:
             error_msg = f"处理建议时出错: {str(e)}"
@@ -240,7 +259,9 @@ class SuggestionHandler(QObject):
                 self.response_area.setText(self.i18n.get('process_suggestion_error', 'Error processing suggestion'))
         finally:
             # 确保UI状态总是能被恢复
+            logger.debug("调用_restore_ui_state()")
             self._restore_ui_state()
+            logger.debug("_restore_ui_state()调用完成")
 
     def _on_error(self, error):
         """处理错误"""

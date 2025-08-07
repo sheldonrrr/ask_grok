@@ -48,6 +48,7 @@ class AskGrokPluginUI(InterfaceAction):
     # 根据操作系统设置不同的快捷键
     action_spec = ('Ask Grok', 'images/ask_grok.png', 'Ask Grok about this book', 
                   'Ctrl+L')
+    action_shortcut_name = 'Ask Grok'
     action_type = 'global'
     
     def __init__(self, parent, site_customization):
@@ -84,13 +85,7 @@ class AskGrokPluginUI(InterfaceAction):
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
         
-        # 根据操作系统设置快捷键
-        if sys.platform == 'darwin':  # macOS
-            self.ask_action.setShortcut(QKeySequence("Command+L"))  # macOS 使用 Command
-            self.qaction.setShortcut(QKeySequence("Command+L"))  # 同时设置主动作的快捷键
-        else:
-            self.ask_action.setShortcut(QKeySequence("Ctrl+L"))  # 其他系统使用 Ctrl
-            self.qaction.setShortcut(QKeySequence("Ctrl+L"))  # 同时设置主动作的快捷键
+        # 快捷键已经在action_spec中设置，这里不需要再设置
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -892,7 +887,7 @@ class AskDialog(QDialog):
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
-        self.suggest_action.setShortcut(QKeySequence("Ctrl+R" if not sys.platform == 'darwin' else "Cmd+R"))
+        self.suggest_action.setShortcut(QKeySequence("Ctrl+R"))
 
         # 设置快捷键的范围为窗口级别的
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
