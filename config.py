@@ -238,24 +238,12 @@ class ModelConfigWidget(QWidget):
             reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
             reset_button.setProperty('isResetButton', True)  # 添加属性标记
             reset_button.clicked.connect(self.reset_model_params)
-            reset_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #f0f0f0;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 5px 10px;
-                }
-                QPushButton:hover {
-                    background-color: #e0e0e0;
-                }
-                QPushButton:pressed {
-                    background-color: #d0d0d0;
-                }
-            """)
-            button_layout = QHBoxLayout()
-            button_layout.addStretch()
-            button_layout.addWidget(reset_button)
-            main_layout.addLayout(button_layout)
+            
+            # 使用QDialogButtonBox来保持与关闭按钮一致的样式
+            button_box = QHBoxLayout()
+            button_box.addWidget(reset_button)
+            button_box.addStretch()  # 添加弹性空间，使按钮靠左
+            main_layout.addLayout(button_box)
     
     def get_config(self):
         """获取当前配置"""
@@ -516,19 +504,7 @@ class ConfigDialog(QWidget):
         self.save_button.setFixedHeight(24)
         self.save_button.setEnabled(False)
         
-        # 设置按钮样式
-        self.save_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
-            }
-            QPushButton:hover:enabled {
-                background-color: #f5f5f5;
-            }
-        """)
+        # 移除自定义样式，使用系统默认样式
         button_layout.addWidget(self.save_button)
         
         main_layout.addLayout(button_layout)
