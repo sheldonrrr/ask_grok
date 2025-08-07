@@ -48,6 +48,7 @@ class AskGrokPluginUI(InterfaceAction):
     # 根据操作系统设置不同的快捷键
     action_spec = ('Ask Grok', 'images/ask_grok.png', 'Ask Grok about this book', 
                   'Ctrl+L')
+    action_shortcut_name = 'Ask Grok'
     action_type = 'global'
     
     def __init__(self, parent, site_customization):
@@ -84,13 +85,7 @@ class AskGrokPluginUI(InterfaceAction):
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
         
-        # 根据操作系统设置快捷键
-        if sys.platform == 'darwin':  # macOS
-            self.ask_action.setShortcut(QKeySequence("Command+L"))  # macOS 使用 Command
-            self.qaction.setShortcut(QKeySequence("Command+L"))  # 同时设置主动作的快捷键
-        else:
-            self.ask_action.setShortcut(QKeySequence("Ctrl+L"))  # 其他系统使用 Ctrl
-            self.qaction.setShortcut(QKeySequence("Ctrl+L"))  # 同时设置主动作的快捷键
+        # 快捷键已经在action_spec中设置，这里不需要再设置
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -318,37 +313,38 @@ class AboutWidget(QWidget):
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
+        # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
         self.about_label.setText(f"""
         <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-            <div style='font-size: 24px; font-weight: bold; color: #333333; margin: 10px 0;'>Ask Grok</div>
-            <div style='font-size: 14px; color: #555555; margin-bottom: 15px; line-height: 1.4;'>{self.i18n['plugin_desc']}</div>
-            <div style='font-size: 13px; color: #666666; margin-bottom: 25px;'>{VERSION_DISPLAY}</div>
+            <div style='font-size: 24px; font-weight: bold; color: palette(window-text); margin: 10px 0;'>Ask Grok</div>
+            <div style='font-size: 14px; color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
+            <div style='font-size: 13px; color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
             
             <div style='display: flex; flex-direction: column; align-items: center; margin: 15px 0;'>
                 <div style='margin: 8px 0;'>
                     <a href='http://simp.ly/publish/FwMSSr' 
-                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
                        {self.i18n.get('user_manual', 'User Manual')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='http://simp.ly/publish/xYW5Tr' 
-                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
                        {self.i18n.get('about_plugin', 'Why Ask Grok?')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='https://youtu.be/QdeZgkT1fpw' 
-                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
                        {self.i18n.get('learn_how_to_use', 'How to Use')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='imessage://sheldonrrr@gmail.com' 
-                       style='color: #333333; text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
                        {self.i18n.get('email', 'iMessage')}: sheldonrrr@gmail.com
                     </a>
                 </div>
@@ -892,7 +888,7 @@ class AskDialog(QDialog):
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
-        self.suggest_action.setShortcut(QKeySequence("Ctrl+R" if not sys.platform == 'darwin' else "Cmd+R"))
+        self.suggest_action.setShortcut(QKeySequence("Ctrl+R"))
 
         # 设置快捷键的范围为窗口级别的
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
