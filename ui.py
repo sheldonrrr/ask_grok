@@ -367,6 +367,9 @@ class TabDialog(QDialog):
         
         # 创建标签页
         self.tab_widget = QTabWidget()
+        
+        # 连接标签页切换信号
+        self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
         # 创建General页面
         self.config_widget = AskGrokConfigWidget(self.gui)
@@ -387,13 +390,44 @@ class TabDialog(QDialog):
         layout.addWidget(self.tab_widget)
         
         # 创建按钮布局
-        button_box = QDialogButtonBox(QDialogButtonBox.Close)
-        button_box.rejected.connect(self.reject)
-        # 设置关闭按钮的文本
-        close_button = button_box.button(QDialogButtonBox.Close)
-        if close_button:
-            close_button.setText(self.i18n.get('close_button', 'Close'))
-        layout.addWidget(button_box)
+        button_layout = QHBoxLayout()
+        
+        # 添加左侧间距
+        button_layout.addSpacing(10)
+        
+        # 获取配置对话框实例
+        config_dialog = self.config_widget.config_dialog
+        
+        # 创建保存按钮（左侧）
+        self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
+        self.save_button.clicked.connect(self.on_save_clicked)
+        self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
+        button_layout.addWidget(self.save_button)
+        
+        # 创建保存成功提示标签
+        self.save_feedback_label = QLabel("")
+        self.save_feedback_label.setStyleSheet("color: green; font-weight: bold;")
+        self.save_feedback_label.hide()
+        button_layout.addWidget(self.save_feedback_label)
+        
+        # 将配置对话框的配置变更信号连接到更新保存按钮状态的方法
+        config_dialog.config_changed.connect(self.update_save_button_state)
+        
+        # 连接保存成功信号
+        config_dialog.settings_saved.connect(self.on_settings_saved)
+        
+        # 添加弹性空间，使按钮分别位于左右两侧
+        button_layout.addStretch()
+        
+        # 添加Close按钮（右侧）
+        close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        close_button.clicked.connect(self.reject)
+        button_layout.addWidget(close_button)
+        
+        # 添加右侧间距
+        button_layout.addSpacing(10)
+        
+        layout.addLayout(button_layout)
         
         self.setLayout(layout)
         
@@ -499,11 +533,63 @@ class TabDialog(QDialog):
         else:
             super().keyPressEvent(event)
     
+    def on_tab_changed(self, index):
+        """处理标签页切换事件
+        
+        :param index: 当前标签页索引
+        """
+        # 仅在 General 标签页（索引为0）显示保存按钮
+        if hasattr(self, 'save_button'):
+            self.save_button.setVisible(index == 0)
+            
+            # 如果切换到 General 标签页，更新保存按钮状态
+            if index == 0:
+                self.update_save_button_state()
+    
+    def on_save_clicked(self):
+        """处理保存按钮点击事件"""
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+            # 调用配置对话框的保存方法
+            self.config_widget.config_dialog.save_settings()
+    
+    def on_settings_saved(self):
+        """处理设置保存成功事件"""
+        # 禁用保存按钮
+        if hasattr(self, 'save_button'):
+            self.save_button.setEnabled(False)
+        
+        # 显示保存成功提示
+        if hasattr(self, 'save_feedback_label'):
+            self.save_feedback_label.setText(self.i18n.get('saved', 'Saved'))
+            self.save_feedback_label.show()
+            
+            # 1秒后隐藏提示
+            QTimer.singleShot(1000, self.save_feedback_label.hide)
+    
+    def update_save_button_state(self):
+        """更新保存按钮的启用/禁用状态"""
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+            # 检查是否有配置变更
+            config_dialog = self.config_widget.config_dialog
+            has_changes = config_dialog.check_for_changes()
+            
+            # 根据是否有变更设置保存按钮状态
+            if hasattr(self, 'save_button'):
+                self.save_button.setEnabled(has_changes)
+                
+            # 如果有变更，隐藏保存成功提示
+            if has_changes and hasattr(self, 'save_feedback_label'):
+                self.save_feedback_label.hide()
+    
     def reject(self):
         """处理关闭按钮"""
         # 如果配置页面有未保存的更改，先重置字段
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog') and self.config_widget.config_dialog.save_button.isEnabled():
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+            # 直接调用重置方法
             self.config_widget.config_dialog.reset_to_initial_values()
+            # 重置保存按钮状态
+            if hasattr(self, 'save_button'):
+                self.save_button.setEnabled(False)
         super().reject()
 
 from calibre_plugins.ask_grok.response_handler import ResponseHandler

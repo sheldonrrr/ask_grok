@@ -6,6 +6,7 @@ import requests
 from typing import Dict, Any, Optional
 
 from .base import BaseAIModel
+from ..i18n import get_translation
 
 
 class GrokModel(BaseAIModel):
@@ -26,7 +27,8 @@ class GrokModel(BaseAIModel):
         required_keys = ['auth_token', 'api_base_url', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
     
     def get_token(self) -> str:
         """
@@ -48,10 +50,10 @@ class GrokModel(BaseAIModel):
         
         token = self.get_token()
         
-        # Grok API Key 格式验证（可选）
-        # 注意：这里我们不再强制要求 xai- 前缀，因为 API 可能会变化
-        if len(token) < 10:  # 只要求基本长度
-            raise ValueError("API Key is too short. Please check and enter the complete key.")
+        # Grok API Key 格式验证：只验证基本长度
+        if len(token) < 10:
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('api_key_too_short', 'API Key is too short. Please check and enter the complete key.'))
         
         return True
     

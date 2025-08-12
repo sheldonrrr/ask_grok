@@ -435,6 +435,7 @@ class ConfigDialog(QWidget):
     # 添加信号
     settings_saved = pyqtSignal()  # 设置保存信号
     language_changed = pyqtSignal(str)  # 语言改变信号
+    config_changed = pyqtSignal()  # 配置变更信号
     
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
@@ -486,28 +487,7 @@ class ConfigDialog(QWidget):
         # 设置通用设置（包含所有配置）
         self.setup_general_tab(main_layout)
         
-        # 添加按钮布局
-        button_layout = QHBoxLayout()
-        
-        # 创建保存成功提示标签
-        self.save_success_label = QLabel('')
-        self.save_success_label.setStyleSheet('color: #2ecc71; font-size: 12px;')
-        self.save_success_label.hide()
-        button_layout.addWidget(self.save_success_label)
-        
-        button_layout.addStretch()
-        
-        # 创建保存按钮
-        self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
-        self.save_button.clicked.connect(self.save_settings)
-        self.save_button.setFixedWidth(80)
-        self.save_button.setFixedHeight(24)
-        self.save_button.setEnabled(False)
-        
-        # 移除自定义样式，使用系统默认样式
-        button_layout.addWidget(self.save_button)
-        
-        main_layout.addLayout(button_layout)
+        # 注意：按钮布局现在在ui.py中统一管理，这里不再添加按钮布局
     
     def setup_general_tab(self, main_layout):
         """设置通用设置（包含所有配置项）"""
@@ -1021,7 +1001,6 @@ class ConfigDialog(QWidget):
                         break
             
             # 如果没有匹配到objectName，则尝试匹配当前文本
-            # 先检查完全匹配
             current_text = label.text()
             if current_text in known_labels.values():
                 continue  # 已经是最新的翻译，无需更新
@@ -1061,7 +1040,6 @@ class ConfigDialog(QWidget):
                 elif key == 'prompt_template' and (('prompt' in current_text_lower and 'template' in current_text_lower) or '提示模板' in current_text_lower or '提示词模板' in current_text_lower):
                     label.setText(value)
                     logger.debug(f"基于关键字更新了{key}标签为: {value}")
-                    break
                     
         # 发出语言改变信号，通知其他组件更新界面
         logger.debug(f"发送语言变更信号: {lang_code}")
@@ -1078,7 +1056,7 @@ class ConfigDialog(QWidget):
         
         # 更新标题和按钮文本
         self.setWindowTitle(self.i18n.get('config_title', 'Ask Grok Configuration'))
-        self.save_button.setText(self.i18n.get('save_button', 'Save'))
+        #self.save_button.setText(self.i18n.get('save_button', 'Save'))
         
         # 更新成功提示文字
         if hasattr(self, 'save_success_label') and not self.save_success_label.isHidden():
@@ -1128,13 +1106,13 @@ class ConfigDialog(QWidget):
             
             # 检查关键字匹配
             current_text_lower = current_text.lower()
-            if ('language' in current_text_lower or '语言' in current_text or '言語' in current_text):
+            if ('language' in current_text_lower or '语言' in current_text or '言語' in current_text_lower):
                 child.setText(known_labels['language'])
                 logger.debug(f"基于关键字更新了语言标签为: {known_labels['language']}")
             elif ('current' in current_text_lower and 'ai' in current_text_lower) or '当前' in current_text:
                 child.setText(known_labels['current_ai'])
                 logger.debug(f"基于关键字更新了当前AI标签为: {known_labels['current_ai']}")
-            elif ('api' in current_text_lower and ('key' in current_text_lower or 'token' in current_text_lower)) or '密钥' in current_text or 'clé' in current_text_lower:
+            elif ('api' in current_text_lower or ('key' in current_text_lower or 'token' in current_text_lower)) or '密钥' in current_text_lower or 'clé' in current_text_lower:
                 child.setText(known_labels['api_key'])
                 logger.debug(f"基于关键字更新了API Key标签为: {known_labels['api_key']}")
             elif ('base' in current_text_lower and 'url' in current_text_lower) or '基础' in current_text or 'base' in current_text_lower:
@@ -1156,7 +1134,7 @@ class ConfigDialog(QWidget):
         # 更新所有按钮文本
         reset_text = self.i18n.get('reset_button', 'Reset to Default')
         reset_tooltip = self.i18n.get('reset_tooltip', 'Reset to default value')
-        save_text = self.i18n.get('save_button', 'Save')
+        #save_text = self.i18n.get('save_button', 'Save')
         
         for button in self.findChildren(QPushButton):
             # 通过objectName或属性识别Reset按钮
@@ -1180,9 +1158,9 @@ class ConfigDialog(QWidget):
                 button.setToolTip(reset_tooltip)
                 logger.debug(f"基于当前文本更新了Reset按钮文本为: {reset_text}")
             # 更新Save按钮
-            elif button.text() in ['Save', '保存', 'Sauvegarder', '保存する']:
-                button.setText(save_text)
-                logger.debug(f"更新了Save按钮文本为: {save_text}")
+            #elif button.text() in ['Save', '保存', 'Sauvegarder', '保存する']:
+            #    button.setText(save_text)
+            #    logger.debug(f"更新了Save按钮文本为: {save_text}")
         
         # 更新模型配置控件
         if hasattr(self, 'model_widgets'):
@@ -1230,7 +1208,7 @@ class ConfigDialog(QWidget):
         logger.debug(f"保存到prefs的所有模型配置: {safe_log_config(models_config)}")
         
         # 更新按钮状态
-        self.save_button.setEnabled(False)
+        #self.save_button.setEnabled(False)
         
         # 显示保存成功提示
         if hasattr(self, 'save_success_label'):
@@ -1279,8 +1257,11 @@ class ConfigDialog(QWidget):
         if isinstance(prefs, JSONConfig):
             prefs.commit()
     
-    def on_config_changed(self):
-        """当任何配置发生改变时检查是否需要启用保存按钮"""
+    def check_for_changes(self):
+        """检查是否有配置变更
+        
+        :return: 如果有变更返回 True，否则返回 False
+        """
         # 获取当前语言
         current_lang = self.lang_combo.currentData()
         
@@ -1348,11 +1329,16 @@ class ConfigDialog(QWidget):
             except Exception as e:
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
-        # 根据是否有改变来设置保存按钮状态
-        if hasattr(self, 'save_button'):
-            self.save_button.setEnabled(general_changed or models_changed or random_questions_changed)
-        else:
-            logger.debug("未找到save_button属性，可能是在子类中使用")
+        # 返回是否有变更
+        return general_changed or models_changed or random_questions_changed
+    
+    def on_config_changed(self):
+        """当任何配置发生改变时检查是否需要启用保存按钮"""
+        # 检查是否有配置变更
+        has_changes = self.check_for_changes()
+        
+        # 发送配置变更信号
+        self.config_changed.emit()
     
     def reset_to_initial_values(self):
         """重置到初始值"""
@@ -1386,6 +1372,6 @@ class ConfigDialog(QWidget):
         self.setup_model_widgets()
         
         # 重置按钮状态
-        self.save_button.setEnabled(False)
-        self.save_success_label.setText('')
-        self.save_success_label.hide()
+        #self.save_button.setEnabled(False)
+        #self.save_success_label.setText('')
+        #self.save_success_label.hide()

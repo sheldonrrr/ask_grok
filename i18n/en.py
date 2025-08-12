@@ -129,6 +129,8 @@ class EnglishTranslation(BaseTranslation):
             'random_question_error': 'Error generating random question',
             'clear_history_failed': 'Failed to clear history',
             'clear_history_not_supported': 'Clear history for single book is not supported yet',
+            'missing_required_config': 'Missing required configuration: {key}. Please check your settings.',
+            'api_key_too_short': 'API Key is too short. Please check and enter the complete key.',
             
             # About information
             'author_name': 'Sheldon',
