@@ -19,7 +19,7 @@ from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_grok.api import APIClient
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_grok.shortcuts_widget import ShortcutsWidget
-from calibre_plugins.ask_grok import VERSION_DISPLAY
+from calibre_plugins.ask_grok.version import VERSION_DISPLAY
 from calibre.utils.resources import get_path as I
 import sys
 import os
