@@ -28,7 +28,7 @@ class GrokModel(BaseAIModel):
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
     
     def get_token(self) -> str:
         """
@@ -192,11 +192,39 @@ class GrokModel(BaseAIModel):
                             content = result['choices'][0]['message']['content']
                             logger.debug(f"成功获取Grok响应内容，长度: {len(content)}")
                             return content
+                        elif 'text' in result['choices'][0]:
+                            # 尝试从其他可能的字段获取内容
+                            content = result['choices'][0]['text']
+                            logger.debug(f"从替代字段获取Grok响应内容，长度: {len(content)}")
+                            return content
                     
-                    # 如果响应格式不符合预期
+                    # 如果无法从标准格式提取内容，尝试从整个响应中提取有用信息
+                    logger.warning("无法从标准格式提取Grok API响应内容，尝试提取原始响应")
+                    
+                    # 尝试从响应中提取任何可能的文本内容
+                    if isinstance(result, dict):
+                        # 尝试从响应中的任何字段提取文本
+                        for key, value in result.items():
+                            if isinstance(value, str) and len(value) > 10:
+                                logger.debug(f"从字段 '{key}' 提取内容，长度: {len(value)}")
+                                return value
+                            elif isinstance(value, list) and value and isinstance(value[0], dict):
+                                # 尝试从列表中的第一个字典提取内容
+                                for sub_key, sub_value in value[0].items():
+                                    if isinstance(sub_value, str) and len(sub_value) > 10:
+                                        logger.debug(f"从子字段 '{key}.{sub_key}' 提取内容，长度: {len(sub_value)}")
+                                        return sub_value
+                    
+                    # 如果仍然无法提取内容，返回响应的字符串表示
+                    response_str = json.dumps(result, ensure_ascii=False)
+                    if len(response_str) > 20:  # 确保响应不是空的或者太短
+                        logger.warning(f"返回原始响应字符串，长度: {len(response_str)}")
+                        return response_str[:1000]  # 限制长度以避免过大的响应
+                    
+                    # 如果响应格式不符合预期且无法提取任何有用内容
                     error_msg = "无法从Grok API响应中提取内容"
                     logger.error(f"{error_msg}, 响应: {json.dumps(result, ensure_ascii=False)[:200]}...")
-                    raise Exception(error_msg)
+                    return f"Error: {error_msg}"  # 返回错误信息而不是抛出异常
                 except requests.exceptions.RequestException as req_e:
                     error_msg = f"Grok API请求失败: {str(req_e)}"
                     logger.error(error_msg)

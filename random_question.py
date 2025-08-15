@@ -235,6 +235,15 @@ class SuggestionHandler(QObject):
                 if self.response_area:
                     self.response_area.setText(error_msg)
                 return
+            
+            # 检查是否是错误消息（以"Error:"开头）
+            if isinstance(suggestion, str) and suggestion.startswith("Error:"):
+                error_msg = suggestion[6:].strip()  # 去除"Error:"前缀
+                logger.warning(f"收到错误消息: {error_msg}")
+                if self.response_area:
+                    self.response_area.setText(error_msg)
+                self._restore_ui_state(restore_input=True)
+                return
                 
             self._response_text = str(suggestion)
             logger.debug(f"_response_text set to: {self._response_text[:100]}")
@@ -269,12 +278,12 @@ class SuggestionHandler(QObject):
             self._request_cancelled = True
             self._stop_loading_timer()
             
-        if self.response_area and hasattr(self, 'i18n') and isinstance(self.i18n, dict):
-            # 只显示一个错误提示
-            error_text = self.i18n['suggestion_error']
+        if self.response_area:
+            # 修复错误处理逻辑，确保即使i18n字典中没有对应的键也能正常工作
+            error_text = self.i18n.get('suggestion_error', 'Error generating suggestion')
             if error and str(error).strip():
                 error_text = f"{error_text}: {str(error).strip()}"
-                self.response_area.setText(error_text)
+            self.response_area.setText(error_text)
                 
         self._restore_ui_state(restore_input=True)
         self._cleanup_worker()  # 确保清理工作线程

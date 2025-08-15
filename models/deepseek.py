@@ -31,7 +31,8 @@ class DeepseekModel(BaseAIModel):
         required_keys = ['api_key', 'api_base_url', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
     
     def get_token(self) -> str:
         """

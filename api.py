@@ -355,14 +355,15 @@ class APIClient:
         except AIAPIError as api_error:
             # 记录详细的 API 错误信息
             logger.error(f"{model_name} API 错误: {str(api_error)}")
-            # 直接重新抛出 AIAPIError
-            raise
+            # 返回错误信息而不是重新抛出异常
+            return f"Error: {str(api_error)}"
         except Exception as e:
             # 记录详细的异常信息
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
             # 处理其他未知错误
             error_msg = f"{self.i18n.get('random_question_error', 'Error generating random question')}: {str(e)}"
-            raise AIAPIError(error_msg, error_type="random_question_error") from e
+            # 返回错误信息而不是抛出异常
+            return f"Error: {error_msg}"
     
     def reload_model(self):
         """重新加载当前选择的模型"""
