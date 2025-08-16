@@ -83,7 +83,7 @@ class AskGrokPlugin(InterfaceActionBase):
     description         = 'Ask questions about a book using AI'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 2, 0)
+    version             = (1, 2, 1)
     minimum_calibre_version = (7, 0)
     icon                = 'images/ask_grok.png'
 
