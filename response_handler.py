@@ -283,7 +283,7 @@ class ResponseHandler(QObject):
         self._timeout_timer = QTimer()
         self._timeout_timer.setSingleShot(True)
         self._timeout_timer.timeout.connect(self._check_request_timeout)
-        self._timeout_timer.start(60000)  # 增加超时时间到60秒
+        self._timeout_timer.start(360000)  # 增加超时时间到60秒
         logger.info(f"[Request Setup] 请求设置完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
     
     # 初始化流式响应相关变量
@@ -394,7 +394,7 @@ class ResponseHandler(QObject):
         """检查请求是否超时"""
         if hasattr(self, '_request_start_time') and self._request_start_time and not self._request_cancelled:
             elapsed = time.time() - self._request_start_time
-            if elapsed > 60:  # 60秒超时
+            if elapsed > 360:  # 60秒超时
                 self.handle_error("Request took too long, automatically terminated", "timeout")
     
     def _cleanup_request(self):

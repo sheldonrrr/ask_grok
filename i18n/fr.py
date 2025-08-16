@@ -51,6 +51,8 @@ class FrenchTranslation(BaseTranslation):
             'copy_response': 'Copier la Réponse',
             'copy_question_response': 'Copier Q&&R',
             'copied': 'Copié!',
+            'saved': 'Enregistré',
+            'close_button': 'Fermer',
             
             # UI - Champs de configuration
             'token_label': 'Clé API:',
@@ -112,6 +114,7 @@ class FrenchTranslation(BaseTranslation):
             'unknown_error': 'Erreur inconnue',
             'unknown_model': 'Modèle inconnu: {model_name}',
             'suggestion_error': 'Erreur de suggestion',
+            'random_question_success': 'Question aléatoire générée avec succès!',
             'book_title_check': 'Titre du livre requis',
             'avoid_repeat_question': 'Veuillez utiliser une question différente',
             'empty_answer': 'Réponse vide',
@@ -126,6 +129,34 @@ class FrenchTranslation(BaseTranslation):
             'random_question_error': 'Erreur lors de la génération d\'une question aléatoire',
             'clear_history_failed': 'Échec de l\'effacement de l\'historique',
             'clear_history_not_supported': 'L\'effacement de l\'historique pour un seul livre n\'est pas encore pris en charge',
+            'missing_required_config': 'Configuration requise manquante: {key}. Veuillez vérifier vos paramètres.',
+            'api_key_too_short': 'La clé API est trop courte. Veuillez vérifier et saisir la clé complète.',
+            
+            # Traitement des réponses API
+            'api_request_failed': 'Échec de la requête API: {error}',
+            'api_content_extraction_failed': 'Impossible d\'extraire le contenu de la réponse API',
+            'api_invalid_response': 'Impossible d\'obtenir une réponse API valide',
+            'api_unknown_error': 'Erreur inconnue: {error}',
+            
+            # Traitement des réponses en streaming
+            'stream_response_code': 'Code d\'état de réponse en streaming: {code}',
+            'stream_continue_prompt': 'Veuillez continuer votre réponse précédente sans répéter le contenu déjà fourni.',
+            'stream_continue_code_blocks': 'Votre réponse précédente contenait des blocs de code non fermés. Veuillez continuer et compléter ces blocs de code.',
+            'stream_continue_parentheses': 'Votre réponse précédente contenait des parenthèses non fermées. Veuillez continuer et vous assurer que toutes les parenthèses sont correctement fermées.',
+            'stream_continue_interrupted': 'Votre réponse précédente semble avoir été interrompue. Veuillez continuer à compléter votre dernière pensée ou explication.',
+            'stream_timeout_error': 'La transmission en streaming n\'a pas reçu de nouveau contenu pendant 60 secondes, peut-être un problème de connexion.',
+            
+            # Messages d\'erreur API
+            'api_version_model_error': 'Erreur de version API ou de nom de modèle: {message}\n\nVeuillez mettre à jour l\'URL de base API à "{base_url}" et le modèle à "{model}" ou un autre modèle disponible dans les paramètres.',
+            'api_format_error': 'Erreur de format de requête API: {message}',
+            'api_key_invalid': 'Clé API invalide ou non autorisée: {message}\n\nVeuillez vérifier votre clé API et vous assurer que l\'accès API est activé.',
+            'api_rate_limit': 'Limite de fréquence de requêtes dépassée, veuillez réessayer plus tard\n\nVous avez peut-être dépassé le quota d\'utilisation gratuite. Cela pourrait être dû à:\n1. Trop de requêtes par minute\n2. Trop de requêtes par jour\n3. Trop de jetons d\'entrée par minute',
+            
+            # Erreurs de configuration
+            'missing_config_key': 'Clé de configuration requise manquante: {key}',
+            'api_base_url_required': 'URL de base API requise',
+            'model_name_required': 'Nom du modèle requis',
+            'api_key_empty': 'La clé API est vide. Veuillez saisir une clé API valide.',
             
             # Informations sur À propos
             'author_name': 'Sheldon',
@@ -141,4 +172,7 @@ class FrenchTranslation(BaseTranslation):
             'model_display_name_custom': 'Personnalisé',
             'model_enable_streaming': 'Activer le streaming',
             'model_disable_ssl_verify': 'Désactiver la vérification SSL',
+            
+            # Messages système communs
+            'default_system_message': 'Vous êtes un expert en analyse de livres. Votre tâche est d\'aider les utilisateurs à mieux comprendre les livres en fournissant des questions et des analyses perspicaces.',
         }

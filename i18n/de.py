@@ -51,6 +51,7 @@ class GermanTranslation(BaseTranslation):
             'copy_response': 'Antwort kopieren',
             'copy_question_response': 'F&&A kopieren',
             'copied': 'Kopiert!',
+            'saved': 'Gespeichert',
             'close_button': 'Schließen',
             
             # UI - Konfigurationsfelder
@@ -115,6 +116,7 @@ class GermanTranslation(BaseTranslation):
             'unknown_error': 'Unbekannter Fehler',
             'unknown_model': 'Unbekanntes Modell: {model_name}',
             'suggestion_error': 'Vorschlagsfehler',
+            'random_question_success': 'Zufällige Frage erfolgreich generiert!',
             'book_title_check': 'Buchtitel erforderlich',
             'avoid_repeat_question': 'Bitte verwenden Sie eine andere Frage',
             'empty_answer': 'Leere Antwort',
@@ -129,6 +131,34 @@ class GermanTranslation(BaseTranslation):
             'random_question_error': 'Fehler beim Generieren einer zufälligen Frage',
             'clear_history_failed': 'Löschen des Verlaufs fehlgeschlagen',
             'clear_history_not_supported': 'Löschen des Verlaufs für ein einzelnes Buch wird noch nicht unterstützt',
+            'missing_required_config': 'Fehlende erforderliche Konfiguration: {key}. Bitte überprüfen Sie Ihre Einstellungen.',
+            'api_key_too_short': 'API-Schlüssel ist zu kurz. Bitte überprüfen Sie und geben Sie den vollständigen Schlüssel ein.',
+            
+            # API-Antwortverarbeitung
+            'api_request_failed': 'API-Anfrage fehlgeschlagen: {error}',
+            'api_content_extraction_failed': 'Inhalt konnte nicht aus der API-Antwort extrahiert werden',
+            'api_invalid_response': 'Keine gültige API-Antwort erhalten',
+            'api_unknown_error': 'Unbekannter Fehler: {error}',
+            
+            # Streaming-Antwortverarbeitung
+            'stream_response_code': 'Streaming-Antwort-Statuscode: {code}',
+            'stream_continue_prompt': 'Bitte setzen Sie Ihre vorherige Antwort fort, ohne bereits bereitgestellte Inhalte zu wiederholen.',
+            'stream_continue_code_blocks': 'Ihre vorherige Antwort hatte ungeschlossene Code-Blöcke. Bitte fahren Sie fort und vervollständigen Sie diese Code-Blöcke.',
+            'stream_continue_parentheses': 'Ihre vorherige Antwort hatte ungeschlossene Klammern. Bitte fahren Sie fort und stellen Sie sicher, dass alle Klammern ordnungsgemäß geschlossen sind.',
+            'stream_continue_interrupted': 'Ihre vorherige Antwort scheint unterbrochen worden zu sein. Bitte fahren Sie fort und vervollständigen Sie Ihren letzten Gedanken oder Ihre Erklärung.',
+            'stream_timeout_error': 'Die Streaming-Übertragung hat 60 Sekunden lang keine neuen Inhalte erhalten, möglicherweise ein Verbindungsproblem.',
+            
+            # API-Fehlermeldungen
+            'api_version_model_error': 'API-Version oder Modellname-Fehler: {message}\n\nBitte aktualisieren Sie die API-Basis-URL auf "{base_url}" und das Modell auf "{model}" oder ein anderes verfügbares Modell in den Einstellungen.',
+            'api_format_error': 'API-Anforderungsformatfehler: {message}',
+            'api_key_invalid': 'API-Schlüssel ungültig oder nicht autorisiert: {message}\n\nBitte überprüfen Sie Ihren API-Schlüssel und stellen Sie sicher, dass der API-Zugriff aktiviert ist.',
+            'api_rate_limit': 'Anfragelimit überschritten, bitte versuchen Sie es später erneut\n\nSie haben möglicherweise das kostenlose Nutzungskontingent überschritten. Dies könnte auf Folgendes zurückzuführen sein:\n1. Zu viele Anfragen pro Minute\n2. Zu viele Anfragen pro Tag\n3. Zu viele Eingabe-Tokens pro Minute',
+            
+            # Konfigurationsfehler
+            'missing_config_key': 'Fehlender erforderlicher Konfigurationsschlüssel: {key}',
+            'api_base_url_required': 'API-Basis-URL ist erforderlich',
+            'model_name_required': 'Modellname ist erforderlich',
+            'api_key_empty': 'API-Schlüssel ist leer. Bitte geben Sie einen gültigen API-Schlüssel ein.',
             
             # Über Informationen
             'author_name': 'Sheldon',
@@ -144,4 +174,7 @@ class GermanTranslation(BaseTranslation):
             'model_display_name_custom': 'Benutzerdefiniert',
             'model_enable_streaming': 'Streaming aktivieren',
             'model_disable_ssl_verify': 'SSL-Verifizierung deaktivieren',
+            
+            # Allgemeine Systemnachrichten
+            'default_system_message': 'Sie sind ein Experte für Buchanalysen. Ihre Aufgabe ist es, Benutzern zu helfen, Bücher besser zu verstehen, indem Sie aufschlussreiche Fragen und Analysen bereitstellen.',
         }

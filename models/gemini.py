@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional
 import logging
 
 from .base import BaseAIModel
+from ..i18n import get_translation
 
 # 获取日志记录器
 logger = logging.getLogger('calibre_plugins.ask_grok.models.gemini')
@@ -31,7 +32,8 @@ class GeminiModel(BaseAIModel):
         required_keys = ['api_key', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
         
         # 确保 api_base_url 存在，如果不存在则使用默认值
         if 'api_base_url' not in self.config:
@@ -55,12 +57,11 @@ class GeminiModel(BaseAIModel):
         # 首先调用基类的基本验证
         super().validate_token()
         
-        # Gemini API Key 格式验证（可选）
-        # 注意：我们不对 Gemini API Key 做特定格式验证，因为它的格式可能会变化
         # 只进行基本的长度检查
         token = self.get_token()
         if len(token) < 10:  # 只要求基本长度
-            raise ValueError("API Key is too short. Please check and enter the complete key.")
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('api_key_too_short', 'API Key is too short. Please check and enter the complete key.'))
         
         return True
     
@@ -89,7 +90,8 @@ class GeminiModel(BaseAIModel):
         :param kwargs: 其他参数，如 temperature 等
         :return: 请求数据字典
         """
-        system_message = kwargs.get('system_message', "You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.")
+        translations = get_translation(self.config.get('language', 'en'))
+        system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
         # 构建基本请求数据结构，严格按照 Gemini API 要求格式化
         data = {
@@ -114,11 +116,7 @@ class GeminiModel(BaseAIModel):
         })
         
         # 添加生成配置
-        generation_config = {
-            # 设置默认的最大输出令牌数为 8192，这是 Gemini 2.5 Pro 支持的最大值
-            # 这将允许模型生成更长的回复
-            "maxOutputTokens": 65536
-        }
+        generation_config = {}
         
         # 温度参数
         if 'temperature' in kwargs:
@@ -128,6 +126,9 @@ class GeminiModel(BaseAIModel):
         if 'max_tokens' in kwargs:
             generation_config["maxOutputTokens"] = kwargs.get('max_tokens')
         
+        # 最大输出令牌数为 128000
+        generation_config["maxOutputTokens"] = 128000
+
         # 采样参数
         if 'top_p' in kwargs:
             generation_config["topP"] = kwargs.get('top_p')
@@ -252,24 +253,21 @@ class GeminiModel(BaseAIModel):
                                                                 stream_callback(chunk_text)
                                                                 chunk_count += 1
                                                                 last_chunk_time = time.time()
-                                                                logger.debug(f"处理流式块 #{chunk_count}, 长度: {len(chunk_text)}, 累计长度: {len(full_content)}")
-                                        except json.JSONDecodeError as e:
-                                            logger.error(f"JSON解析错误: {str(e)}, 行内容: {line[:50]}...")
+                                        except json.JSONDecodeError as je:
+                                            logger.error(f"JSON解析错误: {str(je)}, 行内容: {line[:50]}...")
                                             continue
-                                    
-                                # 检查是否长时间没有收到新内容
+                                
+                                # 检查是否超过5秒没有收到新数据
                                 current_time = time.time()
-                                if current_time - last_chunk_time > 10:  # 10秒没有新内容
-                                    # 计算无响应时间
-                                    no_response_time = current_time - last_chunk_time
-                                    logger.warning(f"流式传输 {no_response_time:.1f} 秒没有新内容, 当前已收到 {chunk_count} 块, 总长度: {len(full_content)}")
-                                    
-                                    # 如果超过30秒没有响应，可能是连接问题，主动抛出异常以触发恢复机制
-                                    if no_response_time > 30 and full_content:  # 只有在已有内容的情况下才触发
-                                        logger.warning("超过30秒无响应，主动触发恢复机制")
-                                        raise requests.exceptions.ReadTimeout("流式传输超过30秒没有新内容，可能是连接问题")
-                                    
-                                    last_chunk_time = current_time  # 重置计时器避免重复日志
+                                if current_time - last_chunk_time > 15:
+                                    logger.warning(f"已经 {current_time - last_chunk_time:.1f} 秒没有收到新数据")
+                                
+                                # 如果超过15秒没有收到新数据，尝试恢复连接
+                                if current_time - last_chunk_time > 60 and full_content:  # 只有在已有内容的情况下才触发
+                                    logger.warning("超过15秒无响应，主动触发恢复机制")
+                                    raise requests.exceptions.ReadTimeout("流式传输超过15秒没有新内容，可能是连接问题")
+                                
+                                last_chunk_time = current_time  # 重置计时器避免重复日志
                         except Exception as e:
                             logger.error(f"流式处理异常: {str(e)}")
                             # 记录异常时的状态
@@ -285,12 +283,22 @@ class GeminiModel(BaseAIModel):
                                     # 重新构建请求，添加标记表示这是恢复请求
                                     recovery_data = self.prepare_request_data(prompt, **kwargs)
                                     
+                                    # 检查响应是否可能不完整（例如缺少结束标点或代码块未闭合）
+                                    unclosed_code_blocks = full_content.count('```') % 2
+                                    
                                     # 添加恢复标记，让模型知道这是继续之前的对话
                                     if 'contents' in recovery_data and len(recovery_data['contents']) > 0:
                                         # 如果最后一个内容是用户消息，添加一个系统消息表示继续
+                                        translations = get_translation(self.config.get('language', 'en'))
+                                        recovery_prompt = translations.get('stream_continue_prompt', 'Please continue your previous answer without repeating content already provided.')
+                                        
+                                        # 根据不同的不完整情况生成不同的恢复提示
+                                        if unclosed_code_blocks:
+                                            recovery_prompt += translations.get('stream_continue_code_blocks', 'Your previous answer had unclosed code blocks. Please continue and complete these code blocks.')
+                                        
                                         recovery_data['contents'].append({
                                             "role": "user",
-                                            "parts": [{"text": "请继续你之前的回答，不要重复已经提供的内容。"}]
+                                            "parts": [{"text": recovery_prompt}]
                                         })
                                     
                                     # 设置更长的超时时间
@@ -349,6 +357,7 @@ class GeminiModel(BaseAIModel):
                                 raise  # 如果没有内容，抛出异常
                     
                     logger.debug(f"流式请求完成, 总内容长度: {len(full_content)}字符")
+                    
                     return full_content
                 else:
                     # 普通请求处理
@@ -363,7 +372,7 @@ class GeminiModel(BaseAIModel):
                             headers=headers,
                             json=data,
                             params=params,
-                            timeout=kwargs.get('timeout', 60)  # 增加超时时间
+                            timeout=kwargs.get('timeout', 300)  # 增加超时时间
                         )
                         response.raise_for_status()
                         
@@ -381,9 +390,10 @@ class GeminiModel(BaseAIModel):
                                 return content
                         
                         # 如果无法获取响应内容，返回错误信息
-                        error_msg = "无法获取有效的 Gemini API 响应"
+                        translations = get_translation(self.config.get('language', 'en'))
+                        error_msg = translations.get('api_invalid_response', 'Unable to get valid API response')
                         if 'error' in result:
-                            error_msg = f"{error_msg}: {result['error'].get('message', '未知错误')}"
+                            error_msg = f"{error_msg}: {result['error'].get('message', translations.get('unknown_error', 'Unknown error'))}"
                         logger.error(f"Gemini API 响应解析失败: {error_msg}")
                         logger.debug(f"完整响应: {json.dumps(result, ensure_ascii=False)}")
                         raise Exception(error_msg)
@@ -408,7 +418,8 @@ class GeminiModel(BaseAIModel):
                     continue
                 
                 # 最后一次尝试失败，提供详细错误信息
-                error_msg = f"API 请求失败: {str(e)}"
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))
                 
                 if hasattr(e, 'response') and e.response is not None:
                     try:
@@ -416,19 +427,21 @@ class GeminiModel(BaseAIModel):
                         
                         # 根据错误类型提供更具体的错误信息
                         if e.response.status_code == 404:
-                            error_msg = f"API 版本或模型名称错误: {error_detail.get('error', {}).get('message', '')}"
-                            error_msg += f"\n\n请在设置中更新 API Base URL 为 '{self.DEFAULT_API_BASE_URL}' 并将模型更新为 '{self.DEFAULT_MODEL}' 或其他可用模型。"
+                            error_msg = translations.get('api_version_model_error', 'API version or model name error: {message}\n\nPlease update API Base URL to "{base_url}" and model to "{model}" or other available model in settings.').format(
+                                message=error_detail.get('error', {}).get('message', ''),
+                                base_url=self.DEFAULT_API_BASE_URL,
+                                model=self.DEFAULT_MODEL
+                            )
                         elif e.response.status_code == 400:
-                            error_msg = f"API 请求格式错误: {error_detail.get('error', {}).get('message', '')}"
+                            error_msg = translations.get('api_format_error', 'API request format error: {message}').format(
+                                message=error_detail.get('error', {}).get('message', '')
+                            )
                         elif e.response.status_code == 401:
-                            error_msg = f"API Key 无效或未授权: {error_detail.get('error', {}).get('message', '')}"
-                            error_msg += "\n\n请检查您的 API Key 是否正确，并确保已启用 Gemini API 访问权限。"
+                            error_msg = translations.get('api_key_invalid', 'API Key invalid or unauthorized: {message}\n\nPlease check your API Key and ensure API access is enabled.').format(
+                                message=error_detail.get('error', {}).get('message', '')
+                            )
                         elif e.response.status_code == 429:
-                            error_msg = "请求频率超限，请稍后再试"
-                            error_msg += "\n\n您可能已超过 Google Gemini API 的免费使用配额。这可能是因为："
-                            error_msg += "\n1. 每分钟请求次数超限"
-                            error_msg += "\n2. 每天请求次数超限"
-                            error_msg += "\n3. 每分钟输入令牌数超限"
+                            error_msg = translations.get('api_rate_limit', 'Request rate limit exceeded, please try again later\n\nYou may have exceeded the free usage quota. This could be due to:\n1. Too many requests per minute\n2. Too many requests per day\n3. Too many input tokens per minute')
                     except:
                         error_msg += f" | 响应内容: {e.response.text[:200] if hasattr(e.response, 'text') else '无法解析响应'}"
                 

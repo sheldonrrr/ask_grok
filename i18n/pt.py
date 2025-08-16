@@ -51,6 +51,8 @@ class PortugueseTranslation(BaseTranslation):
             'copy_response': 'Copiar Resposta',
             'copy_question_response': 'Copiar P&&R',
             'copied': 'Copiado!',
+            'saved': 'Salvo',
+            'close_button': 'Fechar',
             
             # UI - Campos de configuração
             'token_label': 'Chave API:',
@@ -112,6 +114,7 @@ class PortugueseTranslation(BaseTranslation):
             'unknown_error': 'Erro desconhecido',
             'unknown_model': 'Modelo desconhecido: {model_name}',
             'suggestion_error': 'Erro de sugestão',
+            'random_question_success': 'Pergunta aleatória gerada com sucesso!',
             'book_title_check': 'Título do livro necessário',
             'avoid_repeat_question': 'Por favor, use uma pergunta diferente',
             'empty_answer': 'Resposta vazia',
@@ -126,6 +129,34 @@ class PortugueseTranslation(BaseTranslation):
             'random_question_error': 'Erro ao gerar pergunta aleatória',
             'clear_history_failed': 'Falha ao limpar histórico',
             'clear_history_not_supported': 'Limpar histórico para um único livro ainda não é suportado',
+            'missing_required_config': 'Configuração necessária ausente: {key}. Verifique suas configurações.',
+            'api_key_too_short': 'Chave API muito curta. Verifique e insira a chave completa.',
+            
+            # Processamento de resposta da API
+            'api_request_failed': 'Falha na solicitação da API: {error}',
+            'api_content_extraction_failed': 'Não foi possível extrair conteúdo da resposta da API',
+            'api_invalid_response': 'Não recebeu uma resposta válida da API',
+            'api_unknown_error': 'Erro desconhecido: {error}',
+            
+            # Processamento de resposta de streaming
+            'stream_response_code': 'Código de status da resposta de streaming: {code}',
+            'stream_continue_prompt': 'Continue com sua resposta anterior sem repetir o conteúdo já fornecido.',
+            'stream_continue_code_blocks': 'Sua resposta anterior tinha blocos de código não fechados. Continue e complete esses blocos de código.',
+            'stream_continue_parentheses': 'Sua resposta anterior tinha parênteses não fechados. Continue e certifique-se de que todos os parênteses sejam fechados corretamente.',
+            'stream_continue_interrupted': 'Sua resposta anterior parece ter sido interrompida. Continue e complete seu último pensamento ou explicação.',
+            'stream_timeout_error': 'A transmissão de streaming não recebeu novo conteúdo por 60 segundos, possivelmente um problema de conexão.',
+            
+            # Mensagens de erro da API
+            'api_version_model_error': 'Erro de versão da API ou nome do modelo: {message}\n\nAtualize a URL base da API para "{base_url}" e o modelo para "{model}" ou outro modelo disponível nas configurações.',
+            'api_format_error': 'Erro de formato da solicitação da API: {message}',
+            'api_key_invalid': 'Chave API inválida ou não autorizada: {message}\n\nVerifique sua chave API e certifique-se de que o acesso à API esteja ativado.',
+            'api_rate_limit': 'Limite de solicitações excedido, tente novamente mais tarde\n\nVocê pode ter excedido sua cota de uso gratuito. Isso pode ser devido a:\n1. Muitas solicitações por minuto\n2. Muitas solicitações por dia\n3. Muitos tokens de entrada por minuto',
+            
+            # Erros de configuração
+            'missing_config_key': 'Chave de configuração necessária ausente: {key}',
+            'api_base_url_required': 'URL base da API é necessária',
+            'model_name_required': 'Nome do modelo é necessário',
+            'api_key_empty': 'Chave API está vazia. Insira uma chave API válida.',
             
             # Informações sobre
             'author_name': 'Sheldon',
@@ -141,4 +172,7 @@ class PortugueseTranslation(BaseTranslation):
             'model_display_name_custom': 'Personalizado',
             'model_enable_streaming': 'Ativar streaming',
             'model_disable_ssl_verify': 'Desativar verificação SSL',
+            
+            # Mensagens de sistema gerais
+            'default_system_message': 'Você é um especialista em análise de livros. Sua tarefa é ajudar os usuários a entender melhor os livros fornecendo perguntas e análises perspicazes.',
         }

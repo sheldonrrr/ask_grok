@@ -3,9 +3,12 @@ Grok AI 模型实现
 """
 import json
 import requests
+import time
+import logging
 from typing import Dict, Any, Optional
 
 from .base import BaseAIModel
+from ..i18n import get_translation
 
 
 class GrokModel(BaseAIModel):
@@ -26,7 +29,8 @@ class GrokModel(BaseAIModel):
         required_keys = ['auth_token', 'api_base_url', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
     
     def get_token(self) -> str:
         """
@@ -48,10 +52,10 @@ class GrokModel(BaseAIModel):
         
         token = self.get_token()
         
-        # Grok API Key 格式验证（可选）
-        # 注意：这里我们不再强制要求 xai- 前缀，因为 API 可能会变化
-        if len(token) < 10:  # 只要求基本长度
-            raise ValueError("API Key is too short. Please check and enter the complete key.")
+        # Grok API Key 格式验证：只验证基本长度
+        if len(token) < 10:
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('api_key_too_short', 'API Key is too short. Please check and enter the complete key.'))
         
         return True
     
@@ -80,7 +84,8 @@ class GrokModel(BaseAIModel):
         :param kwargs: 其他参数，如 temperature、stream 等
         :return: 请求数据字典
         """
-        system_message = kwargs.get('system_message', "You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.")
+        translations = get_translation(self.config.get('language', 'en'))
+        system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
         data = {
             "model": self.config.get('model', self.DEFAULT_MODEL),
@@ -95,7 +100,7 @@ class GrokModel(BaseAIModel):
                 }
             ],
             "temperature": kwargs.get('temperature', 0.7),
-            "max_tokens": kwargs.get('max_tokens', 2000)
+            "max_tokens": kwargs.get('max_tokens', 128000)
         }
         
         # 添加流式传输支持
@@ -125,38 +130,142 @@ class GrokModel(BaseAIModel):
             # 如果使用流式传输
             if use_stream and stream_callback:
                 full_content = ""
-                with requests.post(
-                    f"{self.config['api_base_url']}/chat/completions",
-                    headers=headers,
-                    json=data,
-                    timeout=kwargs.get('timeout', 60),  # 流式传输需要更长的超时时间
-                    stream=True,
-                    verify=False  # 注意：生产环境应该验证 SSL 证书
-                ) as response:
-                    response.raise_for_status()
-                    
-                    for line in response.iter_lines():
-                        if line:
-                            line_str = line.decode('utf-8')
-                            if line_str.startswith('data: '):
-                                # 处理数据行
-                                try:
-                                    line_data = json.loads(line_str[6:])  # 去除 'data: ' 前缀
-                                    if 'choices' in line_data and line_data['choices']:
-                                        choice = line_data['choices'][0]
-                                        if 'delta' in choice and 'content' in choice['delta']:
-                                            chunk_text = choice['delta']['content']
-                                            if chunk_text:
-                                                full_content += chunk_text
-                                                stream_callback(chunk_text)
-                                except json.JSONDecodeError:
-                                    # 忽略无效的 JSON
-                                    pass
+                chunk_count = 0
+                last_chunk_time = time.time()
+                logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
                 
+                api_url = f"{self.config['api_base_url']}/chat/completions"
+                
+                try:
+                    with requests.post(
+                        api_url,
+                        headers=headers,
+                        json=data,
+                        timeout=kwargs.get('timeout', 300),  # 流式传输需要更长的超时时间
+                        stream=True,
+                        verify=False  # 注意：生产环境应该验证 SSL 证书
+                    ) as response:
+                        response.raise_for_status()
+                        
+                        for line in response.iter_lines():
+                            if line:
+                                line_str = line.decode('utf-8')
+                                if line_str.startswith('data: '):
+                                    # 处理数据行
+                                    try:
+                                        line_data = json.loads(line_str[6:])  # 去除 'data: ' 前缀
+                                        if 'choices' in line_data and line_data['choices']:
+                                            choice = line_data['choices'][0]
+                                            if 'delta' in choice and 'content' in choice['delta']:
+                                                chunk_text = choice['delta']['content']
+                                                if chunk_text:
+                                                    full_content += chunk_text
+                                                    stream_callback(chunk_text)
+                                                    chunk_count += 1
+                                                    last_chunk_time = time.time()
+                                    except json.JSONDecodeError as je:
+                                        logger.error(f"JSON解析错误: {str(je)}, 行内容: {line_str[:50]}...")
+                                        continue
+                                    
+                                # 检查是否超过15秒没有收到新数据
+                                current_time = time.time()
+                                if current_time - last_chunk_time > 15:
+                                    logger.warning(f"已经 {current_time - last_chunk_time:.1f} 秒没有收到新数据")
+                                
+                                # 如果超过60秒没有收到新数据，尝试恢复连接
+                                if current_time - last_chunk_time > 60 and full_content:  # 只有在已有内容的情况下才触发
+                                    logger.warning("超过60秒无响应，主动触发恢复机制")
+                                    translations = get_translation(self.config.get('language', 'en'))
+                                    raise requests.exceptions.ReadTimeout(translations.get('stream_timeout_error', "流式传输超过60秒没有新内容，可能是连接问题"))
+                                
+                                last_chunk_time = current_time  # 重置计时器避免重复日志
+                
+                except Exception as e:
+                    logger.error(f"流式处理异常: {str(e)}")
+                    # 记录异常时的状态
+                    logger.warning(f"异常发生时状态: 已接收 {chunk_count} 块, 总长度: {len(full_content)}")
+                    
+                    # 如果已经有内容，尝试恢复连接
+                    if full_content:
+                        logger.info("尝试恢复连接以获取完整响应...")
+                        try:
+                            # 保存当前已接收的内容
+                            current_content = full_content
+                            
+                            # 重新构建请求，添加标记表示这是恢复请求
+                            recovery_data = self.prepare_request_data(prompt, **kwargs)
+                            
+                            # 检查响应是否可能不完整（例如缺少结束标点或代码块未闭合）
+                            unclosed_code_blocks = full_content.count('```') % 2
+                            
+                            # 添加恢复标记，让模型知道这是继续之前的对话
+                            translations = get_translation(self.config.get('language', 'en'))
+                            recovery_prompt = translations.get('stream_continue_prompt', 'Please continue your previous answer without repeating content already provided.')
+                            
+                            # 根据不同的不完整情况生成不同的恢复提示
+                            if unclosed_code_blocks:
+                                recovery_prompt += " " + translations.get('stream_continue_code_blocks', 'Your previous answer had unclosed code blocks. Please continue and complete these code blocks.')
+                            
+                            # 为恢复请求添加用户消息
+                            recovery_data['messages'].append({
+                                "role": "user",
+                                "content": recovery_prompt
+                            })
+                            
+                            # 设置更长的超时时间
+                            recovery_timeout = kwargs.get('timeout', 300) + 60
+                            
+                            logger.info(f"发起恢复请求，超时时间: {recovery_timeout}秒")
+                            
+                            # 发起恢复请求
+                            with requests.post(
+                                api_url,
+                                headers=headers,
+                                json=recovery_data,
+                                timeout=recovery_timeout,
+                                stream=True,
+                                verify=False
+                            ) as recovery_response:
+                                recovery_response.raise_for_status()
+                                logger.info(f"恢复连接成功，状态码: {recovery_response.status_code}")
+                                
+                                # 处理恢复响应
+                                for line in recovery_response.iter_lines():
+                                    if line:
+                                        line_str = line.decode('utf-8')
+                                        if line_str.startswith('data: '):
+                                            line_data_str = line_str[6:]
+                                            
+                                            if line_data_str.strip() == "[DONE]":
+                                                logger.info("恢复请求收到结束标记 [DONE]")
+                                                break
+                                            
+                                            try:
+                                                line_data = json.loads(line_data_str)
+                                                if 'choices' in line_data and line_data['choices']:
+                                                    choice = line_data['choices'][0]
+                                                    if 'delta' in choice and 'content' in choice['delta']:
+                                                        chunk_text = choice['delta']['content']
+                                                        if chunk_text:
+                                                            full_content += chunk_text
+                                                            stream_callback(chunk_text)
+                                                            chunk_count += 1
+                                                            last_chunk_time = time.time()
+                                            except json.JSONDecodeError as je:
+                                                logger.error(f"恢复请求JSON解析错误: {str(je)}")
+                                                continue
+                                
+                                logger.info(f"恢复请求完成，新增内容长度: {len(full_content) - len(current_content)}")
+                        except Exception as recovery_e:
+                            logger.error(f"恢复连接失败: {str(recovery_e)}")
+                            logger.warning(f"将返回已接收的 {len(full_content)} 字符内容")
+                    else:
+                        raise  # 如果没有内容，抛出异常
+                
+                logger.debug(f"流式请求完成, 总内容长度: {len(full_content)}字符")
                 return full_content
             else:
                 # 非流式请求
-                import logging
                 logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
                 
                 logger.debug("开始Grok非流式请求")
@@ -176,7 +285,7 @@ class GrokModel(BaseAIModel):
                         api_url,
                         headers=headers,
                         json=data,
-                        timeout=kwargs.get('timeout', 60),  # 增加超时时间
+                        timeout=kwargs.get('timeout', 300),  # 增加超时时间
                         verify=False  # 注意：生产环境应该验证 SSL 证书
                     )
                     response.raise_for_status()
@@ -190,13 +299,44 @@ class GrokModel(BaseAIModel):
                             content = result['choices'][0]['message']['content']
                             logger.debug(f"成功获取Grok响应内容，长度: {len(content)}")
                             return content
+                        elif 'text' in result['choices'][0]:
+                            # 尝试从其他可能的字段获取内容
+                            content = result['choices'][0]['text']
+                            logger.debug(f"从替代字段获取Grok响应内容，长度: {len(content)}")
+                            return content
                     
-                    # 如果响应格式不符合预期
-                    error_msg = "无法从Grok API响应中提取内容"
+                    # 如果无法从标准格式提取内容，尝试从整个响应中提取有用信息
+                    logger.warning("无法从标准格式提取Grok API响应内容，尝试提取原始响应")
+                    
+                    # 尝试从响应中提取任何可能的文本内容
+                    if isinstance(result, dict):
+                        # 尝试从响应中的任何字段提取文本
+                        for key, value in result.items():
+                            if isinstance(value, str) and len(value) > 10:
+                                logger.debug(f"从字段 '{key}' 提取内容，长度: {len(value)}")
+                                return value
+                            elif isinstance(value, list) and value and isinstance(value[0], dict):
+                                # 尝试从列表中的第一个字典提取内容
+                                for sub_key, sub_value in value[0].items():
+                                    if isinstance(sub_value, str) and len(sub_value) > 10:
+                                        logger.debug(f"从子字段 '{key}.{sub_key}' 提取内容，长度: {len(sub_value)}")
+                                        return sub_value
+                    
+                    # 如果仍然无法提取内容，返回响应的字符串表示
+                    response_str = json.dumps(result, ensure_ascii=False)
+                    if len(response_str) > 10:  # 确保响应不是空的或者太短
+                        logger.warning(f"返回原始响应字符串，长度: {len(response_str)}")
+                        return response_str[:128000]  # 限制长度以避免过大的响应
+                    
+                    # 如果响应格式不符合预期且无法提取任何有用内容
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('api_content_extraction_failed', 'Unable to extract content from Grok API response')
                     logger.error(f"{error_msg}, 响应: {json.dumps(result, ensure_ascii=False)[:200]}...")
+                    # 抛出异常而不是返回带有Error:前缀的字符串
                     raise Exception(error_msg)
                 except requests.exceptions.RequestException as req_e:
-                    error_msg = f"Grok API请求失败: {str(req_e)}"
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('api_request_failed', 'Grok API request failed: {error}').format(error=str(req_e))
                     logger.error(error_msg)
                     if hasattr(req_e, 'response') and req_e.response is not None:
                         try:
@@ -207,7 +347,8 @@ class GrokModel(BaseAIModel):
                     raise Exception(error_msg) from req_e
             
         except requests.exceptions.RequestException as e:
-            error_msg = f"API request failed: {str(e)}"
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     error_detail = e.response.json()

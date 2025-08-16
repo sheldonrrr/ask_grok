@@ -51,6 +51,7 @@ class SwedishTranslation(BaseTranslation):
             'copy_response': 'Kopiera svar',
             'copy_question_response': 'Kopiera F&&S',
             'copied': 'Kopierad!',
+            'saved': 'Sparad',
             'close_button': 'Stäng',
             
             # UI - Konfigurationsfält
@@ -113,6 +114,7 @@ class SwedishTranslation(BaseTranslation):
             'unknown_error': 'Okänt fel',
             'unknown_model': 'Okänd modell: {model_name}',
             'suggestion_error': 'Förslagsfel',
+            'random_question_success': 'Slumpmässig fråga genererad!',
             'book_title_check': 'Boktitel krävs',
             'avoid_repeat_question': 'Vänligen använd en annan fråga',
             'empty_answer': 'Tomt svar',
@@ -127,6 +129,34 @@ class SwedishTranslation(BaseTranslation):
             'random_question_error': 'Fel vid generering av slumpmässig fråga',
             'clear_history_failed': 'Kunde inte rensa historik',
             'clear_history_not_supported': 'Rensa historik för en enskild bok stöds ännu inte',
+            'missing_required_config': 'Nödvändig konfiguration saknas: {key}. Kontrollera dina inställningar.',
+            'api_key_too_short': 'API-nyckeln är för kort. Kontrollera och ange den fullständiga nyckeln.',
+            
+            # API-svarshantering
+            'api_request_failed': 'API-begäran misslyckades: {error}',
+            'api_content_extraction_failed': 'Kunde inte extrahera innehåll från API-svar',
+            'api_invalid_response': 'Fick inget giltigt svar från API',
+            'api_unknown_error': 'Okänt fel: {error}',
+            
+            # Strömningssvarshantering
+            'stream_response_code': 'Statuskod för strömningssvar: {code}',
+            'stream_continue_prompt': 'Fortsätt med ditt tidigare svar utan att upprepa innehåll som redan tillhandahållits.',
+            'stream_continue_code_blocks': 'Ditt tidigare svar hade oöppnade kodblock. Fortsätt och slutför dessa kodblock.',
+            'stream_continue_parentheses': 'Ditt tidigare svar hade oöppnade parenteser. Fortsätt och se till att alla parenteser är korrekt stängda.',
+            'stream_continue_interrupted': 'Ditt tidigare svar verkar ha avbrutits. Fortsätt och slutför din senaste tanke eller förklaring.',
+            'stream_timeout_error': 'Strömningen har inte fått nytt innehåll på 60 sekunder, möjligen ett anslutningsproblem.',
+            
+            # API-felmeddelanden
+            'api_version_model_error': 'API-versions- eller modellnamnsfel: {message}\n\nUppdatera API-bas-URL till "{base_url}" och modellen till "{model}" eller en annan tillgänglig modell i inställningarna.',
+            'api_format_error': 'API-begäransformatfel: {message}',
+            'api_key_invalid': 'Ogiltig eller obehörig API-nyckel: {message}\n\nKontrollera din API-nyckel och se till att API-åtkomst är aktiverad.',
+            'api_rate_limit': 'Begäransgräns överskriden, försök igen senare\n\nDu kan ha överskridit din gratiskvot. Detta kan bero på:\n1. För många begäranden per minut\n2. För många begäranden per dag\n3. För många indatatokens per minut',
+            
+            # Konfigurationsfel
+            'missing_config_key': 'Nödvändig konfigurationsnyckel saknas: {key}',
+            'api_base_url_required': 'API-bas-URL krävs',
+            'model_name_required': 'Modellnamn krävs',
+            'api_key_empty': 'API-nyckeln är tom. Ange en giltig API-nyckel.',
             
             # Om information
             'author_name': 'Sheldon',
@@ -142,4 +172,7 @@ class SwedishTranslation(BaseTranslation):
             'model_display_name_custom': 'Anpassad',
             'model_enable_streaming': 'Aktivera streaming',
             'model_disable_ssl_verify': 'Inaktivera SSL-verifiering',
+            
+            # Allmänna systemmeddelanden
+            'default_system_message': 'Du är en expert på bokanalys. Din uppgift är att hjälpa användare att förstå böcker bättre genom att tillhandahålla insiktsfulla frågor och analyser.',
         }

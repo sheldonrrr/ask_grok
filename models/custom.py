@@ -8,6 +8,7 @@ import requests
 from typing import Dict, Any, Optional
 
 from .base import BaseAIModel
+from ..i18n import get_translation
 
 
 class CustomModel(BaseAIModel):
@@ -30,7 +31,8 @@ class CustomModel(BaseAIModel):
         required_keys = ['api_base_url', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
         # API Key是可选的，不做强制检查
     
     def validate_token(self) -> bool:
@@ -47,10 +49,12 @@ class CustomModel(BaseAIModel):
         
         # 验证API基础URL和模型名称
         if not self.config.get('api_base_url'):
-            raise ValueError("API Base URL is required")
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('api_base_url_required', 'API Base URL is required'))
         
         if not self.config.get('model'):
-            raise ValueError("Model name is required")
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('model_name_required', 'Model name is required'))
         
         # 对于API Key，如果提供了就验证非空，但不强制要求提供
         # 这样本地模型就可以不需要API Key
@@ -86,7 +90,8 @@ class CustomModel(BaseAIModel):
         :param kwargs: 其他参数，如 temperature、stream 等
         :return: 请求数据字典
         """
-        system_message = kwargs.get('system_message', "You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.")
+        translations = get_translation(self.config.get('language', 'en'))
+        system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
         data = {
             "model": self.config.get('model', self.DEFAULT_MODEL),
@@ -219,11 +224,13 @@ class CustomModel(BaseAIModel):
                         return content
                     
                     # 如果响应格式不符合预期
-                    error_msg = "无法从API响应中提取内容"
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('api_content_extraction_failed', 'Unable to extract content from API response')
                     logger.error(f"{error_msg}, 响应: {json.dumps(result, ensure_ascii=False)[:200]}...")
                     raise Exception(error_msg)
                 except requests.exceptions.RequestException as req_e:
-                    error_msg = f"API请求失败: {str(req_e)}"
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(req_e))
                     logger.error(error_msg)
                     if hasattr(req_e, 'response') and req_e.response is not None:
                         try:
@@ -234,7 +241,8 @@ class CustomModel(BaseAIModel):
                     raise Exception(error_msg) from req_e
             
         except requests.exceptions.RequestException as e:
-            error_msg = f"API request failed: {str(e)}"
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     error_detail = e.response.json()

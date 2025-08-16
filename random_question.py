@@ -3,6 +3,7 @@
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtGui import QTextCursor
 from .config import get_prefs, ConfigDialog
 from .i18n import get_translation, get_suggestion_template
 import logging
@@ -175,6 +176,7 @@ class SuggestionHandler(QObject):
     def _stop_loading_timer(self):
         """停止加载动画定时器"""
         try:
+            logger.debug("停止加载定时器")
             if hasattr(self, '_loading_timer') and self._loading_timer is not None:
                 if self._loading_timer.isActive():
                     self._loading_timer.stop()
@@ -182,16 +184,35 @@ class SuggestionHandler(QObject):
                 self._loading_timer = None
         except Exception as e:
             logger.error(f"停止加载定时器时出错: {str(e)}")
+            
+    def _stop_timeout_timer(self):
+        """停止超时检查定时器"""
+        try:
+            logger.debug("停止超时检查定时器")
+            if hasattr(self, '_timeout_timer') and self._timeout_timer is not None:
+                if self._timeout_timer.isActive():
+                    self._timeout_timer.stop()
+                self._timeout_timer.deleteLater()
+                self._timeout_timer = None
+                logger.debug("超时检查定时器已停止")
+        except Exception as e:
+            logger.error(f"停止超时检查定时器时出错: {str(e)}", exc_info=True)
 
     def _check_response_timeout(self):
         """检查是否超时"""
-        if not self._response_text and not self._request_cancelled:
-            self._request_cancelled = True
-            if self._worker:
-                self._worker.cancel()
-            # 直接显示请求失败状态
+        # 如果已经有响应或请求已取消，则不执行超时处理
+        if self._response_text or self._request_cancelled:
+            logger.debug("超时检查：已有响应或请求已取消，跳过超时处理")
+            return
+            
+        logger.debug("超时检查：触发超时处理")
+        self._request_cancelled = True
+        if self._worker:
+            self._worker.cancel()
+        # 直接显示请求失败状态
+        if self.response_area:
             self.response_area.setText(self.i18n.get('request_failed', 'Request failed'))
-            self._restore_ui_state()
+        self._restore_ui_state()
 
     def _restore_ui_state(self, restore_input=False):
         """恢复UI状态"""
@@ -216,51 +237,74 @@ class SuggestionHandler(QObject):
             elif restore_input:
                 logger.debug("无法恢复原始输入: 条件不满足")
         except Exception as e:
-            logger.error(f"恢复UI状态时出错: {str(e)}")
-        except Exception as e:
-            logger.error(f"恢复UI状态时出错: {str(e)}")
+            logger.error(f"恢复UI状态时出错: {str(e)}", exc_info=True)
 
     def _on_suggestion_received(self, suggestion):
         """处理接收到的随机问题"""
         try:
             logger.debug(f"_on_suggestion_received called with suggestion: {suggestion[:100] if suggestion else 'None'}")
             
+            # 停止加载动画和超时计时器
             if not self._request_cancelled:
                 self._stop_loading_timer()
+                self._stop_timeout_timer()
                 self._request_cancelled = True
-                
+            
+            # 首先设置响应文本，防止超时检查误判
+            self._response_text = suggestion
+            
+            # 检查是否是错误消息或空响应
             if not suggestion:
                 error_msg = self.i18n.get('empty_suggestion', 'Received empty suggestion')
-                logger.warning(error_msg)
                 if self.response_area:
                     self.response_area.setText(error_msg)
-                return
-                
-            self._response_text = str(suggestion)
-            logger.debug(f"_response_text set to: {self._response_text[:100]}")
-            
-            # 更新UI
-            logger.debug(f"开始更新UI，input_area是否存在: {self.input_area is not None}")
-            if self.response_area:
-                self.response_area.clear()
-                logger.debug("已清空response_area")
-            
-            if self.input_area:
-                logger.debug(f"设置input_area文本: {self._response_text[:100]}")
-                self.input_area.setPlainText(self._response_text)
-                logger.debug("已设置input_area文本")
+                self._response_text = None  # 重置响应文本，表示没有有效响应
+            elif isinstance(suggestion, str) and suggestion.startswith("Error:"):
+                # 这是一个错误消息
+                logger.error(f"获取随机问题失败: {suggestion}")
+                if self.response_area:
+                    self.response_area.setText(suggestion)
+                self._response_text = None  # 重置响应文本，表示没有有效响应
             else:
-                logger.debug("input_area不存在")
+                # 这是一个有效的建议
+                logger.debug(f"收到有效随机问题，准备更新UI")
                 
+                # 更新输入框
+                if self.input_area:
+                    logger.debug("更新输入框文本")
+                    self.input_area.setText(suggestion)
+                    # 将光标移动到文本末尾
+                    cursor = self.input_area.textCursor()
+                    # 使用正确的QTextCursor常量
+                    cursor.movePosition(QTextCursor.MoveOperation.End)
+                    self.input_area.setTextCursor(cursor)
+                    # 确保输入框获得焦点
+                    self.input_area.setFocus()
+                else:
+                    logger.debug("input_area不存在")
+                
+                # 显示成功消息
+                if self.response_area:
+                    logger.debug("更新响应区域为成功消息")
+                    self.response_area.setText(self.i18n.get('random_question_success', 'Random question generated successfully!'))
         except Exception as e:
             error_msg = f"处理建议时出错: {str(e)}"
-            logger.error(error_msg)
-            if self.response_area:
-                self.response_area.setText(self.i18n.get('process_suggestion_error', 'Error processing suggestion'))
+            logger.error(error_msg, exc_info=True)
+            
+            # 即使在异常情况下，如果我们有有效的响应文本，也不应该显示错误信息
+            if self._response_text and self.input_area and self.input_area.toPlainText() == self._response_text:
+                # 如果输入框已经有正确的文本，则显示成功信息
+                if self.response_area:
+                    self.response_area.setText(self.i18n.get('random_question_success', 'Random question generated successfully!'))
+            else:
+                # 否则显示错误信息
+                if self.response_area:
+                    self.response_area.setText(self.i18n.get('process_suggestion_error', 'Error processing suggestion'))
+                self._response_text = None  # 确保错误情况下重置响应文本
         finally:
             # 确保UI状态总是能被恢复
             logger.debug("调用_restore_ui_state()")
-            self._restore_ui_state()
+            self._restore_ui_state(restore_input=False)  # 不恢复输入框，因为我们希望保留随机问题
             logger.debug("_restore_ui_state()调用完成")
 
     def _on_error(self, error):
@@ -268,33 +312,20 @@ class SuggestionHandler(QObject):
         if not self._request_cancelled:
             self._request_cancelled = True
             self._stop_loading_timer()
+            self._stop_timeout_timer()  # 停止超时计时器
             
-        if self.response_area and hasattr(self, 'i18n') and isinstance(self.i18n, dict):
-            # 只显示一个错误提示
-            error_text = self.i18n['suggestion_error']
+        if self.response_area:
+            # 修复错误处理逻辑，确保即使i18n字典中没有对应的键也能正常工作
+            error_text = self.i18n.get('suggestion_error', 'Error generating suggestion')
             if error and str(error).strip():
                 error_text = f"{error_text}: {str(error).strip()}"
-                self.response_area.setText(error_text)
-                
-        self._restore_ui_state(restore_input=True)
-        self._cleanup_worker()  # 确保清理工作线程
-
-    def _on_worker_finished(self):
-        """工作线程完成的处理"""
-        # 只清理状态，不立即删除线程
-        self._stop_loading_timer()
-        self.suggest_button.setEnabled(True)
+            self.response_area.setText(error_text)
+        
+        # 重置响应文本，表示没有有效响应
+        self._response_text = None
         
         # 开始定期检查线程状态
-        if self._worker:
-            self._start_cleanup_timer()
-
-    def _start_cleanup_timer(self):
-        """开始定期检查线程状态"""
-        if not self._cleanup_timer:
-            self._cleanup_timer = QTimer(self)
-            self._cleanup_timer.timeout.connect(self._check_worker_status)
-            self._cleanup_timer.start(100)  # 每 100ms 检查一次
+        self._start_cleanup_timer()
 
     def _stop_cleanup_timer(self):
         """停止清理定时器"""
@@ -303,6 +334,14 @@ class SuggestionHandler(QObject):
             self._cleanup_timer.deleteLater()
             self._cleanup_timer = None
 
+    def _start_cleanup_timer(self):
+        """开始定期检查线程状态"""
+        if not self._cleanup_timer:
+            logger.debug("启动清理定时器")
+            self._cleanup_timer = QTimer(self)
+            self._cleanup_timer.timeout.connect(self._check_worker_status)
+            self._cleanup_timer.start(100)  # 每 100ms 检查一次
+            
     def _check_worker_status(self):
         """检查工作线程状态"""
         if self._worker and self._worker.is_finished():
@@ -406,8 +445,11 @@ class SuggestionHandler(QObject):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
         
-        # 设置超时检查（增加到10秒）
-        QTimer.singleShot(10000, self._check_response_timeout)
+        # 设置超时检查（增加到30秒，Grok API通常需要更长时间）
+        self._timeout_timer = QTimer(self)
+        self._timeout_timer.setSingleShot(True)
+        self._timeout_timer.timeout.connect(self._check_response_timeout)
+        self._timeout_timer.start(30000)  # 30秒超时
 
     def prepare_close(self):
         """准备关闭，清理资源但不影响线程运行"""
@@ -426,3 +468,38 @@ class SuggestionHandler(QObject):
         self._stop_cleanup_timer()
         self._request_cancelled = True
         self._cleanup_worker()
+        
+    def _on_worker_finished(self):
+        """工作线程完成时的处理"""
+        logger.debug("工作线程完成")
+        
+        # 停止超时计时器，防止在响应返回后还触发超时
+        self._stop_timeout_timer()
+        
+        # 如果界面显示"请求失败"但实际有响应文本，则更新界面
+        if self._response_text and self.response_area and self.response_area.toPlainText() == self.i18n.get('request_failed', 'Request failed'):
+            logger.debug("检测到超时后响应返回，更新界面")
+            # 更新输入框
+            if self.input_area:
+                logger.debug(f"更新输入框文本为: {self._response_text[:50]}...")
+                self.input_area.setText(self._response_text)
+                # 将光标移动到文本末尾
+                cursor = self.input_area.textCursor()
+                # 使用正确的QTextCursor常量
+                cursor.movePosition(QTextCursor.MoveOperation.End)
+                self.input_area.setTextCursor(cursor)
+                # 确保输入框获得焦点
+                self.input_area.setFocus()
+            
+            # 显示成功消息
+            if self.response_area:
+                logger.debug("更新响应区域为成功消息")
+                self.response_area.setText(self.i18n.get('random_question_success', 'Random question generated successfully!'))
+                
+            # 恢复按钮状态
+            self._restore_ui_state(restore_input=False)
+        
+        # 清理工作线程
+        if self._worker:
+            self._worker.deleteLater()
+            self._worker = None

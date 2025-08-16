@@ -8,6 +8,7 @@ import logging
 from typing import Dict, Any, Optional
 
 from .base import BaseAIModel
+from ..i18n import get_translation
 
 # 获取日志记录器
 logger = logging.getLogger('calibre_plugins.ask_grok.models.deepseek')
@@ -31,7 +32,8 @@ class DeepseekModel(BaseAIModel):
         required_keys = ['api_key', 'api_base_url', 'model']
         for key in required_keys:
             if not self.config.get(key):
-                raise ValueError(f"Missing required config key: {key}")
+                translations = get_translation(self.config.get('language', 'en'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
     
     def get_token(self) -> str:
         """
@@ -55,7 +57,8 @@ class DeepseekModel(BaseAIModel):
         
         # 检查 token 是否为空
         if not token or token.strip() == '':
-            raise ValueError("API Key is empty. Please enter a valid API Key.")
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('api_key_empty', 'API Key is empty. Please enter a valid API Key.'))
         
         # 不再检查 token 长度或格式，只要不为空即可
         # Deepseek 可能支持多种格式的 API Key
@@ -86,7 +89,8 @@ class DeepseekModel(BaseAIModel):
         :param kwargs: 其他参数，如 temperature 等
         :return: 请求数据字典
         """
-        system_message = kwargs.get('system_message', "You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.")
+        translations = get_translation(self.config.get('language', 'en'))
+        system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
         data = {
             "messages": [
@@ -101,7 +105,7 @@ class DeepseekModel(BaseAIModel):
             ],
             "model": self.config.get('model', self.DEFAULT_MODEL),
             "temperature": kwargs.get('temperature', 0.7),
-            "max_tokens": kwargs.get('max_tokens', 2000),
+            "max_tokens": kwargs.get('max_tokens', 128000),
             "stream": kwargs.get('stream', self.config.get('enable_streaming', True))
         }
         
@@ -142,7 +146,7 @@ class DeepseekModel(BaseAIModel):
                             f"{self.config['api_base_url']}/chat/completions",
                             headers=headers,
                             json=data,
-                            timeout=kwargs.get('timeout', 60),
+                            timeout=kwargs.get('timeout', 300),
                             verify=True,
                             stream=True
                         ) as response:
@@ -187,7 +191,7 @@ class DeepseekModel(BaseAIModel):
                         f"{self.config['api_base_url']}/chat/completions",
                         headers=headers,
                         json=data,
-                        timeout=kwargs.get('timeout', 60),
+                        timeout=kwargs.get('timeout', 300),
                         verify=True
                     )
                     response.raise_for_status()
@@ -203,7 +207,8 @@ class DeepseekModel(BaseAIModel):
                     continue
                 
                 # 最后一次尝试失败，抛出异常
-                error_msg = f"API request failed: {str(e)}"
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))
                 if hasattr(e, 'response') and e.response is not None:
                     try:
                         error_detail = e.response.json()

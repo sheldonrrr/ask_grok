@@ -51,6 +51,7 @@ class EnglishTranslation(BaseTranslation):
             'copy_response': 'Copy Response',
             'copy_question_response': 'Copy Q&&A',
             'copied': 'Copied!',
+            'saved': 'Saved',
             'close_button': 'Close',
             
             # UI - Configuration fields
@@ -115,6 +116,7 @@ class EnglishTranslation(BaseTranslation):
             'unknown_error': 'Unknown error',
             'unknown_model': 'Unknown model: {model_name}',
             'suggestion_error': 'Suggestion error',
+            'random_question_success': 'Random question generated successfully!',
             'book_title_check': 'Book title required',
             'avoid_repeat_question': 'Please use a different question',
             'empty_answer': 'Empty answer',
@@ -129,6 +131,34 @@ class EnglishTranslation(BaseTranslation):
             'random_question_error': 'Error generating random question',
             'clear_history_failed': 'Failed to clear history',
             'clear_history_not_supported': 'Clear history for single book is not supported yet',
+            'missing_required_config': 'Missing required configuration: {key}. Please check your settings.',
+            'api_key_too_short': 'API Key is too short. Please check and enter the complete key.',
+            
+            # API response handling
+            'api_request_failed': 'API request failed: {error}',
+            'api_content_extraction_failed': 'Unable to extract content from API response',
+            'api_invalid_response': 'Unable to get valid API response',
+            'api_unknown_error': 'Unknown error: {error}',
+            
+            # Stream response handling
+            'stream_response_code': 'Stream response status code: {code}',
+            'stream_continue_prompt': 'Please continue your previous answer without repeating content already provided.',
+            'stream_continue_code_blocks': 'Your previous answer had unclosed code blocks. Please continue and complete these code blocks.',
+            'stream_continue_parentheses': 'Your previous answer had unclosed parentheses. Please continue and ensure all parentheses are properly closed.',
+            'stream_continue_interrupted': 'Your previous answer seems to have been interrupted. Please continue completing your last thought or explanation.',
+            'stream_timeout_error': 'Stream transmission has not received new content for 60 seconds, possibly a connection issue.',
+            
+            # API error messages
+            'api_version_model_error': 'API version or model name error: {message}\n\nPlease update API Base URL to "{base_url}" and model to "{model}" or other available model in settings.',
+            'api_format_error': 'API request format error: {message}',
+            'api_key_invalid': 'API Key invalid or unauthorized: {message}\n\nPlease check your API Key and ensure API access is enabled.',
+            'api_rate_limit': 'Request rate limit exceeded, please try again later\n\nYou may have exceeded the free usage quota. This could be due to:\n1. Too many requests per minute\n2. Too many requests per day\n3. Too many input tokens per minute',
+            
+            # Configuration errors
+            'missing_config_key': 'Missing required config key: {key}',
+            'api_base_url_required': 'API Base URL is required',
+            'model_name_required': 'Model name is required',
+            'api_key_empty': 'API Key is empty. Please enter a valid API Key.',
             
             # About information
             'author_name': 'Sheldon',
@@ -144,4 +174,8 @@ class EnglishTranslation(BaseTranslation):
             'model_display_name_custom': 'Custom',
             'model_enable_streaming': 'Enable Streaming',
             'model_disable_ssl_verify': 'Disable SSL Verify',
+            
+            # Common system messages
+            'default_system_message': 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.',
+            'api_content_extraction_failed': 'Unable to extract content from API response',
         }
