@@ -51,6 +51,7 @@ class JapaneseTranslation(BaseTranslation):
             'copy_response': '回答をコピー',
             'copy_question_response': '問答をコピー',
             'copied': 'コピー完了！',
+            'saved': '保存しました',
             'close_button': '閉じる',
             
             # UI - 設定フィールド
@@ -113,6 +114,7 @@ class JapaneseTranslation(BaseTranslation):
             'unknown_error': '不明なエラー',
             'unknown_model': '不明なモデル: {model_name}',
             'suggestion_error': '提案エラー',
+            'random_question_success': 'ランダム質問が正常に生成されました！',
             'book_title_check': '本のタイトルが必要です',
             'avoid_repeat_question': '別の質問を使用してください',
             'empty_answer': '空の回答',
@@ -127,6 +129,34 @@ class JapaneseTranslation(BaseTranslation):
             'random_question_error': 'ランダム質問の生成中にエラーが発生しました',
             'clear_history_failed': '履歴のクリアに失敗しました',
             'clear_history_not_supported': '単一の本の履歴クリアはまだサポートされていません',
+            'missing_required_config': '必要な設定が不足しています: {key}。設定を確認してください。',
+            'api_key_too_short': 'APIキーが短すぎます。確認して完全なキーを入力してください。',
+            
+            # APIレスポンス処理
+            'api_request_failed': 'APIリクエスト失敗: {error}',
+            'api_content_extraction_failed': 'APIレスポンスからコンテンツを抽出できません',
+            'api_invalid_response': '有効なAPIレスポンスを取得できません',
+            'api_unknown_error': '不明なエラー: {error}',
+            
+            # ストリーミングレスポンス処理
+            'stream_response_code': 'ストリーミングレスポンスステータスコード: {code}',
+            'stream_continue_prompt': '前回の回答を続けてください。すでに提供された内容を繰り返さないでください。',
+            'stream_continue_code_blocks': '前回の回答には閉じられていないコードブロックがあります。続けてこれらのコードブロックを完成させてください。',
+            'stream_continue_parentheses': '前回の回答には閉じられていない括弧があります。続けてすべての括弧が正しく閉じられていることを確認してください。',
+            'stream_continue_interrupted': '前回の回答が中断されたようです。続けて最後の考えや説明を完成させてください。',
+            'stream_timeout_error': 'ストリーミング送信が60秒間新しいコンテンツを受信していません。接続の問題の可能性があります。',
+            
+            # APIエラーメッセージ
+            'api_version_model_error': 'APIバージョンまたはモデル名エラー: {message}\n\n設定でAPIベースURLを"{base_url}"に、モデルを"{model}"または他の利用可能なモデルに更新してください。',
+            'api_format_error': 'APIリクエストフォーマットエラー: {message}',
+            'api_key_invalid': 'APIキーが無効または認証されていません: {message}\n\nAPIキーを確認し、APIアクセスが有効になっていることを確認してください。',
+            'api_rate_limit': 'リクエストレート制限を超えました。後で再試行してください\n\n無料使用量を超えた可能性があります。次の原因が考えられます：\n1. 1分あたりのリクエストが多すぎる\n2. 1日あたりのリクエストが多すぎる\n3. 1分あたりの入力トークンが多すぎる',
+            
+            # 設定エラー
+            'missing_config_key': '必要な設定キーが不足しています: {key}',
+            'api_base_url_required': 'APIベースURLが必要です',
+            'model_name_required': 'モデル名が必要です',
+            'api_key_empty': 'APIキーが空です。有効なAPIキーを入力してください。',
             
             # 情報について
             'author_name': 'Sheldon',
@@ -142,4 +172,7 @@ class JapaneseTranslation(BaseTranslation):
             'model_display_name_custom': 'カスタム',
             'model_enable_streaming': 'ストリーミングを有効にする',
             'model_disable_ssl_verify': 'SSL認証を無効にする',
+            
+            # 共通システムメッセージ
+            'default_system_message': 'あなたは本の分析の専門家です。あなたの任務は、洞察力のある質問と分析を提供することで、ユーザーが本をより良く理解できるように支援することです。',
         }

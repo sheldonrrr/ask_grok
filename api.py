@@ -345,6 +345,12 @@ class APIClient:
             
             logger.debug(f"{model_name}: 成功获取响应，长度: {len(response) if response else 0}")
             
+            # 检查响应是否为空
+            if not response or not response.strip():
+                error_msg = self.i18n.get('empty_response', 'Received empty response from API')
+                logger.error(f"{model_name}: {error_msg}")
+                raise AIAPIError(error_msg)
+            
             # 清理响应，去除多余的空白字符和引号
             response = response.strip()
             if response.startswith('"') and response.endswith('"'):
@@ -355,15 +361,15 @@ class APIClient:
         except AIAPIError as api_error:
             # 记录详细的 API 错误信息
             logger.error(f"{model_name} API 错误: {str(api_error)}")
-            # 返回错误信息而不是重新抛出异常
-            return f"Error: {str(api_error)}"
+            # 返回带有更详细错误信息的错误消息
+            error_msg = self.i18n.get('api_error_template', 'API request failed: {error}')
+            return f"Error: {error_msg.format(error=str(api_error))}"
         except Exception as e:
             # 记录详细的异常信息
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
             # 处理其他未知错误
-            error_msg = f"{self.i18n.get('random_question_error', 'Error generating random question')}: {str(e)}"
-            # 返回错误信息而不是抛出异常
-            return f"Error: {error_msg}"
+            error_msg = self.i18n.get('random_question_error', 'Error generating random question')
+            return f"Error: {error_msg}: {str(e)}"
     
     def reload_model(self):
         """重新加载当前选择的模型"""

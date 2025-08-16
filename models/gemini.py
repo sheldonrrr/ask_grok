@@ -90,7 +90,8 @@ class GeminiModel(BaseAIModel):
         :param kwargs: 其他参数，如 temperature 等
         :return: 请求数据字典
         """
-        system_message = kwargs.get('system_message', "You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.")
+        translations = get_translation(self.config.get('language', 'en'))
+        system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
         # 构建基本请求数据结构，严格按照 Gemini API 要求格式化
         data = {
@@ -125,6 +126,9 @@ class GeminiModel(BaseAIModel):
         if 'max_tokens' in kwargs:
             generation_config["maxOutputTokens"] = kwargs.get('max_tokens')
         
+        # 最大输出令牌数为 128000
+        generation_config["maxOutputTokens"] = 128000
+
         # 采样参数
         if 'top_p' in kwargs:
             generation_config["topP"] = kwargs.get('top_p')
@@ -255,11 +259,11 @@ class GeminiModel(BaseAIModel):
                                 
                                 # 检查是否超过5秒没有收到新数据
                                 current_time = time.time()
-                                if current_time - last_chunk_time > 5:
+                                if current_time - last_chunk_time > 15:
                                     logger.warning(f"已经 {current_time - last_chunk_time:.1f} 秒没有收到新数据")
                                 
                                 # 如果超过15秒没有收到新数据，尝试恢复连接
-                                if current_time - last_chunk_time > 15 and full_content:  # 只有在已有内容的情况下才触发
+                                if current_time - last_chunk_time > 60 and full_content:  # 只有在已有内容的情况下才触发
                                     logger.warning("超过15秒无响应，主动触发恢复机制")
                                     raise requests.exceptions.ReadTimeout("流式传输超过15秒没有新内容，可能是连接问题")
                                 
@@ -279,12 +283,22 @@ class GeminiModel(BaseAIModel):
                                     # 重新构建请求，添加标记表示这是恢复请求
                                     recovery_data = self.prepare_request_data(prompt, **kwargs)
                                     
+                                    # 检查响应是否可能不完整（例如缺少结束标点或代码块未闭合）
+                                    unclosed_code_blocks = full_content.count('```') % 2
+                                    
                                     # 添加恢复标记，让模型知道这是继续之前的对话
                                     if 'contents' in recovery_data and len(recovery_data['contents']) > 0:
                                         # 如果最后一个内容是用户消息，添加一个系统消息表示继续
+                                        translations = get_translation(self.config.get('language', 'en'))
+                                        recovery_prompt = translations.get('stream_continue_prompt', 'Please continue your previous answer without repeating content already provided.')
+                                        
+                                        # 根据不同的不完整情况生成不同的恢复提示
+                                        if unclosed_code_blocks:
+                                            recovery_prompt += translations.get('stream_continue_code_blocks', 'Your previous answer had unclosed code blocks. Please continue and complete these code blocks.')
+                                        
                                         recovery_data['contents'].append({
                                             "role": "user",
-                                            "parts": [{"text": "请继续你之前的回答，不要重复已经提供的内容。"}]
+                                            "parts": [{"text": recovery_prompt}]
                                         })
                                     
                                     # 设置更长的超时时间
@@ -344,111 +358,6 @@ class GeminiModel(BaseAIModel):
                     
                     logger.debug(f"流式请求完成, 总内容长度: {len(full_content)}字符")
                     
-                    # 检查响应是否可能不完整（例如缺少结束标点或代码块未闭合）
-                    if full_content and len(full_content) > 100:
-                        # 检查是否有未闭合的代码块
-                        unclosed_code_blocks = full_content.count('```') % 2
-                        # 检查最后一个字符是否是标点符号
-                        last_char = full_content[-1] if full_content else ''
-                        ends_with_punctuation = last_char in '.!?。！？'
-                        # 检查是否有未闭合的括号
-                        open_parentheses = full_content.count('(')
-                        close_parentheses = full_content.count(')')
-                        open_brackets = full_content.count('[')
-                        close_brackets = full_content.count(']')
-                        open_braces = full_content.count('{')
-                        close_braces = full_content.count('}')
-                        unbalanced_parentheses = (open_parentheses != close_parentheses) or \
-                                               (open_brackets != close_brackets) or \
-                                               (open_braces != close_braces)
-                        
-                        # 检查是否以不完整的句子结尾
-                        last_sentence = full_content.split('。')[-1].split('.')[-1].strip()
-                        short_ending = last_sentence and len(last_sentence) < 15 and not ends_with_punctuation
-                        
-                        if unclosed_code_blocks or unbalanced_parentheses or short_ending or not ends_with_punctuation:
-                            logger.warning(f"检测到可能不完整的响应: 未闭合代码块={unclosed_code_blocks}, 以标点结尾={ends_with_punctuation}, 括号不平衡={unbalanced_parentheses}, 短句子结尾={short_ending}")
-                            logger.warning(f"括号统计: 左小括号={open_parentheses},右小括号={close_parentheses}, 左中括号={open_brackets},右中括号={close_brackets}, 左大括号={open_braces},右大括号={close_braces}")
-                            logger.warning(f"最后一个句子: '{last_sentence}', 长度: {len(last_sentence)}")
-                            logger.warning(f"最后一个字符: '{last_char}'")
-                            logger.warning(f"当前响应长度: {len(full_content)} 字符, 最后20个字符: '{full_content[-20:] if len(full_content) >= 20 else full_content}'")
-                            
-                            
-                            # 尝试恢复获取完整响应
-                            try:
-                                logger.info("尝试恢复以获取完整响应...")
-                                
-                                # 构建恢复请求
-                                recovery_data = self.prepare_request_data(prompt, **kwargs)
-                                
-                                # 根据不同的不完整情况生成不同的恢复提示
-                                recovery_prompt = "请继续你之前的回答，不要重复已经提供的内容。"
-                                
-                                if unclosed_code_blocks:
-                                    recovery_prompt += "你之前的回答中有未闭合的代码块，请继续并完成这些代码块。"
-                                
-                                if unbalanced_parentheses:
-                                    recovery_prompt += "你之前的回答中有未闭合的括号，请继续并确保所有括号都正确闭合。"
-                                
-                                if short_ending or not ends_with_punctuation:
-                                    recovery_prompt += "你之前的回答似乎被中断了，请继续完成你的最后一个想法或解释。"
-                                
-                                logger.info(f"恢复提示: {recovery_prompt}")
-                                
-                                recovery_data['contents'].append({
-                                    "role": "user",
-                                    "parts": [{"text": recovery_prompt}]
-                                })
-                                
-                                # 设置更长的超时时间
-                                recovery_timeout = kwargs.get('timeout', 300) + 60
-                                
-                                # 发起恢复请求
-                                with requests.post(
-                                    url,
-                                    headers=headers,
-                                    json=recovery_data,
-                                    params=params,
-                                    timeout=recovery_timeout,
-                                    stream=True
-                                ) as recovery_response:
-                                    recovery_response.raise_for_status()
-                                    logger.info(f"恢复请求成功，状态码: {recovery_response.status_code}")
-                                    
-                                    # 处理恢复响应
-                                    for line in recovery_response.iter_lines():
-                                        if line:
-                                            line = line.decode('utf-8')
-                                            
-                                            if line.startswith('data: '):
-                                                line = line[6:]
-                                                
-                                                if line.strip() == "[DONE]":
-                                                    logger.info("恢复请求收到结束标记 [DONE]")
-                                                    break
-                                                
-                                                try:
-                                                    chunk_data = json.loads(line)
-                                                    
-                                                    if 'candidates' in chunk_data and chunk_data['candidates']:
-                                                        candidate = chunk_data['candidates'][0]
-                                                        if 'content' in candidate:
-                                                            content = candidate['content']
-                                                            if 'parts' in content and content['parts']:
-                                                                for part in content['parts']:
-                                                                    if 'text' in part and part['text']:
-                                                                        chunk_text = part['text']
-                                                                        full_content += chunk_text
-                                                                        if stream_callback:
-                                                                            stream_callback(chunk_text)
-                                                                        chunk_count += 1
-                                                except json.JSONDecodeError as je:
-                                                    logger.error(f"恢复请求JSON解析错误: {str(je)}")
-                                    
-                                    logger.info(f"完整性恢复请求完成，最终内容长度: {len(full_content)}")
-                            except Exception as recovery_e:
-                                logger.error(f"恢复请求失败: {str(recovery_e)}")
-                    
                     return full_content
                 else:
                     # 普通请求处理
@@ -463,7 +372,7 @@ class GeminiModel(BaseAIModel):
                             headers=headers,
                             json=data,
                             params=params,
-                            timeout=kwargs.get('timeout', 60)  # 增加超时时间
+                            timeout=kwargs.get('timeout', 300)  # 增加超时时间
                         )
                         response.raise_for_status()
                         
@@ -481,9 +390,10 @@ class GeminiModel(BaseAIModel):
                                 return content
                         
                         # 如果无法获取响应内容，返回错误信息
-                        error_msg = "无法获取有效的 Gemini API 响应"
+                        translations = get_translation(self.config.get('language', 'en'))
+                        error_msg = translations.get('api_invalid_response', 'Unable to get valid API response')
                         if 'error' in result:
-                            error_msg = f"{error_msg}: {result['error'].get('message', '未知错误')}"
+                            error_msg = f"{error_msg}: {result['error'].get('message', translations.get('unknown_error', 'Unknown error'))}"
                         logger.error(f"Gemini API 响应解析失败: {error_msg}")
                         logger.debug(f"完整响应: {json.dumps(result, ensure_ascii=False)}")
                         raise Exception(error_msg)
@@ -508,7 +418,8 @@ class GeminiModel(BaseAIModel):
                     continue
                 
                 # 最后一次尝试失败，提供详细错误信息
-                error_msg = f"API 请求失败: {str(e)}"
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))
                 
                 if hasattr(e, 'response') and e.response is not None:
                     try:
@@ -516,19 +427,21 @@ class GeminiModel(BaseAIModel):
                         
                         # 根据错误类型提供更具体的错误信息
                         if e.response.status_code == 404:
-                            error_msg = f"API 版本或模型名称错误: {error_detail.get('error', {}).get('message', '')}"
-                            error_msg += f"\n\n请在设置中更新 API Base URL 为 '{self.DEFAULT_API_BASE_URL}' 并将模型更新为 '{self.DEFAULT_MODEL}' 或其他可用模型。"
+                            error_msg = translations.get('api_version_model_error', 'API version or model name error: {message}\n\nPlease update API Base URL to "{base_url}" and model to "{model}" or other available model in settings.').format(
+                                message=error_detail.get('error', {}).get('message', ''),
+                                base_url=self.DEFAULT_API_BASE_URL,
+                                model=self.DEFAULT_MODEL
+                            )
                         elif e.response.status_code == 400:
-                            error_msg = f"API 请求格式错误: {error_detail.get('error', {}).get('message', '')}"
+                            error_msg = translations.get('api_format_error', 'API request format error: {message}').format(
+                                message=error_detail.get('error', {}).get('message', '')
+                            )
                         elif e.response.status_code == 401:
-                            error_msg = f"API Key 无效或未授权: {error_detail.get('error', {}).get('message', '')}"
-                            error_msg += "\n\n请检查您的 API Key 是否正确，并确保已启用 Gemini API 访问权限。"
+                            error_msg = translations.get('api_key_invalid', 'API Key invalid or unauthorized: {message}\n\nPlease check your API Key and ensure API access is enabled.').format(
+                                message=error_detail.get('error', {}).get('message', '')
+                            )
                         elif e.response.status_code == 429:
-                            error_msg = "请求频率超限，请稍后再试"
-                            error_msg += "\n\n您可能已超过 Google Gemini API 的免费使用配额。这可能是因为："
-                            error_msg += "\n1. 每分钟请求次数超限"
-                            error_msg += "\n2. 每天请求次数超限"
-                            error_msg += "\n3. 每分钟输入令牌数超限"
+                            error_msg = translations.get('api_rate_limit', 'Request rate limit exceeded, please try again later\n\nYou may have exceeded the free usage quota. This could be due to:\n1. Too many requests per minute\n2. Too many requests per day\n3. Too many input tokens per minute')
                     except:
                         error_msg += f" | 响应内容: {e.response.text[:200] if hasattr(e.response, 'text') else '无法解析响应'}"
                 

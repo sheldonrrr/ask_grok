@@ -51,6 +51,7 @@ class NorwegianTranslation(BaseTranslation):
             'copy_response': 'Kopier svar',
             'copy_question_response': 'Kopier S&&S',
             'copied': 'Kopiert!',
+            'saved': 'Lagret',
             'close_button': 'Lukk',
             
             # UI - Konfigurasjonsfelter
@@ -113,6 +114,7 @@ class NorwegianTranslation(BaseTranslation):
             'unknown_error': 'Ukjent feil',
             'unknown_model': 'Ukjent modell: {model_name}',
             'suggestion_error': 'Forslagsfeil',
+            'random_question_success': 'Tilfeldig spørsmål generert med suksess!',
             'book_title_check': 'Boktittel påkrevd',
             'avoid_repeat_question': 'Vennligst bruk et annet spørsmål',
             'empty_answer': 'Tomt svar',
@@ -127,6 +129,34 @@ class NorwegianTranslation(BaseTranslation):
             'random_question_error': 'Feil ved generering av tilfeldig spørsmål',
             'clear_history_failed': 'Kunne ikke slette historikk',
             'clear_history_not_supported': 'Sletting av historikk for en enkelt bok støttes ikke ennå',
+            'missing_required_config': 'Manglende påkrevd konfigurasjon: {key}. Sjekk innstillingene dine.',
+            'api_key_too_short': 'API-nøkkel er for kort. Sjekk og skriv inn hele nøkkelen.',
+            
+            # API-svarhåndtering
+            'api_request_failed': 'API-forespørsel mislyktes: {error}',
+            'api_content_extraction_failed': 'Kunne ikke hente innhold fra API-svar',
+            'api_invalid_response': 'Mottok ikke et gyldig API-svar',
+            'api_unknown_error': 'Ukjent feil: {error}',
+            
+            # Streaming-svarhåndtering
+            'stream_response_code': 'Streaming-svar statuskode: {code}',
+            'stream_continue_prompt': 'Fortsett med ditt tidligere svar uten å gjenta allerede levert innhold.',
+            'stream_continue_code_blocks': 'Ditt tidligere svar hadde uåpne kodeblokker. Fortsett og fullfør disse kodeblokkene.',
+            'stream_continue_parentheses': 'Ditt tidligere svar hadde uåpne parenteser. Fortsett og sørg for at alle parenteser er riktig lukket.',
+            'stream_continue_interrupted': 'Ditt tidligere svar ser ut til å ha blitt avbrutt. Fortsett og fullfør din siste tanke eller forklaring.',
+            'stream_timeout_error': 'Streaming-overføringen har ikke mottatt nytt innhold på 60 sekunder, muligens et tilkoblingsproblem.',
+            
+            # API-feilmeldinger
+            'api_version_model_error': 'API-versjon eller modellnavn feil: {message}\n\nOppdater API-base-URL til "{base_url}" og modellen til "{model}" eller en annen tilgjengelig modell i innstillingene.',
+            'api_format_error': 'API-forespørselsformatfeil: {message}',
+            'api_key_invalid': 'API-nøkkel ugyldig eller ikke autorisert: {message}\n\nSjekk API-nøkkelen din og sørg for at API-tilgang er aktivert.',
+            'api_rate_limit': 'Forespørselsgrense overskredet, prøv igjen senere\n\nDu har kanskje overskredet din gratis brukskvote. Dette kan skyldes:\n1. For mange forespørsler per minutt\n2. For mange forespørsler per dag\n3. For mange input-tokens per minutt',
+            
+            # Konfigurasjonsfeil
+            'missing_config_key': 'Manglende påkrevd konfigurasjonsnøkkel: {key}',
+            'api_base_url_required': 'API-base-URL er påkrevd',
+            'model_name_required': 'Modellnavn er påkrevd',
+            'api_key_empty': 'API-nøkkel er tom. Skriv inn en gyldig API-nøkkel.',
             
             # Om informasjon
             'author_name': 'Sheldon',
@@ -142,4 +172,7 @@ class NorwegianTranslation(BaseTranslation):
             'model_display_name_custom': 'Tilpasset',
             'model_enable_streaming': 'Aktiver streaming',
             'model_disable_ssl_verify': 'Deaktiver SSL-verifisering',
+            
+            # Generelle systemmeldinger
+            'default_system_message': 'Du er en ekspert på bokanalyse. Din oppgave er å hjelpe brukere med å forstå bøker bedre ved å gi innsiktsfulle spørsmål og analyser.',
         }

@@ -51,6 +51,7 @@ class DutchTranslation(BaseTranslation):
             'copy_response': 'Antwoord kopiëren',
             'copy_question_response': 'V&&A kopiëren',
             'copied': 'Gekopieerd!',
+            'saved': 'Opgeslagen',
             'close_button': 'Sluiten',
             
             # UI - Configuratievelden
@@ -113,6 +114,7 @@ class DutchTranslation(BaseTranslation):
             'unknown_error': 'Onbekende fout',
             'unknown_model': 'Onbekend model: {model_name}',
             'suggestion_error': 'Suggestiefout',
+            'random_question_success': 'Willekeurige vraag succesvol gegenereerd!',
             'book_title_check': 'Boektitel vereist',
             'avoid_repeat_question': 'Gebruik een andere vraag',
             'empty_answer': 'Leeg antwoord',
@@ -127,6 +129,34 @@ class DutchTranslation(BaseTranslation):
             'random_question_error': 'Fout bij genereren willekeurige vraag',
             'clear_history_failed': 'Geschiedenis wissen mislukt',
             'clear_history_not_supported': 'Geschiedenis wissen voor één boek wordt nog niet ondersteund',
+            'missing_required_config': 'Ontbrekende vereiste configuratie: {key}. Controleer uw instellingen.',
+            'api_key_too_short': 'API-sleutel is te kort. Controleer en voer de volledige sleutel in.',
+            
+            # API-responsverwerking
+            'api_request_failed': 'API-aanvraag mislukt: {error}',
+            'api_content_extraction_failed': 'Kon inhoud niet uit API-antwoord halen',
+            'api_invalid_response': 'Geen geldig API-antwoord ontvangen',
+            'api_unknown_error': 'Onbekende fout: {error}',
+            
+            # Streaming-responsverwerking
+            'stream_response_code': 'Streaming-antwoord statuscode: {code}',
+            'stream_continue_prompt': 'Ga verder met uw vorige antwoord zonder reeds verstrekte inhoud te herhalen.',
+            'stream_continue_code_blocks': 'Uw vorige antwoord had onafgesloten codeblokken. Ga verder en voltooi deze codeblokken.',
+            'stream_continue_parentheses': 'Uw vorige antwoord had onafgesloten haakjes. Ga verder en zorg ervoor dat alle haakjes correct worden afgesloten.',
+            'stream_continue_interrupted': 'Uw vorige antwoord lijkt onderbroken te zijn. Ga verder en voltooi uw laatste gedachte of uitleg.',
+            'stream_timeout_error': 'De streaming-overdracht heeft 60 seconden geen nieuwe inhoud ontvangen, mogelijk een verbindingsprobleem.',
+            
+            # API-foutmeldingen
+            'api_version_model_error': 'API-versie of modelnaam fout: {message}\n\nWerk de API-basis-URL bij naar "{base_url}" en het model naar "{model}" of een ander beschikbaar model in de instellingen.',
+            'api_format_error': 'API-aanvraagformatfout: {message}',
+            'api_key_invalid': 'API-sleutel ongeldig of niet geautoriseerd: {message}\n\nControleer uw API-sleutel en zorg ervoor dat API-toegang is ingeschakeld.',
+            'api_rate_limit': 'Aanvraaglimiet overschreden, probeer het later opnieuw\n\nU heeft mogelijk uw gratis gebruiksquotum overschreden. Dit kan te wijten zijn aan:\n1. Te veel aanvragen per minuut\n2. Te veel aanvragen per dag\n3. Te veel invoertokens per minuut',
+            
+            # Configuratiefouten
+            'missing_config_key': 'Ontbrekende vereiste configuratiesleutel: {key}',
+            'api_base_url_required': 'API-basis-URL is vereist',
+            'model_name_required': 'Modelnaam is vereist',
+            'api_key_empty': 'API-sleutel is leeg. Voer een geldige API-sleutel in.',
             
             # Over informatie
             'author_name': 'Sheldon',
@@ -142,4 +172,7 @@ class DutchTranslation(BaseTranslation):
             'model_display_name_custom': 'Aangepast',
             'model_enable_streaming': 'Streaming inschakelen',
             'model_disable_ssl_verify': 'SSL-verificatie uitschakelen',
+            
+            # Algemene systeemberichten
+            'default_system_message': 'U bent een expert in boekanalyse. Uw taak is om gebruikers te helpen boeken beter te begrijpen door inzichtelijke vragen en analyses te bieden.',
         }

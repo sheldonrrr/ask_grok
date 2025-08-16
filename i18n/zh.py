@@ -51,6 +51,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'copy_response': '复制回答',
             'copy_question_response': '复制问答',
             'copied': '已复制！',
+            'saved': '已保存',
             'close_button': '关闭',
             
             # UI - 配置字段
@@ -115,6 +116,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'unknown_error': '未知错误',
             'unknown_model': '未知模型: {model_name}',
             'suggestion_error': '建议错误',
+            'random_question_success': '随机问题生成成功！',
             'book_title_check': '需要书籍标题',
             'avoid_repeat_question': '请使用不同的问题',
             'empty_answer': '空回答',
@@ -129,6 +131,34 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'random_question_error': '生成随机问题时出错',
             'clear_history_failed': '清除历史失败',
             'clear_history_not_supported': '暂不支持清除单本书的历史',
+            'missing_required_config': '缺少必要的配置：{key}。请检查您的设置。',
+            'api_key_too_short': 'API密钥太短。请检查并输入完整的密钥。',
+            
+            # API响应处理
+            'api_request_failed': 'API请求失败：{error}',
+            'api_content_extraction_failed': '无法从 API 响应中提取内容',
+            'api_invalid_response': '无法获取有效的API响应',
+            'api_unknown_error': '未知错误：{error}',
+            
+            # 流式响应处理
+            'stream_response_code': '流式响应状态码：{code}',
+            'stream_continue_prompt': '请继续您的上一个回答，不要重复已提供的内容。',
+            'stream_continue_code_blocks': '您的上一个回答有未关闭的代码块。请继续并完成这些代码块。',
+            'stream_continue_parentheses': '您的上一个回答有未关闭的括号。请继续并确保所有括号正确关闭。',
+            'stream_continue_interrupted': '您的上一个回答似乎被中断了。请继续完成您的最后一个想法或解释。',
+            'stream_timeout_error': '流式传输60秒没有收到新内容，可能是连接问题。',
+            
+            # API错误消息
+            'api_version_model_error': 'API版本或模型名称错误：{message}\n\n请在设置中将API基础URL更新为"{base_url}"，并将模型更新为"{model}"或其他可用模型。',
+            'api_format_error': 'API请求格式错误：{message}',
+            'api_key_invalid': 'API密钥无效或未授权：{message}\n\n请检查您的API密钥并确保已启用API访问。',
+            'api_rate_limit': '请求频率超限，请稍后再试\n\n您可能已超过免费使用配额。这可能是由于：\n1. 每分钟请求过多\n2. 每天请求过多\n3. 每分钟输入令牌过多',
+            
+            # 配置错误
+            'missing_config_key': '缺少必要的配置键：{key}',
+            'api_base_url_required': '需要API基础URL',
+            'model_name_required': '需要模型名称',
+            'api_key_empty': 'API密钥为空。请输入有效的API密钥。',
             
             # 关于信息
             'author_name': 'Sheldon',
@@ -144,4 +174,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_custom': '自定义',
             'model_enable_streaming': '启用流式传输',
             'model_disable_ssl_verify': '禁用SSL验证',
+            
+            # 通用系统消息
+            'default_system_message': '您是一位书籍分析专家。您的任务是通过提供有洞察力的问题和分析，帮助用户更好地理解书籍。',
         }

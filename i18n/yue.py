@@ -51,6 +51,8 @@ class CantoneseTranslation(BaseTranslation):
             'copy_response': '複製回答',
             'copy_question_response': '複製問答',
             'copied': '已複製！',
+            'saved': '已儲存',
+            'close_button': '關閉',
             
             # UI - 設定欄位
             'token_label': 'API金鑰:',
@@ -112,6 +114,7 @@ class CantoneseTranslation(BaseTranslation):
             'unknown_error': '未知錯誤',
             'unknown_model': '未知模型: {model_name}',
             'suggestion_error': '建議錯誤',
+            'random_question_success': '隨機問題生成成功！',
             'book_title_check': '需要書名',
             'avoid_repeat_question': '請用唔同嘅問題',
             'empty_answer': '空回答',
@@ -125,7 +128,35 @@ class CantoneseTranslation(BaseTranslation):
             'no_model_configured': '未設置人工智能模型。請在設定內設置人工智能模型。',
             'random_question_error': '生成隨機問題時出錯',
             'clear_history_failed': '清除歷史失敗',
-            'clear_history_not_supported': '而家不支持清除單本書嘅歷史記錄',
+            'clear_history_not_supported': '而家不支持清除單本書嘉歷史記錄',
+            'missing_required_config': '缺少必要嘉設定: {key}。請檢查你嘉設定。',
+            'api_key_too_short': 'API金鑰太短。請檢查並輸入完整嘉金鑰。',
+            
+            # API回應處理
+            'api_request_failed': 'API請求失敗: {error}',
+            'api_content_extraction_failed': '無法從API回應中提取內容',
+            'api_invalid_response': '收到嘉API回應無效',
+            'api_unknown_error': '未知錯誤: {error}',
+            
+            # 流式回應處理
+            'stream_response_code': '流式回應狀態碼: {code}',
+            'stream_continue_prompt': '繼續你嘉上一個回應，不使重複已經提供嘉內容。',
+            'stream_continue_code_blocks': '你嘉上一個回應有未關閉嘉代碼塊。繼續並完成呢些代碼塊。',
+            'stream_continue_parentheses': '你嘉上一個回應有未關閉嘉括號。繼續並確保所有括號都正確關閉。',
+            'stream_continue_interrupted': '你嘉上一個回應似乎被中斷啦。繼續並完成你嘉最後一個思考或解釋。',
+            'stream_timeout_error': '流式傳輸在60秒內沒收到新嘉內容，可能係連接問題。',
+            
+            # API錯誤消息
+            'api_version_model_error': 'API版本或模型名稱錯誤: {message}\n\n請更新API基礎URL為"{base_url}"，以及模型為"{model}"或在設定中嘉其他可用模型。',
+            'api_format_error': 'API請求格式錯誤: {message}',
+            'api_key_invalid': '無效或未授權嘉API金鑰: {message}\n\n請檢查你嘉API金鑰並確保已開啟API訪問。',
+            'api_rate_limit': '超出請求限制，請稍後再試\n\n你可能超出啦免費配額。呢可能係因為:\n1. 每分鐘請求太多\n2. 每日請求太多\n3. 每分鐘輸入嘉令牌太多',
+            
+            # 設定錯誤
+            'missing_config_key': '缺少必要嘉設定鍵: {key}',
+            'api_base_url_required': '需要API基礎URL',
+            'model_name_required': '需要模型名稱',
+            'api_key_empty': 'API金鑰為空。請輸入有效嘉API金鑰。',
             
             # 關於信息
             'author_name': 'Sheldon',
@@ -141,4 +172,7 @@ class CantoneseTranslation(BaseTranslation):
             'model_display_name_custom': '自定義',
             'model_enable_streaming': '開啟流式傳輸',
             'model_disable_ssl_verify': '關閉SSL驗證',
+            
+            # 一般系統訊息
+            'default_system_message': '你係一個書籍分析嘉專家。你嘉任務係幫助用戶透過提供有見地嘉問題同分析，更加理解書籍。',
         }

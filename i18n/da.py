@@ -51,6 +51,7 @@ class DanishTranslation(BaseTranslation):
             'copy_response': 'Kopiér svar',
             'copy_question_response': 'Kopiér S&&S',
             'copied': 'Kopieret!',
+            'saved': 'Gemt',
             'close_button': 'Luk',
             
             # UI - Configuration fields
@@ -113,6 +114,7 @@ class DanishTranslation(BaseTranslation):
             'unknown_error': 'Ukendt fejl',
             'unknown_model': 'Ukendt model: {model_name}',
             'suggestion_error': 'Forslagsfejl',
+            'random_question_success': 'Tilfældigt spørgsmål genereret med succes!',
             'book_title_check': 'Bogtitel påkrævet',
             'avoid_repeat_question': 'Venligst brug et andet spørgsmål',
             'empty_answer': 'Tomt svar',
@@ -127,6 +129,34 @@ class DanishTranslation(BaseTranslation):
             'random_question_error': 'Fejl ved generering af tilfældigt spørgsmål',
             'clear_history_failed': 'Kunne ikke rydde historik',
             'clear_history_not_supported': 'Rydning af historik for en enkelt bog understøttes ikke endnu',
+            'missing_required_config': 'Manglende påkrævet konfiguration: {key}. Tjek venligst dine indstillinger.',
+            'api_key_too_short': 'API-nøgle er for kort. Tjek venligst og indtast den fulde nøgle.',
+            
+            # API-svarhåndtering
+            'api_request_failed': 'API-anmodning mislykkedes: {error}',
+            'api_content_extraction_failed': 'Kunne ikke udtrække indhold fra API-svar',
+            'api_invalid_response': 'Modtog ikke et gyldigt API-svar',
+            'api_unknown_error': 'Ukendt fejl: {error}',
+            
+            # Streaming-svarhåndtering
+            'stream_response_code': 'Streaming-svar statuskode: {code}',
+            'stream_continue_prompt': 'Fortsæt venligst dit tidligere svar uden at gentage allerede leveret indhold.',
+            'stream_continue_code_blocks': 'Dit tidligere svar havde uåbne kodeblokke. Fortsæt venligst og færdiggør disse kodeblokke.',
+            'stream_continue_parentheses': 'Dit tidligere svar havde uåbne parenteser. Fortsæt venligst og sørg for, at alle parenteser er korrekt lukket.',
+            'stream_continue_interrupted': 'Dit tidligere svar ser ud til at være blevet afbrudt. Fortsæt venligst og færdiggør din sidste tanke eller forklaring.',
+            'stream_timeout_error': 'Streaming-overførslen har ikke modtaget nyt indhold i 60 sekunder, muligvis et forbindelsesproblem.',
+            
+            # API-fejlmeddelelser
+            'api_version_model_error': 'API-version eller modelnavn fejl: {message}\n\nOpdater venligst API-base-URL til "{base_url}" og modellen til "{model}" eller en anden tilgængelig model i indstillingerne.',
+            'api_format_error': 'API-anmodningsformatfejl: {message}',
+            'api_key_invalid': 'API-nøgle ugyldig eller ikke autoriseret: {message}\n\nTjek venligst din API-nøgle og sørg for, at API-adgang er aktiveret.',
+            'api_rate_limit': 'Anmodningsgrænse overskredet, prøv igen senere\n\nDu har måske overskredet din gratis brugskvote. Dette kan skyldes:\n1. For mange anmodninger pr. minut\n2. For mange anmodninger pr. dag\n3. For mange input-tokens pr. minut',
+            
+            # Konfigurationsfejl
+            'missing_config_key': 'Manglende påkrævet konfigurationsnøgle: {key}',
+            'api_base_url_required': 'API-base-URL er påkrævet',
+            'model_name_required': 'Modelnavn er påkrævet',
+            'api_key_empty': 'API-nøgle er tom. Indtast venligst en gyldig API-nøgle.',
             
             # About information
             'author_name': 'Sheldon',
@@ -142,4 +172,7 @@ class DanishTranslation(BaseTranslation):
             'model_display_name_custom': 'Brugerdefineret',
             'model_enable_streaming': 'Aktiver streaming',
             'model_disable_ssl_verify': 'Deaktiver SSL-verifikation',
+            
+            # Generelle systemmeddelelser
+            'default_system_message': 'Du er en ekspert i boganalyse. Din opgave er at hjælpe brugere med at forstå bøger bedre ved at give indsigtsfulde spørgsmål og analyser.',
         }
