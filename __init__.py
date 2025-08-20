@@ -21,7 +21,7 @@ if lib_dir not in sys.path:
     print(f'已添加lib目录到Python路径: {lib_dir}')
 
 # 版本信息 - 硬编码以确保跨平台兼容性
-VERSION = (1, 2, 0)
+VERSION = (1, 2, 2)
 VERSION_STRING = '.'.join(map(str, VERSION))
 PLUGIN_NAME = 'Ask Grok'
 PLUGIN_DESCRIPTION = 'Ask questions about a book using AI'
@@ -83,7 +83,7 @@ class AskGrokPlugin(InterfaceActionBase):
     description         = 'Ask questions about a book using AI'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 2, 1)
+    version             = (1, 2, 2)
     minimum_calibre_version = (7, 0)
     icon                = 'images/ask_grok.png'
 
