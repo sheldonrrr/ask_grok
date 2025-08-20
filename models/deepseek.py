@@ -105,7 +105,7 @@ class DeepseekModel(BaseAIModel):
             ],
             "model": self.config.get('model', self.DEFAULT_MODEL),
             "temperature": kwargs.get('temperature', 0.7),
-            "max_tokens": kwargs.get('max_tokens', 128000),
+            "max_tokens": kwargs.get('max_tokens', 8192),
             "stream": kwargs.get('stream', self.config.get('enable_streaming', True))
         }
         
