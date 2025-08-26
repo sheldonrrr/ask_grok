@@ -526,8 +526,10 @@ class TabDialog(QDialog):
         """处理按键事件"""
         if event.key() == Qt.Key_Escape:
             # 如果配置页面有未保存的更改，先重置字段
-            if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog') and self.config_widget.config_dialog.save_button.isEnabled():
-                self.config_widget.config_dialog.reset_to_initial_values()
+            if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog') and hasattr(self.config_widget.config_dialog, 'check_for_changes'):
+                # 使用check_for_changes方法检查是否有未保存的更改
+                if self.config_widget.config_dialog.check_for_changes():
+                    self.config_widget.config_dialog.reset_to_initial_values()
             # 关闭窗口
             self.reject()
         else:
@@ -1191,54 +1193,38 @@ class AskDialog(QDialog):
         self.suggestion_handler.generate(self.book_info)
 
     def _check_auth_token(self):
-        """检查 auth token 是否已设置，如果未设置则显示配置对话框
-        对于Custom模型，API Key是可选的，不强制要求
-        """
-        from calibre_plugins.ask_grok.config import get_prefs, ConfigDialog
-        import logging
-        logger = logging.getLogger(__name__)
+        """检查当前选择的模型是否设置了API Key"""
+        from calibre_plugins.ask_grok.config import get_prefs
         
-        # 从配置中获取 token（从选中的模型配置中获取）
         prefs = get_prefs()
         selected_model = prefs.get('selected_model', 'grok')
         models_config = prefs.get('models', {})
         model_config = models_config.get(selected_model, {})
         
-        # 安全记录日志，隐藏API Key
-        safe_model_config = safe_log_config(model_config)
-        logger.debug(f"检查模型 {selected_model} 的API Key，配置: {safe_model_config}")
+        # 获取token字段名，不同模型可能使用不同的字段名
+        token_field = 'auth_token' if selected_model == 'grok' else 'api_key'
+        token = model_config.get(token_field, '')
         
         # 如果是Custom模型，不强制要求API Key
         if selected_model == 'custom':
-            logger.debug("Custom模型不强制要求API Key，跳过验证")
             return True
-        
-        # 根据模型类型获取 token
-        token = ''
-        if selected_model == 'grok':
-            token = model_config.get('auth_token', '')
-        elif selected_model == 'gemini':
-            token = model_config.get('api_key', '')
-        elif selected_model == 'deepseek':
-            token = model_config.get('api_key', '')
-        
-        # 检查 token 是否为空
+            
         if not token or not token.strip():
-            # 显示提示信息
+            # 只显示一个警告对话框，不自动打开配置窗口
             from PyQt5.QtWidgets import QMessageBox
+            
+            # 显示警告信息
             QMessageBox.information(
                 self,
                 self.i18n.get('auth_token_required_title', 'API Key Required'),
                 self.i18n.get('auth_token_required_message', 'Please set your API Key in the configuration dialog.')
             )
             
-            # 创建并显示配置对话框
-            config_dialog = ConfigDialog(self.gui)  # 使用 self.gui 而不是 self
-            config_dialog.show()
+            # 直接返回False，表示验证失败
             return False
         
         return True
-
+    
     def send_question(self):
         """发送问题"""
         import logging

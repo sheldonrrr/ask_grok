@@ -107,7 +107,7 @@ class FrenchTranslation(BaseTranslation):
             'request_failed': 'Échec de la requête',
             'question_too_long': 'Question trop longue',
             'auth_token_required_title': 'Clé API Requise',
-            'auth_token_required_message': 'Veuillez définir la clé API dans les paramètres',
+            'auth_token_required_message': 'Veuillez définir la clé API dans la Configuration du Plugin',
             'error_preparing_request': 'Échec de préparation de la requête',
             'empty_suggestion': 'Suggestion vide',
             'process_suggestion_error': 'Erreur de traitement de suggestion',

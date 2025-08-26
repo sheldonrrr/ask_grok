@@ -109,7 +109,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'request_failed': '请求失败',
             'question_too_long': '问题过长',
             'auth_token_required_title': '需要API密钥',
-            'auth_token_required_message': '请在设置中设置API密钥',
+            'auth_token_required_message': '请在插件配置中设置API密钥',
             'error_preparing_request': '请求准备失败',
             'empty_suggestion': '空建议',
             'process_suggestion_error': '处理建议错误',

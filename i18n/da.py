@@ -107,7 +107,7 @@ class DanishTranslation(BaseTranslation):
             'request_failed': 'Anmodning mislykkedes',
             'question_too_long': 'Spørgsmålet er for langt',
             'auth_token_required_title': 'API-nøgle påkrævet',
-            'auth_token_required_message': 'Venligst indstil API-nøglen i indstillingerne',
+            'auth_token_required_message': 'Venligst indstil API-nøglen i Plugin-konfigurationen',
             'error_preparing_request': 'Fejl ved forberedelse af anmodning',
             'empty_suggestion': 'Tom forslag',
             'process_suggestion_error': 'Fejl ved behandling af forslag',

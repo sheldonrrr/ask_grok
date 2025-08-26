@@ -109,7 +109,7 @@ class EnglishTranslation(BaseTranslation):
             'request_failed': 'Request failed',
             'question_too_long': 'Question too long',
             'auth_token_required_title': 'API Key Required',
-            'auth_token_required_message': 'Please set API key in settings',
+            'auth_token_required_message': 'Please set API key in Plugin Configuration.',
             'error_preparing_request': 'Request preparation failed',
             'empty_suggestion': 'Empty suggestion',
             'process_suggestion_error': 'Suggestion processing error',

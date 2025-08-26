@@ -107,7 +107,7 @@ class NorwegianTranslation(BaseTranslation):
             'request_failed': 'Forespørsel mislyktes',
             'question_too_long': 'Spørsmålet er for langt',
             'auth_token_required_title': 'API-nøkkel påkrevd',
-            'auth_token_required_message': 'Vennligst sett API-nøkkelen i innstillingene',
+            'auth_token_required_message': 'Vennligst sett API-nøkkelen i Plugin-konfigurasjonen',
             'error_preparing_request': 'Feil ved forberedelse av forespørsel',
             'empty_suggestion': 'Tom forslag',
             'process_suggestion_error': 'Feil ved behandling av forslag',

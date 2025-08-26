@@ -107,7 +107,7 @@ class SwedishTranslation(BaseTranslation):
             'request_failed': 'Begäran misslyckades',
             'question_too_long': 'Frågan är för lång',
             'auth_token_required_title': 'API-nyckel krävs',
-            'auth_token_required_message': 'Vänligen ställ in API-nyckeln i inställningarna',
+            'auth_token_required_message': 'Vänligen ställ in API-nyckeln i Plugin-konfigurationen',
             'error_preparing_request': 'Fel vid förberedelse av begäran',
             'empty_suggestion': 'Tom förslag',
             'process_suggestion_error': 'Fel vid bearbetning av förslag',

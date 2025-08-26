@@ -107,7 +107,7 @@ class FinnishTranslation(BaseTranslation):
             'request_failed': 'Pyyntö epäonnistui',
             'question_too_long': 'Kysymys on liian pitkä',
             'auth_token_required_title': 'API-avain vaaditaan',
-            'auth_token_required_message': 'Aseta API-avain asetuksissa',
+            'auth_token_required_message': 'Aseta API-avain Liitännäisen Asetuksissa',
             'error_preparing_request': 'Virhe pyyntöä valmistellessa',
             'empty_suggestion': 'Tyhjä ehdotus',
             'process_suggestion_error': 'Virhe ehdotuksen käsittelyssä',

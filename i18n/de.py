@@ -109,7 +109,7 @@ class GermanTranslation(BaseTranslation):
             'request_failed': 'Anfrage fehlgeschlagen',
             'question_too_long': 'Frage zu lang',
             'auth_token_required_title': 'API-Schlüssel erforderlich',
-            'auth_token_required_message': 'Bitte API-Schlüssel in den Einstellungen festlegen',
+            'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen',
             'error_preparing_request': 'Fehler bei der Anfragevorbereitung',
             'empty_suggestion': 'Leerer Vorschlag',
             'process_suggestion_error': 'Fehler bei der Vorschlagsverarbeitung',

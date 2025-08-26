@@ -107,7 +107,7 @@ class JapaneseTranslation(BaseTranslation):
             'request_failed': 'リクエスト失敗',
             'question_too_long': '質問が長すぎます',
             'auth_token_required_title': 'APIキーが必要です',
-            'auth_token_required_message': '設定でAPIキーを設定してください',
+            'auth_token_required_message': 'プラグイン設定でAPIキーを設定してください',
             'error_preparing_request': 'リクエストの準備に失敗しました',
             'empty_suggestion': '空の提案',
             'process_suggestion_error': '提案処理エラー',
