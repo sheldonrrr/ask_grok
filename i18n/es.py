@@ -107,7 +107,7 @@ class SpanishTranslation(BaseTranslation):
             'request_failed': 'Solicitud fallida',
             'question_too_long': 'Pregunta demasiado larga',
             'auth_token_required_title': 'Clave API Requerida',
-            'auth_token_required_message': 'Por favor configura la clave API en ajustes',
+            'auth_token_required_message': 'Por favor configura la clave API en Configuración del Plugin',
             'error_preparing_request': 'Error al preparar la solicitud',
             'empty_suggestion': 'Sugerencia vacía',
             'process_suggestion_error': 'Error al procesar sugerencia',

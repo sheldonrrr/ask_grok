@@ -107,7 +107,7 @@ class TraditionalChineseTranslation(BaseTranslation):
             'request_failed': '請求失敗',
             'question_too_long': '問題過長',
             'auth_token_required_title': '需要API金鑰',
-            'auth_token_required_message': '請在設定中設置API金鑰',
+            'auth_token_required_message': '請在插件配置中設置API金鑰',
             'error_preparing_request': '準備請求時出錯',
             'empty_suggestion': '空建議',
             'process_suggestion_error': '處理建議時出錯',

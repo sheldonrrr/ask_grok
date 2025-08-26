@@ -107,7 +107,7 @@ class DutchTranslation(BaseTranslation):
             'request_failed': 'Aanvraag mislukt',
             'question_too_long': 'Vraag te lang',
             'auth_token_required_title': 'API-sleutel vereist',
-            'auth_token_required_message': 'Stel de API-sleutel in bij de instellingen',
+            'auth_token_required_message': 'Stel de API-sleutel in bij de Plugin Configuratie',
             'error_preparing_request': 'Fout bij voorbereiden aanvraag',
             'empty_suggestion': 'Lege suggestie',
             'process_suggestion_error': 'Fout bij verwerken suggestie',

@@ -107,7 +107,7 @@ class RussianTranslation(BaseTranslation):
             'request_failed': 'Запрос не удался',
             'question_too_long': 'Вопрос слишком длинный',
             'auth_token_required_title': 'Требуется ключ API',
-            'auth_token_required_message': 'Пожалуйста, установите ключ API в настройках',
+            'auth_token_required_message': 'Пожалуйста, установите ключ API в Конфигурации Плагина',
             'error_preparing_request': 'Ошибка подготовки запроса',
             'empty_suggestion': 'Пустое предложение',
             'process_suggestion_error': 'Ошибка обработки предложения',
