@@ -21,7 +21,7 @@ if lib_dir not in sys.path:
     print(f'已添加lib目录到Python路径: {lib_dir}')
 
 # 版本信息 - 硬编码以确保跨平台兼容性
-VERSION = (1, 2, 2)
+VERSION = (1, 2, 3)
 VERSION_STRING = '.'.join(map(str, VERSION))
 PLUGIN_NAME = 'Ask Grok'
 PLUGIN_DESCRIPTION = 'Ask questions about a book using AI'
