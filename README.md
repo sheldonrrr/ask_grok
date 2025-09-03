@@ -43,6 +43,23 @@ Grok(x.AI) https://console.x.ai/
 Google Gemini https://aistudio.google.com/
 DeepSeek https://platform.deepseek.com/
 
+### Free API Key
+
+Recently, Nvidia released a free API key for llama, Deepseek-r1, you can get free API key from [here](https://build.nvidia.com/).
+
+Available models:
+- meta/llama-4-maverick-17b-128e-instruct",
+- meta/llama-4-scout-17b-16e-instruct
+- meta/llama-3.3-70b-instruct
+- deepseek-ai/deepseek-r1
+- qwen/qwen2.5-coder-32b-instruct
+
+Base URL:
+`https://integrate.api.nvidia.com/v1`
+
+API Key:
+- After logging in and validating through your phone number, you can generate an API Key to use. Now the only limit is the rate limit, just limited to 40 RPM.(If you are using it for personal use, there is almost no limit.)
+
 ## Configure API Key
 
   - Click the Ask Grok dropdown menu in the menu bar, select `Configure`
