@@ -308,19 +308,118 @@ class BaseAIModel(ABC):
         """
         return False
     
-    @abstractmethod
+    def get_models_endpoint(self) -> str:
+        """
+        获取模型列表的 API 端点
+        子类可以重写此方法以自定义端点
+        
+        :return: API 端点路径，默认为 "/models"
+        """
+        return "/models"
+    
+    def prepare_models_request_headers(self) -> Dict[str, str]:
+        """
+        准备获取模型列表的请求头
+        子类可以重写此方法以自定义请求头
+        默认使用 prepare_headers() 方法
+        
+        :return: 请求头字典
+        """
+        return self.prepare_headers()
+    
+    def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
+        """
+        准备获取模型列表的完整 URL
+        子类可以重写此方法以自定义 URL 格式（如 Gemini 需要在 URL 中添加 API key）
+        
+        :param base_url: API 基础 URL
+        :param endpoint: API 端点路径
+        :return: 完整的请求 URL
+        """
+        return f"{base_url}{endpoint}"
+    
+    def parse_models_response(self, data: Dict[str, Any]) -> list:
+        """
+        解析模型列表 API 响应
+        子类可以重写此方法以处理不同的响应格式
+        默认处理 OpenAI 兼容格式: {"data": [{"id": "model-name"}, ...]}
+        
+        :param data: API 响应的 JSON 数据
+        :return: 模型名称列表
+        """
+        return [model['id'] for model in data.get('data', [])]
+    
+    def get_logger_name(self) -> str:
+        """
+        获取 logger 名称
+        
+        :return: logger 名称字符串
+        """
+        class_name = self.__class__.__name__.lower().replace('model', '')
+        return f'calibre_plugins.ask_grok.models.{class_name}'
+    
     def fetch_available_models(self) -> list:
         """
-        从 AI 提供商 API 获取可用模型列表
+        通用的获取模型列表实现
         
-        子类必须实现此方法以支持动态获取模型列表
-        如果提供商不支持此功能，应抛出 NotImplementedError
+        此方法提供了一个标准的实现流程：
+        1. 准备 URL 和请求头
+        2. 发送 GET 请求
+        3. 解析响应
+        4. 返回排序后的模型列表
+        
+        子类通常不需要重写此方法，只需重写以下辅助方法来定制行为：
+        - get_models_endpoint(): 自定义 API 端点
+        - prepare_models_request_headers(): 自定义请求头
+        - prepare_models_request_url(): 自定义 URL 格式
+        - parse_models_response(): 自定义响应解析
+        
+        如果提供商完全不支持模型列表 API，子类应该抛出 NotImplementedError
         
         :return: 模型名称列表
         :raises NotImplementedError: 如果提供商不支持模型列表 API
         :raises Exception: 当 API 请求失败时抛出异常
         """
-        pass
+        import logging
+        import requests
+        
+        logger = logging.getLogger(self.get_logger_name())
+        
+        try:
+            # 获取配置
+            api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
+            
+            # 准备请求
+            endpoint = self.get_models_endpoint()
+            url = self.prepare_models_request_url(api_base_url, endpoint)
+            headers = self.prepare_models_request_headers()
+            
+            # 获取 i18n 翻译
+            from ..i18n import get_translation
+            translations = get_translation(self.config.get('language', 'en'))
+            
+            # 发送请求
+            logger.info(translations.get('fetching_models_from', 'Fetching models from {url}').format(url=url))
+            response = requests.get(url, headers=headers, timeout=10, verify=False)
+            response.raise_for_status()
+            
+            # 解析响应
+            data = response.json()
+            models = self.parse_models_response(data)
+            
+            # 记录成功
+            provider_name = self.get_provider_name()
+            logger.info(translations.get('successfully_fetched_models', 
+                                        'Successfully fetched {count} {provider} models').format(
+                                            count=len(models), 
+                                            provider=provider_name))
+            return sorted(models)
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(translations.get('failed_to_fetch_models', 
+                                         'Failed to fetch models: {error}').format(error=str(e)))
+            raise Exception(translations.get('failed_to_fetch_models', 
+                                           'Failed to fetch models: {error}').format(error=str(e)))
 
 
 class AIModelFactory:

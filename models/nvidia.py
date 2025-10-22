@@ -28,11 +28,16 @@ class NvidiaModel(BaseAIModel):
         
         :raises ValueError: When configuration is invalid
         """
-        required_keys = ['api_key', 'api_base_url', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['api_key', 'api_base_url']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -254,33 +259,4 @@ class NvidiaModel(BaseAIModel):
         """
         return "Nvidia AI"
     
-    def fetch_available_models(self) -> list:
-        """
-        Fetch available models from Nvidia AI API
-        
-        :return: List of model names
-        :raises Exception: When API request fails
-        """
-        try:
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
-            api_key = self.config.get('api_key', '')
-            
-            url = f"{api_base_url}/models"
-            headers = {
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
-            }
-            
-            logger.info(f"Fetching models from {url}")
-            response = requests.get(url, headers=headers, timeout=10, verify=False)
-            response.raise_for_status()
-            
-            data = response.json()
-            models = [model['id'] for model in data.get('data', [])]
-            
-            logger.info(f"Successfully fetched {len(models)} Nvidia models")
-            return sorted(models)
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to fetch Nvidia models: {str(e)}")
-            raise Exception(f"Failed to fetch models: {str(e)}")
+    # Nvidia 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models

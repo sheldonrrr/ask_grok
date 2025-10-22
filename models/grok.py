@@ -26,11 +26,16 @@ class GrokModel(BaseAIModel):
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['auth_token', 'api_base_url', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['auth_token', 'api_base_url']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -379,33 +384,5 @@ class GrokModel(BaseAIModel):
             "enable_streaming": True,  # 默认启用流式传输
         }
     
-    def fetch_available_models(self) -> list:
-        """
-        Fetch available models from Grok (xAI) API
-        
-        :return: List of model names
-        :raises Exception: When API request fails
-        """
-        try:
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
-            auth_token = self.config.get('auth_token', '')
-            
-            url = f"{api_base_url}/models"
-            headers = {
-                'Authorization': f'Bearer {auth_token}',
-                'Content-Type': 'application/json'
-            }
-            
-            logger.info(f"Fetching models from {url}")
-            response = requests.get(url, headers=headers, timeout=10, verify=False)
-            response.raise_for_status()
-            
-            data = response.json()
-            models = [model['id'] for model in data.get('data', [])]
-            
-            logger.info(f"Successfully fetched {len(models)} Grok models")
-            return sorted(models)
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to fetch Grok models: {str(e)}")
-            raise Exception(f"Failed to fetch models: {str(e)}")
+    # Grok 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models
+    # 注意：Grok 使用 auth_token 而不是 api_key，但 prepare_headers() 已经处理了这个差异

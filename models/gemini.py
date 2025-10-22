@@ -29,15 +29,20 @@ class GeminiModel(BaseAIModel):
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['api_key', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['api_key']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
         
         # 确保 api_base_url 存在，如果不存在则使用默认值
         if 'api_base_url' not in self.config:
             self.config['api_base_url'] = self.DEFAULT_API_BASE_URL
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -469,37 +474,34 @@ class GeminiModel(BaseAIModel):
             "enable_streaming": True,  # 默认启用流式传输
         }
     
-    def fetch_available_models(self) -> list:
+    def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
         """
-        Fetch available models from Google Gemini API
+        准备获取模型列表的完整 URL
+        Gemini 将 API key 作为 URL 参数
         
-        :return: List of model names
-        :raises Exception: When API request fails
+        :param base_url: API 基础 URL
+        :param endpoint: API 端点路径
+        :return: 完整的请求 URL
         """
-        try:
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
-            api_key = self.config.get('api_key', '')
-            
-            # Gemini uses API key as URL parameter
-            url = f"{api_base_url}/models?key={api_key}"
-            
-            logger.info(f"Fetching models from Gemini API")
-            response = requests.get(url, timeout=10, verify=False)
-            response.raise_for_status()
-            
-            data = response.json()
-            models = []
-            for model in data.get('models', []):
-                model_name = model.get('name', '')
-                # Remove "models/" prefix if present
-                if model_name.startswith('models/'):
-                    models.append(model_name.replace('models/', ''))
-                else:
-                    models.append(model_name)
-            
-            logger.info(f"Successfully fetched {len(models)} Gemini models")
-            return sorted(models)
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to fetch Gemini models: {str(e)}")
-            raise Exception(f"Failed to fetch models: {str(e)}")
+        api_key = self.config.get('api_key', '')
+        return f"{base_url}{endpoint}?key={api_key}"
+    
+    def parse_models_response(self, data: Dict[str, Any]) -> list:
+        """
+        解析 Gemini API 的模型列表响应
+        Gemini 使用 "models" 字段，且模型名称有 "models/" 前缀需要移除
+        
+        :param data: API 响应的 JSON 数据
+        :return: 模型名称列表
+        """
+        models = []
+        for model in data.get('models', []):
+            model_name = model.get('name', '')
+            # Remove "models/" prefix if present
+            if model_name.startswith('models/'):
+                models.append(model_name.replace('models/', ''))
+            else:
+                models.append(model_name)
+        return models
+    
+    # Gemini 只需重写 URL 格式和响应解析，其他使用基类默认实现

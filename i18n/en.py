@@ -172,6 +172,11 @@ class EnglishTranslation(BaseTranslation):
             'missing_config_key': 'Missing required config key: {key}',
             'api_base_url_required': 'API Base URL is required',
             'model_name_required': 'Model name is required',
+            
+            # Model list fetching
+            'fetching_models_from': 'Fetching models from {url}',
+            'successfully_fetched_models': 'Successfully fetched {count} {provider} models',
+            'failed_to_fetch_models': 'Failed to fetch models: {error}',
             'api_key_empty': 'API Key is empty. Please enter a valid API Key.',
             
             # About information

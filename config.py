@@ -275,9 +275,12 @@ class ModelConfigWidget(QWidget):
             # 自定义模型名称输入框（初始隐藏）
             self.custom_model_input = QLineEdit(self)
             self.custom_model_input.setMinimumWidth(base_width)
+            self.custom_model_input.setMinimumHeight(25)  # 设置最小高度
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
             self.custom_model_input.textChanged.connect(self.on_config_changed)
             self.custom_model_input.setVisible(False)
+            # 保存这一行的索引，以便后续控制可见性
+            self.custom_model_row = model_layout.rowCount()
             model_layout.addRow("", self.custom_model_input)
             
             # 加载模型配置（填充下拉框或自定义输入）
@@ -462,13 +465,35 @@ class ModelConfigWidget(QWidget):
         """切换自定义模型名称"""
         use_custom = (state == Qt.Checked)
         
+        logger.debug(f"切换自定义模型名称: use_custom={use_custom}")
+        
         # 切换控件可见性
         self.model_combo.setEnabled(not use_custom)
         self.custom_model_input.setVisible(use_custom)
         
         # 如果切换到自定义，复制当前选中的模型名称
-        if use_custom and self.model_combo.currentText():
-            self.custom_model_input.setText(self.model_combo.currentText())
+        if use_custom:
+            if self.model_combo.currentText():
+                self.custom_model_input.setText(self.model_combo.currentText())
+            # 设置焦点到输入框
+            self.custom_model_input.setFocus()
+        
+        # 强制更新父控件和布局
+        parent = self.custom_model_input.parent()
+        if parent:
+            parent.updateGeometry()
+        
+        # 更新整个窗口的布局
+        if hasattr(self, 'layout') and self.layout():
+            self.layout().update()
+            self.layout().activate()
+        
+        # 强制重绘
+        self.custom_model_input.update()
+        self.update()
+        
+        # 触发配置变更
+        self.on_config_changed()
     
     def load_model_config(self):
         """加载模型配置"""

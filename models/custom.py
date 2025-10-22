@@ -274,37 +274,5 @@ class CustomModel(BaseAIModel):
             "disable_ssl_verify": False,  # 默认启用SSL验证，本地模型可能需要禁用
         }
     
-    def fetch_available_models(self) -> list:
-        """
-        Fetch available models from Custom API (OpenAI-compatible)
-        
-        :return: List of model names
-        :raises Exception: When API request fails
-        """
-        try:
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
-            api_key = self.config.get('api_key', '')
-            disable_ssl_verify = self.config.get('disable_ssl_verify', False)
-            
-            url = f"{api_base_url}/models"
-            headers = {
-                'Content-Type': 'application/json'
-            }
-            
-            # Add API key if provided
-            if api_key:
-                headers['Authorization'] = f'Bearer {api_key}'
-            
-            logger.info(f"Fetching models from {url}")
-            response = requests.get(url, headers=headers, timeout=10, verify=not disable_ssl_verify)
-            response.raise_for_status()
-            
-            data = response.json()
-            models = [model['id'] for model in data.get('data', [])]
-            
-            logger.info(f"Successfully fetched {len(models)} Custom models")
-            return sorted(models)
-            
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to fetch Custom models: {str(e)}")
-            raise Exception(f"Failed to fetch models: {str(e)}")
+    # Custom 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models
+    # 注意：基类实现中 verify=False，已经满足本地模型的需求
