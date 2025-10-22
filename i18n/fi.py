@@ -89,6 +89,19 @@ class FinnishTranslation(BaseTranslation):
             'requesting': 'Pyytää',
             'formatting': 'Pyyntö onnistui, muotoillaan',
             
+            # UI - Mallilistan toiminto
+            'load_models': 'Lataa mallit',
+            'use_custom_model': 'Käytä mukautettua mallin nimeä',
+            'custom_model_placeholder': 'Syötä mukautettu mallin nimi',
+            'model_placeholder': 'Lataa ensin mallit',
+            'models_loaded': '{count} mallia ladattu',
+            'load_models_failed': 'Mallien lataus epäonnistui: {error}',
+            'model_list_not_supported': 'Tämä palveluntarjoaja ei tue automaattista mallilistan hakua',
+            'api_key_required': 'Syötä ensin API-avain',
+            'invalid_params': 'Virheelliset parametrit',
+            'warning': 'Varoitus',
+            'success': 'Onnistui',
+            
             # Metatietokentät
             'metadata_title': 'Otsikko',
             'metadata_authors': 'Kirjailija',
@@ -157,6 +170,11 @@ class FinnishTranslation(BaseTranslation):
             'api_base_url_required': 'API-perus-URL vaaditaan',
             'model_name_required': 'Mallinimi vaaditaan',
             'api_key_empty': 'API-avain on tyhjä. Syötä kelvollinen API-avain.',
+            
+            # Mallilistan haku
+            'fetching_models_from': 'Haetaan malleja osoitteesta {url}',
+            'successfully_fetched_models': '{count} {provider}-mallia haettu',
+            'failed_to_fetch_models': 'Mallien haku epäonnistui: {error}',
             
             # Tietoja
             'author_name': 'Sheldon',

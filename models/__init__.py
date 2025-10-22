@@ -12,6 +12,8 @@ from .custom import CustomModel
 from .openai import OpenAIModel
 from .anthropic import AnthropicModel
 from .nvidia import NvidiaModel
+from .openrouter import OpenRouterModel
+from .ollama import OllamaModel
 
 # 注册模型到工厂类
 AIModelFactory.register_model('grok', GrokModel)
@@ -21,6 +23,8 @@ AIModelFactory.register_model('custom', CustomModel)
 AIModelFactory.register_model('openai', OpenAIModel)
 AIModelFactory.register_model('anthropic', AnthropicModel)
 AIModelFactory.register_model('nvidia', NvidiaModel)
+AIModelFactory.register_model('openrouter', OpenRouterModel)
+AIModelFactory.register_model('ollama', OllamaModel)
 
 # 导出公共接口
-__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel']
+__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'OpenRouterModel', 'OllamaModel']

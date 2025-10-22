@@ -37,14 +37,33 @@ class MarkdownWorker(QThread):
         super().__init__(None)  # 不设置父对象，避免随父对象一起销毁
         self.text = text
         self._is_cancelled = False
+    
+    def _process_think_tags(self, text):
+        """处理推理模型的 think 标签，将其转换为特殊样式的 HTML"""
+        import re
+        
+        # 查找所有 <think>...</think> 标签
+        def replace_think(match):
+            think_content = match.group(1)
+            # 将 think 内容包装在一个带特殊样式的 div 中
+            # 使用 [思考] 替代 emoji，避免 Linux 系统渲染问题
+            return f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+        
+        # 替换所有 <think>...</think> 标签
+        processed_text = re.sub(r'<think>(.*?)</think>', replace_think, text, flags=re.DOTALL)
+        
+        return processed_text
 
     def run(self):
         if self._is_cancelled:
             return
         try:
+            # 处理推理模型的 think 标签
+            text_to_convert = self._process_think_tags(self.text)
+            
             # 使用markdown2转换markdown为HTML
             html = markdown2.markdown(
-                self.text,
+                text_to_convert,
                 extras=[
                     'fenced-code-blocks',
                     'tables',
@@ -125,6 +144,33 @@ class ResponseHandler(QObject):
         self.signal = ResponseSignals()
         self.history_manager = HistoryManager()
         self.current_metadata = None  # 存储当前书籍的元数据
+    
+    def _process_think_tags_for_stream(self, text):
+        """处理流式响应中的 think 标签"""
+        import re
+        
+        # 查找所有完整的 <think>...</think> 标签
+        def replace_think(match):
+            think_content = match.group(1)
+            # 将 think 内容包装在一个带特殊样式的 div 中
+            # 使用 [思考] 替代 emoji，避免 Linux 系统渲染问题
+            return f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+        
+        # 替换所有完整的 <think>...</think> 标签
+        processed_text = re.sub(r'<think>(.*?)</think>', replace_think, text, flags=re.DOTALL)
+        
+        # 处理未完成的 <think> 标签（流式传输中可能出现）
+        # 如果有未闭合的 <think>，暂时显示为"正在思考..."
+        if '<think>' in processed_text and '</think>' not in processed_text[processed_text.rfind('<think>'):]:
+            # 找到最后一个未闭合的 <think>
+            last_think_pos = processed_text.rfind('<think>')
+            before_think = processed_text[:last_think_pos]
+            think_content = processed_text[last_think_pos + 7:]  # 7 = len('<think>')
+            
+            # 显示"正在思考..."和已有的思考内容
+            processed_text = before_think + f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[正在思考...]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+        
+        return processed_text
 
     def setup(self, response_area, send_button, i18n, api, input_area=None):
         """
@@ -341,9 +387,12 @@ class ResponseHandler(QObject):
         self._last_update_time = time.time()
         
         try:
+            # 处理推理模型的 think 标签
+            text_to_convert = self._process_think_tags_for_stream(self._stream_response)
+            
             # 使用markdown2转换完整的累积响应为HTML
             html = markdown2.markdown(
-                self._stream_response,
+                text_to_convert,
                 extras=[
                     'fenced-code-blocks',
                     'tables',

@@ -87,7 +87,20 @@ class DutchTranslation(BaseTranslation):
             'save_success': 'Instellingen opgeslagen',
             'sending': 'Verzenden...',
             'requesting': 'Aanvragen',
-            'formatting': 'Aanvraag geslaagd, formatteren',
+            'formatting': 'Verzoek geslaagd, formatteren',
+            
+            # UI - Modellijstfunctie
+            'load_models': 'Modellen laden',
+            'use_custom_model': 'Aangepaste modelnaam gebruiken',
+            'custom_model_placeholder': 'Voer aangepaste modelnaam in',
+            'model_placeholder': 'Laad eerst modellen',
+            'models_loaded': '{count} modellen geladen',
+            'load_models_failed': 'Laden van modellen mislukt: {error}',
+            'model_list_not_supported': 'Deze provider ondersteunt geen automatisch ophalen van modellijst',
+            'api_key_required': 'Voer eerst API-sleutel in',
+            'invalid_params': 'Ongeldige parameters',
+            'warning': 'Waarschuwing',
+            'success': 'Succes',
             
             # Metadatavelden
             'metadata_title': 'Titel',
@@ -157,6 +170,11 @@ class DutchTranslation(BaseTranslation):
             'api_base_url_required': 'API-basis-URL is vereist',
             'model_name_required': 'Modelnaam is vereist',
             'api_key_empty': 'API-sleutel is leeg. Voer een geldige API-sleutel in.',
+            
+            # Modellijst ophalen
+            'fetching_models_from': 'Modellen ophalen van {url}',
+            'successfully_fetched_models': '{count} {provider}-modellen opgehaald',
+            'failed_to_fetch_models': 'Ophalen van modellen mislukt: {error}',
             
             # Over informatie
             'author_name': 'Sheldon',

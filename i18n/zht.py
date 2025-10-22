@@ -89,6 +89,19 @@ class TraditionalChineseTranslation(BaseTranslation):
             'requesting': '請求中',
             'formatting': '請求成功，格式化中',
             
+            # UI - 模型列表功能
+            'load_models': '載入模型',
+            'use_custom_model': '使用自訂模型名稱',
+            'custom_model_placeholder': '輸入自訂模型名稱',
+            'model_placeholder': '請先載入模型',
+            'models_loaded': '成功載入 {count} 個模型',
+            'load_models_failed': '載入模型失敗：{error}',
+            'model_list_not_supported': '此提供商不支援自動獲取模型列表',
+            'api_key_required': '請先輸入 API Key',
+            'invalid_params': '無效的參數',
+            'warning': '警告',
+            'success': '成功',
+            
             # 元數據欄位
             'metadata_title': '標題',
             'metadata_authors': '作者',
@@ -157,6 +170,11 @@ class TraditionalChineseTranslation(BaseTranslation):
             'api_base_url_required': '需要API基礎URL',
             'model_name_required': '需要模型名稱',
             'api_key_empty': 'API金鑰為空。請輸入有效的API金鑰。',
+            
+            # 模型列表獲取
+            'fetching_models_from': '正在從 {url} 獲取模型',
+            'successfully_fetched_models': '成功獲取 {count} 個 {provider} 模型',
+            'failed_to_fetch_models': '獲取模型失敗：{error}',
             
             # 關於信息
             'author_name': 'Sheldon',

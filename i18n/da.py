@@ -87,7 +87,20 @@ class DanishTranslation(BaseTranslation):
             'save_success': 'Indstillinger gemt',
             'sending': 'Sender...',
             'requesting': 'Anmoder',
-            'formatting': 'Anmodning vellykket, formaterer',
+            'formatting': 'Anmodning lykkedes, formaterer',
+            
+            # UI - Modellistefunktion
+            'load_models': 'Indlæs modeller',
+            'use_custom_model': 'Brug brugerdefineret modelnavn',
+            'custom_model_placeholder': 'Indtast brugerdefineret modelnavn',
+            'model_placeholder': 'Indlæs venligst modeller først',
+            'models_loaded': '{count} modeller indlæst',
+            'load_models_failed': 'Kunne ikke indlæse modeller: {error}',
+            'model_list_not_supported': 'Denne udbyder understøtter ikke automatisk hentning af modelliste',
+            'api_key_required': 'Indtast venligst API-nøgle først',
+            'invalid_params': 'Ugyldige parametre',
+            'warning': 'Advarsel',
+            'success': 'Succes',
             
             # Metadata fields
             'metadata_title': 'Titel',
@@ -156,9 +169,14 @@ class DanishTranslation(BaseTranslation):
             'missing_config_key': 'Manglende påkrævet konfigurationsnøgle: {key}',
             'api_base_url_required': 'API-base-URL er påkrævet',
             'model_name_required': 'Modelnavn er påkrævet',
-            'api_key_empty': 'API-nøgle er tom. Indtast venligst en gyldig API-nøgle.',
+            'api_key_empty': 'API-nøglen er tom. Indtast venligst en gyldig API-nøgle.',
             
-            # About information
+            # Hentning af modelliste
+            'fetching_models_from': 'Henter modeller fra {url}',
+            'successfully_fetched_models': '{count} {provider}-modeller hentet',
+            'failed_to_fetch_models': 'Kunne ikke hente modeller: {error}',
+            
+            # Om information
             'author_name': 'Sheldon',
             'user_manual': 'Brugermanual',
             'about_plugin': 'Hvorfor Ask Grok?',

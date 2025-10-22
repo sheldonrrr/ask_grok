@@ -17,6 +17,8 @@ from .models.custom import CustomModel
 from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
 from .models.nvidia import NvidiaModel
+from .models.openrouter import OpenRouterModel
+from .models.ollama import OllamaModel
 from calibre.utils.config import JSONConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_all_languages
@@ -49,6 +51,8 @@ CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
 NVIDIA_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA)
+OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
+OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
 # 默认配置
 prefs.defaults['selected_model'] = 'grok'  # 当前选中的模型
@@ -103,6 +107,24 @@ prefs.defaults['models'] = {
         'api_base_url': NVIDIA_CONFIG.default_api_base_url,
         'model': NVIDIA_CONFIG.default_model_name,
         'display_name': NVIDIA_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'openrouter': {
+        'api_key': '',
+        'api_base_url': OPENROUTER_CONFIG.default_api_base_url,
+        'model': OPENROUTER_CONFIG.default_model_name,
+        'display_name': OPENROUTER_CONFIG.display_name,
+        'enable_streaming': True,
+        'http_referer': '',  # Optional: for ranking on OpenRouter
+        'x_title': 'Ask Grok Calibre Plugin',  # Optional: app name
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'ollama': {
+        'api_key': '',  # Optional for Ollama (local service)
+        'api_base_url': OLLAMA_CONFIG.default_api_base_url,
+        'model': OLLAMA_CONFIG.default_model_name,
+        'display_name': OLLAMA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
     }
@@ -211,15 +233,25 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'nvidia':
             provider = AIProvider.AI_NVIDIA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'openrouter':
+            provider = AIProvider.AI_OPENROUTER
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'ollama':
+            provider = AIProvider.AI_OLLAMA
+            model_config = get_current_model_config(provider)
         
         if model_config:
-            # API Key/Token 输入框
-            self.api_key_edit = QTextEdit(self)
-            self.api_key_edit.setPlainText(self.config.get(api_key_field_name, ''))
-            self.api_key_edit.textChanged.connect(self.on_config_changed)
-            self.api_key_edit.setMaximumHeight(62)
-            self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
-            layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
+            # API Key/Token 输入框（Ollama 不需要）
+            if self.model_id != 'ollama':
+                self.api_key_edit = QTextEdit(self)
+                self.api_key_edit.setPlainText(self.config.get(api_key_field_name, ''))
+                self.api_key_edit.textChanged.connect(self.on_config_changed)
+                self.api_key_edit.setMaximumHeight(62)
+                self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
+                layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
+            else:
+                # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
+                self.api_key_edit = None
             
             # 添加分隔线
             separator = QFrame()
@@ -355,6 +387,20 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_NVIDIA
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
             config['display_name'] = 'Nvidia AI (Free)'  # 设置固定的显示名称
+        elif self.model_id == 'openrouter':
+            provider = AIProvider.AI_OPENROUTER
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'OpenRouter'  # 设置固定的显示名称
+            # OpenRouter 特殊字段
+            if hasattr(self, 'http_referer_edit'):
+                config['http_referer'] = self.http_referer_edit.text().strip()
+            if hasattr(self, 'x_title_edit'):
+                config['x_title'] = self.x_title_edit.text().strip()
+        elif self.model_id == 'ollama':
+            provider = AIProvider.AI_OLLAMA
+            # Ollama 不需要 API Key
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
+            config['display_name'] = 'Ollama (Local)'  # 设置固定的显示名称
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
@@ -382,10 +428,6 @@ class ModelConfigWidget(QWidget):
             else:
                 config['disable_ssl_verify'] = False  # 默认启用SSL验证
         
-        # 安全记录日志，不显示敏感信息
-        safe_config = safe_log_config(config)
-        logger.debug(f"{self.model_id.capitalize()}模型配置保存: {safe_config}")
-        
         return config
     
     def on_config_changed(self):
@@ -399,15 +441,16 @@ class ModelConfigWidget(QWidget):
         from PyQt5.QtCore import QTimer
         logger = logging.getLogger(__name__)
         
-        # 1. 验证 API Key
-        api_key = self.get_api_key()
-        if not api_key:
-            QMessageBox.warning(
-                self,
-                self.i18n.get('warning', 'Warning'),
-                self.i18n.get('api_key_required', 'Please enter API Key first')
-            )
-            return
+        # 1. 验证 API Key（Ollama 不需要）
+        if self.model_id != 'ollama':
+            api_key = self.get_api_key()
+            if not api_key:
+                QMessageBox.warning(
+                    self,
+                    self.i18n.get('warning', 'Warning'),
+                    self.i18n.get('api_key_required', 'Please enter API Key first')
+                )
+                return
         
         # 2. 禁用按钮，显示加载状态
         self.load_models_button.setEnabled(False)
@@ -523,7 +566,7 @@ class ModelConfigWidget(QWidget):
     
     def get_api_key(self) -> str:
         """获取 API Key"""
-        if hasattr(self, 'api_key_edit'):
+        if hasattr(self, 'api_key_edit') and self.api_key_edit:
             return self.api_key_edit.toPlainText().strip()
         return ''
     
@@ -531,7 +574,7 @@ class ModelConfigWidget(QWidget):
         """更新模型配置控件的文本"""
         import logging
         logger = logging.getLogger(__name__)
-        logger.debug(f"更新模型{self.model_id}的配置控件文本")
+        # 更新模型配置控件文本
 
         # 定义已知标签的翻译
         known_labels = {
@@ -611,6 +654,21 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'custom':
                 from .models import CustomModel
                 model_config = CustomModel
+            elif self.model_id == 'openai':
+                from .models import OpenAIModel
+                model_config = OpenAIModel
+            elif self.model_id == 'anthropic':
+                from .models import AnthropicModel
+                model_config = AnthropicModel
+            elif self.model_id == 'nvidia':
+                from .models import NvidiaModel
+                model_config = NvidiaModel
+            elif self.model_id == 'openrouter':
+                from .models import OpenRouterModel
+                model_config = OpenRouterModel
+            elif self.model_id == 'ollama':
+                from .models import OllamaModel
+                model_config = OllamaModel
                 
             if model_config:
                 default_api_base_url = getattr(model_config, 'DEFAULT_API_BASE_URL', '')
@@ -632,6 +690,16 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_DEEPSEEK
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
+        elif self.model_id == 'openai':
+            provider = AIProvider.AI_OPENAI
+        elif self.model_id == 'anthropic':
+            provider = AIProvider.AI_ANTHROPIC
+        elif self.model_id == 'nvidia':
+            provider = AIProvider.AI_NVIDIA
+        elif self.model_id == 'openrouter':
+            provider = AIProvider.AI_OPENROUTER
+        elif self.model_id == 'ollama':
+            provider = AIProvider.AI_OLLAMA
         else:
             # 未知模型，无法重置
             return
@@ -682,6 +750,8 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('openai', OpenAIModel)
         AIModelFactory.register_model('anthropic', AnthropicModel)
         AIModelFactory.register_model('nvidia', NvidiaModel)
+        AIModelFactory.register_model('openrouter', OpenRouterModel)
+        AIModelFactory.register_model('ollama', OllamaModel)
         
         self.setup_ui()
         self.load_initial_values()
@@ -763,7 +833,9 @@ class ConfigDialog(QWidget):
             AIProvider.AI_CUSTOM: 'custom',
             AIProvider.AI_OPENAI: 'openai',
             AIProvider.AI_ANTHROPIC: 'anthropic',
-            AIProvider.AI_NVIDIA: 'nvidia'
+            AIProvider.AI_NVIDIA: 'nvidia',
+            AIProvider.AI_OPENROUTER: 'openrouter',
+            AIProvider.AI_OLLAMA: 'ollama'
         }
         # 按照默认模型顺序添加到下拉框
         for provider, model_id in model_mapping.items():
@@ -916,13 +988,13 @@ class ConfigDialog(QWidget):
             for model_id, widget in self.model_widgets.items():
                 try:
                     current_configs[model_id] = widget.get_config()
-                    logger.debug(f"保存当前模型 {model_id} 的配置: {safe_log_config(current_configs[model_id])}")
+                    pass  # 配置已保存
                 except Exception as e:
                     logger.error(f"获取模型 {model_id} 配置时出错: {str(e)}")
                     # 如果控件已被删除，使用初始值或默认值
                     if hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
                         current_configs[model_id] = self.initial_values['models'][model_id]
-                        logger.debug(f"使用初始值作为模型 {model_id} 的配置: {safe_log_config(current_configs[model_id])}")
+                        pass  # 使用初始值
         
         # 清除当前布局中的所有元素
         self.clear_layout(self.models_layout)
@@ -941,16 +1013,16 @@ class ConfigDialog(QWidget):
         # 1. 首先检查当前会话中用户修改过的配置
         if model_id in current_configs:
             model_config = current_configs[model_id]
-            logger.debug(f"使用当前会话中的模型配置: {safe_log_config(model_config)}")
+            pass  # 使用当前会话配置
         # 2. 如果没有，检查初始值
         elif hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
             model_config = self.initial_values['models'].get(model_id, {})
-            logger.debug(f"使用初始值中的模型配置: {safe_log_config(model_config)}")
+            pass  # 使用初始值配置
         # 3. 如果还是没有，从已保存的配置中获取
         if not model_config:
             prefs = get_prefs()
             model_config = prefs.get('models', {}).get(model_id, {})
-            logger.debug(f"使用已保存的模型配置: {safe_log_config(model_config)}")
+            pass  # 使用已保存配置
         
         # 创建模型配置控件
         widget = ModelConfigWidget(model_id, model_config, self.i18n)
@@ -1021,7 +1093,9 @@ class ConfigDialog(QWidget):
             AIProvider.AI_CUSTOM: 'custom',
             AIProvider.AI_OPENAI: 'openai',
             AIProvider.AI_ANTHROPIC: 'anthropic',
-            AIProvider.AI_NVIDIA: 'nvidia'
+            AIProvider.AI_NVIDIA: 'nvidia',
+            AIProvider.AI_OPENROUTER: 'openrouter',
+            AIProvider.AI_OLLAMA: 'ollama'
         }
         
         # 按照默认模型顺序添加到下拉框，使用翻译后的名称
@@ -1058,12 +1132,7 @@ class ConfigDialog(QWidget):
         # 调试日志
         import logging
         logger = logging.getLogger(__name__)
-        logger.debug(f"加载初始值: {safe_log_config(self.initial_values['models'])}")
-        logger.debug(f"当前选中模型: {self.initial_values['selected_model']}")
-        if self.initial_values['selected_model'] in self.initial_values['models']:
-            logger.debug(f"当前模型配置: {safe_log_config(self.initial_values['models'][self.initial_values['selected_model']])}")
-        else:
-            logger.debug(f"当前模型配置不存在")
+        # 初始值已加载
         
         
         # 设置当前语言
@@ -1401,7 +1470,7 @@ class ConfigDialog(QWidget):
             for model_id, widget in self.model_widgets.items():
                 if hasattr(widget, 'i18n'):
                     widget.i18n = self.i18n
-                    logger.debug(f"更新了模型{model_id}的配置控件")
+                    pass  # 配置控件已更新
         
         # 更新模型下拉框中的显示名称
         self.update_model_name_display()
@@ -1436,10 +1505,10 @@ class ConfigDialog(QWidget):
         for model_id, widget in self.model_widgets.items():
             model_config = widget.get_config()
             models_config[model_id] = model_config
-            logger.debug(f"保存模型 {model_id} 的配置: {safe_log_config(model_config)}")
+            pass  # 模型配置已保存
         
         prefs['models'] = models_config
-        logger.debug(f"保存到prefs的所有模型配置: {safe_log_config(models_config)}")
+        # 所有模型配置已保存
         
         # 更新按钮状态
         #self.save_button.setEnabled(False)
@@ -1461,13 +1530,13 @@ class ConfigDialog(QWidget):
             prefs.refresh()
             # 获取刷新后的配置并安全地记录日志
             refreshed_models = safe_log_config(prefs.get('models', {}))
-            logger.debug(f"强制刷新prefs配置后的模型配置: {refreshed_models.get('grok', {}).get('model', '未找到')}")
+            pass  # 配置已刷新
         
         # 重新获取最新的prefs值，确保我们使用的是已保存的值
         prefs = get_prefs(force_reload=True)  # 添加force_reload参数
         # 安全地记录重新获取的prefs
         reloaded_models = safe_log_config(prefs.get('models', {}))
-        logger.debug(f"重新获取prefs后的模型配置: {reloaded_models.get('grok', {}).get('model', '未找到')}")
+        # 配置已重新加载
         current_lang = prefs.get('language', 'en')
         
         # 更新初始值，但不重新加载界面元素
@@ -1482,9 +1551,7 @@ class ConfigDialog(QWidget):
         }
         # 安全地记录更新后的初始值
         updated_models = safe_log_config(self.initial_values['models'])
-        logger.debug(f"保存设置后更新初始值中的模型配置: {updated_models.get('grok', {}).get('model', '未找到')}")
-        
-        logger.debug(f"保存设置后更新初始值: {safe_log_config(self.initial_values['models'])}")
+        # 初始值已更新
         
         # 确保设置已经写入到磁盘
         from calibre.utils.config import JSONConfig
@@ -1556,7 +1623,7 @@ class ConfigDialog(QWidget):
                             current_config = widget.get_config()
                             if current_config != self.initial_values['models'][model_id]:
                                 models_changed = True
-                                logger.debug(f"模型 {model_id} 配置已更改")
+                                pass  # 配置已更改
                                 break
                         except Exception as e:
                             logger.error(f"获取模型 {model_id} 配置时出错: {str(e)}")

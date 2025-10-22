@@ -91,6 +91,19 @@ class GermanTranslation(BaseTranslation):
             'requesting': 'Anfrage läuft',
             'formatting': 'Anfrage erfolgreich, Formatierung läuft',
             
+            # UI - Modellliste-Funktion
+            'load_models': 'Modelle laden',
+            'use_custom_model': 'Benutzerdefinierten Modellnamen verwenden',
+            'custom_model_placeholder': 'Benutzerdefinierten Modellnamen eingeben',
+            'model_placeholder': 'Bitte laden Sie zuerst Modelle',
+            'models_loaded': '{count} Modelle erfolgreich geladen',
+            'load_models_failed': 'Fehler beim Laden der Modelle: {error}',
+            'model_list_not_supported': 'Dieser Anbieter unterstützt kein automatisches Abrufen der Modellliste',
+            'api_key_required': 'Bitte geben Sie zuerst den API-Schlüssel ein',
+            'invalid_params': 'Ungültige Parameter',
+            'warning': 'Warnung',
+            'success': 'Erfolg',
+            
             # Metadatenfelder
             'metadata_title': 'Titel',
             'metadata_authors': 'Autor',
@@ -159,6 +172,11 @@ class GermanTranslation(BaseTranslation):
             'api_base_url_required': 'API-Basis-URL ist erforderlich',
             'model_name_required': 'Modellname ist erforderlich',
             'api_key_empty': 'API-Schlüssel ist leer. Bitte geben Sie einen gültigen API-Schlüssel ein.',
+            
+            # Modellliste abrufen
+            'fetching_models_from': 'Modelle werden von {url} abgerufen',
+            'successfully_fetched_models': '{count} {provider}-Modelle erfolgreich abgerufen',
+            'failed_to_fetch_models': 'Fehler beim Abrufen der Modelle: {error}',
             
             # Über Informationen
             'author_name': 'Sheldon',

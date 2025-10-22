@@ -252,8 +252,9 @@ class AskGrokPluginUI(InterfaceAction):
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
-    # 定义一个与 ConfigDialog 相同的语言变更信号
+    # 定义与 ConfigDialog 相同的信号
     language_changed = pyqtSignal(str)
+    settings_saved = pyqtSignal()  # 添加设置保存信号
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -270,8 +271,9 @@ class AskGrokConfigWidget(QWidget):
         self.config_dialog = ConfigDialog(self.gui)
         layout.addWidget(self.config_dialog)
         
-        # 连接 ConfigDialog 的语言变更信号，并转发出去
+        # 连接 ConfigDialog 的信号，并转发出去
         self.config_dialog.language_changed.connect(self.on_language_changed)
+        self.config_dialog.settings_saved.connect(self.settings_saved.emit)  # 转发设置保存信号
     
     def on_language_changed(self, lang_code):
         """当语言改变时更新界面并转发信号"""
@@ -431,10 +433,8 @@ class TabDialog(QDialog):
         
         self.setLayout(layout)
         
-        # 连接配置对话框的信号
-        self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
-    
-        # 连接语言切换信号
+        # 连接配置组件的信号
+        self.config_widget.settings_saved.connect(self.on_settings_saved)
         self.config_widget.language_changed.connect(self.on_language_changed)
     
     def on_language_changed(self, new_language):
@@ -499,10 +499,9 @@ class TabDialog(QDialog):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 重新加载模型，确保使用最新选择的模型
+        # 重新加载全局 API 实例
         from calibre_plugins.ask_grok.api import api
         api.reload_model()
-        logger.debug("已重新加载模型")
         
         # 更新已打开的AskDialog实例的模型信息
         try:
@@ -511,11 +510,14 @@ class TabDialog(QDialog):
                 hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
                 ask_grok_plugin.plugin_instance.ask_dialog):
                 
-                logger.debug("正在更新已打开的AskDialog实例的模型信息")
+                # 确保 AskDialog 的 API 实例也被重新加载
+                if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'api'):
+                    ask_grok_plugin.plugin_instance.ask_dialog.api.reload_model()
+                # 然后更新 UI 显示
                 ask_grok_plugin.plugin_instance.ask_dialog.update_model_info()
-                logger.debug("已更新AskDialog实例的模型信息")
+                logger.info("配置已保存，模型信息已更新")
         except Exception as e:
-            logger.error(f"更新AskDialog实例的模型信息时出错: {str(e)}")
+            logger.error(f"更新模型信息时出错: {str(e)}")
         
         # 获取最新的语言设置
         new_language = get_prefs().get('language', 'en')
@@ -1205,8 +1207,8 @@ class AskDialog(QDialog):
         token_field = 'auth_token' if selected_model == 'grok' else 'api_key'
         token = model_config.get(token_field, '')
         
-        # 如果是Custom模型，不强制要求API Key
-        if selected_model == 'custom':
+        # 如果是Ollama模型，不强制要求API Key（本地服务）
+        if selected_model == 'ollama':
             return True
             
         if not token or not token.strip():

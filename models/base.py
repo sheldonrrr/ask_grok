@@ -17,6 +17,8 @@ class AIProvider(Enum):
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
     AI_NVIDIA = auto()    # Nvidia AI (Free tier available)
+    AI_OPENROUTER = auto() # OpenRouter (Model aggregator)
+    AI_OLLAMA = auto()    # Ollama (Local models)
 
 
 class ModelConfig:
@@ -71,8 +73,8 @@ DEFAULT_MODELS = {
         provider=AIProvider.AI_CUSTOM,
         display_name="Custom",
         api_key_label="API Key:",
-        default_api_base_url="http://localhost:11434",
-        default_model_name="llama3"
+        default_api_base_url="",
+        default_model_name=""
     ),
     AIProvider.AI_OPENAI: ModelConfig(
         provider=AIProvider.AI_OPENAI,
@@ -94,6 +96,20 @@ DEFAULT_MODELS = {
         api_key_label="Nvidia API Key:",
         default_api_base_url="https://integrate.api.nvidia.com/v1",
         default_model_name="meta/llama-3.3-70b-instruct"
+    ),
+    AIProvider.AI_OPENROUTER: ModelConfig(
+        provider=AIProvider.AI_OPENROUTER,
+        display_name="OpenRouter",
+        api_key_label="OpenRouter API Key:",
+        default_api_base_url="https://openrouter.ai/api/v1",
+        default_model_name="openai/gpt-4o-mini"
+    ),
+    AIProvider.AI_OLLAMA: ModelConfig(
+        provider=AIProvider.AI_OLLAMA,
+        display_name="Ollama (Local)",
+        api_key_label="API Key (Optional):",
+        default_api_base_url="http://localhost:11434",
+        default_model_name="llama3"
     )
 }
 
@@ -327,6 +343,37 @@ class BaseAIModel(ABC):
         """
         return self.prepare_headers()
     
+    def build_api_url(self, base_url: str, endpoint: str) -> str:
+        """
+        智能构建 API URL，避免路径重复
+        
+        这是一个通用方法，处理常见的 URL 拼接问题：
+        1. 避免重复的路径段（如 /v1/v1/...）
+        2. 正确处理尾部斜杠
+        3. 支持完整路径的 base_url
+        
+        :param base_url: API 基础 URL
+        :param endpoint: API 端点路径
+        :return: 完整的请求 URL
+        
+        示例:
+            base_url="https://api.example.com/v1", endpoint="/v1/chat/completions"
+            -> "https://api.example.com/v1/chat/completions"
+            
+            base_url="https://api.example.com", endpoint="/v1/chat/completions"
+            -> "https://api.example.com/v1/chat/completions"
+        """
+        base_url = base_url.rstrip('/')
+        endpoint = endpoint.lstrip('/')
+        
+        # 如果 base_url 已经包含了 endpoint 的开始部分，避免重复
+        # 例如: base_url 以 /v1 结尾，endpoint 以 v1/ 开始
+        if base_url.endswith('/v1') and endpoint.startswith('v1/'):
+            # 移除 endpoint 中重复的 v1
+            endpoint = endpoint[3:]  # 移除 "v1/"
+        
+        return f"{base_url}/{endpoint}"
+    
     def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
         """
         准备获取模型列表的完整 URL
@@ -336,7 +383,7 @@ class BaseAIModel(ABC):
         :param endpoint: API 端点路径
         :return: 完整的请求 URL
         """
-        return f"{base_url}{endpoint}"
+        return self.build_api_url(base_url, endpoint)
     
     def parse_models_response(self, data: Dict[str, Any]) -> list:
         """

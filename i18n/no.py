@@ -89,6 +89,19 @@ class NorwegianTranslation(BaseTranslation):
             'requesting': 'Forespør',
             'formatting': 'Forespørsel vellykket, formaterer',
             
+            # UI - Modellistefunksjon
+            'load_models': 'Last modeller',
+            'use_custom_model': 'Bruk egendefinert modellnavn',
+            'custom_model_placeholder': 'Skriv inn egendefinert modellnavn',
+            'model_placeholder': 'Vennligst last modeller først',
+            'models_loaded': '{count} modeller lastet',
+            'load_models_failed': 'Kunne ikke laste modeller: {error}',
+            'model_list_not_supported': 'Denne leverandøren støtter ikke automatisk henting av modellliste',
+            'api_key_required': 'Vennligst skriv inn API-nøkkel først',
+            'invalid_params': 'Ugyldige parametere',
+            'warning': 'Advarsel',
+            'success': 'Suksess',
+            
             # Metadatafelter
             'metadata_title': 'Tittel',
             'metadata_authors': 'Forfatter',
@@ -157,6 +170,11 @@ class NorwegianTranslation(BaseTranslation):
             'api_base_url_required': 'API-base-URL er påkrevd',
             'model_name_required': 'Modellnavn er påkrevd',
             'api_key_empty': 'API-nøkkel er tom. Skriv inn en gyldig API-nøkkel.',
+            
+            # Henting av modellliste
+            'fetching_models_from': 'Henter modeller fra {url}',
+            'successfully_fetched_models': '{count} {provider}-modeller hentet',
+            'failed_to_fetch_models': 'Kunne ikke hente modeller: {error}',
             
             # Om informasjon
             'author_name': 'Sheldon',

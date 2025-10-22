@@ -89,6 +89,19 @@ class JapaneseTranslation(BaseTranslation):
             'requesting': 'リクエスト中',
             'formatting': 'リクエスト成功、フォーマット中',
             
+            # UI - モデルリスト機能
+            'load_models': 'モデルを読み込む',
+            'use_custom_model': 'カスタムモデル名を使用',
+            'custom_model_placeholder': 'カスタムモデル名を入力',
+            'model_placeholder': 'まずモデルを読み込んでください',
+            'models_loaded': '{count}個のモデルを読み込みました',
+            'load_models_failed': 'モデルの読み込みに失敗しました：{error}',
+            'model_list_not_supported': 'このプロバイダーはモデルリストの自動取得に対応していません',
+            'api_key_required': 'まずAPIキーを入力してください',
+            'invalid_params': '無効なパラメータ',
+            'warning': '警告',
+            'success': '成功',
+            
             # メタデータフィールド
             'metadata_title': 'タイトル',
             'metadata_authors': '著者',
@@ -157,6 +170,11 @@ class JapaneseTranslation(BaseTranslation):
             'api_base_url_required': 'APIベースURLが必要です',
             'model_name_required': 'モデル名が必要です',
             'api_key_empty': 'APIキーが空です。有効なAPIキーを入力してください。',
+            
+            # モデルリスト取得
+            'fetching_models_from': '{url}からモデルを取得中',
+            'successfully_fetched_models': '{count}個の{provider}モデルを取得しました',
+            'failed_to_fetch_models': 'モデルの取得に失敗しました：{error}',
             
             # 情報について
             'author_name': 'Sheldon',

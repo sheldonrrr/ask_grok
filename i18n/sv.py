@@ -89,6 +89,19 @@ class SwedishTranslation(BaseTranslation):
             'requesting': 'Begär',
             'formatting': 'Begäran lyckades, formaterar',
             
+            # UI - Modellistafunktion
+            'load_models': 'Ladda modeller',
+            'use_custom_model': 'Använd anpassat modellnamn',
+            'custom_model_placeholder': 'Ange anpassat modellnamn',
+            'model_placeholder': 'Ladda modeller först',
+            'models_loaded': '{count} modeller laddade',
+            'load_models_failed': 'Kunde inte ladda modeller: {error}',
+            'model_list_not_supported': 'Denna leverantör stöder inte automatisk hämtning av modelllista',
+            'api_key_required': 'Ange API-nyckel först',
+            'invalid_params': 'Ogiltiga parametrar',
+            'warning': 'Varning',
+            'success': 'Framgång',
+            
             # Metadatafält
             'metadata_title': 'Titel',
             'metadata_authors': 'Författare',
@@ -157,6 +170,11 @@ class SwedishTranslation(BaseTranslation):
             'api_base_url_required': 'API-bas-URL krävs',
             'model_name_required': 'Modellnamn krävs',
             'api_key_empty': 'API-nyckeln är tom. Ange en giltig API-nyckel.',
+            
+            # Hämtning av modelllista
+            'fetching_models_from': 'Hämtar modeller från {url}',
+            'successfully_fetched_models': '{count} {provider}-modeller hämtade',
+            'failed_to_fetch_models': 'Kunde inte hämta modeller: {error}',
             
             # Om information
             'author_name': 'Sheldon',

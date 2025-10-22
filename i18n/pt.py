@@ -89,6 +89,19 @@ class PortugueseTranslation(BaseTranslation):
             'requesting': 'Solicitando',
             'formatting': 'Solicitação bem-sucedida, formatando',
             
+            # UI - Função de lista de modelos
+            'load_models': 'Carregar modelos',
+            'use_custom_model': 'Usar nome de modelo personalizado',
+            'custom_model_placeholder': 'Digite o nome do modelo personalizado',
+            'model_placeholder': 'Por favor, carregue os modelos primeiro',
+            'models_loaded': '{count} modelos carregados com sucesso',
+            'load_models_failed': 'Falha ao carregar modelos: {error}',
+            'model_list_not_supported': 'Este provedor não suporta busca automática de lista de modelos',
+            'api_key_required': 'Por favor, insira a chave API primeiro',
+            'invalid_params': 'Parâmetros inválidos',
+            'warning': 'Aviso',
+            'success': 'Sucesso',
+            
             # Campos de metadados
             'metadata_title': 'Título',
             'metadata_authors': 'Autor',
@@ -156,7 +169,12 @@ class PortugueseTranslation(BaseTranslation):
             'missing_config_key': 'Chave de configuração necessária ausente: {key}',
             'api_base_url_required': 'URL base da API é necessária',
             'model_name_required': 'Nome do modelo é necessário',
-            'api_key_empty': 'Chave API está vazia. Insira uma chave API válida.',
+            'api_key_empty': 'A chave API está vazia. Por favor, insira uma chave API válida.',
+            
+            # Busca de lista de modelos
+            'fetching_models_from': 'Buscando modelos de {url}',
+            'successfully_fetched_models': '{count} modelos {provider} buscados com sucesso',
+            'failed_to_fetch_models': 'Falha ao buscar modelos: {error}',
             
             # Informações sobre
             'author_name': 'Sheldon',

@@ -44,7 +44,9 @@ class APIClient:
         'custom': AIProvider.AI_CUSTOM,
         'openai': AIProvider.AI_OPENAI,
         'anthropic': AIProvider.AI_ANTHROPIC,
-        'nvidia': AIProvider.AI_NVIDIA
+        'nvidia': AIProvider.AI_NVIDIA,
+        'openrouter': AIProvider.AI_OPENROUTER,
+        'ollama': AIProvider.AI_OLLAMA
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 
@@ -358,6 +360,18 @@ class APIClient:
             response = response.strip()
             if response.startswith('"') and response.endswith('"'):
                 response = response[1:-1].strip()
+            
+            # 过滤掉 think 标签（用于 Deepseek-R1 等推理模型）
+            import re
+            # 移除 <think>...</think> 标签及其内容
+            response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
+            response = response.strip()
+            
+            # 如果过滤后为空，返回错误
+            if not response:
+                error_msg = self.i18n.get('empty_response_after_filter', 'Response is empty after filtering think tags')
+                logger.error(f"{model_name}: {error_msg}")
+                raise AIAPIError(error_msg)
                 
             return response
                 
@@ -492,13 +506,14 @@ class APIClient:
                 logger.error(f"fetch_available_models: {error_msg}")
                 return False, error_msg
             
-            # 2. 验证 API Key
-            api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
-            api_key = config.get(api_key_field, '').strip()
-            if not api_key:
-                error_msg = self.i18n.get('api_key_required', 'API Key is required')
-                logger.warning(f"fetch_available_models: {error_msg}")
-                return False, error_msg
+            # 2. 验证 API Key（Ollama 不需要）
+            if model_name != 'ollama':
+                api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
+                api_key = config.get(api_key_field, '').strip()
+                if not api_key:
+                    error_msg = self.i18n.get('api_key_required', 'API Key is required')
+                    logger.warning(f"fetch_available_models: {error_msg}")
+                    return False, error_msg
             
             # 3. 创建临时模型实例
             logger.debug(f"Creating temporary model instance for {model_name}")

@@ -370,6 +370,22 @@ class GrokModel(BaseAIModel):
         """
         return True
     
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "x.AI (Grok)"
+    
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
         """

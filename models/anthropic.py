@@ -139,7 +139,7 @@ class AnthropicModel(BaseAIModel):
                 last_chunk_time = time.time()
                 logger = logging.getLogger('calibre_plugins.ask_grok.models.anthropic')
                 
-                api_url = f"{self.config['api_base_url']}/messages"
+                api_url = self.build_api_url(self.config['api_base_url'], '/messages')
                 
                 try:
                     with requests.post(
@@ -196,7 +196,7 @@ class AnthropicModel(BaseAIModel):
             
             # Non-streaming mode
             else:
-                api_url = f"{self.config['api_base_url']}/messages"
+                api_url = self.build_api_url(self.config['api_base_url'], '/messages')
                 response = requests.post(
                     api_url,
                     headers=headers,

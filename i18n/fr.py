@@ -89,6 +89,19 @@ class FrenchTranslation(BaseTranslation):
             'requesting': 'Requête en cours',
             'formatting': 'Requête réussie, formatage en cours',
             
+            # UI - Fonction de liste de modèles
+            'load_models': 'Charger les modèles',
+            'use_custom_model': 'Utiliser un nom de modèle personnalisé',
+            'custom_model_placeholder': 'Entrez le nom du modèle personnalisé',
+            'model_placeholder': 'Veuillez d\'abord charger les modèles',
+            'models_loaded': '{count} modèles chargés avec succès',
+            'load_models_failed': 'Échec du chargement des modèles : {error}',
+            'model_list_not_supported': 'Ce fournisseur ne prend pas en charge la récupération automatique de la liste des modèles',
+            'api_key_required': 'Veuillez d\'abord entrer la clé API',
+            'invalid_params': 'Paramètres invalides',
+            'warning': 'Avertissement',
+            'success': 'Succès',
+            
             # Champs de métadonnées
             'metadata_title': 'Titre',
             'metadata_authors': 'Auteur',
@@ -156,9 +169,14 @@ class FrenchTranslation(BaseTranslation):
             'missing_config_key': 'Clé de configuration requise manquante: {key}',
             'api_base_url_required': 'URL de base API requise',
             'model_name_required': 'Nom du modèle requis',
-            'api_key_empty': 'La clé API est vide. Veuillez saisir une clé API valide.',
+            'api_key_empty': 'La clé API est vide. Veuillez entrer une clé API valide.',
             
-            # Informations sur À propos
+            # Récupération de la liste des modèles
+            'fetching_models_from': 'Récupération des modèles depuis {url}',
+            'successfully_fetched_models': '{count} modèles {provider} récupérés avec succès',
+            'failed_to_fetch_models': 'Échec de la récupération des modèles : {error}',
+            
+            # Informations à propos
             'author_name': 'Sheldon',
             'user_manual': 'Manuel d\'Utilisateur',
             'about_plugin': 'Pourquoi Ask Grok?',

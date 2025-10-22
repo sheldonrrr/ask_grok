@@ -91,6 +91,19 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'requesting': '请求中',
             'formatting': '请求成功，正在格式化',
             
+            # UI - 模型列表功能
+            'load_models': '加载模型',
+            'use_custom_model': '使用自定义模型名称',
+            'custom_model_placeholder': '输入自定义模型名称',
+            'model_placeholder': '请先加载模型',
+            'models_loaded': '成功加载 {count} 个模型',
+            'load_models_failed': '加载模型失败：{error}',
+            'model_list_not_supported': '此提供商不支持自动获取模型列表',
+            'api_key_required': '请先输入 API Key',
+            'invalid_params': '无效的参数',
+            'warning': '警告',
+            'success': '成功',
+            
             # 元数据字段
             'metadata_title': '标题',
             'metadata_authors': '作者',
@@ -159,6 +172,11 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'api_base_url_required': '需要API基础URL',
             'model_name_required': '需要模型名称',
             'api_key_empty': 'API密钥为空。请输入有效的API密钥。',
+            
+            # 模型列表获取
+            'fetching_models_from': '正在从 {url} 获取模型',
+            'successfully_fetched_models': '成功获取 {count} 个 {provider} 模型',
+            'failed_to_fetch_models': '获取模型失败：{error}',
             
             # 关于信息
             'author_name': 'Sheldon',

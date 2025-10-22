@@ -89,6 +89,19 @@ class SpanishTranslation(BaseTranslation):
             'requesting': 'Solicitando',
             'formatting': 'Solicitud exitosa, formateando',
             
+            # UI - Función de lista de modelos
+            'load_models': 'Cargar modelos',
+            'use_custom_model': 'Usar nombre de modelo personalizado',
+            'custom_model_placeholder': 'Ingrese el nombre del modelo personalizado',
+            'model_placeholder': 'Por favor, cargue los modelos primero',
+            'models_loaded': '{count} modelos cargados exitosamente',
+            'load_models_failed': 'Error al cargar modelos: {error}',
+            'model_list_not_supported': 'Este proveedor no admite la obtención automática de la lista de modelos',
+            'api_key_required': 'Por favor, ingrese primero la clave API',
+            'invalid_params': 'Parámetros inválidos',
+            'warning': 'Advertencia',
+            'success': 'Éxito',
+            
             # Campos de metadatos
             'metadata_title': 'Título',
             'metadata_authors': 'Autor',
@@ -156,7 +169,12 @@ class SpanishTranslation(BaseTranslation):
             'missing_config_key': 'Falta clave de configuración requerida: {key}',
             'api_base_url_required': 'Se requiere URL Base API',
             'model_name_required': 'Se requiere nombre de modelo',
-            'api_key_empty': 'La clave API está vacía. Por favor ingresa una clave API válida.',
+            'api_key_empty': 'La clave API está vacía. Por favor, ingrese una clave API válida.',
+            
+            # Obtención de lista de modelos
+            'fetching_models_from': 'Obteniendo modelos desde {url}',
+            'successfully_fetched_models': '{count} modelos {provider} obtenidos exitosamente',
+            'failed_to_fetch_models': 'Error al obtener modelos: {error}',
             
             # Información de Acerca de
             'author_name': 'Sheldon',

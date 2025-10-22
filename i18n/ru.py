@@ -89,6 +89,19 @@ class RussianTranslation(BaseTranslation):
             'requesting': 'Запрос',
             'formatting': 'Запрос успешен, форматирование',
             
+            # UI - Функция списка моделей
+            'load_models': 'Загрузить модели',
+            'use_custom_model': 'Использовать пользовательское имя модели',
+            'custom_model_placeholder': 'Введите пользовательское имя модели',
+            'model_placeholder': 'Пожалуйста, сначала загрузите модели',
+            'models_loaded': 'Загружено {count} моделей',
+            'load_models_failed': 'Не удалось загрузить модели: {error}',
+            'model_list_not_supported': 'Этот провайдер не поддерживает автоматическую загрузку списка моделей',
+            'api_key_required': 'Пожалуйста, сначала введите API-ключ',
+            'invalid_params': 'Недопустимые параметры',
+            'warning': 'Предупреждение',
+            'success': 'Успех',
+            
             # Поля метаданных
             'metadata_title': 'Название',
             'metadata_authors': 'Автор',
@@ -157,6 +170,11 @@ class RussianTranslation(BaseTranslation):
             'api_base_url_required': 'Требуется базовый URL API',
             'model_name_required': 'Требуется название модели',
             'api_key_empty': 'Ключ API пуст. Введите действительный ключ API.',
+            
+            # Загрузка списка моделей
+            'fetching_models_from': 'Загрузка моделей с {url}',
+            'successfully_fetched_models': 'Успешно загружено {count} моделей {provider}',
+            'failed_to_fetch_models': 'Не удалось загрузить модели: {error}',
             
             # Информация о программе
             'author_name': 'Sheldon',
