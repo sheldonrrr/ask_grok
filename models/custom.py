@@ -108,8 +108,8 @@ class CustomModel(BaseAIModel):
             "temperature": kwargs.get('temperature', 0.7)
         }
         
-        # 添加流式传输支持
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # 添加流式传输支持（只有明确指定 stream=True 才添加）
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data

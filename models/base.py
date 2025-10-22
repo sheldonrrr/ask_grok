@@ -400,7 +400,7 @@ class BaseAIModel(ABC):
             
             # 发送请求
             logger.info(translations.get('fetching_models_from', 'Fetching models from {url}').format(url=url))
-            response = requests.get(url, headers=headers, timeout=10, verify=False)
+            response = requests.get(url, headers=headers, timeout=15, verify=False)
             response.raise_for_status()
             
             # 解析响应

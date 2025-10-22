@@ -112,8 +112,9 @@ class NvidiaModel(BaseAIModel):
             "max_tokens": kwargs.get('max_tokens', 4096)
         }
         
-        # Add streaming support
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # Add streaming support if enabled
+        # The stream parameter should already be set by ask() method
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data
@@ -127,13 +128,17 @@ class NvidiaModel(BaseAIModel):
         :return: AI model response text
         :raises Exception: When request fails
         """
+        # Check if using streaming - respect explicit stream parameter if provided
+        # Only use config default if stream is not explicitly set
+        if 'stream' not in kwargs:
+            kwargs['stream'] = self.config.get('enable_streaming', True)
+        
+        use_stream = kwargs['stream']
+        stream_callback = kwargs.get('stream_callback', None)
+        
         # Prepare request headers and data
         headers = self.prepare_headers()
         data = self.prepare_request_data(prompt, **kwargs)
-        
-        # Check if using streaming
-        use_stream = kwargs.get('stream', self.config.get('enable_streaming', True))
-        stream_callback = kwargs.get('stream_callback', None)
         
         try:
             # If using streaming
@@ -199,7 +204,12 @@ class NvidiaModel(BaseAIModel):
             
             # Non-streaming mode
             else:
+                logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
                 api_url = f"{self.config['api_base_url']}/chat/completions"
+                
+                logger.debug(f"Non-streaming request to: {api_url}")
+                logger.debug(f"Request data: {json.dumps({k: v for k, v in data.items() if k != 'messages'}, ensure_ascii=False)}")
+                
                 response = requests.post(
                     api_url,
                     headers=headers,
@@ -209,12 +219,26 @@ class NvidiaModel(BaseAIModel):
                 )
                 response.raise_for_status()
                 
-                result = response.json()
-                if 'choices' in result and result['choices']:
-                    return result['choices'][0]['message']['content']
-                else:
+                logger.debug(f"Response status: {response.status_code}")
+                logger.debug(f"Response headers: {dict(response.headers)}")
+                
+                try:
+                    result = response.json()
+                    logger.debug(f"Response JSON parsed successfully")
+                    
+                    if 'choices' in result and result['choices']:
+                        content = result['choices'][0]['message']['content']
+                        logger.debug(f"Response content length: {len(content)}")
+                        return content
+                    else:
+                        translations = get_translation(self.config.get('language', 'en'))
+                        logger.error(f"Invalid response format: {json.dumps(result, ensure_ascii=False)[:200]}")
+                        raise Exception(translations.get('invalid_response', 'Invalid API response format'))
+                except json.JSONDecodeError as je:
+                    logger.error(f"Failed to parse JSON response: {str(je)}")
+                    logger.error(f"Response text: {response.text[:500]}")
                     translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(translations.get('invalid_response', 'Invalid API response format'))
+                    raise Exception(translations.get('json_parse_error', f'Failed to parse API response: {str(je)}'))
                     
         except requests.exceptions.RequestException as e:
             logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
@@ -258,5 +282,27 @@ class NvidiaModel(BaseAIModel):
         :return: Provider name string
         """
         return "Nvidia AI"
+    
+    def supports_streaming(self) -> bool:
+        """
+        Check if Nvidia model supports streaming
+        
+        :return: Always returns True, as Nvidia API supports streaming
+        """
+        return True
+    
+    @classmethod
+    def get_default_config(cls) -> Dict[str, Any]:
+        """
+        Get default configuration for Nvidia model
+        
+        :return: Default configuration dictionary
+        """
+        return {
+            "api_key": "",
+            "api_base_url": cls.DEFAULT_API_BASE_URL,
+            "model": cls.DEFAULT_MODEL,
+            "enable_streaming": True,  # Enable streaming by default
+        }
     
     # Nvidia 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models

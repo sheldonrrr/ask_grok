@@ -272,14 +272,15 @@ class ModelConfigWidget(QWidget):
             self.use_custom_model_checkbox.stateChanged.connect(self.on_custom_model_toggled)
             model_layout.addRow("", self.use_custom_model_checkbox)
             
-            # 自定义模型名称输入框（初始隐藏）
+            # 自定义模型名称输入框（始终显示，初始禁用）
             self.custom_model_input = QLineEdit(self)
             self.custom_model_input.setMinimumWidth(base_width)
             self.custom_model_input.setMinimumHeight(25)  # 设置最小高度
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
             self.custom_model_input.textChanged.connect(self.on_config_changed)
-            self.custom_model_input.setVisible(False)
-            # 保存这一行的索引，以便后续控制可见性
+            self.custom_model_input.setEnabled(False)  # 初始禁用（灰色）
+            logger.info(f"[setup_ui] 自定义输入框初始化完成 - isEnabled()={self.custom_model_input.isEnabled()}")
+            # 保存这一行的索引
             self.custom_model_row = model_layout.rowCount()
             model_layout.addRow("", self.custom_model_input)
             
@@ -463,34 +464,24 @@ class ModelConfigWidget(QWidget):
     
     def on_custom_model_toggled(self, state):
         """切换自定义模型名称"""
-        use_custom = (state == Qt.Checked)
+        use_custom = (state == 2)  # Qt.Checked = 2
         
-        logger.debug(f"切换自定义模型名称: use_custom={use_custom}")
+        logger.info(f"[on_custom_model_toggled] 触发切换 - state={state}, use_custom={use_custom}")
+        logger.info(f"[on_custom_model_toggled] 切换前 - model_combo.isEnabled()={self.model_combo.isEnabled()}, custom_model_input.isEnabled()={self.custom_model_input.isEnabled()}")
         
-        # 切换控件可见性
+        # 切换控件启用/禁用状态
         self.model_combo.setEnabled(not use_custom)
-        self.custom_model_input.setVisible(use_custom)
+        self.custom_model_input.setEnabled(use_custom)
+        
+        logger.info(f"[on_custom_model_toggled] 切换后 - model_combo.isEnabled()={self.model_combo.isEnabled()}, custom_model_input.isEnabled()={self.custom_model_input.isEnabled()}")
         
         # 如果切换到自定义，复制当前选中的模型名称
         if use_custom:
             if self.model_combo.currentText():
+                logger.info(f"[on_custom_model_toggled] 复制模型名称: {self.model_combo.currentText()}")
                 self.custom_model_input.setText(self.model_combo.currentText())
             # 设置焦点到输入框
             self.custom_model_input.setFocus()
-        
-        # 强制更新父控件和布局
-        parent = self.custom_model_input.parent()
-        if parent:
-            parent.updateGeometry()
-        
-        # 更新整个窗口的布局
-        if hasattr(self, 'layout') and self.layout():
-            self.layout().update()
-            self.layout().activate()
-        
-        # 强制重绘
-        self.custom_model_input.update()
-        self.update()
         
         # 触发配置变更
         self.on_config_changed()
@@ -500,25 +491,35 @@ class ModelConfigWidget(QWidget):
         use_custom = self.config.get('use_custom_model_name', False)
         model_name = self.config.get('model', '')
         
+        logger.info(f"[load_model_config] 开始加载 - use_custom={use_custom}, model_name={model_name}")
+        logger.info(f"[load_model_config] 初始状态 - checkbox.isChecked()={self.use_custom_model_checkbox.isChecked()}, custom_input.isEnabled()={self.custom_model_input.isEnabled()}")
+        
         if use_custom:
             # 使用自定义模式
+            logger.info(f"[load_model_config] 设置为自定义模式")
             self.use_custom_model_checkbox.setChecked(True)
             self.custom_model_input.setText(model_name)
         else:
             # 尝试在下拉框中选中（如果列表已加载）
+            logger.info(f"[load_model_config] 使用下拉框模式 - combo.count()={self.model_combo.count()}")
             if self.model_combo.count() > 0:
                 index = self.model_combo.findText(model_name)
+                logger.info(f"[load_model_config] 查找模型 '{model_name}' - index={index}")
                 if index >= 0:
                     self.model_combo.setCurrentIndex(index)
                 else:
                     # 模型不在列表中，切换到自定义
+                    logger.info(f"[load_model_config] 模型不在列表中，切换到自定义")
                     self.use_custom_model_checkbox.setChecked(True)
                     self.custom_model_input.setText(model_name)
             else:
                 # 列表为空，如果有模型名称则显示在自定义输入框
                 if model_name:
+                    logger.info(f"[load_model_config] 列表为空，使用自定义模式")
                     self.use_custom_model_checkbox.setChecked(True)
                     self.custom_model_input.setText(model_name)
+        
+        logger.info(f"[load_model_config] 加载完成 - checkbox.isChecked()={self.use_custom_model_checkbox.isChecked()}, custom_input.isEnabled()={self.custom_model_input.isEnabled()}")
     
     def get_api_key(self) -> str:
         """获取 API Key"""

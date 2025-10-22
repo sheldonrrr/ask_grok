@@ -109,8 +109,8 @@ class OpenAIModel(BaseAIModel):
             "max_tokens": kwargs.get('max_tokens', 4096)
         }
         
-        # Add streaming support
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # Add streaming support (only add if explicitly set to True)
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data

@@ -249,7 +249,7 @@ class ResponseHandler(QObject):
                 else:
                     # 使用普通请求
                     logger.info(f"[普通请求] 使用普通请求处理 {self.api.model_name} 模型")
-                    response = self.api.ask(prompt)
+                    response = self.api.ask(prompt, stream=False)  # 明确指定不使用流式
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(response, True)
                 

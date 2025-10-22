@@ -186,8 +186,8 @@ class GeminiModel(BaseAIModel):
         headers = self.prepare_headers()
         data = self.prepare_request_data(prompt, **kwargs)
         
-        # 获取流式传输设置
-        use_stream = kwargs.get('stream', self.config.get('enable_streaming', True))
+        # 获取流式传输设置（只有明确指定才使用流式）
+        use_stream = kwargs.get('stream', False)
         stream_callback = kwargs.get('stream_callback', None)
         
         # 根据是否使用流式传输构建不同的URL
@@ -452,6 +452,22 @@ class GeminiModel(BaseAIModel):
                 
                 raise Exception(error_msg) from e
     
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "Google Gemini"
+    
     def supports_streaming(self) -> bool:
         """
         检查 Gemini 模型是否支持流式传输
@@ -472,6 +488,18 @@ class GeminiModel(BaseAIModel):
             "api_base_url": cls.DEFAULT_API_BASE_URL,
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
+        }
+    
+    def prepare_models_request_headers(self) -> Dict[str, str]:
+        """
+        准备获取模型列表的请求头
+        Gemini 获取模型列表时不需要在请求头中添加 API key
+        API key 通过 URL 参数传递
+        
+        :return: 请求头字典
+        """
+        return {
+            "Content-Type": "application/json"
         }
     
     def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:

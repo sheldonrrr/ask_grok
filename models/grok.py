@@ -108,8 +108,8 @@ class GrokModel(BaseAIModel):
             "max_tokens": kwargs.get('max_tokens', 128000)
         }
         
-        # 添加流式传输支持
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # 添加流式传输支持（只有明确指定 stream=True 才添加）
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data
