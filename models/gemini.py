@@ -468,3 +468,38 @@ class GeminiModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    def fetch_available_models(self) -> list:
+        """
+        Fetch available models from Google Gemini API
+        
+        :return: List of model names
+        :raises Exception: When API request fails
+        """
+        try:
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            api_key = self.config.get('api_key', '')
+            
+            # Gemini uses API key as URL parameter
+            url = f"{api_base_url}/models?key={api_key}"
+            
+            logger.info(f"Fetching models from Gemini API")
+            response = requests.get(url, timeout=10, verify=False)
+            response.raise_for_status()
+            
+            data = response.json()
+            models = []
+            for model in data.get('models', []):
+                model_name = model.get('name', '')
+                # Remove "models/" prefix if present
+                if model_name.startswith('models/'):
+                    models.append(model_name.replace('models/', ''))
+                else:
+                    models.append(model_name)
+            
+            logger.info(f"Successfully fetched {len(models)} Gemini models")
+            return sorted(models)
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch Gemini models: {str(e)}")
+            raise Exception(f"Failed to fetch models: {str(e)}")

@@ -238,3 +238,34 @@ class DeepseekModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    def fetch_available_models(self) -> list:
+        """
+        Fetch available models from DeepSeek API
+        
+        :return: List of model names
+        :raises Exception: When API request fails
+        """
+        try:
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            api_key = self.config.get('api_key', '')
+            
+            url = f"{api_base_url}/models"
+            headers = {
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            }
+            
+            logger.info(f"Fetching models from {url}")
+            response = requests.get(url, headers=headers, timeout=10, verify=False)
+            response.raise_for_status()
+            
+            data = response.json()
+            models = [model['id'] for model in data.get('data', [])]
+            
+            logger.info(f"Successfully fetched {len(models)} DeepSeek models")
+            return sorted(models)
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch DeepSeek models: {str(e)}")
+            raise Exception(f"Failed to fetch models: {str(e)}")

@@ -14,6 +14,9 @@ from .models.grok import GrokModel
 from .models.gemini import GeminiModel
 from .models.deepseek import DeepseekModel
 from .models.custom import CustomModel
+from .models.openai import OpenAIModel
+from .models.anthropic import AnthropicModel
+from .models.nvidia import NvidiaModel
 from calibre.utils.config import JSONConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_all_languages
@@ -43,6 +46,9 @@ GROK_CONFIG = get_current_model_config(AIProvider.AI_GROK)
 GEMINI_CONFIG = get_current_model_config(AIProvider.AI_GEMINI)
 DEEPSEEK_CONFIG = get_current_model_config(AIProvider.AI_DEEPSEEK)
 CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
+OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
+ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
+NVIDIA_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA)
 
 # 默认配置
 prefs.defaults['selected_model'] = 'grok'  # 当前选中的模型
@@ -73,6 +79,30 @@ prefs.defaults['models'] = {
         'api_base_url': CUSTOM_CONFIG.default_api_base_url,
         'model': CUSTOM_CONFIG.default_model_name,
         'display_name': CUSTOM_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'openai': {
+        'api_key': '',
+        'api_base_url': OPENAI_CONFIG.default_api_base_url,
+        'model': OPENAI_CONFIG.default_model_name,
+        'display_name': OPENAI_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'anthropic': {
+        'api_key': '',
+        'api_base_url': ANTHROPIC_CONFIG.default_api_base_url,
+        'model': ANTHROPIC_CONFIG.default_model_name,
+        'display_name': ANTHROPIC_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'nvidia': {
+        'api_key': '',
+        'api_base_url': NVIDIA_CONFIG.default_api_base_url,
+        'model': NVIDIA_CONFIG.default_model_name,
+        'display_name': NVIDIA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
     }
@@ -172,6 +202,15 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'openai':
+            provider = AIProvider.AI_OPENAI
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'anthropic':
+            provider = AIProvider.AI_ANTHROPIC
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'nvidia':
+            provider = AIProvider.AI_NVIDIA
+            model_config = get_current_model_config(provider)
         
         if model_config:
             # API Key/Token 输入框
@@ -210,13 +249,39 @@ class ModelConfigWidget(QWidget):
             self.api_base_edit.setMinimumWidth(base_width)  # 设置最小宽度
             model_layout.addRow(self.i18n.get('base_url_label', 'Base URL:'), self.api_base_edit)
             
-            # 模型名称输入框
-            self.model_edit = QLineEdit(self)
-            self.model_edit.setText(self.config.get('model', model_config.default_model_name))
-            self.model_edit.textChanged.connect(self.on_config_changed)
-            self.model_edit.setMinimumHeight(25)  # 设置最小高度
-            self.model_edit.setMinimumWidth(base_width)  # 设置最小宽度
-            model_layout.addRow(self.i18n.get('model_label', 'Model:'), self.model_edit)
+            # 模型选择区域：下拉框 + 加载按钮
+            model_select_layout = QHBoxLayout()
+            
+            # 模型下拉框
+            self.model_combo = QComboBox(self)
+            self.model_combo.setMinimumWidth(int(base_width * 0.7))
+            self.model_combo.setEditable(False)
+            self.model_combo.currentTextChanged.connect(self.on_config_changed)
+            model_select_layout.addWidget(self.model_combo)
+            
+            # 加载模型按钮
+            self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'))
+            self.load_models_button.clicked.connect(self.on_load_models_clicked)
+            self.load_models_button.setMinimumWidth(100)
+            model_select_layout.addWidget(self.load_models_button)
+            
+            model_layout.addRow(self.i18n.get('model_label', 'Model:'), model_select_layout)
+            
+            # 使用自定义模型名称选项
+            self.use_custom_model_checkbox = QCheckBox(self.i18n.get('use_custom_model', 'Use custom model name'))
+            self.use_custom_model_checkbox.stateChanged.connect(self.on_custom_model_toggled)
+            model_layout.addRow("", self.use_custom_model_checkbox)
+            
+            # 自定义模型名称输入框（初始隐藏）
+            self.custom_model_input = QLineEdit(self)
+            self.custom_model_input.setMinimumWidth(base_width)
+            self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
+            self.custom_model_input.textChanged.connect(self.on_config_changed)
+            self.custom_model_input.setVisible(False)
+            model_layout.addRow("", self.custom_model_input)
+            
+            # 加载模型配置（填充下拉框或自定义输入）
+            self.load_model_config()
 
             # 流式传输选项
             self.enable_streaming_checkbox = QCheckBox(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
@@ -274,10 +339,31 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
             config['display_name'] = 'Custom'  # 设置固定的显示名称
+        elif self.model_id == 'openai':
+            provider = AIProvider.AI_OPENAI
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'OpenAI'  # 设置固定的显示名称
+        elif self.model_id == 'anthropic':
+            provider = AIProvider.AI_ANTHROPIC
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Anthropic (Claude)'  # 设置固定的显示名称
+        elif self.model_id == 'nvidia':
+            provider = AIProvider.AI_NVIDIA
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Nvidia AI (Free)'  # 设置固定的显示名称
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
-        config['model'] = self.model_edit.text().strip() if hasattr(self, 'model_edit') else ''
+        
+        # 模型名称配置（新逻辑：支持下拉框或自定义输入）
+        if hasattr(self, 'use_custom_model_checkbox') and self.use_custom_model_checkbox.isChecked():
+            # 使用自定义模型名称
+            config['use_custom_model_name'] = True
+            config['model'] = self.custom_model_input.text().strip() if hasattr(self, 'custom_model_input') else ''
+        else:
+            # 使用下拉框选中的模型
+            config['use_custom_model_name'] = False
+            config['model'] = self.model_combo.currentText().strip() if hasattr(self, 'model_combo') else ''
         
         # 流式传输选项（如果存在）
         if hasattr(self, 'enable_streaming_checkbox'):
@@ -301,6 +387,119 @@ class ModelConfigWidget(QWidget):
     def on_config_changed(self):
         """配置变更时发出信号"""
         self.config_changed.emit()
+    
+    def on_load_models_clicked(self):
+        """点击加载模型按钮"""
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtCore import QTimer
+        logger = logging.getLogger(__name__)
+        
+        # 1. 验证 API Key
+        api_key = self.get_api_key()
+        if not api_key:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('warning', 'Warning'),
+                self.i18n.get('api_key_required', 'Please enter API Key first')
+            )
+            return
+        
+        # 2. 禁用按钮，显示加载状态
+        self.load_models_button.setEnabled(False)
+        self.load_models_button.setText(self.i18n.get('loading', 'Loading...'))
+        
+        # 3. 获取当前配置
+        config = self.get_config()
+        
+        # 4. 创建 API 客户端并获取模型列表
+        from .api import APIClient
+        api_client = APIClient(i18n=self.i18n)
+        
+        # 使用 QTimer 异步执行，避免阻塞 UI
+        def fetch_models():
+            success, result = api_client.fetch_available_models(self.model_id, config)
+            
+            # 恢复按钮状态
+            self.load_models_button.setEnabled(True)
+            self.load_models_button.setText(self.i18n.get('load_models', 'Load Models'))
+            
+            if success:
+                # 成功：填充下拉框
+                models = result
+                logger.info(f"Successfully loaded {len(models)} models")
+                
+                self.model_combo.clear()
+                self.model_combo.addItems(models)
+                
+                # 如果有保存的模型名称，尝试选中
+                saved_model = config.get('model', '')
+                if saved_model:
+                    index = self.model_combo.findText(saved_model)
+                    if index >= 0:
+                        self.model_combo.setCurrentIndex(index)
+                
+                QMessageBox.information(
+                    self,
+                    self.i18n.get('success', 'Success'),
+                    self.i18n.get('models_loaded', f'Successfully loaded {len(models)} models')
+                )
+            else:
+                # 失败：显示错误
+                error_msg = result
+                logger.error(f"Failed to load models: {error_msg}")
+                
+                QMessageBox.critical(
+                    self,
+                    self.i18n.get('error', 'Error'),
+                    self.i18n.get('load_models_failed', f'Failed to load models: {error_msg}')
+                )
+        
+        # 使用 QTimer 延迟执行，避免阻塞
+        QTimer.singleShot(100, fetch_models)
+    
+    def on_custom_model_toggled(self, state):
+        """切换自定义模型名称"""
+        use_custom = (state == Qt.Checked)
+        
+        # 切换控件可见性
+        self.model_combo.setEnabled(not use_custom)
+        self.custom_model_input.setVisible(use_custom)
+        
+        # 如果切换到自定义，复制当前选中的模型名称
+        if use_custom and self.model_combo.currentText():
+            self.custom_model_input.setText(self.model_combo.currentText())
+    
+    def load_model_config(self):
+        """加载模型配置"""
+        use_custom = self.config.get('use_custom_model_name', False)
+        model_name = self.config.get('model', '')
+        
+        if use_custom:
+            # 使用自定义模式
+            self.use_custom_model_checkbox.setChecked(True)
+            self.custom_model_input.setText(model_name)
+        else:
+            # 尝试在下拉框中选中（如果列表已加载）
+            if self.model_combo.count() > 0:
+                index = self.model_combo.findText(model_name)
+                if index >= 0:
+                    self.model_combo.setCurrentIndex(index)
+                else:
+                    # 模型不在列表中，切换到自定义
+                    self.use_custom_model_checkbox.setChecked(True)
+                    self.custom_model_input.setText(model_name)
+            else:
+                # 列表为空，如果有模型名称则显示在自定义输入框
+                if model_name:
+                    self.use_custom_model_checkbox.setChecked(True)
+                    self.custom_model_input.setText(model_name)
+    
+    def get_api_key(self) -> str:
+        """获取 API Key"""
+        if hasattr(self, 'api_key_edit'):
+            return self.api_key_edit.toPlainText().strip()
+        return ''
     
     def retranslate_ui(self):
         """更新模型配置控件的文本"""
@@ -449,11 +648,14 @@ class ConfigDialog(QWidget):
         self.initial_values = {}
         self.model_widgets = {}
         
-        # 初始化模型工厂
+        # 初始化模型工厂（注意：这些模型已经在 models/__init__.py 中注册过了）
         AIModelFactory.register_model('grok', GrokModel)
         AIModelFactory.register_model('gemini', GeminiModel)
         AIModelFactory.register_model('deepseek', DeepseekModel)
         AIModelFactory.register_model('custom', CustomModel)
+        AIModelFactory.register_model('openai', OpenAIModel)
+        AIModelFactory.register_model('anthropic', AnthropicModel)
+        AIModelFactory.register_model('nvidia', NvidiaModel)
         
         self.setup_ui()
         self.load_initial_values()
@@ -532,7 +734,10 @@ class ConfigDialog(QWidget):
             AIProvider.AI_GROK: 'grok',
             AIProvider.AI_GEMINI: 'gemini',
             AIProvider.AI_DEEPSEEK: 'deepseek',
-            AIProvider.AI_CUSTOM: 'custom'
+            AIProvider.AI_CUSTOM: 'custom',
+            AIProvider.AI_OPENAI: 'openai',
+            AIProvider.AI_ANTHROPIC: 'anthropic',
+            AIProvider.AI_NVIDIA: 'nvidia'
         }
         # 按照默认模型顺序添加到下拉框
         for provider, model_id in model_mapping.items():
@@ -787,7 +992,10 @@ class ConfigDialog(QWidget):
             AIProvider.AI_GROK: 'grok',
             AIProvider.AI_GEMINI: 'gemini',
             AIProvider.AI_DEEPSEEK: 'deepseek',
-            AIProvider.AI_CUSTOM: 'custom'
+            AIProvider.AI_CUSTOM: 'custom',
+            AIProvider.AI_OPENAI: 'openai',
+            AIProvider.AI_ANTHROPIC: 'anthropic',
+            AIProvider.AI_NVIDIA: 'nvidia'
         }
         
         # 按照默认模型顺序添加到下拉框，使用翻译后的名称

@@ -14,6 +14,9 @@ class AIProvider(Enum):
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
+    AI_OPENAI = auto()    # OpenAI (GPT models)
+    AI_ANTHROPIC = auto() # Anthropic (Claude models)
+    AI_NVIDIA = auto()    # Nvidia AI (Free tier available)
 
 
 class ModelConfig:
@@ -70,6 +73,27 @@ DEFAULT_MODELS = {
         api_key_label="API Key:",
         default_api_base_url="http://localhost:11434",
         default_model_name="llama3"
+    ),
+    AIProvider.AI_OPENAI: ModelConfig(
+        provider=AIProvider.AI_OPENAI,
+        display_name="OpenAI",
+        api_key_label="OpenAI API Key:",
+        default_api_base_url="https://api.openai.com/v1",
+        default_model_name="gpt-4o-mini"
+    ),
+    AIProvider.AI_ANTHROPIC: ModelConfig(
+        provider=AIProvider.AI_ANTHROPIC,
+        display_name="Anthropic (Claude)",
+        api_key_label="Anthropic API Key:",
+        default_api_base_url="https://api.anthropic.com/v1",
+        default_model_name="claude-3-5-sonnet-20241022"
+    ),
+    AIProvider.AI_NVIDIA: ModelConfig(
+        provider=AIProvider.AI_NVIDIA,
+        display_name="Nvidia AI (Free)",
+        api_key_label="Nvidia API Key:",
+        default_api_base_url="https://integrate.api.nvidia.com/v1",
+        default_model_name="meta/llama-3.3-70b-instruct"
     )
 }
 
@@ -283,6 +307,20 @@ class BaseAIModel(ABC):
         :return: 如果支持流式传输则返回 True，默认为 False
         """
         return False
+    
+    @abstractmethod
+    def fetch_available_models(self) -> list:
+        """
+        从 AI 提供商 API 获取可用模型列表
+        
+        子类必须实现此方法以支持动态获取模型列表
+        如果提供商不支持此功能，应抛出 NotImplementedError
+        
+        :return: 模型名称列表
+        :raises NotImplementedError: 如果提供商不支持模型列表 API
+        :raises Exception: 当 API 请求失败时抛出异常
+        """
+        pass
 
 
 class AIModelFactory:

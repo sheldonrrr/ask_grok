@@ -84,12 +84,26 @@ class EnglishTranslation(BaseTranslation):
             'menu_ask': 'Ask {model}',  # 用于所有模型的菜单项
             
             # UI - Status messages
-            'loading': 'Loading',
+            'loading': 'Loading...',
             'loading_text': 'Asking',
             'save_success': 'Settings saved',
             'sending': 'Sending...',
             'requesting': 'Requesting',
             'formatting': 'Request successful, formatting',
+            
+            # UI - Model list feature
+            'load_models': 'Load Models',
+            'use_custom_model': 'Use custom model name',
+            'custom_model_placeholder': 'Enter custom model name',
+            'model_placeholder': 'Please load models first',
+            'models_loaded': 'Successfully loaded {count} models',
+            'load_models_failed': 'Failed to load models: {error}',
+            'model_list_not_supported': 'This provider does not support automatic model list fetching',
+            'api_key_required': 'Please enter API Key first',
+            'invalid_params': 'Invalid parameters',
+            'warning': 'Warning',
+            'success': 'Success',
+            'error': 'Error',
             
             # Metadata fields
             'metadata_title': 'Title',

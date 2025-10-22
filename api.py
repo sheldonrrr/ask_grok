@@ -4,7 +4,7 @@
 import json
 import requests
 import urllib3
-from typing import Optional, Dict, Any, Tuple, Union
+from typing import Optional, Dict, Any, Tuple, Union, List
 import logging
 from .i18n import get_translation
 from .models import AIModelFactory, BaseAIModel
@@ -41,7 +41,10 @@ class APIClient:
         'grok': AIProvider.AI_GROK,
         'gemini': AIProvider.AI_GEMINI,
         'deepseek': AIProvider.AI_DEEPSEEK,
-        'custom': AIProvider.AI_CUSTOM
+        'custom': AIProvider.AI_CUSTOM,
+        'openai': AIProvider.AI_OPENAI,
+        'anthropic': AIProvider.AI_ANTHROPIC,
+        'nvidia': AIProvider.AI_NVIDIA
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 
@@ -468,6 +471,62 @@ class APIClient:
             
         # 如果没有配置，使用默认值
         return DEFAULT_MODELS[provider].default_model_name
+    
+    def fetch_available_models(self, model_name: str, config: Dict[str, Any]) -> Tuple[bool, Union[List[str], str]]:
+        """
+        从 AI 提供商获取可用模型列表
+        
+        Args:
+            model_name: 模型提供商名称 ('grok', 'openai', 'gemini', etc.)
+            config: 模型配置字典，包含 api_key, api_base_url 等
+            
+        Returns:
+            Tuple[bool, Union[List[str], str]]: 
+                - (True, List[str]): 成功，返回模型名称列表
+                - (False, str): 失败，返回错误消息
+        """
+        try:
+            # 1. 验证参数
+            if not model_name or not config:
+                error_msg = self.i18n.get('invalid_params', 'Invalid parameters')
+                logger.error(f"fetch_available_models: {error_msg}")
+                return False, error_msg
+            
+            # 2. 验证 API Key
+            api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
+            api_key = config.get(api_key_field, '').strip()
+            if not api_key:
+                error_msg = self.i18n.get('api_key_required', 'API Key is required')
+                logger.warning(f"fetch_available_models: {error_msg}")
+                return False, error_msg
+            
+            # 3. 创建临时模型实例
+            logger.debug(f"Creating temporary model instance for {model_name}")
+            temp_model = AIModelFactory.create_model(model_name, config)
+            
+            # 4. 调用模型的 fetch_available_models 方法
+            logger.info(f"Fetching available models for {model_name}")
+            models = temp_model.fetch_available_models()
+            
+            # 5. 返回成功结果
+            logger.info(f"Successfully fetched {len(models)} models for {model_name}")
+            return True, models
+            
+        except NotImplementedError:
+            error_msg = self.i18n.get('model_list_not_supported', 
+                                     'This provider does not support automatic model list fetching')
+            logger.warning(f"{model_name} does not support model list fetching")
+            return False, error_msg
+            
+        except AIAPIError as e:
+            error_msg = str(e)
+            logger.error(f"Failed to fetch models for {model_name}: {error_msg}")
+            return False, error_msg
+            
+        except Exception as e:
+            error_msg = self.i18n.get('unknown_error', 'Unknown error occurred')
+            logger.error(f"Unexpected error while fetching models for {model_name}: {str(e)}")
+            return False, f"{error_msg}: {str(e)}"
 
 
 # 创建 APIClient 的全局实例，供其他模块导入使用
