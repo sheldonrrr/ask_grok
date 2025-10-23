@@ -138,7 +138,7 @@ class OpenAIModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.openai')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openai')
                 
                 api_url = f"{self.config['api_base_url']}/chat/completions"
                 
@@ -214,7 +214,7 @@ class OpenAIModel(BaseAIModel):
                     raise Exception(translations.get('invalid_response', 'Invalid API response format'))
                     
         except requests.exceptions.RequestException as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.openai')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openai')
             logger.error(f"OpenAI API request error: {str(e)}")
             translations = get_translation(self.config.get('language', 'en'))
             raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
@@ -229,7 +229,7 @@ class OpenAIModel(BaseAIModel):
         try:
             self.ask(prompt, stream=True, stream_callback=callback)
         except Exception as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.openai')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openai')
             logger.error(f"send_message error: {str(e)}")
             raise
     

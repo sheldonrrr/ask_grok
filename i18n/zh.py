@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Simplified Chinese language translations for Ask Grok plugin.
+Simplified Chinese language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # 插件信息
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': '使用AI回答关于书籍的问题',
             
             # UI - 标签和区域
@@ -51,7 +51,13 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'suggest_button': '随机问题',
             'copy_response': '复制回答',
             'copy_question_response': '复制问答',
+            'export_pdf': '导出PDF',
             'copied': '已复制！',
+            'pdf_exported': 'PDF已导出！',
+            'export_pdf_dialog_title': '导出为PDF',
+            'export_pdf_error': '导出PDF失败：{0}',
+            'no_question': '无问题',
+            'no_response': '无回答',
             'saved': '已保存',
             'close_button': '关闭',
             
@@ -184,7 +190,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'user_manual': '用户手册',
             'learn_how_to_use': '观看教程视频',
             'email': 'iMessage',
-            'about_plugin': '关于 Ask Grok',
+            'about_plugin': '关于 Ask AI Plugin',
             
             # 模型特定配置
             'model_display_name_grok': 'Grok(x.AI)',

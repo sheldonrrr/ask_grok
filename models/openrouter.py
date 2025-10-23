@@ -9,7 +9,7 @@ from typing import Dict, Any
 from .base import BaseAIModel
 from ..i18n import get_translation
 
-logger = logging.getLogger('calibre_plugins.ask_grok.models.openrouter')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openrouter')
 
 
 class OpenRouterModel(BaseAIModel):
@@ -134,7 +134,7 @@ class OpenRouterModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
             "http_referer": "",  # 可选：用于在 OpenRouter 上进行排名
-            "x_title": "Ask Grok Calibre Plugin",  # 可选：应用名称标识
+            "x_title": "Ask AI Plugin",  # 可选：应用名称标识
         }
     
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:
@@ -196,7 +196,7 @@ class OpenRouterModel(BaseAIModel):
         headers = self.prepare_headers()
         data = self.prepare_request_data(prompt, **kwargs)
         
-        logger = logging.getLogger('calibre_plugins.ask_grok.models.openrouter')
+        logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openrouter')
         
         try:
             # 如果使用流式传输

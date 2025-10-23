@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Cantonese language translations for Ask Grok plugin.
+Cantonese language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class CantoneseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # 插件信息
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': '用AI問書嘅問題',
             
             # UI - 標籤同區域
@@ -179,7 +179,7 @@ class CantoneseTranslation(BaseTranslation):
             # 關於信息
             'author_name': 'Sheldon',
             'user_manual': '用戶手冊',
-            'about_plugin': '為哪 Ask Grok？',
+            'about_plugin': '為哪 Ask AI Plugin？',
             'learn_how_to_use': '點樣用',
             'email': 'iMessage',
             

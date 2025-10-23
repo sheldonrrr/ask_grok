@@ -137,7 +137,7 @@ class AnthropicModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.anthropic')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.anthropic')
                 
                 api_url = self.build_api_url(self.config['api_base_url'], '/messages')
                 
@@ -215,7 +215,7 @@ class AnthropicModel(BaseAIModel):
                     raise Exception(translations.get('invalid_response', 'Invalid API response format'))
                     
         except requests.exceptions.RequestException as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.anthropic')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.anthropic')
             logger.error(f"Anthropic API request error: {str(e)}")
             translations = get_translation(self.config.get('language', 'en'))
             raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
@@ -230,7 +230,7 @@ class AnthropicModel(BaseAIModel):
         try:
             self.ask(prompt, stream=True, stream_callback=callback)
         except Exception as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.anthropic')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.anthropic')
             logger.error(f"send_message error: {str(e)}")
             raise
     

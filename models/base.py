@@ -403,7 +403,7 @@ class BaseAIModel(ABC):
         :return: logger 名称字符串
         """
         class_name = self.__class__.__name__.lower().replace('model', '')
-        return f'calibre_plugins.ask_grok.models.{class_name}'
+        return f'calibre_plugins.ask_ai_plugin.models.{class_name}'
     
     def fetch_available_models(self) -> list:
         """
@@ -523,7 +523,7 @@ class AIModelFactory:
         model_class = cls._model_classes.get(model_name)
         if model_class is None:
             # 使用i18n翻译字符串
-            from calibre_plugins.ask_grok.i18n import get_translation
+            from calibre_plugins.ask_ai_plugin.i18n import get_translation
             i18n = get_translation('en')  # 默认使用英文
             error_msg = i18n.get('unknown_model', 'Unknown model: {model_name}').format(model_name=model_name)
             raise ValueError(error_msg)

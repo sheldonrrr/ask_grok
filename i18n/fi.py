@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Finnish language translations for Ask Grok plugin.
+Finnish language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class FinnishTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin tiedot
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Kysy kirjasta tekoälyn avulla',
             
             # UI - Välilehdet ja osiot
@@ -179,7 +179,7 @@ class FinnishTranslation(BaseTranslation):
             # Tietoja
             'author_name': 'Sheldon',
             'user_manual': 'Käyttöopas',
-            'about_plugin': 'Miksi Ask Grok?',
+            'about_plugin': 'Miksi Ask AI Plugin?',
             'learn_how_to_use': 'Käyttöohjeet',
             'email': 'iMessage',
             

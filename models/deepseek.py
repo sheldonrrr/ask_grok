@@ -11,7 +11,7 @@ from .base import BaseAIModel
 from ..i18n import get_translation
 
 # 获取日志记录器
-logger = logging.getLogger('calibre_plugins.ask_grok.models.deepseek')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.deepseek')
 
 
 class DeepseekModel(BaseAIModel):

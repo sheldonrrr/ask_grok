@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Dutch language translations for Ask Grok plugin.
+Dutch language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class DutchTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin informatie
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Stel vragen over een boek met behulp van AI',
             
             # UI - Tabbladen en secties
@@ -179,7 +179,7 @@ class DutchTranslation(BaseTranslation):
             # Over informatie
             'author_name': 'Sheldon',
             'user_manual': 'Gebruikershandleiding',
-            'about_plugin': 'Waarom Ask Grok?',
+            'about_plugin': 'Waarom Ask AI Plugin?',
             'learn_how_to_use': 'Hoe te gebruiken',
             'email': 'iMessage',
             

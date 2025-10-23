@@ -15,11 +15,11 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton,
 from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
-from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
-from calibre_plugins.ask_grok.api import APIClient
+from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
+from calibre_plugins.ask_ai_plugin.api import APIClient
 from .i18n import get_translation, get_suggestion_template
-from calibre_plugins.ask_grok.shortcuts_widget import ShortcutsWidget
-from calibre_plugins.ask_grok.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
+from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
 from calibre.utils.resources import get_path as I
 import sys
 import os
@@ -33,7 +33,7 @@ import markdown2
 import bleach
 
 # 导入插件实例
-import calibre_plugins.ask_grok.ui as ask_grok_plugin
+import calibre_plugins.ask_ai_plugin.ui as ask_grok_plugin
 
 # 存储插件实例的全局变量
 plugin_instance = None
@@ -43,12 +43,12 @@ def get_suggestion_template_from_ui(lang_code):
     from .i18n import get_suggestion_template
     return get_suggestion_template(lang_code)
 
-class AskGrokPluginUI(InterfaceAction):
-    name = 'Ask Grok'
+class AskAIPluginUI(InterfaceAction):
+    name = 'Ask AI Plugin'
     # 根据操作系统设置不同的快捷键
-    action_spec = ('Ask Grok', 'images/ask_grok.png', 'Ask Grok about this book', 
+    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 
                   'Ctrl+L')
-    action_shortcut_name = 'Ask Grok'
+    action_shortcut_name = 'Ask AI Plugin'
     action_type = 'global'
     
     def __init__(self, parent, site_customization):
@@ -71,7 +71,7 @@ class AskGrokPluginUI(InterfaceAction):
         plugin_instance = self
         
     def genesis(self):
-        icon = get_icons('images/ask_grok.png')
+        icon = get_icons('images/ask_ai_plugin.png')
         self.qaction.setIcon(icon)
         
         # 创建菜单
@@ -318,7 +318,7 @@ class AboutWidget(QWidget):
         # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
         self.about_label.setText(f"""
         <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-            <div style='font-size: 24px; font-weight: bold; color: palette(window-text); margin: 10px 0;'>Ask Grok</div>
+            <div style='font-size: 24px; font-weight: bold; color: palette(window-text); margin: 10px 0;'>Ask AI Plugin</div>
             <div style='font-size: 14px; color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
             <div style='font-size: 13px; color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
             
@@ -333,7 +333,7 @@ class AboutWidget(QWidget):
                 <div style='margin: 8px 0;'>
                     <a href='http://simp.ly/publish/xYW5Tr' 
                        style='color: palette(link); text-decoration: none; font-size: 14px;'>
-                       {self.i18n.get('about_plugin', 'Why Ask Grok?')} ↗
+                       {self.i18n.get('about_plugin', 'Why Ask AI Plugin?')} ↗
                     </a>
                 </div>
                 
@@ -500,7 +500,7 @@ class TabDialog(QDialog):
         logger = logging.getLogger(__name__)
         
         # 重新加载全局 API 实例
-        from calibre_plugins.ask_grok.api import api
+        from calibre_plugins.ask_ai_plugin.api import api
         api.reload_model()
         
         # 更新已打开的AskDialog实例的模型信息
@@ -596,8 +596,8 @@ class TabDialog(QDialog):
                 self.save_button.setEnabled(False)
         super().reject()
 
-from calibre_plugins.ask_grok.response_handler import ResponseHandler
-from calibre_plugins.ask_grok.random_question import SuggestionHandler
+from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
+from calibre_plugins.ask_ai_plugin.random_question import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -707,7 +707,7 @@ class AskDialog(QDialog):
         
         # 获取TabDialog实例并连接语言变更信号
         try:
-            from calibre_plugins.ask_grok import ask_grok_plugin
+            from calibre_plugins.ask_ai_plugin import ask_grok_plugin
             if hasattr(ask_grok_plugin, 'plugin_instance') and ask_grok_plugin.plugin_instance:
                 # 将当前对话框保存到插件实例中，方便其他组件访问
                 ask_grok_plugin.plugin_instance.ask_dialog = self
@@ -872,7 +872,7 @@ class AskDialog(QDialog):
     
     def _populate_model_switcher(self):
         """填充模型切换器，只显示已配置的模型"""
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         import logging
         logger = logging.getLogger(__name__)
         
@@ -913,7 +913,7 @@ class AskDialog(QDialog):
     
     def on_model_switched(self, index):
         """处理模型切换事件"""
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         import logging
         logger = logging.getLogger(__name__)
         
@@ -1218,9 +1218,28 @@ class AskDialog(QDialog):
         """)
         self.copy_qr_btn.clicked.connect(self.copy_question_response)
         
+        # 导出PDF按钮
+        export_pdf_text = self.i18n.get('export_pdf', 'Export PDF')
+        export_pdf_text = export_pdf_text.replace('&', '&&')
+        self.export_pdf_btn = QPushButton(export_pdf_text)
+        self.export_pdf_btn.setStyleSheet("""
+            QPushButton {
+                padding: 3px 8px;
+                font-size: 12px;
+                border: 1px solid palette(mid);
+                border-radius: 3px;
+                background: transparent;
+            }
+            QPushButton:hover {
+                background: palette(midlight);
+            }
+        """)
+        self.export_pdf_btn.clicked.connect(self.export_to_pdf)
+        
         # 添加按钮到布局
         button_layout.addWidget(self.copy_response_btn)
         button_layout.addWidget(self.copy_qr_btn)
+        button_layout.addWidget(self.export_pdf_btn)
         button_layout.addStretch()
         
         # 将响应区域和按钮添加到容器
@@ -1308,7 +1327,7 @@ class AskDialog(QDialog):
 
     def _check_auth_token(self):
         """检查当前选择的模型是否设置了API Key"""
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         
         prefs = get_prefs()
         selected_model = prefs.get('selected_model', 'grok')
@@ -1409,7 +1428,7 @@ class AskDialog(QDialog):
             return
         
         # 获取配置的模板
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         template = prefs.get('template', '')
         
@@ -1502,6 +1521,183 @@ class AskDialog(QDialog):
         clipboard.setText(text)
         self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
     
+    def export_to_pdf(self):
+        """导出当前问答为PDF文件"""
+        import logging
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from datetime import datetime
+        
+        logger = logging.getLogger(__name__)
+        
+        # 获取问题和回答
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            logger.warning("没有内容可导出")
+            return
+        
+        # 生成默认文件名（使用时间戳）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"ask_ai_qa_{timestamp}.pdf"
+        
+        # 打开文件保存对话框
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
+            default_filename,
+            "PDF Files (*.pdf)"
+        )
+        
+        if not file_path:
+            logger.debug("用户取消了PDF导出")
+            return
+        
+        try:
+            # 使用最简单的方式：直接使用 response_area 的打印功能
+            from PyQt5.QtPrintSupport import QPrinter
+            
+            printer = QPrinter()
+            printer.setOutputFileName(file_path)
+            
+            # 构建书籍元数据信息
+            metadata_lines = []
+            if hasattr(self, 'book_metadata') and self.book_metadata:
+                metadata_lines.append("=" * 60)
+                metadata_lines.append("BOOK METADATA")
+                metadata_lines.append("=" * 60)
+                
+                if self.book_metadata.get('title'):
+                    metadata_lines.append(f"Title: {self.book_metadata['title']}")
+                
+                if self.book_metadata.get('authors'):
+                    authors = ', '.join(self.book_metadata['authors']) if isinstance(self.book_metadata['authors'], list) else str(self.book_metadata['authors'])
+                    metadata_lines.append(f"Authors: {authors}")
+                
+                if self.book_metadata.get('publisher'):
+                    metadata_lines.append(f"Publisher: {self.book_metadata['publisher']}")
+                
+                if self.book_metadata.get('pubdate'):
+                    pubdate = str(self.book_metadata['pubdate'])
+                    # 只保留年月，去掉详细时间
+                    if 'T' in pubdate:
+                        pubdate = pubdate.split('T')[0]  # 去掉时间部分
+                    if len(pubdate) > 7:
+                        pubdate = pubdate[:7]  # 只保留 YYYY-MM
+                    metadata_lines.append(f"Publication Date: {pubdate}")
+                
+                if self.book_metadata.get('languages'):
+                    languages = ', '.join(self.book_metadata['languages']) if isinstance(self.book_metadata['languages'], list) else str(self.book_metadata['languages'])
+                    metadata_lines.append(f"Languages: {languages}")
+                
+                metadata_lines.append("")
+            
+            # 获取当前使用的AI模型信息
+            model_info_lines = []
+            try:
+                if hasattr(self, 'api') and self.api:
+                    logger.debug(f"API对象存在: {self.api}")
+                    
+                    model_info_lines.append("")
+                    model_info_lines.append("=" * 60)
+                    model_info_lines.append("AI MODEL INFORMATION")
+                    model_info_lines.append("=" * 60)
+                    
+                    # 尝试获取当前模型信息
+                    if hasattr(self.api, 'current_model') and self.api.current_model:
+                        model = self.api.current_model
+                        logger.debug(f"当前模型对象: {model}")
+                        
+                        if hasattr(model, 'config') and model.config:
+                            config = model.config
+                            logger.debug(f"模型配置: {config}")
+                            
+                            provider = config.get('display_name', 'Unknown')
+                            model_name = config.get('model', 'Unknown')
+                            api_url = config.get('api_base_url', '')
+                            
+                            model_info_lines.append(f"Provider: {provider}")
+                            model_info_lines.append(f"Model: {model_name}")
+                            if api_url:
+                                model_info_lines.append(f"API Base URL: {api_url}")
+                        else:
+                            logger.warning("模型对象没有config属性")
+                            model_info_lines.append("Provider: Information not available")
+                    else:
+                        logger.warning("API对象没有current_model属性")
+                        model_info_lines.append("Provider: Information not available")
+                else:
+                    logger.warning("没有API对象")
+            except Exception as e:
+                logger.error(f"获取模型信息失败: {str(e)}", exc_info=True)
+            
+            # 组合所有内容
+            content_parts = []
+            
+            # 1. 书籍元数据（最开头）
+            if metadata_lines:
+                content_parts.append('\n'.join(metadata_lines))
+            
+            # 2. 问题
+            content_parts.append("=" * 60)
+            content_parts.append("QUESTION")
+            content_parts.append("=" * 60)
+            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
+            content_parts.append("")
+            
+            # 3. 回答
+            content_parts.append("=" * 60)
+            content_parts.append("ANSWER")
+            content_parts.append("=" * 60)
+            content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
+            
+            # 4. AI模型信息（最后）
+            if model_info_lines:
+                content_parts.extend(model_info_lines)
+            
+            # 5. 生成信息
+            content_parts.append("")
+            content_parts.append("=" * 60)
+            content_parts.append("GENERATED BY")
+            content_parts.append("=" * 60)
+            content_parts.append(f"Plugin: Ask AI Plugin (Calibre Plugin)")
+            content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"Software: Calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"Generated Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append("=" * 60)
+            
+            content = '\n'.join(content_parts)
+            
+            # 使用 response_area 的文档直接打印
+            from PyQt5.QtGui import QTextDocument
+            doc = QTextDocument()
+            doc.setPlainText(content)
+            doc.print(printer)
+            
+            logger.info(f"PDF导出成功: {file_path}")
+            # 显示成功提示
+            success_msg = self.i18n.get('pdf_exported', 'PDF Exported!')
+            self._show_copy_tooltip(self.export_pdf_btn, success_msg)
+            
+            # 同时在状态栏显示消息（如果可用）
+            try:
+                from PyQt5.QtWidgets import QApplication
+                if QApplication.instance():
+                    main_window = QApplication.instance().activeWindow()
+                    if main_window and hasattr(main_window, 'statusBar'):
+                        main_window.statusBar().showMessage(f"{success_msg} - {file_path}", 3000)
+            except:
+                pass
+            
+        except Exception as e:
+            logger.error(f"导出PDF失败: {str(e)}", exc_info=True)
+            error_msg = self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                error_msg
+            )
+    
     def _show_copy_tooltip(self, button, text):
         """在按钮位置显示复制成功的提示"""
         from PyQt5.QtWidgets import QToolTip
@@ -1514,7 +1710,7 @@ class AskDialog(QDialog):
         
         # 如果没有指定语言，从配置中获取
         if not new_language:
-            from calibre_plugins.ask_grok.config import get_prefs
+            from calibre_plugins.ask_ai_plugin.config import get_prefs
             prefs = get_prefs()
             new_language = prefs.get('language', 'en')
         

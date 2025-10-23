@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Russian language translations for Ask Grok plugin.
+Russian language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class RussianTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Информация о плагине
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Задавайте вопросы о книге с помощью ИИ',
             
             # UI - Вкладки и разделы
@@ -179,7 +179,7 @@ class RussianTranslation(BaseTranslation):
             # Информация о программе
             'author_name': 'Sheldon',
             'user_manual': 'Руководство пользователя',
-            'about_plugin': 'Почему Ask Grok?',
+            'about_plugin': 'Почему Ask AI Plugin?',
             'learn_how_to_use': 'Как пользоваться',
             'email': 'iMessage',
             

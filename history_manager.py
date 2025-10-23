@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class HistoryManager:
     def __init__(self):
-        self.history_file = os.path.join(config_dir, 'plugins', 'ask_grok_latest_history.json')
+        self.history_file = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_latest_history.json')
         self.history_data = self._load_history()
     
     def _load_history(self):

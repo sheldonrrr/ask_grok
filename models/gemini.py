@@ -12,7 +12,7 @@ from .base import BaseAIModel
 from ..i18n import get_translation
 
 # 获取日志记录器
-logger = logging.getLogger('calibre_plugins.ask_grok.models.gemini')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.gemini')
 
 class GeminiModel(BaseAIModel):
     """

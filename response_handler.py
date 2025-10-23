@@ -19,9 +19,9 @@ from calibre.utils.config import config_dir
 from .history_manager import HistoryManager
 
 # 配置日志目录
-log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
+log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
 os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, 'ask_grok_response.log')
+log_file = os.path.join(log_dir, 'ask_ai_plugin_response.log')
 
 # 使用已配置的日志系统，不再重复配置根日志记录器
 # 只创建当前模块的日志记录器

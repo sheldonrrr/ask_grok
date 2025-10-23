@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Internationalization package for Ask Grok plugin.
+Internationalization package for Ask AI Plugin.
 This package provides translations for the plugin interface.
 """
 

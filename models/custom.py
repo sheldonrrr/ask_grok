@@ -209,7 +209,7 @@ class CustomModel(BaseAIModel):
             else:
                 # 非流式请求
                 import logging
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.custom')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.custom')
                 
                 logger.debug("开始Custom模型非流式请求")
                 try:

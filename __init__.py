@@ -23,11 +23,11 @@ if lib_dir not in sys.path:
 # 版本信息 - 硬编码以确保跨平台兼容性
 VERSION = (1, 2, 3) # 版本号推送触发
 VERSION_STRING = '.'.join(map(str, VERSION))
-PLUGIN_NAME = 'Ask Grok'
-PLUGIN_DESCRIPTION = 'Ask questions about a book using AI'
+PLUGIN_NAME = 'Ask AI Plugin'
+PLUGIN_DESCRIPTION = 'Ask questions about books using multiple AI providers'
 AUTHOR = 'Sheldon'
 AUTHOR_EMAIL = 'sheldonrrr@gmail.com'
-KEYWORDS = 'bookAI readingAI x.AI GrokAI GeminiAI'
+KEYWORDS = 'bookAI readingAI multiAI OpenAI Anthropic Gemini DeepSeek Nvidia Ollama'
 
 # 配置日志
 import tempfile
@@ -35,9 +35,9 @@ import os
 from calibre.utils.config import config_dir
 
 # 创建插件日志目录
-log_dir = os.path.join(config_dir, 'plugins', 'ask_grok_logs')
+log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
 os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, 'ask_grok_debug.log')
+log_file = os.path.join(log_dir, 'ask_ai_plugin_debug.log')
 
 # 获取根日志记录器
 root_logger = logging.getLogger()
@@ -71,27 +71,27 @@ if not handlers_exist:
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
     
-    print(f'已配置Ask Grok日志系统，日志文件位置: {log_file}')
+    print(f'已配置Ask AI Plugin日志系统，日志文件位置: {log_file}')
 
 logger = logging.getLogger(__name__)
-logger.info(f'Ask Grok 插件启动，日志文件位置: {log_file}')
+logger.info(f'Ask AI Plugin 插件启动，日志文件位置: {log_file}')
 
 PLUGIN_ICON = 'images/icon.png'
 
-class AskGrokPlugin(InterfaceActionBase):
-    name                = 'Ask Grok'
-    description         = 'Ask questions about a book using AI'
+class AskAIPlugin(InterfaceActionBase):
+    name                = 'Ask AI Plugin'
+    description         = 'Ask questions about books using multiple AI providers'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
     version             = (1, 2, 3)
     minimum_calibre_version = (7, 0, 0)
-    icon                = 'images/ask_grok.png'
+    icon                = 'images/ask_ai_plugin.png'
 
     # Declare the main action associated with this plugin
     # The keyboard shortcut can be None if you dont want to use a keyboard
     # shortcut. Remember that currently calibre has no central management for
     # keyboard shortcuts, so try to use an unusual/unused shortcut.
-    actual_plugin = 'calibre_plugins.ask_grok.ui:AskGrokPluginUI'
+    actual_plugin = 'calibre_plugins.ask_ai_plugin.ui:AskAIPluginUI'
     
     def is_customizable(self):
         return True

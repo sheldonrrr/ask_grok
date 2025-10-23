@@ -146,7 +146,7 @@ class NvidiaModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
                 
                 api_url = f"{self.config['api_base_url']}/chat/completions"
                 
@@ -204,7 +204,7 @@ class NvidiaModel(BaseAIModel):
             
             # Non-streaming mode
             else:
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
                 api_url = f"{self.config['api_base_url']}/chat/completions"
                 
                 logger.debug(f"Non-streaming request to: {api_url}")
@@ -241,7 +241,7 @@ class NvidiaModel(BaseAIModel):
                     raise Exception(translations.get('json_parse_error', f'Failed to parse API response: {str(je)}'))
                     
         except requests.exceptions.RequestException as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
             logger.error(f"Nvidia API request error: {str(e)}")
             translations = get_translation(self.config.get('language', 'en'))
             raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
@@ -256,7 +256,7 @@ class NvidiaModel(BaseAIModel):
         try:
             self.ask(prompt, stream=True, stream_callback=callback)
         except Exception as e:
-            logger = logging.getLogger('calibre_plugins.ask_grok.models.nvidia')
+            logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
             logger.error(f"send_message error: {str(e)}")
             raise
     

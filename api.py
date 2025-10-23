@@ -255,7 +255,7 @@ class APIClient:
         from calibre.utils.config import JSONConfig
         try:
             # 获取当前配置
-            prefs = JSONConfig('plugins/ask_grok')
+            prefs = JSONConfig('plugins/ask_ai_plugin')
             selected_model = prefs.get('selected_model', 'grok')  # 仍然使用字符串作为配置键
             models_config = prefs.get('models', {})
             
@@ -316,7 +316,7 @@ class APIClient:
         import random
         
         # 获取当前配置
-        prefs = JSONConfig('plugins/ask_grok')
+        prefs = JSONConfig('plugins/ask_ai_plugin')
         random_questions = prefs.get('random_questions', {})
         
         # 获取当前语言的随机问题提示词

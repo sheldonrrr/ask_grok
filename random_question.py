@@ -383,7 +383,7 @@ class SuggestionHandler(QObject):
             return
         
         # 检查当前选中的模型
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         selected_model = prefs.get('selected_model', 'grok')
         

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-English language translations for Ask Grok plugin.
+English language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class EnglishTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin information
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Ask questions about a book using AI',
             
             # UI - Tabs and sections
@@ -51,7 +51,13 @@ class EnglishTranslation(BaseTranslation):
             'suggest_button': 'Random Question',
             'copy_response': 'Copy Response',
             'copy_question_response': 'Copy Q&&A',
+            'export_pdf': 'Export PDF',
             'copied': 'Copied!',
+            'pdf_exported': 'PDF Exported!',
+            'export_pdf_dialog_title': 'Export to PDF',
+            'export_pdf_error': 'Failed to export PDF: {0}',
+            'no_question': 'No question',
+            'no_response': 'No response',
             'saved': 'Saved',
             'close_button': 'Close',
             
@@ -182,7 +188,7 @@ class EnglishTranslation(BaseTranslation):
             # About information
             'author_name': 'Sheldon',
             'user_manual': 'User Manual',
-            'about_plugin': 'Why Ask Grok?',
+            'about_plugin': 'Why Ask AI Plugin?',
             'learn_how_to_use': 'How to Use',
             'email': 'iMessage',
             

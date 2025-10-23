@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Norwegian language translations for Ask Grok plugin.
+Norwegian language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class NorwegianTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin informasjon
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Still spørsmål om en bok ved hjelp av AI',
             
             # UI - Faner og seksjoner
@@ -179,7 +179,7 @@ class NorwegianTranslation(BaseTranslation):
             # Om informasjon
             'author_name': 'Sheldon',
             'user_manual': 'Brukermanual',
-            'about_plugin': 'Hvorfor Ask Grok?',
+            'about_plugin': 'Hvorfor Ask AI Plugin?',
             'learn_how_to_use': 'Hvordan bruke',
             'email': 'iMessage',
             

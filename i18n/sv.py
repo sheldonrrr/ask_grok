@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Swedish language translations for Ask Grok plugin.
+Swedish language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class SwedishTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin information
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Ställ frågor om en bok med hjälp av AI',
             
             # UI - Flikar och sektioner
@@ -179,7 +179,7 @@ class SwedishTranslation(BaseTranslation):
             # Om information
             'author_name': 'Sheldon',
             'user_manual': 'Användarmanual',
-            'about_plugin': 'Varför Ask Grok?',
+            'about_plugin': 'Varför Ask AI Plugin?',
             'learn_how_to_use': 'Hur man använder',
             'email': 'iMessage',
             

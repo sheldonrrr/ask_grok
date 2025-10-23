@@ -5,7 +5,7 @@ import sys
 import os
 from setuptools import setup, find_packages
 
-package_name = "Ask Grok"
+package_name = "Ask AI Plugin"
 
 if sys.version_info < (2, 7):
     sys.exit(package_name + ' requires Python 2.7 or newer.')
@@ -16,13 +16,13 @@ setup(
     description='Ask AI about your books',
     author='Sheldon',
     author_email='sheldonrrr@gmail.com',
-    packages=['ask_grok'],
+    packages=['ask_ai_plugin'],
     include_package_data=True,
     platforms=['windows', 'osx', 'linux'],
     install_requires=['requests'],
     zip_safe=False,
     keywords='bookAI readingAI x.AI GrokAI GeminiAI',
     package_data={
-        'ask_grok': ['images/*.png', 'lib/*']
+        'ask_ai_plugin': ['images/*.png', 'lib/*']
     }
 )

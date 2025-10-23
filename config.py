@@ -29,7 +29,7 @@ from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 logger = logging.getLogger(__name__)
 
 # 创建配置对象
-prefs = JSONConfig('plugins/ask_grok')
+prefs = JSONConfig('plugins/ask_ai_plugin')
 
 # 从i18n模块获取支持的语言列表
 # 将字典转换为列表格式 [(code, name), ...]
@@ -117,7 +117,7 @@ prefs.defaults['models'] = {
         'display_name': OPENROUTER_CONFIG.display_name,
         'enable_streaming': True,
         'http_referer': '',  # Optional: for ranking on OpenRouter
-        'x_title': 'Ask Grok Calibre Plugin',  # Optional: app name
+        'x_title': 'Ask AI Plugin',  # Optional: app name
         'enabled': False  # 默认不启用，需要用户配置
     },
     'ollama': {
@@ -1355,7 +1355,7 @@ class ConfigDialog(QWidget):
         
         # 确保所有标签都被更新，使用更全面的方法
         # 首先更新所有标签页和标签文本
-        self.setWindowTitle(self.i18n.get('config_title', 'Ask Grok Configuration'))
+        self.setWindowTitle(self.i18n.get('config_title', 'Ask AI Plugin Configuration'))
         if hasattr(self, 'tab_widget'):
             self.tab_widget.setTabText(0, self.i18n.get('general_tab', 'General'))
             self.tab_widget.setTabText(1, self.i18n.get('ai_models', 'AI'))
@@ -1451,7 +1451,7 @@ class ConfigDialog(QWidget):
         logger.debug("开始更新界面文字")
         
         # 更新标题和按钮文本
-        self.setWindowTitle(self.i18n.get('config_title', 'Ask Grok Configuration'))
+        self.setWindowTitle(self.i18n.get('config_title', 'Ask AI Plugin Configuration'))
         #self.save_button.setText(self.i18n.get('save_button', 'Save'))
         
         # 更新成功提示文字

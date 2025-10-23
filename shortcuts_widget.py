@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QGroupBox, QFrame, QScrollArea
 from PyQt5.QtCore import Qt
 from .i18n import get_translation, get_suggestion_template
-from calibre_plugins.ask_grok.config import get_prefs
+from calibre_plugins.ask_ai_plugin.config import get_prefs
 import sys
 
 # Shortcut for ask: Command + L(macOS), Ctrl + L(other)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Traditional Chinese language translations for Ask Grok plugin.
+Traditional Chinese language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class TraditionalChineseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # 插件信息
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': '使用AI提問關於書籍的問題',
             
             # UI - 標籤和區域
@@ -50,7 +50,13 @@ class TraditionalChineseTranslation(BaseTranslation):
             'suggest_button': '隨機問題',
             'copy_response': '複製回答',
             'copy_question_response': '複製問答',
+            'export_pdf': '匯出PDF',
             'copied': '已複製！',
+            'pdf_exported': 'PDF已匯出！',
+            'export_pdf_dialog_title': '匯出為PDF',
+            'export_pdf_error': '匯出PDF失敗：{0}',
+            'no_question': '無問題',
+            'no_response': '無回答',
             'saved': '已儲存',
             'close_button': '關閉',
             
@@ -179,7 +185,7 @@ class TraditionalChineseTranslation(BaseTranslation):
             # 關於信息
             'author_name': 'Sheldon',
             'user_manual': '用戶手冊',
-            'about_plugin': '為何使用 Ask Grok？',
+            'about_plugin': '為何使用 Ask AI Plugin？',
             'learn_how_to_use': '如何使用',
             'email': 'iMessage',
             

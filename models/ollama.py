@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional
 from .base import BaseAIModel
 from ..i18n import get_translation
 
-logger = logging.getLogger('calibre_plugins.ask_grok.models.ollama')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.ollama')
 
 
 class OllamaModel(BaseAIModel):

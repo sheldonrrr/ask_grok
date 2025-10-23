@@ -137,7 +137,7 @@ class GrokModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
                 
                 api_url = f"{self.config['api_base_url']}/chat/completions"
                 
@@ -271,7 +271,7 @@ class GrokModel(BaseAIModel):
                 return full_content
             else:
                 # 非流式请求
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
                 
                 logger.debug("开始Grok非流式请求")
                 try:

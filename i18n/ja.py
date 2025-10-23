@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Japanese language translations for Ask Grok plugin.
+Japanese language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -32,7 +32,7 @@ class JapaneseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # プラグイン情報
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'AIを使用して本について質問する',
             
             # UI - タブとセクション
@@ -179,7 +179,7 @@ class JapaneseTranslation(BaseTranslation):
             # 情報について
             'author_name': 'Sheldon',
             'user_manual': 'ユーザーマニュアル',
-            'about_plugin': 'Ask Grokの特徴',
+            'about_plugin': 'Ask AI Pluginの特徴',
             'learn_how_to_use': '使い方',
             'email': 'iMessage',
             
