@@ -855,12 +855,10 @@ class AskDialog(QDialog):
             model_display_name = self.api.model_display_name
             logger.debug(f"更新模型信息: {model_display_name}")
             
-            # 更新状态栏中的模型信息标签
-            if hasattr(self, 'model_info_label') and self.model_info_label:
-                self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
-                logger.debug("已更新状态栏模型信息标签")
-            else:
-                logger.warning("无法更新模型信息标签: 标签不存在")
+            # 刷新模型切换器
+            if hasattr(self, 'model_switcher'):
+                self._populate_model_switcher()
+                logger.debug("已更新模型切换器")
             
             # 更新窗口标题
             if hasattr(self, 'book_info') and self.book_info:
@@ -871,6 +869,77 @@ class AskDialog(QDialog):
                 
         except Exception as e:
             logger.error(f"更新模型信息时出错: {str(e)}")
+    
+    def _populate_model_switcher(self):
+        """填充模型切换器，只显示已配置的模型"""
+        from calibre_plugins.ask_grok.config import get_prefs
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        prefs = get_prefs()
+        models_config = prefs.get('models', {})
+        current_model = prefs.get('selected_model', 'grok')
+        
+        # 阻止信号触发
+        self.model_switcher.blockSignals(True)
+        self.model_switcher.clear()
+        
+        # 获取所有已配置的模型
+        configured_count = 0
+        for model_id, config in models_config.items():
+            if config.get('is_configured', False):
+                provider_name = config.get('display_name', model_id)
+                model_name = config.get('model', 'unknown')
+                display_text = f"{provider_name} - {model_name}"
+                
+                self.model_switcher.addItem(display_text, model_id)
+                configured_count += 1
+                
+                # 选中当前模型
+                if model_id == current_model:
+                    self.model_switcher.setCurrentIndex(self.model_switcher.count() - 1)
+        
+        # 如果没有配置的模型，显示警告
+        if configured_count == 0:
+            self.model_switcher.addItem(self.i18n.get('no_configured_models', 'No AI configured - Please configure in settings'), None)
+            self.model_switcher.setEnabled(False)
+            logger.warning("没有已配置的 AI 模型")
+        else:
+            self.model_switcher.setEnabled(True)
+            logger.debug(f"已加载 {configured_count} 个已配置的模型")
+        
+        # 恢复信号
+        self.model_switcher.blockSignals(False)
+    
+    def on_model_switched(self, index):
+        """处理模型切换事件"""
+        from calibre_plugins.ask_grok.config import get_prefs
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        model_id = self.model_switcher.itemData(index)
+        if not model_id:
+            return
+        
+        # 保存新选择
+        prefs = get_prefs()
+        old_model = prefs.get('selected_model', 'grok')
+        
+        if model_id == old_model:
+            return  # 没有变化，不需要处理
+        
+        prefs['selected_model'] = model_id
+        logger.info(f"切换模型: {old_model} -> {model_id}")
+        
+        # 重新加载 API 客户端
+        self.api.reload_model()
+        
+        # 更新窗口标题
+        model_display_name = self.api.model_display_name
+        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
+        
+        # 在状态栏显示切换提示
+        self.statusBar.showMessage(f"Switched to {model_display_name}", 3000)
     
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
@@ -894,16 +963,31 @@ class AskDialog(QDialog):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 添加一个状态栏用于显示加载状态和模型信息
+        # 创建顶部栏：标题 + AI 切换器
+        top_bar = QHBoxLayout()
+        
+        # 左侧：对话标题
+        title_label = QLabel(self.i18n['menu_title'])
+        title_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        top_bar.addWidget(title_label)
+        
+        top_bar.addStretch()
+        
+        # 右侧：AI 切换器
+        model_switcher_label = QLabel(self.i18n.get('current_ai', 'Current AI:'))
+        model_switcher_label.setStyleSheet("color: #666; font-size: 12px;")
+        top_bar.addWidget(model_switcher_label)
+        
+        self.model_switcher = QComboBox()
+        self.model_switcher.setMinimumWidth(250)
+        self.model_switcher.currentIndexChanged.connect(self.on_model_switched)
+        self._populate_model_switcher()
+        top_bar.addWidget(self.model_switcher)
+        
+        layout.addLayout(top_bar)
+        
+        # 添加一个状态栏用于显示加载状态
         self.statusBar = QStatusBar()
-        
-        # 添加模型信息到状态栏
-        # 确保显示正确的模型名称，而不是 "Unknown Model"
-        model_display_name = self.api.model_display_name
-        self.model_info_label = QLabel(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
-        self.model_info_label.setStyleSheet("color: #666; font-size: 12px; padding-right: 10px;")
-        self.statusBar.addPermanentWidget(self.model_info_label)
-        
         layout.addWidget(self.statusBar)
         
         # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
@@ -1452,9 +1536,9 @@ class AskDialog(QDialog):
         if hasattr(self, 'input_area'):
             self.input_area.setPlaceholderText(self.i18n.get('ask_placeholder', 'Ask about this book...'))
         
-        # 更新模型信息标签
-        if hasattr(self, 'model_info_label'):
-            self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
+        # 更新模型切换器
+        if hasattr(self, 'model_switcher'):
+            self._populate_model_switcher()
         
         # 更新复制按钮文本
         if hasattr(self, 'copy_response_btn'):

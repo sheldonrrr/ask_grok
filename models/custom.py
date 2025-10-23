@@ -162,8 +162,7 @@ class CustomModel(BaseAIModel):
                     headers=headers,
                     json=data,
                     stream=True,
-                    timeout=kwargs.get('timeout', 60),
-                    verify=False  # 本地API可能不需要验证SSL
+                    timeout=kwargs.get('timeout', 60)
                 ) as response:
                     response.raise_for_status()
                     
@@ -237,8 +236,7 @@ class CustomModel(BaseAIModel):
                         api_url,
                         headers=headers,
                         json=data,
-                        timeout=kwargs.get('timeout', 60),
-                        verify=False  # 本地API可能不需要验证SSL
+                        timeout=kwargs.get('timeout', 60)
                     )
                     response.raise_for_status()
                     
@@ -322,7 +320,6 @@ class CustomModel(BaseAIModel):
             "api_base_url": cls.DEFAULT_API_BASE_URL,
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
-            "disable_ssl_verify": False,  # 默认启用SSL验证，本地模型可能需要禁用
         }
     
     # Custom 模型使用基类的 build_api_url 方法，无需重写 prepare_models_request_url

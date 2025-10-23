@@ -173,6 +173,24 @@ def get_prefs(force_reload=False):
     # 不再强制更新模型名称，保留用户的自定义设置
     # 只有当模型名称不存在时，才使用默认值
     
+    # 自动判断并设置 is_configured 字段（用于已有配置的兼容性）
+    for model_id, model_config in prefs['models'].items():
+        if 'is_configured' not in model_config:
+            # 判断是否已配置
+            if model_id == 'ollama':
+                # Ollama 不需要 API Key
+                has_auth = True
+            else:
+                # 其他模型需要 API Key
+                api_key_field = 'auth_token' if model_id == 'grok' else 'api_key'
+                has_auth = bool(model_config.get(api_key_field, '').strip())
+            
+            # 检查是否有模型名称
+            has_model = bool(model_config.get('model', '').strip())
+            
+            # 设置 is_configured 标志
+            model_config['is_configured'] = has_auth and has_model
+    
     return prefs
 
 
@@ -241,6 +259,23 @@ class ModelConfigWidget(QWidget):
             model_config = get_current_model_config(provider)
         
         if model_config:
+            # Nvidia 特殊提示：免费 API Key 信息
+            if self.model_id == 'nvidia':
+                info_label = QLabel(self.i18n.get('nvidia_free_info', 
+                    '💡 New users get 6 months free API access - No credit card required'))
+                info_label.setStyleSheet("""
+                    QLabel {
+                        background-color: #e8f5e9;
+                        color: #2e7d32;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        border-left: 3px solid #4caf50;
+                        font-size: 12px;
+                    }
+                """)
+                info_label.setWordWrap(True)
+                main_layout.addWidget(info_label)
+            
             # API Key/Token 输入框（Ollama 不需要）
             if self.model_id != 'ollama':
                 self.api_key_edit = QTextEdit(self)
@@ -325,15 +360,6 @@ class ModelConfigWidget(QWidget):
             self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
             model_layout.addRow("", self.enable_streaming_checkbox)
             
-            # Custom模型特有选项
-            if self.model_id == 'custom':
-                # 禁用SSL验证选项
-                self.disable_ssl_verify_checkbox = QCheckBox(self.i18n.get('model_disable_ssl_verify', 'Disable SSL Verify'))
-                self.disable_ssl_verify_checkbox.setChecked(self.config.get('disable_ssl_verify', False))
-                self.disable_ssl_verify_checkbox.stateChanged.connect(self.on_config_changed)
-
-                model_layout.addRow("", self.disable_ssl_verify_checkbox)
-            
             # 添加重置按钮
             reset_button = QPushButton(self.i18n.get('reset_button', 'Reset to Default'))
             reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
@@ -386,7 +412,7 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'nvidia':
             provider = AIProvider.AI_NVIDIA
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'Nvidia AI (Free)'  # 设置固定的显示名称
+            config['display_name'] = 'Nvidia AI'  # 设置固定的显示名称
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -420,15 +446,30 @@ class ModelConfigWidget(QWidget):
             config['enable_streaming'] = self.enable_streaming_checkbox.isChecked()
         else:
             config['enable_streaming'] = True  # 默认启用
-            
-        # Custom模型特有选项
-        if self.model_id == 'custom':
-            if hasattr(self, 'disable_ssl_verify_checkbox'):
-                config['disable_ssl_verify'] = self.disable_ssl_verify_checkbox.isChecked()
-            else:
-                config['disable_ssl_verify'] = False  # 默认启用SSL验证
+        
+        # 判断是否已配置完成
+        config['is_configured'] = self._is_model_configured(config)
         
         return config
+    
+    def _is_model_configured(self, config: dict) -> bool:
+        """检查当前模型配置是否完整
+        
+        判断标准：
+        1. 有 API Key（Ollama 除外）
+        2. 有模型名称
+        """
+        # 检查 API Key（Ollama 不需要）
+        if self.model_id == 'ollama':
+            has_auth = True
+        else:
+            api_key_field = 'auth_token' if self.model_id == 'grok' else 'api_key'
+            has_auth = bool(config.get(api_key_field, '').strip())
+        
+        # 检查模型名称
+        has_model = bool(config.get('model', '').strip())
+        
+        return has_auth and has_model
     
     def on_config_changed(self):
         """配置变更时发出信号"""
@@ -587,10 +628,6 @@ class ModelConfigWidget(QWidget):
         if hasattr(self, 'enable_streaming_checkbox'):
             self.enable_streaming_checkbox.setText(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
             logger.debug("更新了流式传输复选框文本")
-            
-        if hasattr(self, 'disable_ssl_verify_checkbox'):
-            self.disable_ssl_verify_checkbox.setText(self.i18n.get('model_disable_ssl_verify', 'Disable SSL Verify'))
-            logger.debug("更新了SSL验证复选框文本")
             
         for label in self.findChildren(QLabel):
             # 先检查objectName
@@ -829,20 +866,21 @@ class ConfigDialog(QWidget):
         model_select_layout.addWidget(QLabel(self.i18n.get('current_ai', 'Current AI:')))
 
         self.model_combo = QComboBox()
-        # 使用DEFAULT_MODELS字典来动态添加模型
-        model_mapping = {
-            AIProvider.AI_GROK: 'grok',
-            AIProvider.AI_GEMINI: 'gemini',
-            AIProvider.AI_DEEPSEEK: 'deepseek',
-            AIProvider.AI_CUSTOM: 'custom',
-            AIProvider.AI_OPENAI: 'openai',
-            AIProvider.AI_ANTHROPIC: 'anthropic',
-            AIProvider.AI_NVIDIA: 'nvidia',
-            AIProvider.AI_OPENROUTER: 'openrouter',
-            AIProvider.AI_OLLAMA: 'ollama'
-        }
-        # 按照默认模型顺序添加到下拉框
-        for provider, model_id in model_mapping.items():
+        # 使用有序列表来定义模型显示顺序（按使用频率和影响力排序）
+        # OpenAI 第一，Custom 最后
+        model_mapping = [
+            (AIProvider.AI_OPENAI, 'openai'),
+            (AIProvider.AI_ANTHROPIC, 'anthropic'),
+            (AIProvider.AI_GEMINI, 'gemini'),
+            (AIProvider.AI_GROK, 'grok'),
+            (AIProvider.AI_DEEPSEEK, 'deepseek'),
+            (AIProvider.AI_NVIDIA, 'nvidia'),
+            (AIProvider.AI_OPENROUTER, 'openrouter'),
+            (AIProvider.AI_OLLAMA, 'ollama'),
+            (AIProvider.AI_CUSTOM, 'custom'),
+        ]
+        # 按照定义的顺序添加到下拉框
+        for provider, model_id in model_mapping:
             if provider in DEFAULT_MODELS:
                 model_config = DEFAULT_MODELS[provider]
                 self.model_combo.addItem(model_config.display_name, model_id)
@@ -1093,25 +1131,36 @@ class ConfigDialog(QWidget):
         # 清空下拉框
         self.model_combo.clear()
         
-        # 使用DEFAULT_MODELS字典来动态添加模型
-        model_mapping = {
-            AIProvider.AI_GROK: 'grok',
-            AIProvider.AI_GEMINI: 'gemini',
-            AIProvider.AI_DEEPSEEK: 'deepseek',
-            AIProvider.AI_CUSTOM: 'custom',
-            AIProvider.AI_OPENAI: 'openai',
-            AIProvider.AI_ANTHROPIC: 'anthropic',
-            AIProvider.AI_NVIDIA: 'nvidia',
-            AIProvider.AI_OPENROUTER: 'openrouter',
-            AIProvider.AI_OLLAMA: 'ollama'
-        }
+        # 使用有序列表来定义模型显示顺序（按使用频率和影响力排序）
+        # OpenAI 第一，Custom 最后
+        model_mapping = [
+            (AIProvider.AI_OPENAI, 'openai'),
+            (AIProvider.AI_ANTHROPIC, 'anthropic'),
+            (AIProvider.AI_GEMINI, 'gemini'),
+            (AIProvider.AI_GROK, 'grok'),
+            (AIProvider.AI_DEEPSEEK, 'deepseek'),
+            (AIProvider.AI_NVIDIA, 'nvidia'),
+            (AIProvider.AI_OPENROUTER, 'openrouter'),
+            (AIProvider.AI_OLLAMA, 'ollama'),
+            (AIProvider.AI_CUSTOM, 'custom'),
+        ]
         
-        # 按照默认模型顺序添加到下拉框，使用翻译后的名称
-        for provider, model_id in model_mapping.items():
+        # 获取当前所有模型的配置状态
+        prefs = get_prefs()
+        models_config = prefs.get('models', {})
+        
+        # 按照定义的顺序添加到下拉框，使用翻译后的名称
+        for provider, model_id in model_mapping:
             if provider in DEFAULT_MODELS:
                 # 获取翻译后的模型名称
                 display_name_key = f"model_display_name_{model_id}"
                 translated_name = self.i18n.get(display_name_key, DEFAULT_MODELS[provider].display_name)
+                
+                # 检查是否已配置，添加对钩标记
+                model_config = models_config.get(model_id, {})
+                if model_config.get('is_configured', False):
+                    translated_name = f"✓ {translated_name}"
+                
                 logger.debug(f"模型 {model_id} 的翻译名称: {translated_name}")
                 self.model_combo.addItem(translated_name, model_id)
         

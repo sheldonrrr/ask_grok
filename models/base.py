@@ -92,7 +92,7 @@ DEFAULT_MODELS = {
     ),
     AIProvider.AI_NVIDIA: ModelConfig(
         provider=AIProvider.AI_NVIDIA,
-        display_name="Nvidia AI (Free)",
+        display_name="Nvidia AI",
         api_key_label="Nvidia API Key:",
         default_api_base_url="https://integrate.api.nvidia.com/v1",
         default_model_name="meta/llama-3.3-70b-instruct"

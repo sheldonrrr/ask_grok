@@ -188,9 +188,8 @@ class CantoneseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定義',
-            'model_enable_streaming': '開啟流式傳輸',
-            'model_disable_ssl_verify': '關閉SSL驗證',
+            'model_enable_streaming': '啟用串流傳輸',
             
-            # 一般系統訊息
+            # 通用系統訊息
             'default_system_message': '你係一個書籍分析嘉專家。你嘉任務係幫助用戶透過提供有見地嘉問題同分析，更加理解書籍。',
         }

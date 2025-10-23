@@ -68,7 +68,6 @@ class EnglishTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': 'Model',
-            'current_ai': 'Current AI:',
             'action': 'Action',
             'reset_button': 'Reset',
             'prompt_template': 'Prompt Template',
@@ -193,7 +192,13 @@ class EnglishTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Custom',
             'model_enable_streaming': 'Enable Streaming',
-            'model_disable_ssl_verify': 'Disable SSL Verify',
+            
+            # AI Switcher
+            'current_ai': 'Current AI',
+            'no_configured_models': 'No AI configured - Please configure in settings',
+            
+            # Provider specific info
+            'nvidia_free_info': '💡 New users get 6 months free API access - No credit card required',
             
             # Common system messages
             'default_system_message': 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.',

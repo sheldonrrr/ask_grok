@@ -192,7 +192,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定义',
             'model_enable_streaming': '启用流式传输',
-            'model_disable_ssl_verify': '禁用SSL验证',
             
             # 通用系统消息
             'default_system_message': '您是一位书籍分析专家。您的任务是通过提供有洞察力的问题和分析，帮助用户更好地理解书籍。',
