@@ -188,8 +188,17 @@ class TraditionalChineseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定義',
-            'model_enable_streaming': '啟用串流傳輸',
+            'model_enable_streaming': '啟用流式傳輸',
+            'model_disable_ssl_verify': '禁用SSL驗證',
+            
+            # 提供商特定資訊
+            'nvidia_free_info': '💡 新用戶可獲得 6 個月免費 API 訪問權限 - 無需信用卡',
             
             # 通用系統訊息
             'default_system_message': '您是一位書籍分析專家。您的任務是透過提供有見地的問題和分析，幫助用戶更好地理解書籍。',
+            
+            # 請求超時設定
+            'request_timeout_label': '請求超時時間：',
+            'seconds': '秒',
+            'request_timeout_error': '請求超時，當前超時時間為：{timeout} 秒',
         }

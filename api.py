@@ -50,14 +50,20 @@ class APIClient:
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 
-                 max_retries: int = 3, timeout: float = 30.0):
+                 max_retries: int = 3, timeout: float = None):
         """初始化 AI 模型 API 客户端
         
         Args:
             i18n: 国际化文本字典
             max_retries: 最大重试次数
-            timeout: 请求超时时间（秒）
+            timeout: 请求超时时间（秒），如果为None则从配置中读取
         """
+        # 如果没有指定timeout，从配置中读取
+        if timeout is None:
+            from .config import get_prefs
+            prefs = get_prefs()
+            timeout = prefs.get('request_timeout', 60)
+        
         self._timeout = timeout
         self._ai_model = None  # 当前使用的 AI 模型实例
         self._model_name = None  # 当前使用的模型名称
@@ -172,7 +178,8 @@ class APIClient:
             # 准备请求参数
             kwargs = {
                 'temperature': 0.7,
-                'max_tokens': 2000
+                'max_tokens': 2000,
+                'timeout': self._timeout  # 使用配置的超时时间
             }
             
             # 检查模型是否支持流式传输以及是否在配置中启用了流式传输
@@ -223,6 +230,10 @@ class APIClient:
         except AIAPIError:
             # 直接重新抛出 AIAPIError
             raise
+        except requests.exceptions.Timeout as e:
+            # 处理超时错误
+            error_msg = self.i18n.get('request_timeout_error', 'Request timeout. Current timeout: {timeout} seconds').format(timeout=self._timeout)
+            raise AIAPIError(error_msg, error_type="timeout_error") from e
         except Exception as e:
             # 处理其他未知错误
             error_msg = f"{self.i18n.get('unknown_error', 'Unknown error')}: {str(e)}"

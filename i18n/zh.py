@@ -193,6 +193,14 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_custom': '自定义',
             'model_enable_streaming': '启用流式传输',
             
+            # 提供商特定信息
+            'nvidia_free_info': '💡 新用户可获得 6 个月免费 API 访问权限 - 无需信用卡',
+            
             # 通用系统消息
             'default_system_message': '您是一位书籍分析专家。您的任务是通过提供有洞察力的问题和分析，帮助用户更好地理解书籍。',
+            
+            # 请求超时设置
+            'request_timeout_label': '请求超时时间：',
+            'seconds': '秒',
+            'request_timeout_error': '请求超时，当前超时时间为：{timeout} 秒',
         }

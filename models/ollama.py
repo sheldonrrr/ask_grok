@@ -226,6 +226,13 @@ class OllamaModel(BaseAIModel):
                 logger.error(f"{error_msg}, response: {json.dumps(result, ensure_ascii=False)[:200]}...")
                 raise Exception(error_msg)
                 
+        except requests.exceptions.Timeout as e:
+            # 处理超时错误
+            translations = get_translation(self.config.get('language', 'en'))
+            timeout_value = kwargs.get('timeout', 60)
+            error_msg = translations.get('request_timeout_error', 'Request timeout. Current timeout: {timeout} seconds').format(timeout=timeout_value)
+            logger.error(f"Ollama API timeout error: {error_msg}")
+            raise Exception(error_msg) from e
         except requests.exceptions.RequestException as e:
             translations = get_translation(self.config.get('language', 'en'))
             error_msg = translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e))

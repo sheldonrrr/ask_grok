@@ -445,22 +445,12 @@ class SuggestionHandler(QObject):
         self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
         
-        # 根据模型类型设置超时时间
-        # 推理模型（如 Deepseek-R1）需要更长的超时时间
+        # 从配置中获取超时时间
         prefs = get_prefs()
-        selected_model = prefs.get('selected_model', 'grok')
-        models_config = prefs.get('models', {})
-        model_config = models_config.get(selected_model, {})
-        model_name = model_config.get('model', '').lower()
+        timeout_sec = prefs.get('request_timeout', 60)
+        timeout_ms = timeout_sec * 1000
         
-        # 检测是否为推理模型（包含 r1, reasoning 等关键词）
-        is_reasoning_model = any(keyword in model_name for keyword in ['r1', 'reasoning', 'think', 'thinkding', 'deepseek-r1', 'reason'])
-        
-        # 推理模型使用 90 秒超时，普通模型使用 30 秒超时
-        timeout_ms = 90000 if is_reasoning_model else 30000
-        timeout_sec = timeout_ms // 1000
-        
-        logger.debug(f"模型 '{model_name}' 被识别为{'推理' if is_reasoning_model else '普通'}模型，超时时间: {timeout_sec}秒")
+        logger.debug(f"使用配置的超时时间: {timeout_sec}秒")
         
         self._timeout_timer = QTimer(self)
         self._timeout_timer.setSingleShot(True)

@@ -134,6 +134,7 @@ prefs.defaults['language'] = 'en'
 prefs.defaults['ask_dialog_width'] = 600
 prefs.defaults['ask_dialog_height'] = 400
 prefs.defaults['random_questions'] = {}
+prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -160,6 +161,10 @@ def get_prefs(force_reload=False):
     # 确保 selected_model 键存在
     if 'selected_model' not in prefs:
         prefs['selected_model'] = 'grok'
+    
+    # 确保 request_timeout 键存在
+    if 'request_timeout' not in prefs:
+        prefs['request_timeout'] = 60
     
     # 确保默认模型配置存在
     if 'grok' not in prefs['models']:
@@ -911,6 +916,36 @@ class ConfigDialog(QWidget):
         
         # 直接将布局添加到模型组布局中
         model_layout.addLayout(self.models_layout)
+        
+        # 添加分隔线（在重置按钮和超时设置之间）
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Plain)
+        separator.setStyleSheet("border-top: 1px dashed #aaaaaa; margin-top: 15px; margin-bottom: 15px; background: none;")
+        separator.setMinimumHeight(10)
+        model_layout.addWidget(separator)
+        
+        # 添加请求超时时间设置
+        timeout_layout = QHBoxLayout()
+        timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout:'))
+        timeout_layout.addWidget(timeout_label)
+        
+        self.timeout_input = QLineEdit(self)
+        self.timeout_input.setText(str(get_prefs().get('request_timeout', 60)))
+        self.timeout_input.setPlaceholderText('60')
+        self.timeout_input.setMaximumWidth(100)
+        # 只允许输入数字
+        from PyQt5.QtGui import QIntValidator
+        self.timeout_input.setValidator(QIntValidator(1, 3600, self))  # 1-3600秒
+        self.timeout_input.textChanged.connect(self.on_config_changed)
+        timeout_layout.addWidget(self.timeout_input)
+        
+        timeout_unit_label = QLabel(self.i18n.get('seconds', 'seconds'))
+        timeout_layout.addWidget(timeout_unit_label)
+        timeout_layout.addStretch()
+        
+        model_layout.addLayout(timeout_layout)
+        
         model_group.setLayout(model_layout)
         
         # 添加间距
@@ -1183,7 +1218,8 @@ class ConfigDialog(QWidget):
             'template': prefs.get('template', get_default_template(current_lang)),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'random_questions': copy.deepcopy(prefs.get('random_questions', {}))
+            'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
+            'request_timeout': prefs.get('request_timeout', 60)
         }
         
         # 调试日志
@@ -1552,6 +1588,14 @@ class ConfigDialog(QWidget):
             prefs['random_questions'] = {}
         prefs['random_questions'][current_lang] = self.random_questions_edit.toPlainText().strip()
         
+        # 保存请求超时时间
+        if hasattr(self, 'timeout_input'):
+            timeout_value = self.timeout_input.text().strip()
+            if timeout_value:
+                prefs['request_timeout'] = int(timeout_value)
+            else:
+                prefs['request_timeout'] = 60  # 默认值
+        
         # 保存选中的模型
         prefs['selected_model'] = self.model_combo.currentData()
         
@@ -1604,7 +1648,8 @@ class ConfigDialog(QWidget):
             'template': prefs.get('template', get_default_template(current_lang)),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'random_questions': copy.deepcopy(prefs.get('random_questions', {}))
+            'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
+            'request_timeout': prefs.get('request_timeout', 60)
         }
         # 安全地记录更新后的初始值
         updated_models = safe_log_config(self.initial_values['models'])
@@ -1628,7 +1673,7 @@ class ConfigDialog(QWidget):
             self.initial_values = {}
         
         # 确保必要的键存在
-        for key in ['language', 'template', 'selected_model', 'models', 'random_questions']:
+        for key in ['language', 'template', 'selected_model', 'models', 'random_questions', 'request_timeout']:
             if key not in self.initial_values:
                 if key == 'language':
                     self.initial_values[key] = 'en'
@@ -1638,6 +1683,8 @@ class ConfigDialog(QWidget):
                     self.initial_values[key] = 'grok'
                 elif key == 'models' or key == 'random_questions':
                     self.initial_values[key] = {}
+                elif key == 'request_timeout':
+                    self.initial_values[key] = 60
         
         # 检查通用设置是否更改
         general_changed = False
@@ -1670,6 +1717,18 @@ class ConfigDialog(QWidget):
                 random_questions_changed = True
                 logger.debug("随机问题提示词已更改")
         
+        # 检查请求超时时间是否更改
+        timeout_changed = False
+        if hasattr(self, 'timeout_input'):
+            current_timeout = self.timeout_input.text().strip()
+            if current_timeout:
+                try:
+                    if int(current_timeout) != self.initial_values['request_timeout']:
+                        timeout_changed = True
+                        logger.debug("请求超时时间已更改")
+                except ValueError:
+                    pass
+        
         # 检查模型配置是否更改
         models_changed = False
         if hasattr(self, 'model_widgets'):
@@ -1688,7 +1747,7 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or random_questions_changed
+        return general_changed or models_changed or random_questions_changed or timeout_changed
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""

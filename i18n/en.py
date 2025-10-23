@@ -203,4 +203,9 @@ class EnglishTranslation(BaseTranslation):
             # Common system messages
             'default_system_message': 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.',
             'api_content_extraction_failed': 'Unable to extract content from API response',
+            
+            # Request timeout settings
+            'request_timeout_label': 'Request Timeout:',
+            'seconds': 'seconds',
+            'request_timeout_error': 'Request timeout. Current timeout: {timeout} seconds',
         }
