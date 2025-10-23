@@ -47,6 +47,7 @@ class EnglishTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Save',
             'send_button': 'Send',
+            'stop_button': 'Stop',
             'suggest_button': 'Random Question',
             'copy_response': 'Copy Response',
             'copy_question_response': 'Copy Q&&A',

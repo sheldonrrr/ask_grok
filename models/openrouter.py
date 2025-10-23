@@ -246,7 +246,7 @@ class OpenRouterModel(BaseAIModel):
                 except requests.exceptions.RequestException as e:
                     logger.error(f"OpenRouter API request error: {str(e)}")
                     translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(translations.get('api_request_error', f'API request failed: {str(e)}'))
+                    raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
             
             # 非流式模式
             else:
@@ -270,7 +270,7 @@ class OpenRouterModel(BaseAIModel):
         except requests.exceptions.RequestException as e:
             logger.error(f"OpenRouter API request error: {str(e)}")
             translations = get_translation(self.config.get('language', 'en'))
-            raise Exception(translations.get('api_request_error', f'API request failed: {str(e)}'))
+            raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
     
     # OpenRouter 使用基类的默认实现获取模型列表
     # fetch_available_models() - GET /v1/models 端点

@@ -192,7 +192,7 @@ class AnthropicModel(BaseAIModel):
                 except requests.exceptions.RequestException as e:
                     logger.error(f"Anthropic API request error: {str(e)}")
                     translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(translations.get('api_request_error', f'API request failed: {str(e)}'))
+                    raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
             
             # Non-streaming mode
             else:
@@ -218,7 +218,7 @@ class AnthropicModel(BaseAIModel):
             logger = logging.getLogger('calibre_plugins.ask_grok.models.anthropic')
             logger.error(f"Anthropic API request error: {str(e)}")
             translations = get_translation(self.config.get('language', 'en'))
-            raise Exception(translations.get('api_request_error', f'API request failed: {str(e)}'))
+            raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
     
     def send_message(self, prompt: str, callback: callable) -> None:
         """

@@ -739,7 +739,8 @@ class AskDialog(QDialog):
             send_button=self.send_button,
             i18n=self.i18n,
             api=self.api,
-            input_area=self.input_area  # 添加输入区域
+            input_area=self.input_area,  # 添加输入区域
+            stop_button=self.stop_button  # 添加停止按钮
         )
         self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
         
@@ -1006,6 +1007,33 @@ class AskDialog(QDialog):
         
         # 添加弹性空间
         action_layout.addStretch()
+        
+        # 创建停止按钮
+        self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
+        self.stop_button.clicked.connect(self.stop_request)
+        self.stop_button.setMinimumWidth(80)
+        self.stop_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.stop_button.setVisible(False)  # 初始隐藏
+        
+        # 设置停止按钮样式
+        self.stop_button.setStyleSheet("""
+            QPushButton {
+                color: #d32f2f;
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
+                min-width: 80px;
+                border: 1px solid #d32f2f;
+            }
+            QPushButton:hover:enabled {
+                background-color: #ffebee;
+            }
+            QPushButton:pressed {
+                background-color: #d32f2f;
+                color: white;
+            }
+        """)
+        action_layout.addWidget(self.stop_button)
         
         # 创建发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
@@ -1326,9 +1354,9 @@ class AskDialog(QDialog):
             self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
             return
         
-        # 禁用发送按钮并显示加载状态
-        self.send_button.setEnabled(False)
-        self.send_button.setText(self.i18n.get('sending', 'Sending...'))
+        # 禁用发送按钮并显示加载状态，显示停止按钮
+        self.send_button.setVisible(False)
+        self.stop_button.setVisible(True)
         
         # 开始异步请求
         logger.info("开始异步请求...")
@@ -1338,6 +1366,25 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
             self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
+            # 恢复按钮状态
+            self.send_button.setVisible(True)
+            self.stop_button.setVisible(False)
+    
+    def stop_request(self):
+        """停止当前请求"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("用户请求停止当前请求")
+        
+        # 调用响应处理器的取消方法
+        if hasattr(self, 'response_handler'):
+            self.response_handler.cancel_request()
+        
+        # 恢复按钮状态
+        self.send_button.setVisible(True)
+        self.stop_button.setVisible(False)
+        
+        logger.info("请求已停止，按钮状态已恢复")
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""

@@ -39,27 +39,36 @@ class MarkdownWorker(QThread):
         self._is_cancelled = False
     
     def _process_think_tags(self, text):
-        """处理推理模型的 think 标签，将其转换为特殊样式的 HTML"""
+        """处理推理模型的 think 标签，将其转换为特殊样式的 HTML
+        
+        使用占位符策略避免 markdown2 转义 HTML 标签
+        """
         import re
+        import html
+        
+        # 存储 think 内容的列表
+        think_blocks = []
         
         # 查找所有 <think>...</think> 标签
-        def replace_think(match):
+        def extract_think(match):
             think_content = match.group(1)
-            # 将 think 内容包装在一个带特殊样式的 div 中
-            # 使用 [思考] 替代 emoji，避免 Linux 系统渲染问题
-            return f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+            # 转义 HTML 特殊字符
+            escaped_content = html.escape(think_content)
+            think_blocks.append(escaped_content)
+            # 返回占位符（使用 HTML 注释格式）
+            return f'<!--THINK_BLOCK_{len(think_blocks)-1}-->'
         
-        # 替换所有 <think>...</think> 标签
-        processed_text = re.sub(r'<think>(.*?)</think>', replace_think, text, flags=re.DOTALL)
+        # 替换所有 <think>...</think> 标签为占位符
+        processed_text = re.sub(r'<think>(.*?)</think>', extract_think, text, flags=re.DOTALL)
         
-        return processed_text
+        return processed_text, think_blocks
 
     def run(self):
         if self._is_cancelled:
             return
         try:
-            # 处理推理模型的 think 标签
-            text_to_convert = self._process_think_tags(self.text)
+            # 处理推理模型的 think 标签，获取占位符文本和 think 块列表
+            text_to_convert, think_blocks = self._process_think_tags(self.text)
             
             # 使用markdown2转换markdown为HTML
             html = markdown2.markdown(
@@ -74,6 +83,11 @@ class MarkdownWorker(QThread):
                     'markdown-in-html'
                 ]
             )
+            
+            # 将占位符替换回 think 块的 HTML
+            for i, think_content in enumerate(think_blocks):
+                think_html = f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+                html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
             
             if self._is_cancelled:
                 return
@@ -146,35 +160,54 @@ class ResponseHandler(QObject):
         self.current_metadata = None  # 存储当前书籍的元数据
     
     def _process_think_tags_for_stream(self, text):
-        """处理流式响应中的 think 标签"""
+        """处理流式响应中的 think 标签
+        
+        使用占位符策略：
+        1. 先将 <think> 标签替换为占位符
+        2. Markdown 转换
+        3. 将占位符替换回 HTML
+        """
         import re
+        import html
+        
+        # 存储 think 内容的列表
+        think_blocks = []
         
         # 查找所有完整的 <think>...</think> 标签
-        def replace_think(match):
+        def extract_think(match):
             think_content = match.group(1)
-            # 将 think 内容包装在一个带特殊样式的 div 中
-            # 使用 [思考] 替代 emoji，避免 Linux 系统渲染问题
-            return f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+            # 不转义内容，保留原始 Markdown 格式
+            think_blocks.append(think_content)
+            # 返回占位符（使用 HTML 注释格式，markdown2 不会处理）
+            return f'<!--THINK_BLOCK_{len(think_blocks)-1}-->'
         
-        # 替换所有完整的 <think>...</think> 标签
-        processed_text = re.sub(r'<think>(.*?)</think>', replace_think, text, flags=re.DOTALL)
+        # 替换所有完整的 <think>...</think> 标签为占位符
+        processed_text = re.sub(r'<think>(.*?)</think>', extract_think, text, flags=re.DOTALL)
+        
+        # 只在有新的 think 块时记录日志
+        if think_blocks and not hasattr(self, '_last_think_count'):
+            self._last_think_count = 0
+        
+        if think_blocks and len(think_blocks) != self._last_think_count:
+            logger.info(f"[Process Think Tags] 提取 {len(think_blocks)} 个 think 块，总长度: {sum(len(b) for b in think_blocks)} 字符")
+            self._last_think_count = len(think_blocks)
         
         # 处理未完成的 <think> 标签（流式传输中可能出现）
-        # 如果有未闭合的 <think>，暂时显示为"正在思考..."
         if '<think>' in processed_text and '</think>' not in processed_text[processed_text.rfind('<think>'):]:
             # 找到最后一个未闭合的 <think>
             last_think_pos = processed_text.rfind('<think>')
             before_think = processed_text[:last_think_pos]
             think_content = processed_text[last_think_pos + 7:]  # 7 = len('<think>')
             
-            # 显示"正在思考..."和已有的思考内容
-            processed_text = before_think + f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[正在思考...]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+            # 保存未完成的 think 内容（不转义，保留 Markdown 格式）
+            think_blocks.append(think_content)
+            processed_text = before_think + f'<!--THINK_BLOCK_INCOMPLETE_{len(think_blocks)-1}-->'
         
-        return processed_text
+        # 返回处理后的文本和 think 块列表
+        return processed_text, think_blocks
 
-    def setup(self, response_area, send_button, i18n, api, input_area=None):
-        """
-        设置处理器需要的UI组件和国际化文本
+    def setup(self, response_area, send_button, i18n, api, input_area=None, stop_button=None):
+        """设置处理器需要的UI组件和国际化文本
         
         Args:
             response_area: 显示响应的文本区域
@@ -182,9 +215,11 @@ class ResponseHandler(QObject):
             i18n: 国际化对象
             api: API 客户端
             input_area: 输入问题的文本区域
+            stop_button: 停止按钮
         """
         self.response_area = response_area
         self.send_button = send_button
+        self.stop_button = stop_button
         self.i18n = i18n
         self.api = api
         self.input_area = input_area  # 保存输入区域的引用
@@ -195,6 +230,28 @@ class ResponseHandler(QObject):
         # 更新按钮文本
         if self.send_button.isEnabled():
             self.send_button.setText(self.i18n.get('send', 'Send'))
+    
+    def cancel_request(self):
+        """取消当前请求"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("[Cancel Request] 用户请求取消当前请求")
+        
+        # 设置取消标志
+        self._request_cancelled = True
+        
+        # 停止加载动画
+        self._stop_loading_timer()
+        
+        # 如果有正在运行的请求线程，等待它结束
+        if hasattr(self, '_request_thread') and self._request_thread and self._request_thread.is_alive():
+            logger.info("[Cancel Request] 等待请求线程结束...")
+            # 不要调用 join()，让线程自然结束
+        
+        # 清理资源
+        self._cleanup_request()
+        
+        logger.info("[Cancel Request] 请求已取消")
 
     def start_request(self, prompt):
         """开始一个新的请求，使用非流式 API"""
@@ -279,9 +336,18 @@ class ResponseHandler(QObject):
                     # 使用流式请求
                     logger.info(f"[流式请求] 开始使用流式请求处理 {self.api.model_name} 模型")
                     
+                    # 初始化流式日志计数器
+                    if not hasattr(self, '_stream_log_counter'):
+                        self._stream_log_counter = 0
+                        self._stream_log_total_chars = 0
+                    
                     def stream_callback(chunk):
                         if not self._request_cancelled:
-                            logger.info(f"[流式回调] 收到流式片段, 长度: {len(chunk)} 字符")
+                            # 只在每1000个字符时记录一次日志
+                            self._stream_log_total_chars += len(chunk)
+                            self._stream_log_counter += 1
+                            if self._stream_log_total_chars % 1000 < len(chunk):
+                                logger.info(f"[流式回调] 已接收 {self._stream_log_counter} 个片段，累计 {self._stream_log_total_chars} 字符")
                             self._current_signals.stream_update.emit(chunk)
                     
                     # 调用API时传入回调函数
@@ -335,23 +401,21 @@ class ResponseHandler(QObject):
     # 初始化流式响应相关变量
     def _init_stream_variables(self):
         """初始化流式响应相关变量"""
-        self._stream_response = ""
-        self._stream_buffer = ""
+        self._stream_response = ""  # 累积的完整响应
+        self._stream_buffer = ""    # 待处理的缓冲区
         self._last_update_time = 0
         self._update_interval = 0.1  # 100ms更新间隔
         self._update_timer = QTimer()
         self._update_timer.setSingleShot(True)
         self._update_timer.timeout.connect(self._process_stream_buffer)
+        self._last_processed_length = 0  # 上次处理的响应长度
     
     def _handle_stream_update(self, chunk):
         """处理流式响应更新
         
         :param chunk: 流式响应片段
         """
-        logger.info(f"[Stream Update] 收到流式响应片段: {len(chunk)} 字符")
-        
         if not chunk or self._request_cancelled:
-            logger.warning("[Stream Update] 片段为空或请求已取消，忽略此片段")
             return
         
         # 初始化流式响应变量（如果还没有初始化）
@@ -361,7 +425,16 @@ class ResponseHandler(QObject):
         # 累积响应内容
         self._stream_response += chunk
         self._stream_buffer += chunk
-        logger.info(f"[Stream Update] 当前累积响应长度: {len(self._stream_response)} 字符")
+        
+        # 检测推理标签（用于调试）
+        if '<' in chunk and any(tag in chunk for tag in ['think', 'reasoning', 'ds-think', 'thinking']):
+            logger.warning(f"[Response Handler Debug] 检测到可能的推理标签，chunk内容: {repr(chunk[:200])}")
+        
+        # 只在每1000个字符时记录一次日志
+        if len(self._stream_response) % 1000 < len(chunk):
+            logger.info(f"[Stream Update] 累积响应长度: {len(self._stream_response)} 字符 (~{len(self._stream_response)//4} tokens)")
+            # 输出累积内容的前500字符用于调试
+            logger.debug(f"[Response Handler Debug] 累积内容（前500字符）: {repr(self._stream_response[:500])}")
         
         # 停止加载动画，因为我们已经开始收到响应
         self._stop_loading_timer()
@@ -381,14 +454,28 @@ class ResponseHandler(QObject):
         """处理累积的流式响应缓冲区"""
         if not self._stream_buffer or self._request_cancelled:
             return
+        
+        # 检查是否有新内容需要处理
+        current_length = len(self._stream_response)
+        if not hasattr(self, '_last_processed_length'):
+            self._last_processed_length = 0
+        
+        if current_length == self._last_processed_length:
+            # 没有新内容，跳过处理
+            self._stream_buffer = ""
+            return
             
-        logger.info(f"[Stream Process] 处理缓冲区内容, 长度: {len(self._stream_buffer)} 字符")
+        # 只在缓冲区较大时记录日志
+        if len(self._stream_buffer) > 100:
+            logger.debug(f"[Stream Process] 处理缓冲区: {len(self._stream_buffer)} 字符，新增: {current_length - self._last_processed_length} 字符")
+        
         self._stream_buffer = ""  # 清空缓冲区
         self._last_update_time = time.time()
+        self._last_processed_length = current_length  # 更新已处理长度
         
         try:
-            # 处理推理模型的 think 标签
-            text_to_convert = self._process_think_tags_for_stream(self._stream_response)
+            # 处理推理模型的 think 标签，获取占位符文本和 think 块列表
+            text_to_convert, think_blocks = self._process_think_tags_for_stream(self._stream_response)
             
             # 使用markdown2转换完整的累积响应为HTML
             html = markdown2.markdown(
@@ -403,6 +490,44 @@ class ResponseHandler(QObject):
                     'markdown-in-html'
                 ]
             )
+            
+            # 将占位符替换回 think 块的 HTML
+            import re
+            for i, think_content in enumerate(think_blocks):
+                # 将推理内容转换为 Markdown HTML
+                think_html_content = markdown2.markdown(
+                    think_content,
+                    extras=[
+                        'fenced-code-blocks',
+                        'tables',
+                        'break-on-newline',
+                        'header-ids',
+                        'strike',
+                        'task_list',
+                        'markdown-in-html'
+                    ]
+                )
+                
+                # 完整的 think 块 - 添加结束标识
+                think_html = f'''<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
+                    <div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px; display: flex; align-items: center;">
+                        <span>[推理过程]</span>
+                    </div>
+                    <div style="line-height: 1.6;">{think_html_content}</div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #d0e8ff; font-size: 0.85em; color: #888; text-align: right;">
+                        [推理完成]
+                    </div>
+                </div>'''
+                html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
+                
+                # 未完成的 think 块
+                incomplete_html = f'''<div class="reasoning-process" style="background-color: #fff9e6; border-left: 4px solid #ffa500; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
+                    <div style="font-weight: bold; color: #ffa500; margin-bottom: 8px; display: flex; align-items: center;">
+                        <span>[正在思考...]</span>
+                    </div>
+                    <div style="line-height: 1.6;">{think_html_content}</div>
+                </div>'''
+                html = html.replace(f'<!--THINK_BLOCK_INCOMPLETE_{i}-->', incomplete_html)
             
             # 清理HTML，允许表格相关标签
             allowed_tags = [
@@ -483,6 +608,12 @@ class ResponseHandler(QObject):
             self._markdown_worker.cancel()
             self._markdown_worker.deleteLater()
             self._markdown_worker = None
+        
+        # 重置流式响应相关变量
+        self._last_processed_length = 0
+        self._last_think_count = 0
+        self._stream_response = ""
+        self._stream_buffer = ""
             
         self.send_button.setEnabled(True)
 
@@ -677,7 +808,14 @@ class ResponseHandler(QObject):
 
     def _set_html_response(self, html):
         """设置HTML响应并确保正确的样式"""
-        logger.info(f"[Set HTML] 更新UI显示, HTML长度: {len(html)} 字符")
+        # 只在HTML长度较大时记录日志（每1000字符记录一次）
+        if not hasattr(self, '_last_html_log_size'):
+            self._last_html_log_size = 0
+        
+        if len(html) - self._last_html_log_size >= 1000:
+            logger.debug(f"[Set HTML] 更新UI显示, HTML长度: {len(html)} 字符")
+            self._last_html_log_size = len(html)
+        
         try:
             # 设置HTML内容
             self.response_area.setHtml(html)
@@ -690,7 +828,6 @@ class ResponseHandler(QObject):
             
             # 强制更新UI
             QApplication.processEvents()
-            logger.info("[Set HTML] UI更新成功，已滚动到最新内容")
         except Exception as e:
             logger.error(f"[Set HTML] 更新UI时出错: {str(e)}")
 
@@ -759,27 +896,7 @@ class ResponseHandler(QObject):
 
     def _restore_button_state(self):
         """恢复按钮状态，确保在主线程中执行"""
-        self.send_button.setEnabled(True)
-        if hasattr(self, 'i18n') and self.i18n is not None:
-            self.send_button.setText(self.i18n.get('send_button', 'Send'))
-        else:
-            self.send_button.setText('Send')
-        self.send_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
-            }
-            QPushButton:disabled {
-                color: #ccc;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(midlight);
-                color: white;
-            }   
-        """)
+        # 显示发送按钮，隐藏停止按钮
+        self.send_button.setVisible(True)
+        if hasattr(self, 'stop_button') and self.stop_button is not None:
+            self.stop_button.setVisible(False)

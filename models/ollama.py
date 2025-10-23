@@ -272,13 +272,13 @@ class OllamaModel(BaseAIModel):
             
             # 如果响应格式不符合预期
             translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models from API')
+            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models: {error}').format(error='Invalid response format')
             logger.error(f"{error_msg}, response: {json.dumps(result, ensure_ascii=False)[:200]}...")
             raise Exception(error_msg)
             
         except requests.exceptions.RequestException as e:
             translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models from API')
+            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models: {error}').format(error=str(e))
             logger.error(f"Ollama fetch models error: {str(e)}")
             if hasattr(e, 'response') and e.response is not None:
                 try:

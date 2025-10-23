@@ -47,6 +47,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ok_button': '确定',
             'save_button': '保存',
             'send_button': '发送',
+            'stop_button': '停止',
             'suggest_button': '随机问题',
             'copy_response': '复制回答',
             'copy_question_response': '复制问答',

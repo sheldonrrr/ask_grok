@@ -489,7 +489,7 @@ class ModelConfigWidget(QWidget):
                 QMessageBox.information(
                     self,
                     self.i18n.get('success', 'Success'),
-                    self.i18n.get('models_loaded', f'Successfully loaded {len(models)} models')
+                    self.i18n.get('models_loaded', 'Successfully loaded {count} models').format(count=len(models))
                 )
             else:
                 # 失败：显示错误
@@ -499,7 +499,7 @@ class ModelConfigWidget(QWidget):
                 QMessageBox.critical(
                     self,
                     self.i18n.get('error', 'Error'),
-                    self.i18n.get('load_models_failed', f'Failed to load models: {error_msg}')
+                    self.i18n.get('load_models_failed', 'Failed to load models: {error}').format(error=error_msg)
                 )
         
         # 使用 QTimer 延迟执行，避免阻塞
@@ -710,7 +710,11 @@ class ModelConfigWidget(QWidget):
         if model_config:
             # 更新 UI 元素，保留 API Key
             self.api_base_edit.setText(model_config.default_api_base_url)
-            self.model_edit.setText(model_config.default_model_name)
+            
+            # 重置模型名称：清空下拉框，使用自定义输入框填入默认值
+            self.model_combo.clear()
+            self.use_custom_model_checkbox.setChecked(True)
+            self.custom_model_input.setText(model_config.default_model_name)
             
             # 如果存在流式传输选项，则设置为默认值（通常为True）
             if hasattr(self, 'enable_streaming_checkbox'):
@@ -1006,25 +1010,29 @@ class ConfigDialog(QWidget):
         
         # 获取模型配置的优先级：
         # 1. 当前会话中用户修改过的配置（存储在current_configs中）
-        # 2. 当前会话的初始值（存储在self.initial_values中）
-        # 3. 已保存的配置（存储在prefs中）
-        model_config = {}
+        # 2. 已保存的配置（存储在prefs中）
+        # 3. 当前会话的初始值（存储在self.initial_values中）
+        model_config = None
         
         # 1. 首先检查当前会话中用户修改过的配置
         if model_id in current_configs:
             model_config = current_configs[model_id]
-            pass  # 使用当前会话配置
-        # 2. 如果没有，检查初始值
+            logger.debug(f"使用当前会话配置: {model_id}")
+        # 2. 如果没有，从已保存的配置中获取
+        elif get_prefs().get('models', {}).get(model_id):
+            model_config = get_prefs().get('models', {}).get(model_id, {})
+            logger.debug(f"使用已保存配置: {model_id}")
+        # 3. 如果还是没有，检查初始值
         elif hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
             model_config = self.initial_values['models'].get(model_id, {})
-            pass  # 使用初始值配置
-        # 3. 如果还是没有，从已保存的配置中获取
-        if not model_config:
-            prefs = get_prefs()
-            model_config = prefs.get('models', {}).get(model_id, {})
-            pass  # 使用已保存配置
+            logger.debug(f"使用初始值配置: {model_id}")
+        # 4. 如果都没有，使用空字典
+        else:
+            model_config = {}
+            logger.debug(f"使用空配置: {model_id}")
         
         # 创建模型配置控件
+        logger.debug(f"创建 {model_id} 配置控件，配置内容: api_base_url={model_config.get('api_base_url', 'N/A')}, model={model_config.get('model', 'N/A')}")
         widget = ModelConfigWidget(model_id, model_config, self.i18n)
         widget.config_changed.connect(self.on_config_changed)
         # 不设置最小高度，让控件根据内容自动调整大小
