@@ -209,4 +209,19 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'request_timeout_label': '请求超时时间：',
             'seconds': '秒',
             'request_timeout_error': '请求超时，当前超时时间为：{timeout} 秒',
+            
+            # PDF导出章节标题
+            'pdf_book_metadata': '书籍元数据',
+            'pdf_question': '问题',
+            'pdf_answer': '回答',
+            'pdf_ai_model_info': 'AI模型信息',
+            'pdf_generated_by': '生成信息',
+            'pdf_provider': '提供商',
+            'pdf_model': '模型',
+            'pdf_api_base_url': 'API基础URL',
+            'pdf_plugin': '插件',
+            'pdf_github': 'GitHub',
+            'pdf_software': '软件',
+            'pdf_generated_time': '生成时间',
+            'pdf_info_not_available': '信息不可用',
         }

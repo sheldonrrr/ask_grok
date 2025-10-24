@@ -207,4 +207,19 @@ class TraditionalChineseTranslation(BaseTranslation):
             'request_timeout_label': '請求超時時間：',
             'seconds': '秒',
             'request_timeout_error': '請求超時，當前超時時間為：{timeout} 秒',
+            
+            # PDF導出章節標題
+            'pdf_book_metadata': '書籍元數據',
+            'pdf_question': '問題',
+            'pdf_answer': '回答',
+            'pdf_ai_model_info': 'AI模型資訊',
+            'pdf_generated_by': '生成資訊',
+            'pdf_provider': '提供商',
+            'pdf_model': '模型',
+            'pdf_api_base_url': 'API基礎URL',
+            'pdf_plugin': '外掛',
+            'pdf_github': 'GitHub',
+            'pdf_software': '軟體',
+            'pdf_generated_time': '生成時間',
+            'pdf_info_not_available': '資訊不可用',
         }

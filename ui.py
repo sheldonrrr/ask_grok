@@ -1561,21 +1561,25 @@ class AskDialog(QDialog):
             printer.setOutputFileName(file_path)
             
             # 构建书籍元数据信息
+            separator = "=" * 40  # 缩短分隔线从60到40字符
             metadata_lines = []
             if hasattr(self, 'book_metadata') and self.book_metadata:
-                metadata_lines.append("=" * 60)
-                metadata_lines.append("BOOK METADATA")
-                metadata_lines.append("=" * 60)
+                metadata_lines.append(separator)
+                metadata_lines.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                metadata_lines.append(separator)
                 
                 if self.book_metadata.get('title'):
-                    metadata_lines.append(f"Title: {self.book_metadata['title']}")
+                    title_label = self.i18n.get('metadata_title', 'Title')
+                    metadata_lines.append(f"{title_label}: {self.book_metadata['title']}")
                 
                 if self.book_metadata.get('authors'):
                     authors = ', '.join(self.book_metadata['authors']) if isinstance(self.book_metadata['authors'], list) else str(self.book_metadata['authors'])
-                    metadata_lines.append(f"Authors: {authors}")
+                    authors_label = self.i18n.get('metadata_authors', 'Authors')
+                    metadata_lines.append(f"{authors_label}: {authors}")
                 
                 if self.book_metadata.get('publisher'):
-                    metadata_lines.append(f"Publisher: {self.book_metadata['publisher']}")
+                    publisher_label = self.i18n.get('metadata_publisher', 'Publisher')
+                    metadata_lines.append(f"{publisher_label}: {self.book_metadata['publisher']}")
                 
                 if self.book_metadata.get('pubdate'):
                     pubdate = str(self.book_metadata['pubdate'])
@@ -1584,11 +1588,13 @@ class AskDialog(QDialog):
                         pubdate = pubdate.split('T')[0]  # 去掉时间部分
                     if len(pubdate) > 7:
                         pubdate = pubdate[:7]  # 只保留 YYYY-MM
-                    metadata_lines.append(f"Publication Date: {pubdate}")
+                    pubdate_label = self.i18n.get('metadata_pubyear', 'Publication Date')
+                    metadata_lines.append(f"{pubdate_label}: {pubdate}")
                 
                 if self.book_metadata.get('languages'):
                     languages = ', '.join(self.book_metadata['languages']) if isinstance(self.book_metadata['languages'], list) else str(self.book_metadata['languages'])
-                    metadata_lines.append(f"Languages: {languages}")
+                    languages_label = self.i18n.get('metadata_language', 'Languages')
+                    metadata_lines.append(f"{languages_label}: {languages}")
                 
                 metadata_lines.append("")
             
@@ -1599,37 +1605,31 @@ class AskDialog(QDialog):
                     logger.debug(f"API对象存在: {self.api}")
                     
                     model_info_lines.append("")
-                    model_info_lines.append("=" * 60)
-                    model_info_lines.append("AI MODEL INFORMATION")
-                    model_info_lines.append("=" * 60)
+                    model_info_lines.append(separator)
+                    model_info_lines.append(self.i18n.get('pdf_ai_model_info', 'AI MODEL INFORMATION'))
+                    model_info_lines.append(separator)
                     
-                    # 尝试获取当前模型信息
-                    if hasattr(self.api, 'current_model') and self.api.current_model:
-                        model = self.api.current_model
-                        logger.debug(f"当前模型对象: {model}")
-                        
-                        if hasattr(model, 'config') and model.config:
-                            config = model.config
-                            logger.debug(f"模型配置: {config}")
-                            
-                            provider = config.get('display_name', 'Unknown')
-                            model_name = config.get('model', 'Unknown')
-                            api_url = config.get('api_base_url', '')
-                            
-                            model_info_lines.append(f"Provider: {provider}")
-                            model_info_lines.append(f"Model: {model_name}")
-                            if api_url:
-                                model_info_lines.append(f"API Base URL: {api_url}")
-                        else:
-                            logger.warning("模型对象没有config属性")
-                            model_info_lines.append("Provider: Information not available")
-                    else:
-                        logger.warning("API对象没有current_model属性")
-                        model_info_lines.append("Provider: Information not available")
+                    # 使用新的provider_name属性获取提供商名称
+                    provider = self.api.provider_name
+                    model_name = self.api.model
+                    api_url = self.api.api_base
+                    
+                    provider_label = self.i18n.get('pdf_provider', 'Provider')
+                    model_label = self.i18n.get('pdf_model', 'Model')
+                    api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
+                    
+                    model_info_lines.append(f"{provider_label}: {provider}")
+                    model_info_lines.append(f"{model_label}: {model_name}")
+                    if api_url:
+                        model_info_lines.append(f"{api_url_label}: {api_url}")
                 else:
                     logger.warning("没有API对象")
+                    info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                    model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
             except Exception as e:
                 logger.error(f"获取模型信息失败: {str(e)}", exc_info=True)
+                info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
             
             # 组合所有内容
             content_parts = []
@@ -1639,16 +1639,16 @@ class AskDialog(QDialog):
                 content_parts.append('\n'.join(metadata_lines))
             
             # 2. 问题
-            content_parts.append("=" * 60)
-            content_parts.append("QUESTION")
-            content_parts.append("=" * 60)
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
+            content_parts.append(separator)
             content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
             content_parts.append("")
             
             # 3. 回答
-            content_parts.append("=" * 60)
-            content_parts.append("ANSWER")
-            content_parts.append("=" * 60)
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_answer', 'ANSWER'))
+            content_parts.append(separator)
             content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
             
             # 4. AI模型信息（最后）
@@ -1657,14 +1657,18 @@ class AskDialog(QDialog):
             
             # 5. 生成信息
             content_parts.append("")
-            content_parts.append("=" * 60)
-            content_parts.append("GENERATED BY")
-            content_parts.append("=" * 60)
-            content_parts.append(f"Plugin: Ask AI Plugin (Calibre Plugin)")
-            content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
-            content_parts.append(f"Software: Calibre E-book Manager (https://calibre-ebook.com)")
-            content_parts.append(f"Generated Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            content_parts.append("=" * 60)
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
+            content_parts.append(separator)
+            plugin_label = self.i18n.get('pdf_plugin', 'Plugin')
+            github_label = self.i18n.get('pdf_github', 'GitHub')
+            software_label = self.i18n.get('pdf_software', 'Software')
+            time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
+            content_parts.append(f"{plugin_label}: Ask AI Plugin (Calibre Plugin)")
+            content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"{software_label}: Calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(separator)
             
             content = '\n'.join(content_parts)
             

@@ -131,8 +131,8 @@ prefs.defaults['models'] = {
 }
 prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['language'] = 'en'
-prefs.defaults['ask_dialog_width'] = 600
-prefs.defaults['ask_dialog_height'] = 400
+prefs.defaults['ask_dialog_width'] = 800
+prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = {}
 prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 

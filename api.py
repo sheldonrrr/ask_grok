@@ -497,6 +497,32 @@ class APIClient:
         # 如果没有配置，使用默认值
         return DEFAULT_MODELS[provider].default_model_name
     
+    @property
+    def current_model(self):
+        """获取当前AI模型实例"""
+        if not self._ai_model:
+            self._load_current_model()
+        return self._ai_model
+    
+    @property
+    def provider_name(self):
+        """获取当前模型的提供商名称"""
+        if not self._model_name:
+            self._load_current_model()
+        
+        if not self._model_name:
+            return 'Unknown'
+        
+        # 获取对应的AIProvider枚举值
+        provider = self._get_provider_from_model_name(self._model_name)
+        
+        # 从默认模型配置中获取显示名称
+        model_config = DEFAULT_MODELS.get(provider)
+        if model_config:
+            return model_config.display_name
+        
+        return self._model_name.capitalize()
+    
     def fetch_available_models(self, model_name: str, config: Dict[str, Any]) -> Tuple[bool, Union[List[str], str]]:
         """
         从 AI 提供商获取可用模型列表
