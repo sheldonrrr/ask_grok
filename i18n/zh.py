@@ -122,6 +122,15 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'no_series': '无系列',
             'unknown': '未知',
             
+            # 多书功能
+            'books_unit': '本书',
+            'new_conversation': '新对话',
+            'single_book': '单书',
+            'multi_book': '多书',
+            'deleted': '已删除',
+            'history': '历史记录',
+            'multi_book_template_label': '多书提示词模板:',
+            
             # 错误信息
             'error': '错误: ',
             'network_error': '连接错误',

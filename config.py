@@ -130,6 +130,13 @@ prefs.defaults['models'] = {
     }
 }
 prefs.defaults['template'] = get_default_template('en')
+prefs.defaults['multi_book_template'] = """以下是关于多本书籍的信息：
+
+{books_metadata}
+
+用户问题：{query}
+
+请基于以上书籍信息回答问题。"""
 prefs.defaults['language'] = 'en'
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600

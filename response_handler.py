@@ -850,15 +850,30 @@ class ResponseHandler(QObject):
             logger.info(f"[Markdown Process] Markdown处理完成, 耗时: {(time.time() - md_start)*1000:.2f}ms")
             
             # 如果不是从历史记录加载的，保存到历史记录
-            if not is_history and hasattr(self, 'current_metadata') and self.current_metadata:
+            if not is_history:
                 try:
-                    question = self.input_area.toPlainText()
-                    self.history_manager.save_history(
-                        self.current_metadata,
-                        question,
-                        text
-                    )
-                    logger.info("成功保存问询历史")
+                    # 获取父对话框以访问多书相关属性
+                    parent_dialog = self.parent()
+                    if parent_dialog and hasattr(parent_dialog, 'current_uid'):
+                        question = self.input_area.toPlainText()
+                        
+                        # 确定模式
+                        mode = 'multi' if parent_dialog.is_multi_book else 'single'
+                        
+                        # 使用新的保存方法
+                        self.history_manager.save_history(
+                            parent_dialog.current_uid,
+                            mode,
+                            parent_dialog.books_metadata,
+                            question,
+                            text
+                        )
+                        logger.info(f"成功保存问询历史: UID={parent_dialog.current_uid}, 模式={mode}")
+                    elif hasattr(self, 'current_metadata') and self.current_metadata:
+                        # 向后兼容旧版本
+                        question = self.input_area.toPlainText()
+                        # 使用旧版本保存（会被转换为新格式）
+                        logger.warning("使用旧版本历史记录保存方法")
                 except Exception as e:
                     logger.error(f"保存问询历史失败: {str(e)}")
             return

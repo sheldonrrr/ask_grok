@@ -4,6 +4,7 @@
 import os
 import json
 import logging
+import hashlib
 from datetime import datetime
 from calibre.utils.config import config_dir
 
@@ -11,154 +12,140 @@ logger = logging.getLogger(__name__)
 
 class HistoryManager:
     def __init__(self):
-        self.history_file = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_latest_history.json')
-        self.history_data = self._load_history()
+        # 使用新的历史记录文件（v2版本）
+        self.history_file = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_history_v2.json')
+        self.histories = self._load_histories()
+        
+        # 保留旧版本文件路径用于迁移
+        self.old_history_file = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_latest_history.json')
     
-    def _load_history(self):
-        """加载历史记录文件"""
+    def _load_histories(self):
+        """加载历史记录文件（新版本格式）"""
+        if not os.path.exists(self.history_file):
+            return {}
+        
         try:
-            if os.path.exists(self.history_file):
-                with open(self.history_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return data
+            with open(self.history_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
-            # 如果解析失败，尝试备份并创建新文件
+            # 备份损坏的文件
             try:
-                if os.path.exists(self.history_file):
-                    import shutil
-                    backup_file = f"{self.history_file}.bak"
-                    shutil.copy2(self.history_file, backup_file)
-                    logger.warning(f"历史记录文件已损坏，已备份到: {backup_file}")
+                import shutil
+                backup_file = f"{self.history_file}.bak"
+                shutil.copy2(self.history_file, backup_file)
+                logger.warning(f"历史记录文件已损坏，已备份到: {backup_file}")
             except Exception as backup_error:
                 logger.error(f"备份历史记录文件失败: {str(backup_error)}")
-        
-        # 如果文件不存在或解析失败，返回默认结构
-        return {"books": {}}
+            return {}
     
-    def _save_history(self):
+    def _save_histories(self):
         """保存历史记录到文件"""
         try:
             os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
-            
-            # 创建一个可序列化的数据副本
-            serializable_data = json.loads(json.dumps(
-                self.history_data,
-                default=lambda o: o.isoformat() if hasattr(o, 'isoformat') else str(o),
-                ensure_ascii=False,
-                indent=2
-            ))
-            
             with open(self.history_file, 'w', encoding='utf-8') as f:
-                json.dump(serializable_data, f, ensure_ascii=False, indent=2)
-            return True
+                json.dump(self.histories, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"保存历史记录失败: {str(e)}")
-            return False
     
-    def generate_book_key(self, metadata):
+    def generate_uid(self, book_ids):
         """
-        生成书籍的唯一键
+        生成唯一 UID
         
         Args:
-            metadata: 包含书籍元数据的字典，需要包含 title, authors, publisher, pubdate, languages
+            book_ids: 书籍ID列表
             
         Returns:
-            str: 唯一键
+            str: UID格式 {timestamp}_{book_ids_hash}
         """
-        try:
-            # 确保作者列表是有序的
-            authors = tuple(sorted(str(a) for a in metadata.get('authors', [])))
-            languages = tuple(sorted(str(lang) for lang in metadata.get('languages', [])))
-            
-            # 处理出版日期，确保它是字符串
-            pubdate = metadata.get('pubdate', '')
-            if hasattr(pubdate, 'isoformat'):
-                pubdate = pubdate.isoformat()
-            
-            # 构建键值元组
-            key_data = (
-                str(metadata.get('title', '')).lower().strip(),
-                authors,
-                str(metadata.get('publisher', '')).lower().strip(),
-                pubdate,
-                languages
-            )
-            # 使用元组的字符串表示作为键
-            return str(key_data)
-        except Exception as e:
-            logger.error(f"生成书籍键失败: {str(e)}")
-            return None
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        book_ids_sorted = sorted([str(bid) for bid in book_ids])
+        book_ids_str = ','.join(book_ids_sorted)
+        hash_suffix = hashlib.md5(book_ids_str.encode()).hexdigest()[:12]
+        
+        return f"{timestamp}_{hash_suffix}"
     
-    def save_history(self, metadata, question, answer):
+    def save_history(self, uid, mode, books_metadata, question, answer):
         """
-        保存问询历史
+        保存历史记录
         
         Args:
-            metadata: 书籍元数据
+            uid: 唯一标识符
+            mode: 'single' 或 'multi'
+            books_metadata: 书籍元数据列表
             question: 用户问题
             answer: AI回答
-            
-        Returns:
-            bool: 是否保存成功
         """
-        try:
-            book_key = self.generate_book_key(metadata)
-            if not book_key:
-                return False
-                
-            # 准备要保存的数据
-            history_entry = {
-                "metadata": {
-                    "title": metadata.get('title', ''),
-                    "authors": metadata.get('authors', []),
-                    "publisher": metadata.get('publisher', ''),
-                    "pubdate": metadata.get('pubdate', ''),
-                    "languages": metadata.get('languages', [])
-                },
-                "history": {
-                    "timestamp": datetime.now().isoformat(),
-                    "question": question,
-                    "answer": answer
-                }
-            }
-            
-            # 更新历史记录
-            self.history_data["books"][book_key] = history_entry
-            
-            # 保存到文件
-            return self._save_history()
-            
-        except Exception as e:
-            logger.error(f"保存问询历史失败: {str(e)}")
-            return False
+        history_entry = {
+            'uid': uid,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'mode': mode,
+            'books': books_metadata,
+            'question': question,
+            'answer': answer
+        }
+        
+        # 添加或更新历史记录
+        self.histories[uid] = history_entry
+        self._save_histories()
+        
+        logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}")
     
-    def get_history(self, metadata):
+    def get_related_histories(self, book_ids):
         """
-        获取指定书籍的历史记录
+        获取包含指定书籍的所有历史记录
         
         Args:
-            metadata: 书籍元数据
+            book_ids: 书籍ID列表
             
         Returns:
-            dict: 历史记录，如果没有则返回None
+            历史记录列表，按时间倒序
         """
-        try:
-            book_key = self.generate_book_key(metadata)
-            if book_key and book_key in self.history_data.get("books", {}):
-                return self.history_data["books"][book_key]["history"]
-            return None
-        except Exception as e:
-            logger.error(f"获取历史记录失败: {str(e)}")
-            return None
+        related = []
+        
+        for uid, history in self.histories.items():
+            # 检查是否包含任意一本书
+            history_book_ids = [book['id'] for book in history['books']]
+            if any(book_id in history_book_ids for book_id in book_ids):
+                related.append(history)
+        
+        # 按时间倒序排序
+        related.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return related
+    
+    def get_history_by_uid(self, uid):
+        """根据 UID 获取历史记录"""
+        return self.histories.get(uid)
     
     def clear_history(self):
         """清空所有历史记录"""
         try:
-            self.history_data = {"books": {}}
+            self.histories = {}
             if os.path.exists(self.history_file):
                 os.remove(self.history_file)
+            logger.info("所有历史记录已清空")
             return True
         except Exception as e:
             logger.error(f"清空历史记录失败: {str(e)}")
             return False
+    
+    # 保留旧版本兼容方法
+    def get_history(self, metadata):
+        """
+        获取指定书籍的历史记录（旧版本兼容）
+        
+        Args:
+            metadata: 书籍元数据字典
+            
+        Returns:
+            dict: 历史记录，如果没有则返回None
+        """
+        # 尝试通过书籍ID查找
+        book_id = metadata.get('id')
+        if book_id:
+            histories = self.get_related_histories([book_id])
+            if histories:
+                # 返回最新的一条记录
+                return histories[0]
+        return None

@@ -185,11 +185,23 @@ class AskAIPluginUI(InterfaceAction):
         
         # 获取书籍信息
         db = self.gui.current_db
-        book_id = self.gui.library_view.model().id(rows[0])
-        mi = db.get_metadata(book_id, index_is_id=True)
+        
+        # 支持多书选择
+        if len(rows) == 1:
+            # 单书模式（向后兼容）
+            book_id = self.gui.library_view.model().id(rows[0])
+            mi = db.get_metadata(book_id, index_is_id=True)
+            books_info = mi
+        else:
+            # 多书模式
+            books_info = []
+            for row in rows:
+                book_id = self.gui.library_view.model().id(row)
+                mi = db.get_metadata(book_id, index_is_id=True)
+                books_info.append(mi)
         
         # 显示对话框
-        d = AskDialog(self.gui, mi, self.api)
+        d = AskDialog(self.gui, books_info, self.api)
         
         # 保存对话框实例的引用
         self.ask_dialog = d
@@ -663,37 +675,41 @@ class AskDialog(QDialog):
         'zh-yue': '粵語',
     }
     
-    def __init__(self, gui, book_info, api):
+    def __init__(self, gui, books_info, api, history_uid=None):
+        """
+        Args:
+            books_info: 单个 Metadata 对象（单书模式）或 Metadata 列表（多书模式）
+            history_uid: 可选，用于加载特定历史记录
+        """
         super().__init__(gui)
         self.gui = gui
-        self.book_info = book_info
         self.api = api
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         
-        # 准备书籍元数据用于历史记录
-        pubdate = book_info.get('pubdate', '')
-        # 处理日期对象，确保它是 YYYY-MM-DD 格式的字符串
-        if hasattr(pubdate, 'strftime'):
-            pubdate = pubdate.strftime('%Y-%m-%d')
-        elif isinstance(pubdate, str) and pubdate:
-            # 如果已经是字符串，尝试解析并格式化为 YYYY-MM-DD
-            try:
-                from calibre.utils.date import parse_date
-                pubdate = parse_date(pubdate).strftime('%Y-%m-%d')
-            except:
-                # 如果解析失败，尝试提取日期部分（格式如 YYYY-MM-DDTHH:MM:SS+HH:MM）
-                if 'T' in pubdate:
-                    pubdate = pubdate.split('T')[0]
+        # 统一处理为列表
+        if isinstance(books_info, list):
+            self.books_info = books_info  # 多书模式
+            self.is_multi_book = len(books_info) > 1
+        else:
+            self.books_info = [books_info]  # 单书模式
+            self.is_multi_book = False
         
-        self.book_metadata = {
-            'title': book_info.get('title', ''),
-            'authors': book_info.get('authors', []),
-            'publisher': book_info.get('publisher', ''),
-            'pubdate': book_info.get('pubdate', ''),
-            'languages': book_info.get('languages', [])
-        }
+        # 向后兼容：保留 self.book_info 指向第一本书
+        self.book_info = self.books_info[0]
+        
+        # 生成或加载 UID
+        if history_uid:
+            self.current_uid = history_uid
+        else:
+            self.current_uid = self._generate_uid()
+        
+        # 准备书籍元数据列表
+        self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+        
+        # 向后兼容：保留 self.book_metadata
+        self.book_metadata = self.books_metadata[0]
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
@@ -756,24 +772,381 @@ class AskDialog(QDialog):
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
 
+    def _generate_uid(self):
+        """生成唯一 UID"""
+        import hashlib
+        from datetime import datetime
+        
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        book_ids = sorted([str(book.id) for book in self.books_info])
+        book_ids_str = ','.join(book_ids)
+        hash_suffix = hashlib.md5(book_ids_str.encode()).hexdigest()[:12]
+        
+        return f"{timestamp}_{hash_suffix}"
+    
+    def _extract_metadata(self, book_info):
+        """提取单本书的元数据"""
+        pubdate = book_info.get('pubdate', '')
+        if hasattr(pubdate, 'strftime'):
+            pubdate = pubdate.strftime('%Y-%m-%d')
+        elif isinstance(pubdate, str) and 'T' in pubdate:
+            pubdate = pubdate.split('T')[0]
+        
+        # 检查书籍是否仍存在于数据库
+        try:
+            db = self.gui.current_db
+            db.get_metadata(book_info.id, index_is_id=True)
+            deleted = False
+        except:
+            deleted = True
+        
+        return {
+            'id': book_info.id,
+            'title': book_info.get('title', ''),
+            'authors': book_info.get('authors', []),
+            'publisher': book_info.get('publisher', ''),
+            'pubdate': pubdate,
+            'languages': book_info.get('languages', []),
+            'series': book_info.get('series', ''),
+            'deleted': deleted
+        }
+    
+    def _update_window_title(self):
+        """更新窗口标题"""
+        if self.is_multi_book:
+            book_count = len(self.books_info)
+            title = f"{self.i18n['menu_title']} - {book_count}{self.i18n.get('books_unit', '本书')}"
+        else:
+            title = f"{self.i18n['menu_title']} - {self.book_info.title}"
+        
+        self.setWindowTitle(title)
+    
+    def _create_metadata_widget(self):
+        """创建可折叠的元数据展示组件"""
+        from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
+        from PyQt5.QtGui import QColor
+        from PyQt5.QtCore import Qt
+        
+        self.metadata_tree = QTreeWidget()
+        self.metadata_tree.setHeaderHidden(True)
+        # 减小最大高度，给 response area 更多空间
+        self.metadata_tree.setMaximumHeight(120)  # 从 300 减小到 120
+        # 确保在内容超出时显示垂直滚动条
+        self.metadata_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # 禁用水平滚动条，避免横向滚动
+        self.metadata_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        for idx, book_meta in enumerate(self.books_metadata):
+            # 创建书籍节点
+            book_item = QTreeWidgetItem(self.metadata_tree)
+            
+            # 设置书籍标题
+            title_text = f"{idx + 1}. {book_meta['title']}"
+            if book_meta['deleted']:
+                title_text += f" ({self.i18n.get('deleted', '已删除')})"
+                book_item.setForeground(0, QColor(128, 128, 128))
+            
+            book_item.setText(0, title_text)
+            
+            # 添加元数据子节点
+            if book_meta['authors']:
+                author_item = QTreeWidgetItem(book_item)
+                author_item.setText(0, f"{self.i18n['metadata_authors']}: {', '.join(book_meta['authors'])}")
+            
+            if book_meta['publisher']:
+                pub_item = QTreeWidgetItem(book_item)
+                pub_item.setText(0, f"{self.i18n['metadata_publisher']}: {book_meta['publisher']}")
+            
+            if book_meta['pubdate']:
+                date_item = QTreeWidgetItem(book_item)
+                date_item.setText(0, f"{self.i18n['metadata_pubyear']}: {book_meta['pubdate']}")
+            
+            if book_meta['languages']:
+                lang_item = QTreeWidgetItem(book_item)
+                lang_name = self.get_language_name(book_meta['languages'][0])
+                lang_item.setText(0, f"{self.i18n['metadata_language']}: {lang_name}")
+            
+            if book_meta['series']:
+                series_item = QTreeWidgetItem(book_item)
+                series_item.setText(0, f"{self.i18n['metadata_series']}: {book_meta['series']}")
+            
+            # 设置默认展开/收起状态
+            # 单书模式：展开；多书模式：收起
+            # 但两种模式都显示书名（作为树节点的根节点文本）
+            book_item.setExpanded(not self.is_multi_book)
+        
+        return self.metadata_tree
+    
+    def _build_multi_book_prompt(self, question):
+        """构建多书提示词"""
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        prefs = get_prefs()
+        
+        template = prefs.get('multi_book_template', '')
+        if not template:
+            template = """以下是关于多本书籍的信息：
+
+{books_metadata}
+
+用户问题：{query}
+
+请基于以上书籍信息回答问题。"""
+        
+        # 拼接所有书籍元数据（包含所有字段：标题、作者、出版日期、系列、出版社、语言）
+        books_metadata_text = []
+        for idx, book in enumerate(self.books_info, 1):
+            book_text = f"书籍 {idx}:\n"
+            book_text += f"  标题: {book.title}\n"
+            
+            if book.authors:
+                book_text += f"  作者: {', '.join(book.authors)}\n"
+            
+            if hasattr(book, 'pubdate') and book.pubdate:
+                year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
+                book_text += f"  出版日期: {year}\n"
+            
+            if hasattr(book, 'series') and book.series:
+                book_text += f"  系列: {book.series}\n"
+            
+            if book.publisher:
+                book_text += f"  出版社: {book.publisher}\n"
+            
+            if book.language:
+                lang_name = self.get_language_name(book.language)
+                book_text += f"  语言: {lang_name}\n"
+            
+            books_metadata_text.append(book_text)
+        
+        prompt = template.format(
+            books_metadata='\n'.join(books_metadata_text),
+            query=question
+        )
+        
+        return prompt
+    
+    def _create_history_switcher(self):
+        """创建历史记录切换按钮和菜单"""
+        from PyQt5.QtWidgets import QToolButton, QMenu
+        
+        self.history_button = QToolButton()
+        self.history_button.setText(self.i18n.get('history', '历史记录'))
+        self.history_button.setPopupMode(QToolButton.InstantPopup)
+        
+        self.history_menu = QMenu()
+        self.history_button.setMenu(self.history_menu)
+        
+        self._load_related_histories()
+        
+        return self.history_button
+    
+    def _load_related_histories(self):
+        """加载当前书籍关联的所有历史记录"""
+        if not hasattr(self.response_handler, 'history_manager'):
+            return
+        
+        current_book_ids = [book.id for book in self.books_info]
+        all_histories = self.response_handler.history_manager.get_related_histories(current_book_ids)
+        
+        self.history_menu.clear()
+        
+        # 新对话选项
+        new_action = self.history_menu.addAction(self.i18n.get('new_conversation', '新对话'))
+        new_action.triggered.connect(lambda: self._on_history_switched(None))
+        
+        if all_histories:
+            self.history_menu.addSeparator()
+        
+        # 历史记录列表（统一显示格式）
+        for history in all_histories:
+            book_count = len(history['books'])
+            display_text = f"{book_count}{self.i18n.get('books_unit', '本书')} - {history['timestamp']}"
+            
+            action = self.history_menu.addAction(display_text)
+            action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
+    
+    def _on_history_switched(self, uid):
+        """历史记录切换事件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if uid is None:
+            # 新对话
+            self.input_area.clear()
+            self.response_area.clear()
+            logger.info("切换到新对话")
+            return
+        
+        history = self.response_handler.history_manager.get_history_by_uid(uid)
+        if not history:
+            logger.warning(f"未找到历史记录: {uid}")
+            return
+        
+        logger.info(f"切换到历史记录: {uid}, 模式: {history['mode']}, 书籍数: {len(history['books'])}")
+        
+        # 重建书籍列表
+        books_info = []
+        book_ids_to_select = []  # 用于反向选择
+        
+        for book_meta in history['books']:
+            book_ids_to_select.append(book_meta['id'])
+            if not book_meta['deleted']:
+                try:
+                    db = self.gui.current_db
+                    mi = db.get_metadata(book_meta['id'], index_is_id=True)
+                    books_info.append(mi)
+                except Exception as e:
+                    logger.warning(f"无法加载书籍 {book_meta['id']}: {str(e)}")
+        
+        # 更新当前状态
+        if books_info:
+            self.books_info = books_info
+            self.book_info = books_info[0]
+        self.is_multi_book = len(history['books']) > 1
+        self.current_uid = uid
+        
+        # 重新提取元数据
+        self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+        self.book_metadata = self.books_metadata[0]
+        
+        # 反向选择：在 Calibre 中选中这些书籍（如果技术可行）
+        self._select_books_in_calibre(book_ids_to_select)
+        
+        # 更新 UI
+        self._update_window_title()
+        self._rebuild_metadata_widget()
+        
+        # 加载问答内容
+        self.input_area.setPlainText(history['question'])
+        self.response_handler._update_ui_from_signal(
+            history['answer'], 
+            is_response=True,
+            is_history=True
+        )
+        
+        logger.info("历史记录切换完成")
+    
+    def _select_books_in_calibre(self, book_ids):
+        """在 Calibre 主界面中选中指定书籍"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from PyQt5.QtCore import QItemSelectionModel
+            
+            # 清除当前选择
+            self.gui.library_view.selectionModel().clear()
+            
+            # 选中指定书籍
+            db = self.gui.current_db
+            selected_count = 0
+            
+            for book_id in book_ids:
+                try:
+                    # 使用 Calibre 的 API 选中书籍
+                    # 通过 set_current_row 方法选中书籍
+                    if db.has_id(book_id):
+                        # 使用 select_rows 方法选中多本书
+                        self.gui.library_view.select_rows([book_id], using_ids=True, change_current=False)
+                        selected_count += 1
+                    else:
+                        logger.debug(f"书籍 {book_id} 不存在于数据库中")
+                except Exception as e:
+                    logger.debug(f"书籍 {book_id} 可能已被删除或不在当前视图中: {str(e)}")
+            
+            logger.info(f"在 Calibre 中选中了 {selected_count}/{len(book_ids)} 本书")
+            
+        except Exception as e:
+            logger.warning(f"无法在 Calibre 中选中书籍: {str(e)}")
+    
+    def _rebuild_metadata_widget(self):
+        """重建元数据组件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 查找并移除旧的元数据树
+            if hasattr(self, 'metadata_tree'):
+                self.metadata_tree.setParent(None)
+                self.metadata_tree.deleteLater()
+            
+            # 创建新的元数据树
+            new_metadata_tree = self._create_metadata_widget()
+            
+            # 找到布局中的位置并插入
+            layout = self.layout()
+            # 元数据树应该在状态栏之后，输入区域之前
+            # 通常是索引 2 的位置
+            layout.insertWidget(2, new_metadata_tree)
+            
+            # 更新顶部书籍信息标签
+            if hasattr(self, 'books_info_label'):
+                if self.is_multi_book:
+                    book_count = len(self.books_info)
+                    books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
+                else:
+                    books_info_text = f"({self.book_info.title[:30]}{'...' if len(self.book_info.title) > 30 else ''})"
+                self.books_info_label.setText(books_info_text)
+                logger.debug(f"已更新书籍信息标签: {books_info_text}")
+            
+            logger.info("元数据组件已重建")
+            
+        except Exception as e:
+            logger.error(f"重建元数据组件失败: {str(e)}")
+
     def _load_history(self):
-        """加载历史记录"""
-        if not hasattr(self, 'book_metadata') or not self.book_metadata:
+        """加载历史记录 - 智能匹配当前书籍组合"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if not hasattr(self.response_handler, 'history_manager'):
             return
             
         try:
-            if hasattr(self.response_handler, 'history_manager'):
-                history = self.response_handler.history_manager.get_history(self.book_metadata)
-                if history:
-                    # 显示历史记录
-                    self.input_area.setPlainText(history['question'])
-                    # 标记为历史记录加载，避免重复保存
-                    self.response_handler._update_ui_from_signal(
-                        history['answer'], 
-                        is_response=True,
-                        is_history=True
-                    )
-                    logger.info(f"已加载历史记录，时间: {history.get('timestamp', '未知')}")
+            # 获取当前书籍ID集合
+            current_book_ids = set([book.id for book in self.books_info])
+            
+            # 获取所有相关历史记录
+            all_histories = self.response_handler.history_manager.get_related_histories(list(current_book_ids))
+            
+            if not all_histories:
+                logger.info("没有找到相关历史记录，显示新对话")
+                return
+            
+            # 查找最佳匹配的历史记录
+            matched_history = None
+            
+            # 优先级1: 完全匹配（UID相同的书籍组合）
+            for history in all_histories:
+                history_book_ids = set([book['id'] for book in history['books']])
+                if history_book_ids == current_book_ids:
+                    matched_history = history
+                    logger.info(f"找到完全匹配的历史记录: UID={history['uid']}, 书籍数={len(history['books'])}")
+                    # 使用现有 UID，不创建新的
+                    self.current_uid = history['uid']
+                    break
+            
+            # 优先级2: 当前选择被包含在某个历史记录中
+            if not matched_history:
+                for history in all_histories:
+                    history_book_ids = set([book['id'] for book in history['books']])
+                    if current_book_ids.issubset(history_book_ids):
+                        matched_history = history
+                        logger.info(f"找到包含关系的历史记录: UID={history['uid']}, 历史书籍数={len(history['books'])}, 当前书籍数={len(current_book_ids)}")
+                        # 保持当前 UID，只有发起新对话时才会创建新 UID
+                        break
+            
+            # 如果找到匹配的历史记录，加载它
+            if matched_history:
+                self.input_area.setPlainText(matched_history['question'])
+                self.response_handler._update_ui_from_signal(
+                    matched_history['answer'], 
+                    is_response=True,
+                    is_history=True
+                )
+                logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
+            else:
+                logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
+                
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
     
@@ -955,21 +1328,32 @@ class AskDialog(QDialog):
         # 获取当前使用的模型显示名称
         model_display_name = self.api.model_display_name
         
-        # 更新窗口标题，包含模型信息
-        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
+        # 更新窗口标题
+        self._update_window_title()
         self.setMinimumWidth(500)
         self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
         
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建顶部栏：标题 + AI 切换器
+        # 创建顶部栏：标题 + 书籍信息 + AI 切换器
         top_bar = QHBoxLayout()
         
         # 左侧：对话标题
         title_label = QLabel(self.i18n['menu_title'])
         title_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         top_bar.addWidget(title_label)
+        
+        # 书籍信息标签
+        if self.is_multi_book:
+            book_count = len(self.books_info)
+            books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
+        else:
+            books_info_text = f"({self.book_info.title[:30]}{'...' if len(self.book_info.title) > 30 else ''})"
+        
+        self.books_info_label = QLabel(books_info_text)
+        self.books_info_label.setStyleSheet("color: #888; font-size: 12px; margin-left: 8px;")
+        top_bar.addWidget(self.books_info_label)
         
         top_bar.addStretch()
         
@@ -990,48 +1374,9 @@ class AskDialog(QDialog):
         self.statusBar = QStatusBar()
         layout.addWidget(self.statusBar)
         
-        # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
-        info_area = QTextEdit()
-        info_area.setReadOnly(True)  # 设置为只读
-        info_area.setFrameShape(QTextEdit.NoFrame)  # 无边框
-        info_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # 需要时显示滚动条
-        info_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 禁用水平滚动条
-        info_area.setStyleSheet("""
-            QTextEdit {
-                background-color: palette(base);
-                color: palette(text);
-                font-size: 13px;
-                padding: 10px;
-                border-radius: 5px;
-                border: 1px solid palette(mid);
-                line-height: 1.5;
-            }
-        """)
-        # 设置高度和滚动条策略
-        info_area.setMinimumHeight(20)
-        info_area.setMaximumHeight(100)
-        
-        # 构建书籍信息
-        metadata_info = []
-        if self.book_info.title:
-            metadata_info.append(f"{self.i18n['metadata_title']}-{self.book_info.title}")
-        if self.book_info.authors:
-            metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)}")
-        if self.book_info.publisher:
-            metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
-        if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
-            year = str(self.book_info.pubdate.year) if hasattr(self.book_info.pubdate, 'year') else str(self.book_info.pubdate)
-            metadata_info.append(f"{self.i18n['metadata_pubyear']}-{year}")
-        if self.book_info.language:
-            metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
-        if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}")
-        
-        if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
-            metadata_info.append(f"{self.i18n.get('no_metadata', 'No metadata available')}.")
-        
-        info_area.setHtml("<br>".join(metadata_info))
-        layout.addWidget(info_area)
+        # 创建可折叠的书籍元数据树形组件
+        metadata_widget = self._create_metadata_widget()
+        layout.addWidget(metadata_widget)
         
         # 创建输入区域
         self.input_area = QTextEdit()
@@ -1054,6 +1399,10 @@ class AskDialog(QDialog):
         
         # 创建操作区域
         action_layout = QHBoxLayout()
+        
+        # 创建历史记录切换按钮
+        history_button = self._create_history_switcher()
+        action_layout.addWidget(history_button)
         
         # 创建随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
@@ -1375,85 +1724,96 @@ class AskDialog(QDialog):
             # 标准化换行符并确保使用 UTF-8 编码
             question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
         
-            # 准备模板变量
-
-            # 安全地获取书籍的作者或作者列表
-            try:
-                authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-                author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                author_str = self.i18n.get('unknown', 'Unknown')
-            
-            # 安全地获取书籍的出版年份
-            try:
-                pubyear = ''
-                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
-                    if hasattr(self.book_info.pubdate, 'year'):
-                        pubyear = str(self.book_info.pubdate.year)
+            # 根据模式构建提示词
+            if self.is_multi_book:
+                # 多书模式：使用多书提示词
+                logger.info("使用多书模式构建提示词...")
+                prompt = self._build_multi_book_prompt(question)
+            else:
+                # 单书模式：使用原有逻辑
+                logger.info("使用单书模式构建提示词...")
+                
+                # 安全地获取书籍的作者或作者列表
+                try:
+                    authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
+                    author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
+                except AttributeError:
+                    author_str = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的出版年份
+                try:
+                    pubyear = ''
+                    if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+                        if hasattr(self.book_info.pubdate, 'year'):
+                            pubyear = str(self.book_info.pubdate.year)
+                        else:
+                            pubyear = str(self.book_info.pubdate)
                     else:
-                        pubyear = str(self.book_info.pubdate)
-                else:
+                        pubyear = self.i18n.get('unknown', 'Unknown')
+                except Exception as e:
+                    logger.error(f"获取出版年份时出错: {str(e)}")
                     pubyear = self.i18n.get('unknown', 'Unknown')
-            except Exception as e:
-                logger.error(f"获取出版年份时出错: {str(e)}")
-                pubyear = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的语言类别
+                try:
+                    language = self.book_info.language
+                    language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
+                except (AttributeError, KeyError) as e:
+                    language_name = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的系列名
+                try:
+                    series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
+                except AttributeError:
+                    series = self.i18n.get('unknown', 'Unknown')
+                
+                # 准备模板变量
+                logger.info("准备模板变量...")
+                template_vars = {
+                    'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
+                    'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
+                    'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
+                }
+                logger.info(f"模板变量准备完成: {template_vars}")
+                
+                # 获取配置的模板
+                from calibre_plugins.ask_ai_plugin.config import get_prefs
+                prefs = get_prefs()
+                template = prefs.get('template', '')
+                
+                # 如果模板为空，使用默认模板
+                if not template:
+                    template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
+                
+                logger.info(f"使用的模板: {template}")
+                
+                # 检查并替换模板中的变量名，确保用户输入能够正确插入
+                if '{query}' not in template and '{question}' in template:
+                    logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
+                    template = template.replace('{question}', '{query}')
+                
+                # 格式化提示词
+                try:
+                    logger.info("正在格式化提示词...")
+                    prompt = template.format(**template_vars)
+                    logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
+                except KeyError as e:
+                    self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
+                    return
             
-            # 安全地获取书籍的语言类别
-            try:
-                language = self.book_info.language
-                language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
-            except (AttributeError, KeyError) as e:
-                language_name = self.i18n.get('unknown', 'Unknown')
+            logger.info(f"最终提示词长度: {len(prompt)}")
             
-            # 安全地获取书籍的系列名
-            try:
-                series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                series = self.i18n.get('unknown', 'Unknown')
-            
-            # 准备模板变量
-            logger.info("准备模板变量...")
-            template_vars = {
-                'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
-                'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
-                'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
-            }
-            logger.info(f"模板变量准备完成: {template_vars}")
         except Exception as e:
             self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
         
-        # 获取配置的模板
-        from calibre_plugins.ask_ai_plugin.config import get_prefs
-        prefs = get_prefs()
-        template = prefs.get('template', '')
-        
-        # 如果模板为空，使用默认模板
-        if not template:
-            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
-        
-        logger.info(f"使用的模板: {template}")
-        
-        # 检查并替换模板中的变量名，确保用户输入能够正确插入
-        if '{query}' not in template and '{question}' in template:
-            logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
-            template = template.replace('{question}', '{query}')
-        
-        # 格式化提示词
-        try:
-            logger.info("正在格式化提示词...")
-            prompt = template.format(**template_vars)
-            logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
-        except KeyError as e:
-            self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
-            return
-        
-        # 如果提示词过长，可能会导致超时
-        if len(prompt) > 2000:  # 设置一个合理的限制
+        # 如果提示词过长，可能会导致超时（多书模式允许更长）
+        max_length = 4000 if self.is_multi_book else 2000
+        if len(prompt) > max_length:
             self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
             return
         

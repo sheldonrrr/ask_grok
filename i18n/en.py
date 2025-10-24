@@ -122,6 +122,15 @@ class EnglishTranslation(BaseTranslation):
             'no_series': 'No series',
             'unknown': 'Unknown',
             
+            # Multi-book feature
+            'books_unit': ' books',
+            'new_conversation': 'New Conversation',
+            'single_book': 'Single Book',
+            'multi_book': 'Multi-Book',
+            'deleted': 'Deleted',
+            'history': 'History',
+            'multi_book_template_label': 'Multi-Book Prompt Template:',
+            
             # Error messages
             'error': 'Error: ',  # 同时用于error_prefix
             'network_error': 'Connection error',

@@ -119,6 +119,15 @@ class TraditionalChineseTranslation(BaseTranslation):
             'no_series': '無系列',
             'unknown': '未知',
             
+            # 多書功能
+            'books_unit': '本書',
+            'new_conversation': '新對話',
+            'single_book': '單書',
+            'multi_book': '多書',
+            'deleted': '已刪除',
+            'history': '歷史記錄',
+            'multi_book_template_label': '多書提示詞模板:',
+            
             # 錯誤消息
             'error': '錯誤: ',
             'network_error': '網絡錯誤',
