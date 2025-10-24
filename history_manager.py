@@ -65,31 +65,46 @@ class HistoryManager:
         
         return f"{timestamp}_{hash_suffix}"
     
-    def save_history(self, uid, mode, books_metadata, question, answer):
+    def save_history(self, uid, mode, books_metadata, question, answer, ai_id=None):
         """
-        保存历史记录
+        保存历史记录（支持多AI响应）
         
         Args:
             uid: 唯一标识符
             mode: 'single' 或 'multi'
             books_metadata: 书籍元数据列表
             question: 用户问题
-            answer: AI回答
+            answer: AI回答（单个AI）或字典（多个AI）
+            ai_id: AI标识符（可选，用于多AI场景）
         """
-        history_entry = {
-            'uid': uid,
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'mode': mode,
-            'books': books_metadata,
-            'question': question,
-            'answer': answer
-        }
+        # 如果历史记录不存在，创建新的
+        if uid not in self.histories:
+            self.histories[uid] = {
+                'uid': uid,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'mode': mode,
+                'books': books_metadata,
+                'question': question,
+                'answers': {}  # 改为字典，支持多个AI的响应
+            }
         
-        # 添加或更新历史记录
-        self.histories[uid] = history_entry
+        # 更新或添加AI的响应
+        if ai_id:
+            # 多AI场景：保存特定AI的响应
+            self.histories[uid]['answers'][ai_id] = {
+                'answer': answer,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            logger.info(f"历史记录已保存: UID={uid}, AI={ai_id}, 模式={mode}")
+        else:
+            # 单AI场景（向后兼容）：使用'default'作为key
+            self.histories[uid]['answers']['default'] = {
+                'answer': answer,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}")
+        
         self._save_histories()
-        
-        logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}")
     
     def get_related_histories(self, book_ids):
         """

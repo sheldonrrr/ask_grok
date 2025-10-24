@@ -225,6 +225,16 @@ class EnglishTranslation(BaseTranslation):
             'seconds': 'seconds',
             'request_timeout_error': 'Request timeout. Current timeout: {timeout} seconds',
             
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Parallel AI Count:',
+            'parallel_ai_count_tooltip': 'Number of AI models to query simultaneously (1-4)',
+            'parallel_ai_notice': 'Note: This only affects sending questions. Random questions always use a single AI.',
+            'suggest_maximize': 'Tip: Maximize window for better viewing with 3 AIs',
+            'ai_panel_label': 'AI {index}:',
+            'no_ai_available': 'No AI available for this panel',
+            'add_more_ai_providers': 'Please add more AI providers in settings',
+            'select_ai': '-- Select AI --',
+            
             # PDF export section titles
             'pdf_book_metadata': 'BOOK METADATA',
             'pdf_question': 'QUESTION',

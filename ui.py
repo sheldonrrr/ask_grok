@@ -1017,11 +1017,56 @@ class AskDialog(QDialog):
         
         # 加载问答内容
         self.input_area.setPlainText(history['question'])
-        self.response_handler._update_ui_from_signal(
-            history['answer'], 
-            is_response=True,
-            is_history=True
-        )
+        
+        # 处理多AI响应格式
+        if 'answers' in history and isinstance(history['answers'], dict):
+            # 新格式：多AI响应
+            if hasattr(self, 'response_panels') and self.response_panels:
+                # 多面板模式：为每个面板加载对应AI的响应
+                for panel in self.response_panels:
+                    ai_id = panel.get_selected_ai()
+                    if ai_id and ai_id in history['answers']:
+                        answer_data = history['answers'][ai_id]
+                        answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                        panel.response_handler._update_ui_from_signal(
+                            answer_text,
+                            is_response=True,
+                            is_history=True
+                        )
+                        logger.info(f"为面板加载AI {ai_id} 的历史响应")
+                    elif 'default' in history['answers']:
+                        # 向后兼容：如果没有匹配的AI，使用default
+                        answer_data = history['answers']['default']
+                        answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                        panel.response_handler._update_ui_from_signal(
+                            answer_text,
+                            is_response=True,
+                            is_history=True
+                        )
+                        break  # 只加载到第一个面板
+            else:
+                # 单面板模式：加载default或第一个AI的响应
+                if 'default' in history['answers']:
+                    answer_data = history['answers']['default']
+                elif history['answers']:
+                    answer_data = list(history['answers'].values())[0]
+                else:
+                    answer_data = ''
+                
+                answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                self.response_handler._update_ui_from_signal(
+                    answer_text,
+                    is_response=True,
+                    is_history=True
+                )
+        else:
+            # 旧格式：单一响应（向后兼容）
+            answer = history.get('answer', '')
+            self.response_handler._update_ui_from_signal(
+                answer,
+                is_response=True,
+                is_history=True
+            )
         
         logger.info("历史记录切换完成")
     
@@ -1321,6 +1366,270 @@ class AskDialog(QDialog):
         lang_code = lang_code.lower().strip()
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
+    def _create_response_container(self, count: int):
+        """根据并行AI数量创建响应容器
+        
+        Args:
+            count: 并行AI数量 (1-4)
+        
+        Returns:
+            包含响应面板的容器组件
+        """
+        from .response_panel import ResponsePanel
+        from PyQt5.QtWidgets import QGridLayout
+        
+        container = QWidget()
+        
+        # 根据数量选择布局
+        if count == 1:
+            # 单列布局
+            layout = QVBoxLayout(container)
+        elif count == 2:
+            # 横向2个
+            layout = QHBoxLayout(container)
+        elif count == 3:
+            # 1+2布局：上面1个，下面2个
+            layout = QVBoxLayout(container)
+        else:  # count == 4
+            # 2x2网格
+            layout = QGridLayout(container)
+        
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+        
+        # 创建响应面板列表
+        self.response_panels = []
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        if count == 3:
+            # 1+2布局特殊处理
+            # 上半部分：第一个AI
+            top_panel = ResponsePanel(0, self, self.api, self.i18n)
+            top_panel.ai_changed.connect(self._on_panel_ai_changed)
+            self._setup_panel_handler(top_panel)
+            self.response_panels.append(top_panel)
+            layout.addWidget(top_panel)
+            
+            # 下半部分：2个AI横向排列
+            bottom_container = QWidget()
+            bottom_layout = QHBoxLayout(bottom_container)
+            bottom_layout.setContentsMargins(0, 0, 0, 0)
+            bottom_layout.setSpacing(10)
+            
+            for i in range(1, 3):
+                panel = ResponsePanel(i, self, self.api, self.i18n)
+                panel.ai_changed.connect(self._on_panel_ai_changed)
+                self._setup_panel_handler(panel)
+                self.response_panels.append(panel)
+                bottom_layout.addWidget(panel)
+            
+            layout.addWidget(bottom_container)
+        else:
+            # 其他布局
+            for i in range(count):
+                panel = ResponsePanel(i, self, self.api, self.i18n)
+                panel.ai_changed.connect(self._on_panel_ai_changed)
+                self._setup_panel_handler(panel)
+                self.response_panels.append(panel)
+                
+                if count == 1 or count == 2:
+                    layout.addWidget(panel)
+                else:  # count == 4, 2x2网格
+                    row = i // 2
+                    col = i % 2
+                    layout.addWidget(panel, row, col)
+        
+        # 初始化所有面板的AI切换器，并设置默认选择
+        self._update_all_panel_ai_switchers()
+        self._set_default_ai_selections()
+        
+        return container
+    
+    def _get_configured_ais(self):
+        """获取已配置的AI列表
+        
+        Returns:
+            List[Tuple[str, str]]: [(ai_id, display_name), ...]
+        """
+        prefs = get_prefs()
+        models_config = prefs.get('models', {})
+        
+        configured_ais = []
+        for ai_id, config in models_config.items():
+            # 首先检查is_configured标志
+            if not config.get('is_configured', False):
+                continue
+            
+            # 检查是否有API Key（Ollama除外，它是本地服务）
+            token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+            has_token = bool(config.get(token_field, '').strip())
+            
+            # Ollama特殊处理：需要有api_base_url和model
+            if ai_id == 'ollama':
+                has_valid_config = bool(config.get('api_base_url', '').strip()) and bool(config.get('model', '').strip())
+                if not has_valid_config:
+                    continue
+            elif not has_token:
+                # 其他AI必须有token
+                continue
+            
+            display_name = config.get('display_name', ai_id)
+            model_name = config.get('model', 'unknown')
+            full_display = f"{display_name} - {model_name}"
+            configured_ais.append((ai_id, full_display))
+        
+        return configured_ais
+    
+    def _update_all_panel_ai_switchers(self):
+        """更新所有面板的AI切换器（实现互斥逻辑）"""
+        if not hasattr(self, 'response_panels') or not self.response_panels:
+            return
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        # 收集已被使用的AI
+        used_ais = set()
+        for panel in self.response_panels:
+            ai_id = panel.get_selected_ai()
+            if ai_id:
+                used_ais.add(ai_id)
+        
+        # 更新每个面板
+        for panel in self.response_panels:
+            current_ai = panel.get_selected_ai()
+            # 排除其他面板使用的AI（但保留当前面板自己选中的）
+            other_used_ais = used_ais - {current_ai} if current_ai else used_ais
+            panel.populate_ai_switcher(configured_ais, other_used_ais)
+    
+    def _setup_panel_handler(self, panel):
+        """为面板设置ResponseHandler
+        
+        Args:
+            panel: ResponsePanel实例
+        """
+        from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
+        from calibre_plugins.ask_ai_plugin.api import APIClient
+        
+        # 为每个面板创建独立的APIClient实例
+        # 这样可以避免多面板并发时的模型切换冲突
+        panel_api = APIClient()
+        
+        # 创建独立的ResponseHandler实例
+        handler = ResponseHandler(self)
+        
+        # 设置handler，使用面板独立的API实例
+        handler.setup(
+            response_area=panel.response_area,
+            send_button=self.send_button,
+            i18n=self.i18n,
+            api=panel_api,  # 使用独立的API实例
+            input_area=self.input_area,
+            stop_button=self.stop_button
+        )
+        
+        # 将handler和api关联到面板
+        panel.setup_response_handler(handler)
+        panel.api = panel_api  # 更新面板的API引用
+        
+        # 连接面板的请求完成信号
+        panel.request_finished.connect(self._on_panel_request_finished)
+        
+        logger.info(f"已为面板 {panel.panel_index} 设置独立的ResponseHandler和APIClient")
+    
+    def _on_panel_request_finished(self, panel_index):
+        """面板请求完成事件处理
+        
+        Args:
+            panel_index: 完成的面板索引
+        """
+        logger.info(f"面板 {panel_index} 请求完成")
+        
+        # 检查是否所有面板都已完成
+        # 这里简化处理：任何一个面板完成都不改变按钮状态
+        # 实际上应该等所有面板都完成，但这需要更复杂的状态管理
+        # 暂时保持按钮状态不变，让用户手动点击停止按钮来恢复
+    
+    def _set_default_ai_selections(self):
+        """为每个面板设置默认的AI选择
+        
+        规则：
+        1. 从配置中读取上次的选择（记忆功能）
+        2. 如果没有记忆，按顺序分配不同的AI
+        3. 如果AI数量不足，超出的面板留空
+        """
+        prefs = get_prefs()
+        
+        # 读取上次的AI选择记忆
+        saved_selections = prefs.get('panel_ai_selections', {})
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        if not configured_ais:
+            logger.warning("没有已配置的AI，无法设置默认选择")
+            return
+        
+        # 为每个面板设置默认AI
+        for i, panel in enumerate(self.response_panels):
+            panel_key = f"panel_{i}"
+            
+            # 1. 优先使用记忆的选择
+            if panel_key in saved_selections:
+                saved_ai_id = saved_selections[panel_key]
+                # 检查这个AI是否还存在且可用
+                if any(ai_id == saved_ai_id for ai_id, _ in configured_ais):
+                    index = panel.ai_switcher.findData(saved_ai_id)
+                    if index >= 0:
+                        panel.ai_switcher.setCurrentIndex(index)
+                        logger.info(f"面板 {i} 恢复上次选择: {saved_ai_id}")
+                        continue
+            
+            # 2. 如果没有记忆或记忆的AI不可用，按顺序分配
+            if i < len(configured_ais):
+                ai_id, _ = configured_ais[i]
+                index = panel.ai_switcher.findData(ai_id)
+                if index >= 0:
+                    panel.ai_switcher.setCurrentIndex(index)
+                    logger.info(f"面板 {i} 默认选择: {ai_id}")
+            else:
+                # 3. AI数量不足，留空
+                panel.ai_switcher.setCurrentIndex(-1)
+                logger.info(f"面板 {i} 留空（AI数量不足）")
+        
+        # 更新所有面板的AI切换器（实现互斥）
+        self._update_all_panel_ai_switchers()
+    
+    def _save_panel_ai_selections(self):
+        """保存所有面板的AI选择到配置"""
+        prefs = get_prefs()
+        
+        selections = {}
+        for i, panel in enumerate(self.response_panels):
+            ai_id = panel.get_selected_ai()
+            if ai_id:
+                selections[f"panel_{i}"] = ai_id
+        
+        prefs['panel_ai_selections'] = selections
+        logger.info(f"已保存面板AI选择: {selections}")
+    
+    def _on_panel_ai_changed(self, panel_index, new_ai_id):
+        """面板AI切换事件处理
+        
+        Args:
+            panel_index: 面板索引
+            new_ai_id: 新选中的AI ID
+        """
+        logger.info(f"面板 {panel_index} 切换到 AI: {new_ai_id}")
+        
+        # 更新所有面板的AI切换器（实现互斥）
+        self._update_all_panel_ai_switchers()
+        
+        # 保存选择到配置
+        self._save_panel_ai_selections()
+    
     def setup_ui(self):
         # 确保模型已经加载
         self.api.reload_model()
@@ -1330,13 +1639,38 @@ class AskDialog(QDialog):
         
         # 更新窗口标题
         self._update_window_title()
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
+        
+        # 获取并行AI数量配置
+        prefs = get_prefs()
+        self.parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 根据并行AI数量动态设置最小宽度和高度
+        min_widths = {
+            1: 600,   # 单个：保持现有
+            2: 1000,  # 2个：每个500px
+            3: 1000,  # 3个：1+2布局
+            4: 1200   # 4个：2x2布局，每个600px
+        }
+        min_heights = {
+            1: 600,   # 单个：基础高度
+            2: 600,   # 2个横向：同样高度
+            3: 900,   # 3个（1+2布局）：需要更高
+            4: 900    # 4个（2x2）：需要更高
+        }
+        self.setMinimumWidth(min_widths.get(self.parallel_ai_count, 600))
+        self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 600))
+        
+        # 如果是3个AI，显示建议最大化窗口的提示
+        if self.parallel_ai_count == 3:
+            QTimer.singleShot(500, lambda: self.statusBar.showMessage(
+                self.i18n.get('suggest_maximize', 'Tip: Maximize window for better viewing with 3 AIs'),
+                5000
+            ))
         
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建顶部栏：标题 + 书籍信息 + AI 切换器
+        # 创建顶部栏：标题 + 书籍信息（移除全局AI切换器，每个面板有自己的切换器）
         top_bar = QHBoxLayout()
         
         # 左侧：对话标题
@@ -1356,17 +1690,6 @@ class AskDialog(QDialog):
         top_bar.addWidget(self.books_info_label)
         
         top_bar.addStretch()
-        
-        # 右侧：AI 切换器
-        model_switcher_label = QLabel(self.i18n.get('current_ai', 'Current AI:'))
-        model_switcher_label.setStyleSheet("color: #666; font-size: 12px;")
-        top_bar.addWidget(model_switcher_label)
-        
-        self.model_switcher = QComboBox()
-        self.model_switcher.setMinimumWidth(250)
-        self.model_switcher.currentIndexChanged.connect(self.on_model_switched)
-        self._populate_model_switcher()
-        top_bar.addWidget(self.model_switcher)
         
         layout.addLayout(top_bar)
         
@@ -1503,175 +1826,28 @@ class AskDialog(QDialog):
         
         layout.addLayout(action_layout)
         
-        # 创建响应区域容器
-        response_container = QWidget()
-        response_layout = QVBoxLayout(response_container)
-        response_layout.setContentsMargins(0, 0, 0, 0)
-        response_layout.setSpacing(5)
-        
-        # 创建响应区域
-        self.response_area = QTextBrowser()
-        self.response_area.setOpenExternalLinks(True)  # 允许打开外部链接
-        self.response_area.setMinimumHeight(250)  # 设置最小高度，允许用户拉伸
-        self.response_area.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextBrowserInteraction | 
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
-        self.response_area.setStyleSheet("""
-            QTextBrowser {
-                border: 1px dashed palette(mid);
-                color: palette(text);
-                border-radius: 4px;
-                padding: 5px;
-            }
-        """)
-        self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
-        
-        # 创建按钮容器
-        button_container = QWidget()
-        button_layout = QHBoxLayout(button_container)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.setSpacing(5)
-        
-        # 复制响应按钮
-        self.copy_response_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
-        self.copy_response_btn.setStyleSheet("""
-            QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
-        self.copy_response_btn.clicked.connect(self.copy_response)
-        
-        # 复制问题和响应按钮
-        copy_qa_text = self.i18n.get('copy_question_response', 'Copy Q&A')
-        copy_qa_text = copy_qa_text.replace('&', '&&')
-        self.copy_qr_btn = QPushButton(copy_qa_text)
-        self.copy_qr_btn.setStyleSheet("""
-            QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
-        self.copy_qr_btn.clicked.connect(self.copy_question_response)
-        
-        # 导出PDF按钮
-        export_pdf_text = self.i18n.get('export_pdf', 'Export PDF')
-        export_pdf_text = export_pdf_text.replace('&', '&&')
-        self.export_pdf_btn = QPushButton(export_pdf_text)
-        self.export_pdf_btn.setStyleSheet("""
-            QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
-        self.export_pdf_btn.clicked.connect(self.export_to_pdf)
-        
-        # 添加按钮到布局
-        button_layout.addWidget(self.copy_response_btn)
-        button_layout.addWidget(self.copy_qr_btn)
-        button_layout.addWidget(self.export_pdf_btn)
-        button_layout.addStretch()
-        
-        # 将响应区域和按钮添加到容器
-        response_layout.addWidget(self.response_area)
-        response_layout.addWidget(button_container)
-        
-        # 添加到主布局
+        # 创建响应面板容器（支持多AI并行）
+        response_container = self._create_response_container(self.parallel_ai_count)
         layout.addWidget(response_container)
         
-        # 设置 Markdown 支持
-        self.response_area.document().setDefaultStyleSheet("""
-            strong { font-weight: bold; }
-            em { font-style: italic; }
-            h1 { font-size: 1.2em; }
-            h2 { font-size: 1.1em; }
-            h3 { font-size: 1.1em; }
-            code { 
-                background-color: palette(midlight); 
-                padding: 2px 4px; 
-                border-radius: 3px; 
-                font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            }
-            pre { 
-                background-color: palette(midlight); 
-                padding: 10px; 
-                border-radius: 5px; 
-                margin: 10px 0; 
-                white-space: pre-wrap;
-                word-wrap: break-word;
-            }
-            /* 基础表格样式 */
-            table {
-                border-collapse: collapse;
-                width: 100%;
-                margin: 15px 0;
-                border: 1px solid palette(midlight);
-                font-size: 0.95em;
-                line-height: 1.5;
-            }
-            /* 表格单元格 */
-            th, td {
-                border: 1px solid palette(midlight);
-                padding: 8px 12px;
-                text-align: left;
-                vertical-align: top;
-            }
-            /* 表头样式 */
-            thead {
-                background-color: palette(light);
-                font-weight: bold;
-            }
-            /* 表格行 */
-            tr {
-                border-bottom: 1px solid palette(midlight);
-            }
-            /* 最后一行不需要下边框 */
-            tr:last-child {
-                border-bottom: none;
-            }
-            /* 斑马纹 */
-            tr:nth-child(even) {
-                background-color: rgba(0, 0, 0, 0.02);
-            }
-            blockquote { 
-                border-left: 4px solid palette(midlight); 
-                margin: 10px 0; 
-                padding: 0 10px; 
-                color: #333;
-                background-color: rgba(0, 0, 0, 0.02);
-            }
-            ul, ol { 
-                margin: 10px 0; 
-                padding-left: 20px; 
-            }
-            li { margin: 5px 0; }
-        """)
-        layout.addWidget(self.response_area)
+        # 为向后兼容，保留 response_area 和 response_handler 引用（指向第一个面板）
+        if self.response_panels:
+            self.response_area = self.response_panels[0].response_area
+            self.response_handler = self.response_panels[0].response_handler
     
     def generate_suggestion(self):
-        """生成问题随机问题"""
+        """生成随机问题（只发送到第一个AI面板）"""
         if not self.api:
             return
-            
+        
+        # 随机问题只使用第一个AI（不并行）
+        if hasattr(self, 'response_panels') and self.response_panels:
+            # 确保第一个面板有选中的AI
+            first_panel = self.response_panels[0]
+            if not first_panel.get_selected_ai():
+                logger.warning("第一个面板没有选中AI，无法生成随机问题")
+                return
+        
         self.suggestion_handler.generate(self.book_info)
 
     def _check_auth_token(self):
@@ -1821,14 +1997,27 @@ class AskDialog(QDialog):
         self.send_button.setVisible(False)
         self.stop_button.setVisible(True)
         
-        # 开始异步请求
-        logger.info("开始异步请求...")
+        # 开始异步请求 - 并行发送到所有面板
+        logger.info("开始并行异步请求...")
         try:
-            self.response_handler.start_async_request(prompt)
-            logger.info("异步请求已启动")
+            if hasattr(self, 'response_panels') and self.response_panels:
+                # 多面板模式：并行发送到所有面板
+                for panel in self.response_panels:
+                    selected_ai = panel.get_selected_ai()
+                    if selected_ai:
+                        logger.info(f"向面板 {panel.panel_index} (AI: {selected_ai}) 发送请求")
+                        panel.send_request(prompt, model_id=selected_ai)
+                    else:
+                        logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")
+                logger.info(f"已向 {len(self.response_panels)} 个面板发送请求")
+            else:
+                # 向后兼容：单面板模式
+                self.response_handler.start_async_request(prompt)
+                logger.info("异步请求已启动（单面板模式）")
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
-            self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
+            if hasattr(self, 'response_handler'):
+                self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
             # 恢复按钮状态
             self.send_button.setVisible(True)
             self.stop_button.setVisible(False)
@@ -1839,8 +2028,14 @@ class AskDialog(QDialog):
         logger = logging.getLogger(__name__)
         logger.info("用户请求停止当前请求")
         
-        # 调用响应处理器的取消方法
-        if hasattr(self, 'response_handler'):
+        # 停止所有面板的请求
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                if hasattr(panel, 'response_handler') and panel.response_handler:
+                    panel.response_handler.cancel_request()
+            logger.info(f"已停止 {len(self.response_panels)} 个面板的请求")
+        elif hasattr(self, 'response_handler'):
+            # 向后兼容：单面板模式
             self.response_handler.cancel_request()
         
         # 恢复按钮状态

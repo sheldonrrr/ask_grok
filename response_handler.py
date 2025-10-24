@@ -289,10 +289,15 @@ class ResponseHandler(QObject):
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
 
-    def start_async_request(self, prompt):
-        """开始异步请求 API㕼可以处理普通请求和流式请求"""
+    def start_async_request(self, prompt, model_id=None):
+        """开始异步请求 API，可以处理普通请求和流式请求
+        
+        Args:
+            prompt: 提示词
+            model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
+        """
         self._request_start_time = time.time()
-        logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}")
+        logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}, model_id: {model_id}")
         
         # 清理之前的请求状态
         start_cleanup = time.time()
@@ -327,6 +332,10 @@ class ResponseHandler(QObject):
                 api_start = time.time()
                 
                 # 检查当前模型是否支持流式传输
+                # 首先检查模型是否已加载
+                if not self.api._ai_model:
+                    raise Exception("AI model not loaded. Please check your configuration.")
+                
                 model_supports_streaming = hasattr(self.api._ai_model, 'supports_streaming') and self.api._ai_model.supports_streaming()
                 streaming_enabled = self.api._ai_model.config.get('enable_streaming', True)  # 默认启用
                 
@@ -350,8 +359,8 @@ class ResponseHandler(QObject):
                                 logger.info(f"[流式回调] 已接收 {self._stream_log_counter} 个片段，累计 {self._stream_log_total_chars} 字符")
                             self._current_signals.stream_update.emit(chunk)
                     
-                    # 调用API时传入回调函数
-                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback)
+                    # 调用API时传入回调函数和model_id
+                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id)
                     logger.info(f"[流式请求完成] 收到完整响应, 长度: {len(response)} 字符")
                     
                     # 在流式请求完成后，发送完整响应
@@ -361,7 +370,7 @@ class ResponseHandler(QObject):
                 else:
                     # 使用普通请求
                     logger.info(f"[普通请求] 使用普通请求处理 {self.api.model_name} 模型")
-                    response = self.api.ask(prompt, stream=False)  # 明确指定不使用流式
+                    response = self.api.ask(prompt, stream=False, model_id=model_id)  # 明确指定不使用流式，并传递model_id
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(response, True)
                 
@@ -860,15 +869,17 @@ class ResponseHandler(QObject):
                         # 确定模式
                         mode = 'multi' if parent_dialog.is_multi_book else 'single'
                         
-                        # 使用新的保存方法
+                        # 使用新的保存方法，传递AI标识符
+                        ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
                             mode,
                             parent_dialog.books_metadata,
                             question,
-                            text
+                            text,
+                            ai_id=ai_id
                         )
-                        logger.info(f"成功保存问询历史: UID={parent_dialog.current_uid}, 模式={mode}")
+                        logger.info(f"成功保存问询历史: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}")
                     elif hasattr(self, 'current_metadata') and self.current_metadata:
                         # 向后兼容旧版本
                         question = self.input_area.toPlainText()

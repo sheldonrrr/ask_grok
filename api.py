@@ -146,7 +146,7 @@ class APIClient:
                 
             raise AIAPIError(error_msg, error_type=error_type) from e
     
-    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None) -> str:
+    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None, model_id: str = None) -> str:
         """向 AI 模型发送问题并获取回答，支持流式请求
         
         Args:
@@ -155,6 +155,7 @@ class APIClient:
             return_dict: 是否返回完整的响应字典，默认为 False，只返回文本
             stream: 是否使用流式请求，默认为 False
             stream_callback: 流式响应回调函数，用于处理流式响应的每个片段
+            model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
             
         Returns:
             str 或 dict: 如果 return_dict 为 False，返回回答文本；否则返回完整的响应字典
@@ -165,16 +166,25 @@ class APIClient:
         # 更新 i18n 以确保使用正确的语言
         self.i18n = get_translation(lang_code)
         
-        # 检查模型是否已加载
-        if not self._ai_model:
-            # 尝试重新加载模型
-            self._load_current_model()
-            
-            if not self._ai_model:
-                error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
-                raise AIAPIError(error_msg, error_type="config_error")
+        # 如果指定了model_id，临时切换模型
+        original_model = None
+        original_model_name = None
+        if model_id and model_id != self._model_name:
+            logger.info(f"临时切换模型: {self._model_name} -> {model_id}")
+            original_model = self._ai_model
+            original_model_name = self._model_name
+            self._switch_to_model(model_id)
         
         try:
+            # 检查模型是否已加载
+            if not self._ai_model:
+                # 尝试重新加载模型
+                self._load_current_model()
+                
+                if not self._ai_model:
+                    error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
+                    raise AIAPIError(error_msg, error_type="config_error")
+            
             # 准备请求参数
             kwargs = {
                 'temperature': 0.7,
@@ -238,6 +248,12 @@ class APIClient:
             # 处理其他未知错误
             error_msg = f"{self.i18n.get('unknown_error', 'Unknown error')}: {str(e)}"
             raise AIAPIError(error_msg, error_type="unknown_error") from e
+        finally:
+            # 恢复原始模型
+            if original_model is not None:
+                logger.info(f"恢复原始模型: {model_id} -> {original_model_name}")
+                self._ai_model = original_model
+                self._model_name = original_model_name
     
     def _get_provider_from_model_name(self, model_name: str) -> AIProvider:
         """根据模型名称获取对应的AIProvider枚举值
@@ -249,6 +265,33 @@ class APIClient:
             AIProvider: 对应的AIProvider枚举值
         """
         return self._MODEL_TO_PROVIDER.get(model_name, DEFAULT_PROVIDER)
+    
+    def _switch_to_model(self, model_id: str):
+        """临时切换到指定的模型
+        
+        Args:
+            model_id: 模型ID（如'grok', 'openai'等）
+        """
+        from calibre.utils.config import JSONConfig
+        try:
+            # 获取配置
+            prefs = JSONConfig('plugins/ask_ai_plugin')
+            models_config = prefs.get('models', {})
+            
+            # 获取指定模型的配置
+            model_config = models_config.get(model_id, {})
+            
+            if not model_config:
+                logger.warning(f"未找到模型 {model_id} 的配置")
+                return
+            
+            # 创建模型实例
+            self._model_name = model_id
+            self._ai_model = AIModelFactory.create_model(model_id, model_config)
+            logger.info(f"已切换到模型: {model_id}")
+            
+        except Exception as e:
+            logger.error(f"切换模型 {model_id} 时出错: {str(e)}")
     
     def _load_current_model(self):
         """加载当前选择的模型"""

@@ -142,6 +142,7 @@ prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = {}
 prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
+prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -172,6 +173,10 @@ def get_prefs(force_reload=False):
     # 确保 request_timeout 键存在
     if 'request_timeout' not in prefs:
         prefs['request_timeout'] = 60
+    
+    # 确保 parallel_ai_count 键存在
+    if 'parallel_ai_count' not in prefs:
+        prefs['parallel_ai_count'] = 1
     
     # 确保默认模型配置存在
     if 'grok' not in prefs['models']:
@@ -953,6 +958,34 @@ class ConfigDialog(QWidget):
         
         model_layout.addLayout(timeout_layout)
         
+        # 添加并行AI数量设置
+        parallel_layout = QHBoxLayout()
+        parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count:'))
+        parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
+            'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
+        parallel_layout.addWidget(parallel_label)
+        
+        self.parallel_ai_combo = QComboBox(self)
+        for i in range(1, 5):
+            self.parallel_ai_combo.addItem(str(i), i)
+        current_parallel = get_prefs().get('parallel_ai_count', 1)
+        index = self.parallel_ai_combo.findData(current_parallel)
+        if index >= 0:
+            self.parallel_ai_combo.setCurrentIndex(index)
+        self.parallel_ai_combo.currentIndexChanged.connect(self.on_config_changed)
+        self.parallel_ai_combo.setMaximumWidth(100)
+        parallel_layout.addWidget(self.parallel_ai_combo)
+        parallel_layout.addStretch()
+        
+        model_layout.addLayout(parallel_layout)
+        
+        # 添加并行AI提示信息
+        parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
+            'Note: Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
+        parallel_notice.setWordWrap(True)
+        parallel_notice.setStyleSheet("color: #666; font-size: 11px; padding: 5px 0;")
+        model_layout.addWidget(parallel_notice)
+        
         model_group.setLayout(model_layout)
         
         # 添加间距
@@ -1263,7 +1296,8 @@ class ConfigDialog(QWidget):
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
-            'request_timeout': prefs.get('request_timeout', 60)
+            'request_timeout': prefs.get('request_timeout', 60),
+            'parallel_ai_count': prefs.get('parallel_ai_count', 1)
         }
         
         # 调试日志
@@ -1655,6 +1689,10 @@ class ConfigDialog(QWidget):
             else:
                 prefs['request_timeout'] = 60  # 默认值
         
+        # 保存并行AI数量
+        if hasattr(self, 'parallel_ai_combo'):
+            prefs['parallel_ai_count'] = self.parallel_ai_combo.currentData()
+        
         # 保存选中的模型
         prefs['selected_model'] = self.model_combo.currentData()
         
@@ -1709,7 +1747,8 @@ class ConfigDialog(QWidget):
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
-            'request_timeout': prefs.get('request_timeout', 60)
+            'request_timeout': prefs.get('request_timeout', 60),
+            'parallel_ai_count': prefs.get('parallel_ai_count', 1)
         }
         
         # 更新原始文本值（用于变更检测）
@@ -1747,7 +1786,7 @@ class ConfigDialog(QWidget):
             self.initial_values = {}
         
         # 确保必要的键存在
-        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout']:
+        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout', 'parallel_ai_count']:
             if key not in self.initial_values:
                 if key == 'language':
                     self.initial_values[key] = 'en'
@@ -1759,6 +1798,8 @@ class ConfigDialog(QWidget):
                     self.initial_values[key] = {}
                 elif key == 'request_timeout':
                     self.initial_values[key] = 60
+                elif key == 'parallel_ai_count':
+                    self.initial_values[key] = 1
         
         # 检查通用设置是否更改
         general_changed = False
@@ -1814,6 +1855,14 @@ class ConfigDialog(QWidget):
                 except ValueError:
                     pass
         
+        # 检查并行AI数量是否更改
+        parallel_ai_changed = False
+        if hasattr(self, 'parallel_ai_combo'):
+            current_parallel = self.parallel_ai_combo.currentData()
+            if current_parallel != self.initial_values.get('parallel_ai_count', 1):
+                parallel_ai_changed = True
+                logger.debug(f"并行AI数量已更改: {current_parallel} != {self.initial_values.get('parallel_ai_count', 1)}")
+        
         # 检查模型配置是否更改
         models_changed = False
         if hasattr(self, 'model_widgets'):
@@ -1832,7 +1881,7 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or random_questions_changed or timeout_changed
+        return general_changed or models_changed or random_questions_changed or timeout_changed or parallel_ai_changed
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
