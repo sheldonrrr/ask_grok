@@ -130,6 +130,7 @@ class EnglishTranslation(BaseTranslation):
             'deleted': 'Deleted',
             'history': 'History',
             'multi_book_template_label': 'Multi-Book Prompt Template:',
+            'multi_book_placeholder_hint': 'Use {books_metadata} for book information, {query} for user question',
             
             # Error messages
             'error': 'Error: ',  # 同时用于error_prefix

@@ -74,9 +74,9 @@ class TraditionalChineseTranslation(BaseTranslation):
             'current_ai': '目前人工智能:',
             'action': '操作',
             'reset_button': '重置',
-            'prompt_template': '提示模板',
-            'ask_prompts': '提問提示',
-            'random_questions_prompts': '隨機問題提示',
+            'prompt_template': '提示詞模板:',
+            'ask_prompts': '提問提示詞:',
+            'random_questions_prompts': '隨機問題提示詞:',
             'display': '顯示',
             
             # UI - 對話框元素
@@ -127,6 +127,7 @@ class TraditionalChineseTranslation(BaseTranslation):
             'deleted': '已刪除',
             'history': '歷史記錄',
             'multi_book_template_label': '多書提示詞模板:',
+            'multi_book_placeholder_hint': '使用 {books_metadata} 表示書籍信息，{query} 表示用戶問題',
             
             # 錯誤消息
             'error': '錯誤: ',

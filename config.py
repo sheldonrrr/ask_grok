@@ -1038,6 +1038,42 @@ class ConfigDialog(QWidget):
         # 将随机问题提示词添加到模板布局
         template_layout.addLayout(random_questions_layout)
         
+        # 多书提示词模板
+        multi_book_template_layout = QVBoxLayout()
+        multi_book_template_layout.addWidget(QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template:')))
+        
+        self.multi_book_template_edit = QPlainTextEdit(self)
+        self.multi_book_template_edit.setPlainText(get_prefs().get('multi_book_template', ''))
+        self.multi_book_template_edit.textChanged.connect(self.on_config_changed)
+        
+        # 设置初始高度为大约5行文字的高度
+        font_metrics = QFontMetrics(self.multi_book_template_edit.font())
+        line_height = font_metrics.lineSpacing()
+        padding = 10  # 上下内边距
+        five_lines_height = line_height * 5 + padding
+        ten_lines_height = line_height * 10 + padding
+        
+        # 设置初始高度和最小/最大高度限制
+        self.multi_book_template_edit.setMinimumHeight(five_lines_height)  # 最小5行高度
+        self.multi_book_template_edit.setMaximumHeight(ten_lines_height)  # 最大10行高度
+        
+        # 设置大小策略以允许垂直扩展和调整大小
+        self.multi_book_template_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
+        # 确保滚动条在需要时出现
+        self.multi_book_template_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.multi_book_template_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        multi_book_template_layout.addWidget(self.multi_book_template_edit)
+        
+        # 添加占位符说明
+        placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
+        placeholder_hint.setStyleSheet("color: #888; font-size: 11px; font-style: italic;")
+        placeholder_hint.setWordWrap(True)
+        multi_book_template_layout.addWidget(placeholder_hint)
+        
+        # 将多书提示词模板添加到模板布局
+        template_layout.addLayout(multi_book_template_layout)
+        
         # 将布局设置应用到模板组
         template_group.setLayout(template_layout)
         
@@ -1223,6 +1259,7 @@ class ConfigDialog(QWidget):
         self.initial_values = {
             'language': current_lang,
             'template': prefs.get('template', get_default_template(current_lang)),
+            'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
@@ -1245,6 +1282,14 @@ class ConfigDialog(QWidget):
         
         # 设置模板
         self.template_edit.setPlainText(self.initial_values['template'])
+        # 保存原始文本用于变更检测
+        self.initial_values['template_raw'] = self.template_edit.toPlainText()
+        
+        # 设置多书提示词模板
+        if hasattr(self, 'multi_book_template_edit'):
+            self.multi_book_template_edit.setPlainText(self.initial_values.get('multi_book_template', ''))
+            # 保存原始文本用于变更检测
+            self.initial_values['multi_book_template_raw'] = self.multi_book_template_edit.toPlainText()
         
         # 设置随机问题提示词
         random_questions = self.initial_values['random_questions']
@@ -1265,6 +1310,10 @@ class ConfigDialog(QWidget):
         print(f"DEBUG: default_value = {repr(default_value)[:100]}...")
         
         self.random_questions_edit.setPlainText(default_value)
+        # 保存原始文本用于变更检测
+        if 'random_questions_raw' not in self.initial_values:
+            self.initial_values['random_questions_raw'] = {}
+        self.initial_values['random_questions_raw'][current_lang] = self.random_questions_edit.toPlainText()
         
         # 设置当前模型
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
@@ -1589,6 +1638,9 @@ class ConfigDialog(QWidget):
         # 保存模板
         prefs['template'] = self.template_edit.toPlainText().strip()
         
+        # 保存多书提示词模板
+        prefs['multi_book_template'] = self.multi_book_template_edit.toPlainText().strip()
+        
         # 保存随机问题提示词
         current_lang = prefs['language']
         if 'random_questions' not in prefs:
@@ -1653,11 +1705,23 @@ class ConfigDialog(QWidget):
         self.initial_values = {
             'language': current_lang,
             'template': prefs.get('template', get_default_template(current_lang)),
+            'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
             'request_timeout': prefs.get('request_timeout', 60)
         }
+        
+        # 更新原始文本值（用于变更检测）
+        if hasattr(self, 'template_edit'):
+            self.initial_values['template_raw'] = self.template_edit.toPlainText()
+        if hasattr(self, 'multi_book_template_edit'):
+            self.initial_values['multi_book_template_raw'] = self.multi_book_template_edit.toPlainText()
+        if hasattr(self, 'random_questions_edit'):
+            if 'random_questions_raw' not in self.initial_values:
+                self.initial_values['random_questions_raw'] = {}
+            self.initial_values['random_questions_raw'][current_lang] = self.random_questions_edit.toPlainText()
+        
         # 安全地记录更新后的初始值
         updated_models = safe_log_config(self.initial_values['models'])
         # 初始值已更新
@@ -1672,6 +1736,9 @@ class ConfigDialog(QWidget):
         
         :return: 如果有变更返回 True，否则返回 False
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # 获取当前语言
         current_lang = self.lang_combo.currentData()
         
@@ -1680,11 +1747,11 @@ class ConfigDialog(QWidget):
             self.initial_values = {}
         
         # 确保必要的键存在
-        for key in ['language', 'template', 'selected_model', 'models', 'random_questions', 'request_timeout']:
+        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout']:
             if key not in self.initial_values:
                 if key == 'language':
                     self.initial_values[key] = 'en'
-                elif key == 'template':
+                elif key == 'template' or key == 'multi_book_template':
                     self.initial_values[key] = ''
                 elif key == 'selected_model':
                     self.initial_values[key] = 'grok'
@@ -1706,21 +1773,32 @@ class ConfigDialog(QWidget):
             general_changed = True
             logger.debug(f"模型选择已更改: {self.model_combo.currentData()} != {self.initial_values['selected_model']}")
         
-        # 检查模板是否更改
+        # 检查模板是否更改（使用原始文本，不 strip，以便检测空格变化）
         if hasattr(self, 'template_edit'):
-            template_text = self.template_edit.toPlainText().strip()
-            if template_text != self.initial_values['template']:
+            template_text = self.template_edit.toPlainText()
+            # 保存时会 strip，所以这里也需要比较 strip 后的值
+            # 但为了让用户看到即时反馈，我们比较原始文本
+            if template_text != self.initial_values.get('template_raw', self.initial_values['template']):
                 general_changed = True
                 logger.debug("模板已更改")
         
-        # 检查随机问题提示词是否更改
+        # 检查多书提示词模板是否更改（使用原始文本）
+        if hasattr(self, 'multi_book_template_edit'):
+            multi_book_template_text = self.multi_book_template_edit.toPlainText()
+            if multi_book_template_text != self.initial_values.get('multi_book_template_raw', self.initial_values.get('multi_book_template', '')):
+                general_changed = True
+                logger.debug("多书提示词模板已更改")
+        
+        # 检查随机问题提示词是否更改（使用原始文本）
         random_questions_changed = False
         initial_random_questions = self.initial_values['random_questions'].get(current_lang, '')
         
         current_random_questions = ''
         if hasattr(self, 'random_questions_edit'):
-            current_random_questions = self.random_questions_edit.toPlainText().strip()
-            if current_random_questions != initial_random_questions:
+            current_random_questions = self.random_questions_edit.toPlainText()
+            # 同样使用原始文本比较
+            initial_raw = self.initial_values.get('random_questions_raw', {}).get(current_lang, initial_random_questions)
+            if current_random_questions != initial_raw:
                 random_questions_changed = True
                 logger.debug("随机问题提示词已更改")
         

@@ -77,9 +77,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'current_ai': '当前AI:',
             'action': '操作',
             'reset_button': '重置',
-            'prompt_template': '提示模板:',
-            'ask_prompts': '提问提示:',
-            'random_questions_prompts': '随机问题提示:',
+            'prompt_template': '提示词模板:',
+            'ask_prompts': '提问提示词:',
+            'random_questions_prompts': '随机问题提示词:',
             'display': '显示',
             
             # UI - 对话框元素
@@ -130,6 +130,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'deleted': '已删除',
             'history': '历史记录',
             'multi_book_template_label': '多书提示词模板:',
+            'multi_book_placeholder_hint': '使用 {books_metadata} 表示书籍信息，{query} 表示用户问题',
             
             # 错误信息
             'error': '错误: ',
