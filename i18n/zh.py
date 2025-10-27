@@ -222,13 +222,15 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # 并行AI设置
             'parallel_ai_count_label': '并行AI数量：',
-            'parallel_ai_count_tooltip': '同时请求的AI数量（1-4）。仅对发送问题生效，随机问题始终使用单个AI。',
+            'parallel_ai_count_tooltip': '同时请求的AI数量（1-2可用，3-4即将推出）。仅对发送问题生效，随机问题始终使用单个AI。',
             'parallel_ai_notice': '注意：每个响应窗口都有独立的AI切换器。请确保已配置足够数量的AI服务商。',
             'suggest_maximize': '提示：使用3个AI时建议最大化窗口以获得更好的显示效果',
             'ai_panel_label': 'AI {index}：',
             'no_ai_available': '此面板没有可用的AI',
             'add_more_ai_providers': '请在设置中添加更多AI服务商',
             'select_ai': '-- 选择AI --',
+            'coming_soon': '即将推出',
+            'advanced_feature_tooltip': '此功能正在开发中，敬请期待！',
             
             # PDF导出章节标题
             'pdf_book_metadata': '书籍元数据',

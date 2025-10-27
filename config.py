@@ -966,14 +966,30 @@ class ConfigDialog(QWidget):
         parallel_layout.addWidget(parallel_label)
         
         self.parallel_ai_combo = QComboBox(self)
+        # 添加选项1-4，但3-4置灰（保留入口，吸引高级用户）
         for i in range(1, 5):
-            self.parallel_ai_combo.addItem(str(i), i)
+            display_text = str(i)
+            if i > 2:
+                display_text += f" ({self.i18n.get('coming_soon', 'Coming Soon')})"
+            self.parallel_ai_combo.addItem(display_text, i)
+            # 将3和4选项设置为不可用
+            if i > 2:
+                model = self.parallel_ai_combo.model()
+                item = model.item(i - 1)
+                item.setEnabled(False)
+                item.setToolTip(self.i18n.get('advanced_feature_tooltip', 
+                    'This feature is under development. Stay tuned for updates!'))
+        
         current_parallel = get_prefs().get('parallel_ai_count', 1)
+        # 如果当前配置是3或4，自动降级到2
+        if current_parallel > 2:
+            current_parallel = 2
+            get_prefs()['parallel_ai_count'] = 2
         index = self.parallel_ai_combo.findData(current_parallel)
         if index >= 0:
             self.parallel_ai_combo.setCurrentIndex(index)
         self.parallel_ai_combo.currentIndexChanged.connect(self.on_config_changed)
-        self.parallel_ai_combo.setMaximumWidth(100)
+        self.parallel_ai_combo.setMaximumWidth(150)
         parallel_layout.addWidget(self.parallel_ai_combo)
         parallel_layout.addStretch()
         

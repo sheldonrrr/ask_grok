@@ -257,6 +257,14 @@ class AnthropicModel(BaseAIModel):
         """
         return "Anthropic (Claude)"
     
+    def supports_streaming(self) -> bool:
+        """
+        Check if model supports streaming
+        
+        :return: True if streaming is supported
+        """
+        return True  # Anthropic supports streaming
+    
     def prepare_models_request_headers(self) -> Dict[str, str]:
         """
         准备获取模型列表的请求头

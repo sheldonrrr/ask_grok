@@ -185,11 +185,8 @@ class OpenRouterModel(BaseAIModel):
         import requests
         import time
         
-        # 检查是否使用流式传输 - 尊重显式传递的 stream 参数
-        if 'stream' not in kwargs:
-            kwargs['stream'] = self.config.get('enable_streaming', True)
-        
-        use_stream = kwargs['stream']
+        # OpenRouter 总是返回流式响应（text/event-stream）
+        # 无论配置如何，都必须使用流式处理
         stream_callback = kwargs.get('stream_callback', None)
         
         # 准备请求头和数据
@@ -199,8 +196,9 @@ class OpenRouterModel(BaseAIModel):
         logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openrouter')
         
         try:
-            # 如果使用流式传输
-            if use_stream and stream_callback:
+            # OpenRouter总是使用流式传输
+            if stream_callback:
+                # 有回调函数：实时流式传输
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
@@ -248,29 +246,56 @@ class OpenRouterModel(BaseAIModel):
                     translations = get_translation(self.config.get('language', 'en'))
                     raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
             
-            # 非流式模式
+            # 无回调函数：收集完整响应后返回
             else:
-                api_url = f"{self.config['api_base_url']}/chat/completions"
-                response = requests.post(
-                    api_url,
-                    headers=headers,
-                    json=data,
-                    timeout=kwargs.get('timeout', 60),
-                    verify=False
-                )
-                response.raise_for_status()
+                full_content = ""
+                chunk_count = 0
                 
-                result = response.json()
-                if 'choices' in result and result['choices']:
-                    return result['choices'][0]['message']['content']
-                else:
+                api_url = f"{self.config['api_base_url']}/chat/completions"
+                
+                try:
+                    with requests.post(
+                        api_url,
+                        headers=headers,
+                        json=data,
+                        timeout=kwargs.get('timeout', 300),
+                        stream=True,  # 强制使用流式
+                        verify=False
+                    ) as response:
+                        response.raise_for_status()
+                        
+                        # 处理流式响应
+                        for line in response.iter_lines():
+                            if line:
+                                line_str = line.decode('utf-8')
+                                if line_str.startswith('data: '):
+                                    try:
+                                        if line_str == 'data: [DONE]':
+                                            break
+                                        line_data = json.loads(line_str[6:])
+                                        if 'choices' in line_data and line_data['choices']:
+                                            choice = line_data['choices'][0]
+                                            if 'delta' in choice and 'content' in choice['delta']:
+                                                chunk_text = choice['delta']['content']
+                                                if chunk_text:
+                                                    full_content += chunk_text
+                                                    chunk_count += 1
+                                    except json.JSONDecodeError as je:
+                                        logger.error(f"JSON parse error: {str(je)}, line: {line_str[:50]}...")
+                                        continue
+                        
+                        logger.info(f"Non-streaming mode completed, received {chunk_count} chunks, total: {len(full_content)}")
+                        return full_content
+                        
+                except requests.exceptions.RequestException as e:
+                    logger.error(f"OpenRouter API request error: {str(e)}")
                     translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(translations.get('invalid_response', 'Invalid API response format'))
-                    
-        except requests.exceptions.RequestException as e:
-            logger.error(f"OpenRouter API request error: {str(e)}")
-            translations = get_translation(self.config.get('language', 'en'))
-            raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
+                    raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
+        
+        except Exception as e:
+            # 捕获所有未处理的异常
+            logger.error(f"OpenRouter unexpected error: {str(e)}")
+            raise
     
     # OpenRouter 使用基类的默认实现获取模型列表
     # fetch_available_models() - GET /v1/models 端点

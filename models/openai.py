@@ -256,5 +256,13 @@ class OpenAIModel(BaseAIModel):
         """
         return "OpenAI"
     
+    def supports_streaming(self) -> bool:
+        """
+        Check if model supports streaming
+        
+        :return: True if streaming is supported
+        """
+        return True  # OpenAI supports streaming
+    
     # OpenAI 使用基类的默认实现，无需重写 fetch_available_models
     # 基类已经提供了完整的 OpenAI 兼容实现

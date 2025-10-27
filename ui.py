@@ -1370,13 +1370,17 @@ class AskDialog(QDialog):
         """根据并行AI数量创建响应容器
         
         Args:
-            count: 并行AI数量 (1-4)
+            count: 并行AI数量 (目前仅支持1-2)
         
         Returns:
             包含响应面板的容器组件
         """
         from .response_panel import ResponsePanel
-        from PyQt5.QtWidgets import QGridLayout
+        
+        # 限制为1-2个（3-4功能暂未完成）
+        if count > 2:
+            logger.warning(f"并行AI数量 {count} 超过限制，自动降级到2")
+            count = 2
         
         container = QWidget()
         
@@ -1384,15 +1388,9 @@ class AskDialog(QDialog):
         if count == 1:
             # 单列布局
             layout = QVBoxLayout(container)
-        elif count == 2:
+        else:  # count == 2
             # 横向2个
             layout = QHBoxLayout(container)
-        elif count == 3:
-            # 1+2布局：上面1个，下面2个
-            layout = QVBoxLayout(container)
-        else:  # count == 4
-            # 2x2网格
-            layout = QGridLayout(container)
         
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
@@ -1403,43 +1401,13 @@ class AskDialog(QDialog):
         # 获取已配置的AI列表
         configured_ais = self._get_configured_ais()
         
-        if count == 3:
-            # 1+2布局特殊处理
-            # 上半部分：第一个AI
-            top_panel = ResponsePanel(0, self, self.api, self.i18n)
-            top_panel.ai_changed.connect(self._on_panel_ai_changed)
-            self._setup_panel_handler(top_panel)
-            self.response_panels.append(top_panel)
-            layout.addWidget(top_panel)
-            
-            # 下半部分：2个AI横向排列
-            bottom_container = QWidget()
-            bottom_layout = QHBoxLayout(bottom_container)
-            bottom_layout.setContentsMargins(0, 0, 0, 0)
-            bottom_layout.setSpacing(10)
-            
-            for i in range(1, 3):
-                panel = ResponsePanel(i, self, self.api, self.i18n)
-                panel.ai_changed.connect(self._on_panel_ai_changed)
-                self._setup_panel_handler(panel)
-                self.response_panels.append(panel)
-                bottom_layout.addWidget(panel)
-            
-            layout.addWidget(bottom_container)
-        else:
-            # 其他布局
-            for i in range(count):
-                panel = ResponsePanel(i, self, self.api, self.i18n)
-                panel.ai_changed.connect(self._on_panel_ai_changed)
-                self._setup_panel_handler(panel)
-                self.response_panels.append(panel)
-                
-                if count == 1 or count == 2:
-                    layout.addWidget(panel)
-                else:  # count == 4, 2x2网格
-                    row = i // 2
-                    col = i % 2
-                    layout.addWidget(panel, row, col)
+        # 简化逻辑：只处理1-2个面板
+        for i in range(count):
+            panel = ResponsePanel(i, self, self.api, self.i18n)
+            panel.ai_changed.connect(self._on_panel_ai_changed)
+            self._setup_panel_handler(panel)
+            self.response_panels.append(panel)
+            layout.addWidget(panel)
         
         # 初始化所有面板的AI切换器，并设置默认选择
         self._update_all_panel_ai_switchers()
@@ -1644,28 +1612,23 @@ class AskDialog(QDialog):
         prefs = get_prefs()
         self.parallel_ai_count = prefs.get('parallel_ai_count', 1)
         
+        # 限制为1-2个AI（3-4功能暂未完成）
+        if self.parallel_ai_count > 2:
+            logger.warning(f"并行AI数量 {self.parallel_ai_count} 超过限制，自动降级到2")
+            self.parallel_ai_count = 2
+            prefs['parallel_ai_count'] = 2
+        
         # 根据并行AI数量动态设置最小宽度和高度
         min_widths = {
             1: 600,   # 单个：保持现有
             2: 1000,  # 2个：每个500px
-            3: 1000,  # 3个：1+2布局
-            4: 1200   # 4个：2x2布局，每个600px
         }
         min_heights = {
             1: 600,   # 单个：基础高度
             2: 600,   # 2个横向：同样高度
-            3: 900,   # 3个（1+2布局）：需要更高
-            4: 900    # 4个（2x2）：需要更高
         }
         self.setMinimumWidth(min_widths.get(self.parallel_ai_count, 600))
         self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 600))
-        
-        # 如果是3个AI，显示建议最大化窗口的提示
-        if self.parallel_ai_count == 3:
-            QTimer.singleShot(500, lambda: self.statusBar.showMessage(
-                self.i18n.get('suggest_maximize', 'Tip: Maximize window for better viewing with 3 AIs'),
-                5000
-            ))
         
         layout = QVBoxLayout()
         self.setLayout(layout)

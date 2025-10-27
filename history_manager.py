@@ -88,6 +88,20 @@ class HistoryManager:
                 'answers': {}  # 改为字典，支持多个AI的响应
             }
         
+        # 确保answers键存在（兼容旧格式）
+        if 'answers' not in self.histories[uid]:
+            # 旧格式转换：如果有answer字段，迁移到answers['default']
+            if 'answer' in self.histories[uid]:
+                old_answer = self.histories[uid].pop('answer')
+                self.histories[uid]['answers'] = {
+                    'default': {
+                        'answer': old_answer,
+                        'timestamp': self.histories[uid]['timestamp']
+                    }
+                }
+            else:
+                self.histories[uid]['answers'] = {}
+        
         # 更新或添加AI的响应
         if ai_id:
             # 多AI场景：保存特定AI的响应

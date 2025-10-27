@@ -331,6 +331,15 @@ class ResponseHandler(QObject):
                 logger.info(f"[API Request] 开始API请求, 时间: {time.strftime('%H:%M:%S')}")
                 api_start = time.time()
                 
+                # 如果指定了model_id，需要临时切换模型来检测流式支持
+                original_model = None
+                original_model_name = None
+                if model_id and model_id != self.api._model_name:
+                    logger.info(f"[流式检测] 临时切换模型以检测流式支持: {self.api._model_name} -> {model_id}")
+                    original_model = self.api._ai_model
+                    original_model_name = self.api._model_name
+                    self.api._switch_to_model(model_id)
+                
                 # 检查当前模型是否支持流式传输
                 # 首先检查模型是否已加载
                 if not self.api._ai_model:
@@ -340,6 +349,12 @@ class ResponseHandler(QObject):
                 streaming_enabled = self.api._ai_model.config.get('enable_streaming', True)  # 默认启用
                 
                 logger.info(f"[模型检测] 当前模型: {self.api.model_name}, 支持流式传输: {model_supports_streaming}, 启用流式传输: {streaming_enabled}")
+                
+                # 恢复原始模型（如果切换了的话）
+                if original_model is not None:
+                    logger.info(f"[流式检测] 恢复原始模型: {model_id} -> {original_model_name}")
+                    self.api._ai_model = original_model
+                    self.api._model_name = original_model_name
                 
                 if model_supports_streaming and streaming_enabled:
                     # 使用流式请求
