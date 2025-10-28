@@ -1183,11 +1183,28 @@ class AskDialog(QDialog):
             # 如果找到匹配的历史记录，加载它
             if matched_history:
                 self.input_area.setPlainText(matched_history['question'])
-                self.response_handler._update_ui_from_signal(
-                    matched_history['answer'], 
-                    is_response=True,
-                    is_history=True
-                )
+                
+                # 兼容新旧格式：优先使用answers字典，回退到answer字段
+                if 'answers' in matched_history and matched_history['answers']:
+                    # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
+                    first_ai_id = list(matched_history['answers'].keys())[0]
+                    answer_data = matched_history['answers'][first_ai_id]
+                    answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+                    logger.info(f"加载新格式历史记录，AI: {first_ai_id}")
+                elif 'answer' in matched_history:
+                    # 旧格式：直接使用answer字段
+                    answer_text = matched_history['answer']
+                    logger.info("加载旧格式历史记录")
+                else:
+                    answer_text = ""
+                    logger.warning("历史记录中没有找到答案内容")
+                
+                if answer_text:
+                    self.response_handler._update_ui_from_signal(
+                        answer_text, 
+                        is_response=True,
+                        is_history=True
+                    )
                 logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
             else:
                 logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")

@@ -241,6 +241,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'pdf_provider': '提供商',
             'pdf_model': '模型',
             'pdf_api_base_url': 'API基础URL',
+            'pdf_panel': '面板',
             'pdf_plugin': '插件',
             'pdf_github': 'GitHub',
             'pdf_software': '软件',

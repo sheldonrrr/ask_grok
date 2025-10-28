@@ -369,10 +369,184 @@ class ResponsePanel(QWidget):
         self._show_copy_tooltip(self.copy_qa_btn, self.i18n.get('copied', 'Copied!'))
     
     def export_to_pdf(self):
-        """导出为PDF"""
-        # TODO: 实现PDF导出功能
-        logger.info(f"面板 {self.panel_index} 导出PDF")
-        pass
+        """导出当前面板的问答为PDF文件"""
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from PyQt5.QtPrintSupport import QPrinter
+        from PyQt5.QtGui import QTextDocument
+        from datetime import datetime
+        
+        logger.info(f"面板 {self.panel_index} 开始导出PDF")
+        
+        # 从父对话框获取问题
+        question = ""
+        if hasattr(self.parent_dialog, 'input_area'):
+            question = self.parent_dialog.input_area.toPlainText().strip()
+        
+        # 获取当前面板的响应
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            logger.warning(f"面板 {self.panel_index} 没有内容可导出")
+            return
+        
+        # 生成默认文件名（使用时间戳和面板索引）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        ai_name = self.get_selected_ai() or "unknown"
+        default_filename = f"ask_ai_qa_{ai_name}_panel{self.panel_index + 1}_{timestamp}.pdf"
+        
+        # 打开文件保存对话框
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
+            default_filename,
+            "PDF Files (*.pdf)"
+        )
+        
+        if not file_path:
+            logger.debug(f"面板 {self.panel_index} 用户取消了PDF导出")
+            return
+        
+        try:
+            # 创建打印机对象
+            printer = QPrinter()
+            printer.setOutputFileName(file_path)
+            
+            # 构建书籍元数据信息
+            separator = "=" * 40
+            metadata_lines = []
+            
+            # 从父对话框获取书籍元数据
+            if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
+                book_metadata = self.parent_dialog.book_metadata
+                metadata_lines.append(separator)
+                metadata_lines.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                metadata_lines.append(separator)
+                
+                if book_metadata.get('title'):
+                    title_label = self.i18n.get('metadata_title', 'Title')
+                    metadata_lines.append(f"{title_label}: {book_metadata['title']}")
+                
+                if book_metadata.get('authors'):
+                    authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
+                    authors_label = self.i18n.get('metadata_authors', 'Authors')
+                    metadata_lines.append(f"{authors_label}: {authors}")
+                
+                if book_metadata.get('publisher'):
+                    publisher_label = self.i18n.get('metadata_publisher', 'Publisher')
+                    metadata_lines.append(f"{publisher_label}: {book_metadata['publisher']}")
+                
+                if book_metadata.get('pubdate'):
+                    pubdate = str(book_metadata['pubdate'])
+                    # 只保留年月，去掉详细时间
+                    if 'T' in pubdate:
+                        pubdate = pubdate.split('T')[0]
+                    if len(pubdate) > 7:
+                        pubdate = pubdate[:7]
+                    pubdate_label = self.i18n.get('metadata_pubyear', 'Publication Date')
+                    metadata_lines.append(f"{pubdate_label}: {pubdate}")
+                
+                if book_metadata.get('languages'):
+                    languages = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
+                    languages_label = self.i18n.get('metadata_language', 'Languages')
+                    metadata_lines.append(f"{languages_label}: {languages}")
+                
+                metadata_lines.append("")
+            
+            # 获取当前使用的AI模型信息
+            model_info_lines = []
+            try:
+                if hasattr(self, 'api') and self.api:
+                    logger.debug(f"面板 {self.panel_index} API对象存在: {self.api}")
+                    
+                    model_info_lines.append("")
+                    model_info_lines.append(separator)
+                    model_info_lines.append(self.i18n.get('pdf_ai_model_info', 'AI MODEL INFORMATION'))
+                    model_info_lines.append(separator)
+                    
+                    # 使用provider_name属性获取提供商名称
+                    provider = getattr(self.api, 'provider_name', 'Unknown')
+                    model_name = getattr(self.api, 'model', 'Unknown')
+                    api_url = getattr(self.api, 'api_base', '')
+                    
+                    provider_label = self.i18n.get('pdf_provider', 'Provider')
+                    model_label = self.i18n.get('pdf_model', 'Model')
+                    api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
+                    panel_label = self.i18n.get('pdf_panel', 'Panel')
+                    
+                    model_info_lines.append(f"{panel_label}: {self.panel_index + 1}")
+                    model_info_lines.append(f"{provider_label}: {provider}")
+                    model_info_lines.append(f"{model_label}: {model_name}")
+                    if api_url:
+                        model_info_lines.append(f"{api_url_label}: {api_url}")
+                else:
+                    logger.warning(f"面板 {self.panel_index} 没有API对象")
+                    info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                    model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
+            except Exception as e:
+                logger.error(f"面板 {self.panel_index} 获取模型信息失败: {str(e)}", exc_info=True)
+                info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
+            
+            # 组合所有内容
+            content_parts = []
+            
+            # 1. 书籍元数据（最开头）
+            if metadata_lines:
+                content_parts.append('\n'.join(metadata_lines))
+            
+            # 2. 问题
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
+            content_parts.append(separator)
+            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
+            content_parts.append("")
+            
+            # 3. 回答
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_answer', 'ANSWER'))
+            content_parts.append(separator)
+            content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
+            
+            # 4. AI模型信息（最后）
+            if model_info_lines:
+                content_parts.extend(model_info_lines)
+            
+            # 5. 生成信息
+            content_parts.append("")
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
+            content_parts.append(separator)
+            plugin_label = self.i18n.get('pdf_plugin', 'Plugin')
+            github_label = self.i18n.get('pdf_github', 'GitHub')
+            software_label = self.i18n.get('pdf_software', 'Software')
+            time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
+            content_parts.append(f"{plugin_label}: Ask AI Plugin (Calibre Plugin)")
+            content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"{software_label}: Calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(separator)
+            
+            content = '\n'.join(content_parts)
+            
+            # 使用QTextDocument打印
+            doc = QTextDocument()
+            doc.setPlainText(content)
+            doc.print(printer)
+            
+            logger.info(f"面板 {self.panel_index} PDF导出成功: {file_path}")
+            
+            # 显示成功提示
+            success_msg = self.i18n.get('pdf_exported', 'PDF Exported!')
+            self._show_copy_tooltip(self.export_btn, success_msg)
+            
+        except Exception as e:
+            logger.error(f"面板 {self.panel_index} 导出PDF失败: {str(e)}", exc_info=True)
+            error_msg = self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                error_msg
+            )
     
     def _show_copy_tooltip(self, button, text):
         """在按钮位置显示复制成功的提示"""

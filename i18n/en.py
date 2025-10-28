@@ -246,6 +246,7 @@ class EnglishTranslation(BaseTranslation):
             'pdf_provider': 'Provider',
             'pdf_model': 'Model',
             'pdf_api_base_url': 'API Base URL',
+            'pdf_panel': 'Panel',
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',

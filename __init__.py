@@ -86,6 +86,7 @@ class AskAIPlugin(InterfaceActionBase):
     version             = (1, 2, 3)
     minimum_calibre_version = (7, 0, 0)
     icon                = 'images/ask_ai_plugin.png'
+    uninstall           = 'Ask Grok'
 
     # Declare the main action associated with this plugin
     # The keyboard shortcut can be None if you dont want to use a keyboard
