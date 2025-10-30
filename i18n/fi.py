@@ -47,17 +47,26 @@ class FinnishTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Tallenna',
             'send_button': 'Lähetä',
+            'stop_button': 'Pysäytä',
             'suggest_button': 'Satunnainen kysymys',
             'copy_response': 'Kopioi vastaus',
             'copy_question_response': 'Kopioi K&&V',
+            'export_pdf': 'Vie PDF',
             'copied': 'Kopioitu!',
+            'pdf_exported': 'PDF viety!',
+            'export_pdf_dialog_title': 'Vie PDF-muotoon',
+            'export_pdf_error': 'PDF-viennin virhe: {0}',
+            'no_question': 'Ei kysymystä',
+            'no_response': 'Ei vastausta',
             'saved': 'Tallennettu',
             'close_button': 'Sulje',
             
             # UI - Asetuskentät
             'token_label': 'API-avain:',
+            'api_key_label': 'API-avain:',
             'model_label': 'Malli:',
-            'language_label': 'Kieli',
+            'language_label': 'Kieli:',
+            'language_label_old': 'Kieli',
             'base_url_label': 'Perus-URL:',
             'base_url_placeholder': 'Oletus: {default_api_base_url}',
             'shortcut': 'Pikanäppäin',
@@ -65,7 +74,6 @@ class FinnishTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': 'Malli',
-            'current_ai': 'Nykyinen tekoäly:',
             'action': 'Toiminto',
             'reset_button': 'Nollaa',
             'prompt_template': 'Kehotepohja',
@@ -82,7 +90,7 @@ class FinnishTranslation(BaseTranslation):
             'menu_ask': 'Kysy {model}',
             
             # UI - Tilaviestit
-            'loading': 'Ladataan',
+            'loading': 'Ladataan...',
             'loading_text': 'Kysytään',
             'save_success': 'Asetukset tallennettu',
             'sending': 'Lähetetään...',
@@ -101,6 +109,7 @@ class FinnishTranslation(BaseTranslation):
             'invalid_params': 'Virheelliset parametrit',
             'warning': 'Varoitus',
             'success': 'Onnistui',
+            'error': 'Virhe',
             
             # Metatietokentät
             'metadata_title': 'Otsikko',
@@ -113,6 +122,16 @@ class FinnishTranslation(BaseTranslation):
             'no_series': 'Ei sarjaa',
             'unknown': 'Tuntematon',
             
+            # Multi-book feature
+            'books_unit': ' kirjaa',
+            'new_conversation': 'Uusi keskustelu',
+            'single_book': 'Yksittäinen kirja',
+            'multi_book': 'Monikirja',
+            'deleted': 'Poistettu',
+            'history': 'Historia',
+            'multi_book_template_label': 'Monikirja-kehotepohja:',
+            'multi_book_placeholder_hint': 'Käytä {books_metadata} kirjan tiedoille, {query} käyttäjän kysymykselle',
+            
             # Virheviestit
             'error': 'Virhe: ',
             'network_error': 'Verkkovirhe',
@@ -120,7 +139,7 @@ class FinnishTranslation(BaseTranslation):
             'request_failed': 'Pyyntö epäonnistui',
             'question_too_long': 'Kysymys on liian pitkä',
             'auth_token_required_title': 'API-avain vaaditaan',
-            'auth_token_required_message': 'Aseta API-avain Liitännäisen Asetuksissa',
+            'auth_token_required_message': 'Aseta API-avain Liitännäisen Asetuksissa.',
             'error_preparing_request': 'Virhe pyyntöä valmistellessa',
             'empty_suggestion': 'Tyhjä ehdotus',
             'process_suggestion_error': 'Virhe ehdotuksen käsittelyssä',
@@ -191,6 +210,46 @@ class FinnishTranslation(BaseTranslation):
             'model_enable_streaming': 'Ota streaming käyttöön',
             'model_disable_ssl_verify': 'Poista SSL-vahvistus käytöstä',
             
+            # AI Switcher
+            'current_ai': 'Nykyinen tekoäly',
+            'no_configured_models': 'Tekoälyä ei määritetty - Määritä asetuksissa',
+            
+            # Provider specific info
+            'nvidia_free_info': '💡 Uudet käyttäjät saavat 6 kuukautta ilmaista API-käyttöä - Luottokorttia ei tarvita',
+            
             # Yleiset järjestelmäviestit
             'default_system_message': 'Olet kirja-analyysin asiantuntija. Tehtäväsi on auttaa käyttäjiä ymmärtämään kirjoja paremmin tarjoamalla oivaltavia kysymyksiä ja analyysejä.',
+            
+            # Request timeout settings
+            'request_timeout_label': 'Pyyntöjen aikakatkaisu:',
+            'seconds': 'sekuntia',
+            'request_timeout_error': 'Pyyntö aikakatkaistiin. Nykyinen aikakatkaisu: {timeout} sekuntia',
+            
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Rinnakkaisten tekoälyjen määrä:',
+            'parallel_ai_count_tooltip': 'Samanaikaisesti kyseltävien tekoälymallien määrä (1-2 saatavilla, 3-4 tulossa pian)',
+            'parallel_ai_notice': 'Huomaa: Tämä vaikuttaa vain kysymysten lähettämiseen. Satunnaiset kysymykset käyttävät aina yhtä tekoälyä.',
+            'suggest_maximize': 'Vinkki: Suurenna ikkunaa nähdäksesi paremmin 3 tekoälyllä',
+            'ai_panel_label': 'Tekoäly {index}:',
+            'no_ai_available': 'Ei tekoälyä käytettävissä tälle paneelille',
+            'add_more_ai_providers': 'Lisää tekoälyntarjoajia asetuksissa',
+            'select_ai': '-- Valitse tekoäly --',
+            'coming_soon': 'Tulossa pian',
+            'advanced_feature_tooltip': 'Tämä ominaisuus on kehitysvaiheessa. Pysy kuulolla päivityksistä!',
+            
+            # PDF export section titles
+            'pdf_book_metadata': 'KIRJAN METATIEDOT',
+            'pdf_question': 'KYSYMYS',
+            'pdf_answer': 'VASTAUS',
+            'pdf_ai_model_info': 'TEKOÄLYMALLIN TIEDOT',
+            'pdf_generated_by': 'LUONUT',
+            'pdf_provider': 'Palveluntarjoaja',
+            'pdf_model': 'Malli',
+            'pdf_api_base_url': 'API-perus-URL',
+            'pdf_panel': 'Paneeli',
+            'pdf_plugin': 'Liitännäinen',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Ohjelmisto',
+            'pdf_generated_time': 'Luontiaika',
+            'pdf_info_not_available': 'Tietoja ei saatavilla',
         }

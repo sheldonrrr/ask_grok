@@ -47,10 +47,17 @@ class GermanTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Speichern',
             'send_button': 'Senden',
+            'stop_button': 'Stoppen',
             'suggest_button': 'Zufällige Frage',
             'copy_response': 'Antwort kopieren',
             'copy_question_response': 'F&&A kopieren',
+            'export_pdf': 'PDF exportieren',
             'copied': 'Kopiert!',
+            'pdf_exported': 'PDF exportiert!',
+            'export_pdf_dialog_title': 'In PDF exportieren',
+            'export_pdf_error': 'Fehler beim Exportieren der PDF: {0}',
+            'no_question': 'Keine Frage',
+            'no_response': 'Keine Antwort',
             'saved': 'Gespeichert',
             'close_button': 'Schließen',
             
@@ -84,7 +91,7 @@ class GermanTranslation(BaseTranslation):
             'menu_ask': 'Frage {model}',
             
             # UI - Statusmeldungen
-            'loading': 'Laden',
+            'loading': 'Laden...',
             'loading_text': 'Frage stellen',
             'save_success': 'Einstellungen gespeichert',
             'sending': 'Senden...',
@@ -103,6 +110,7 @@ class GermanTranslation(BaseTranslation):
             'invalid_params': 'Ungültige Parameter',
             'warning': 'Warnung',
             'success': 'Erfolg',
+            'error': 'Fehler',
             
             # Metadatenfelder
             'metadata_title': 'Titel',
@@ -114,6 +122,16 @@ class GermanTranslation(BaseTranslation):
             'no_metadata': 'Keine Metadaten',
             'no_series': 'Keine Reihe',
             'unknown': 'Unbekannt',
+
+            # Multi-book feature
+            'books_unit': ' Bücher',
+            'new_conversation': 'Neue Unterhaltung',
+            'single_book': 'Einzelnes Buch',
+            'multi_book': 'Mehrere Bücher',
+            'deleted': 'Gelöscht',
+            'history': 'Verlauf',
+            'multi_book_template_label': 'Prompt-Vorlage für mehrere Bücher:',
+            'multi_book_placeholder_hint': 'Verwenden Sie {books_metadata} für Buchinformationen, {query} für die Benutzerfrage',
             
             # Fehlermeldungen
             'error': 'Fehler: ',
@@ -122,7 +140,7 @@ class GermanTranslation(BaseTranslation):
             'request_failed': 'Anfrage fehlgeschlagen',
             'question_too_long': 'Frage zu lang',
             'auth_token_required_title': 'API-Schlüssel erforderlich',
-            'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen',
+            'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen.',
             'error_preparing_request': 'Fehler bei der Anfragevorbereitung',
             'empty_suggestion': 'Leerer Vorschlag',
             'process_suggestion_error': 'Fehler bei der Vorschlagsverarbeitung',
@@ -192,7 +210,47 @@ class GermanTranslation(BaseTranslation):
             'model_display_name_custom': 'Benutzerdefiniert',
             'model_enable_streaming': 'Streaming aktivieren',
             'model_disable_ssl_verify': 'SSL-Verifizierung deaktivieren',
+
+            # AI Switcher
+            'current_ai': 'Aktuelle KI',
+            'no_configured_models': 'Keine KI konfiguriert - Bitte in den Einstellungen konfigurieren',
             
-            # Allgemeine Systemnachrichten
+            # Provider specific info
+            'nvidia_free_info': '💡 Neue Benutzer erhalten 6 Monate kostenlosen API-Zugang - Keine Kreditkarte erforderlich',
+            
+            # Common system messages
             'default_system_message': 'Sie sind ein Experte für Buchanalysen. Ihre Aufgabe ist es, Benutzern zu helfen, Bücher besser zu verstehen, indem Sie aufschlussreiche Fragen und Analysen bereitstellen.',
+
+            # Request timeout settings
+            'request_timeout_label': 'Anfrage-Timeout:',
+            'seconds': 'Sekunden',
+            'request_timeout_error': 'Anfrage-Timeout. Aktuelles Timeout: {timeout} Sekunden',
+            
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Anzahl paralleler KIs:',
+            'parallel_ai_count_tooltip': 'Anzahl der gleichzeitig abzufragenden KI-Modelle (1-2 verfügbar, 3-4 in Kürze)',
+            'parallel_ai_notice': 'Hinweis: Dies betrifft nur das Senden von Fragen. Zufällige Fragen verwenden immer eine einzelne KI.',
+            'suggest_maximize': 'Tipp: Maximieren Sie das Fenster für eine bessere Ansicht mit 3 KIs',
+            'ai_panel_label': 'KI {index}:',
+            'no_ai_available': 'Keine KI für dieses Panel verfügbar',
+            'add_more_ai_providers': 'Bitte fügen Sie weitere KI-Anbieter in den Einstellungen hinzu',
+            'select_ai': '-- KI auswählen --',
+            'coming_soon': 'Demnächst verfügbar',
+            'advanced_feature_tooltip': 'Diese Funktion befindet sich in der Entwicklung. Bleiben Sie dran für Updates!',
+            
+            # PDF export section titles
+            'pdf_book_metadata': 'BUCHMETADATEN',
+            'pdf_question': 'FRAGE',
+            'pdf_answer': 'ANTWORT',
+            'pdf_ai_model_info': 'KI-MODELL-INFORMATIONEN',
+            'pdf_generated_by': 'GENERIERET VON',
+            'pdf_provider': 'Anbieter',
+            'pdf_model': 'Modell',
+            'pdf_api_base_url': 'API-Basis-URL',
+            'pdf_panel': 'Panel',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Software',
+            'pdf_generated_time': 'Generierte Zeit',
+            'pdf_info_not_available': 'Informationen nicht verfügbar',
         }

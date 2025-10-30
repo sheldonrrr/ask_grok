@@ -47,17 +47,26 @@ class CantoneseTranslation(BaseTranslation):
             'ok_button': '確定',
             'save_button': '儲存',
             'send_button': '發送',
+            'stop_button': '停止',
             'suggest_button': '隨機問題',
             'copy_response': '複製回答',
             'copy_question_response': '複製問答',
+            'export_pdf': '導出 PDF',
             'copied': '已複製！',
+            'pdf_exported': 'PDF 已導出！',
+            'export_pdf_dialog_title': '導出為 PDF',
+            'export_pdf_error': 'PDF 導出錯誤：{0}',
+            'no_question': '冇問題',
+            'no_response': '冇回應',
             'saved': '已儲存',
             'close_button': '關閉',
             
             # UI - 設定欄位
             'token_label': 'API金鑰:',
+            'api_key_label': 'API金鑰:',
             'model_label': '模型:',
-            'language_label': '語言',
+            'language_label': '語言:',
+            'language_label_old': '語言',
             'base_url_label': '基礎URL:',
             'base_url_placeholder': '預設: {default_api_base_url}',
             'shortcut': '快捷鍵',
@@ -65,7 +74,6 @@ class CantoneseTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': '模型',
-            'current_ai': '而家人工智能:',
             'action': '操作',
             'reset_button': '重置',
             'prompt_template': '提示模板',
@@ -101,26 +109,37 @@ class CantoneseTranslation(BaseTranslation):
             'invalid_params': '無效參數',
             'warning': '警告',
             'success': '成功',
+            'error': '錯誤',
             
             # 元數據欄位
             'metadata_title': '標題',
             'metadata_authors': '作者',
             'metadata_publisher': '出版社',
-            'metadata_pubyear': '出版日期',
+            'metadata_pubyear': '出版年份',
             'metadata_language': '語言',
             'metadata_series': '系列',
-            'no_metadata': '冠元數據',
-            'no_series': '冠系列',
+            'no_metadata': '冇元數據',
+            'no_series': '冇系列',
             'unknown': '未知',
+
+            # 多本書功能
+            'books_unit': ' 本書',
+            'new_conversation': '新對話',
+            'single_book': '單本書',
+            'multi_book': '多本書',
+            'deleted': '已刪除',
+            'history': '歷史',
+            'multi_book_template_label': '多本書提示模板:',
+            'multi_book_placeholder_hint': '用 {books_metadata} 嚟表示書本信息，{query} 嚟表示用戶問題',
             
             # 錯誤消息
             'error': '錯誤: ',
             'network_error': '網絡錯誤',
-            'request_timeout': '請求逾時',
+            'request_timeout': '請求超時',
             'request_failed': '請求失敗',
             'question_too_long': '問題太長',
             'auth_token_required_title': '需要API金鑰',
-            'auth_token_required_message': '請在插件配置內設置API金鑰',
+            'auth_token_required_message': '請在插件配置內設置API金鑰。',
             'error_preparing_request': '準備請求時出錯',
             'empty_suggestion': '空建議',
             'process_suggestion_error': '處理建議時出錯',
@@ -136,40 +155,40 @@ class CantoneseTranslation(BaseTranslation):
             'auth_error_403': '拒絕訪問',
             'rate_limit': '請求太多',
             'invalid_json': '無效嘅JSON',
-            'no_response': '冠回應',
+            'no_response': '冇回應',
             'template_error': '模板錯誤',
             'no_model_configured': '未設置人工智能模型。請在設定內設置人工智能模型。',
             'random_question_error': '生成隨機問題時出錯',
             'clear_history_failed': '清除歷史失敗',
-            'clear_history_not_supported': '而家不支持清除單本書嘉歷史記錄',
-            'missing_required_config': '缺少必要嘉設定: {key}。請檢查你嘉設定。',
-            'api_key_too_short': 'API金鑰太短。請檢查並輸入完整嘉金鑰。',
+            'clear_history_not_supported': '而家唔支持清除單本書嘅歷史記錄',
+            'missing_required_config': '缺少必要嘅設定: {key}。請檢查你嘅設定。',
+            'api_key_too_short': 'API金鑰太短。請檢查並輸入完整嘅金鑰。',
             
             # API回應處理
             'api_request_failed': 'API請求失敗: {error}',
             'api_content_extraction_failed': '無法從API回應中提取內容',
-            'api_invalid_response': '收到嘉API回應無效',
+            'api_invalid_response': '收到嘅API回應無效',
             'api_unknown_error': '未知錯誤: {error}',
             
             # 流式回應處理
             'stream_response_code': '流式回應狀態碼: {code}',
-            'stream_continue_prompt': '繼續你嘉上一個回應，不使重複已經提供嘉內容。',
-            'stream_continue_code_blocks': '你嘉上一個回應有未關閉嘉代碼塊。繼續並完成呢些代碼塊。',
-            'stream_continue_parentheses': '你嘉上一個回應有未關閉嘉括號。繼續並確保所有括號都正確關閉。',
-            'stream_continue_interrupted': '你嘉上一個回應似乎被中斷啦。繼續並完成你嘉最後一個思考或解釋。',
-            'stream_timeout_error': '流式傳輸在60秒內沒收到新嘉內容，可能係連接問題。',
+            'stream_continue_prompt': '繼續你嘅上一個回應，唔使重複已經提供嘅內容。',
+            'stream_continue_code_blocks': '你嘅上一個回應有未關閉嘅代碼塊。繼續並完成呢啲代碼塊。',
+            'stream_continue_parentheses': '你嘅上一個回應有未關閉嘅括號。繼續並確保所有括號都正確關閉。',
+            'stream_continue_interrupted': '你嘅上一個回應似乎被中斷咗。繼續並完成你嘅最後一個思考或解釋。',
+            'stream_timeout_error': '流式傳輸喺60秒內冇收到新嘅內容，可能係連接問題。',
             
             # API錯誤消息
-            'api_version_model_error': 'API版本或模型名稱錯誤: {message}\n\n請更新API基礎URL為"{base_url}"，以及模型為"{model}"或在設定中嘉其他可用模型。',
+            'api_version_model_error': 'API版本或模型名稱錯誤: {message}\n\n請更新API基礎URL為"{base_url}"，以及模型為"{model}"或在設定中添加其他可用模型。',
             'api_format_error': 'API請求格式錯誤: {message}',
-            'api_key_invalid': '無效或未授權嘉API金鑰: {message}\n\n請檢查你嘉API金鑰並確保已開啟API訪問。',
-            'api_rate_limit': '超出請求限制，請稍後再試\n\n你可能超出啦免費配額。呢可能係因為:\n1. 每分鐘請求太多\n2. 每日請求太多\n3. 每分鐘輸入嘉令牌太多',
+            'api_key_invalid': '無效或未授權嘅API金鑰: {message}\n\n請檢查你嘅API金鑰並確保已開啟API訪問。',
+            'api_rate_limit': '超出請求限制，請稍後再試\n\n你可能超出咗免費配額。呢可能係因為:\n1. 每分鐘請求太多\n2. 每日請求太多\n3. 每分鐘輸入嘅令牌太多',
             
             # 設定錯誤
-            'missing_config_key': '缺少必要嘉設定鍵: {key}',
+            'missing_config_key': '缺少必要嘅設定鍵: {key}',
             'api_base_url_required': '需要API基礎URL',
             'model_name_required': '需要模型名稱',
-            'api_key_empty': 'API金鑰為空。請輸入有效嘉API金鑰。',
+            'api_key_empty': 'API金鑰為空。請輸入有效嘅API金鑰。',
             
             # 模型列表獲取
             'fetching_models_from': '正在從 {url} 獲取模型',
@@ -179,17 +198,58 @@ class CantoneseTranslation(BaseTranslation):
             # 關於信息
             'author_name': 'Sheldon',
             'user_manual': '用戶手冊',
-            'about_plugin': '為哪 Ask AI Plugin？',
+            'about_plugin': '點解揀 Ask AI Plugin？',
             'learn_how_to_use': '點樣用',
             'email': 'iMessage',
             
-            # 模型特定設置
+            # 模型特定設定
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
-            'model_display_name_custom': '自定義',
-            'model_enable_streaming': '啟用串流傳輸',
+            'model_display_name_custom': '自訂',
+            'model_enable_streaming': '啟用流式傳輸',
+            'model_disable_ssl_verify': '禁用 SSL 驗證',
+
+            # AI 切換器
+            'current_ai': '當前 AI',
+            'no_configured_models': '未配置 AI - 請在設定中配置',
             
-            # 通用系統訊息
-            'default_system_message': '你係一個書籍分析嘉專家。你嘉任務係幫助用戶透過提供有見地嘉問題同分析，更加理解書籍。',
+            # 提供商特定信息
+            'nvidia_free_info': '💡 新用戶有 6 個月免費 API 訪問 - 唔使信用卡',
+            
+            # 一般系統消息
+            'default_system_message': '你係一個書籍分析專家。你嘅任務係通過提供有見地嘅問題同分析，幫助用戶更好咁理解書籍。',
+
+            # 請求超時設定
+            'request_timeout_label': '請求超時:',
+            'seconds': '秒',
+            'request_timeout_error': '請求超時。而家嘅超時時間：{timeout} 秒',
+            
+            # 並行 AI 設定
+            'parallel_ai_count_label': '並行 AI 數量:',
+            'parallel_ai_count_tooltip': '同時查詢嘅 AI 模型數量 (1-2 可用，3-4 即將推出)',
+            'parallel_ai_notice': '注意：呢個只影響發送問題。隨機問題總係用單個 AI。',
+            'suggest_maximize': '貼士：最大化窗口，用 3 個 AI 睇得更好',
+            'ai_panel_label': 'AI {index}:',
+            'no_ai_available': '呢個面板冇可用嘅 AI',
+            'add_more_ai_providers': '請喺設定中添加更多 AI 提供商',
+            'select_ai': '-- 選擇 AI --',
+            'coming_soon': '即將推出',
+            'advanced_feature_tooltip': '呢個功能開發緊。請留意更新！',
+            
+            # PDF 導出部分標題
+            'pdf_book_metadata': '書籍元數據',
+            'pdf_question': '問題',
+            'pdf_answer': '回答',
+            'pdf_ai_model_info': 'AI 模型信息',
+            'pdf_generated_by': '由...生成',
+            'pdf_provider': '提供商',
+            'pdf_model': '模型',
+            'pdf_api_base_url': 'API 基礎 URL',
+            'pdf_panel': '面板',
+            'pdf_plugin': '插件',
+            'pdf_github': 'GitHub',
+            'pdf_software': '軟件',
+            'pdf_generated_time': '生成時間',
+            'pdf_info_not_available': '信息不可用',
         }

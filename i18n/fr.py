@@ -47,17 +47,26 @@ class FrenchTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Enregistrer',
             'send_button': 'Envoyer',
+            'stop_button': 'Arrêter',
             'suggest_button': 'Question Aléatoire',
             'copy_response': 'Copier la Réponse',
             'copy_question_response': 'Copier Q&&R',
+            'export_pdf': 'Exporter PDF',
             'copied': 'Copié!',
+            'pdf_exported': 'PDF Exporté!',
+            'export_pdf_dialog_title': 'Exporter au format PDF',
+            'export_pdf_error': 'Échec de l\'exportation PDF: {0}',
+            'no_question': 'Pas de question',
+            'no_response': 'Pas de réponse',
             'saved': 'Enregistré',
             'close_button': 'Fermer',
             
             # UI - Champs de configuration
             'token_label': 'Clé API:',
+            'api_key_label': 'Clé API:',
             'model_label': 'Modèle:',
-            'language_label': 'Langue',
+            'language_label': 'Langue:',
+            'language_label_old': 'Langue',
             'base_url_label': 'URL de Base:',
             'base_url_placeholder': 'Par défaut: {default_api_base_url}',
             'shortcut': 'Touche de Raccourci',
@@ -65,7 +74,6 @@ class FrenchTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Entrée',
             'shortcut_return': 'Command + Retour',
             'using_model': 'Modèle',
-            'current_ai': 'IA Actuelle:',
             'action': 'Action',
             'reset_button': 'Réinitialiser',
             'prompt_template': 'Modèle de Prompt',
@@ -82,7 +90,7 @@ class FrenchTranslation(BaseTranslation):
             'menu_ask': 'Demander à {model}',
             
             # UI - Messages d'état
-            'loading': 'Chargement',
+            'loading': 'Chargement...',
             'loading_text': 'Demande en cours',
             'save_success': 'Paramètres enregistrés',
             'sending': 'Envoi en cours...',
@@ -101,6 +109,7 @@ class FrenchTranslation(BaseTranslation):
             'invalid_params': 'Paramètres invalides',
             'warning': 'Avertissement',
             'success': 'Succès',
+            'error': 'Erreur',
             
             # Champs de métadonnées
             'metadata_title': 'Titre',
@@ -112,6 +121,16 @@ class FrenchTranslation(BaseTranslation):
             'no_metadata': 'Pas de métadonnées',
             'no_series': 'Pas de série',
             'unknown': 'Inconnu',
+
+            # Fonctionnalité multi-livres
+            'books_unit': ' livres',
+            'new_conversation': 'Nouvelle Conversation',
+            'single_book': 'Livre Unique',
+            'multi_book': 'Multi-Livres',
+            'deleted': 'Supprimé',
+            'history': 'Historique',
+            'multi_book_template_label': 'Modèle de Prompt Multi-Livres:',
+            'multi_book_placeholder_hint': 'Utilisez {books_metadata} pour les informations du livre, {query} pour la question de l\'utilisateur',
             
             # Messages d'erreur
             'error': 'Erreur: ',
@@ -120,10 +139,10 @@ class FrenchTranslation(BaseTranslation):
             'request_failed': 'Échec de la requête',
             'question_too_long': 'Question trop longue',
             'auth_token_required_title': 'Clé API Requise',
-            'auth_token_required_message': 'Veuillez définir la clé API dans la Configuration du Plugin',
-            'error_preparing_request': 'Échec de préparation de la requête',
+            'auth_token_required_message': 'Veuillez définir la clé API dans la Configuration du Plugin.',
+            'error_preparing_request': 'Échec de la préparation de la requête',
             'empty_suggestion': 'Suggestion vide',
-            'process_suggestion_error': 'Erreur de traitement de suggestion',
+            'process_suggestion_error': 'Erreur de traitement de la suggestion',
             'unknown_error': 'Erreur inconnue',
             'unknown_model': 'Modèle inconnu: {model_name}',
             'suggestion_error': 'Erreur de suggestion',
@@ -134,55 +153,55 @@ class FrenchTranslation(BaseTranslation):
             'invalid_response': 'Réponse invalide',
             'auth_error_401': 'Non autorisé',
             'auth_error_403': 'Accès refusé',
-            'rate_limit': 'Trop de requêtes',
+            'rate_limit': 'Limite de taux de requêtes dépassée',
             'invalid_json': 'JSON invalide',
             'no_response': 'Pas de réponse',
             'template_error': 'Erreur de modèle',
             'no_model_configured': 'Aucun modèle d\'IA configuré. Veuillez configurer un modèle d\'IA dans les paramètres.',
             'random_question_error': 'Erreur lors de la génération d\'une question aléatoire',
             'clear_history_failed': 'Échec de l\'effacement de l\'historique',
-            'clear_history_not_supported': 'L\'effacement de l\'historique pour un seul livre n\'est pas encore pris en charge',
+            'clear_history_not_supported': 'L\'effacement de l\'historique pour un seul livre n\'est pas encore supporté',
             'missing_required_config': 'Configuration requise manquante: {key}. Veuillez vérifier vos paramètres.',
-            'api_key_too_short': 'La clé API est trop courte. Veuillez vérifier et saisir la clé complète.',
-            
-            # Traitement des réponses API
+            'api_key_too_short': 'La clé API est trop courte. Veuillez vérifier et entrer la clé complète.',
+
+            # Gestion des réponses API
             'api_request_failed': 'Échec de la requête API: {error}',
             'api_content_extraction_failed': 'Impossible d\'extraire le contenu de la réponse API',
             'api_invalid_response': 'Impossible d\'obtenir une réponse API valide',
             'api_unknown_error': 'Erreur inconnue: {error}',
-            
-            # Traitement des réponses en streaming
-            'stream_response_code': 'Code d\'état de réponse en streaming: {code}',
+
+            # Gestion des réponses en streaming
+            'stream_response_code': 'Code d\'état de la réponse en streaming: {code}',
             'stream_continue_prompt': 'Veuillez continuer votre réponse précédente sans répéter le contenu déjà fourni.',
             'stream_continue_code_blocks': 'Votre réponse précédente contenait des blocs de code non fermés. Veuillez continuer et compléter ces blocs de code.',
             'stream_continue_parentheses': 'Votre réponse précédente contenait des parenthèses non fermées. Veuillez continuer et vous assurer que toutes les parenthèses sont correctement fermées.',
-            'stream_continue_interrupted': 'Votre réponse précédente semble avoir été interrompue. Veuillez continuer à compléter votre dernière pensée ou explication.',
-            'stream_timeout_error': 'La transmission en streaming n\'a pas reçu de nouveau contenu pendant 60 secondes, peut-être un problème de connexion.',
-            
-            # Messages d\'erreur API
-            'api_version_model_error': 'Erreur de version API ou de nom de modèle: {message}\n\nVeuillez mettre à jour l\'URL de base API à "{base_url}" et le modèle à "{model}" ou un autre modèle disponible dans les paramètres.',
+            'stream_continue_interrupted': 'Votre réponse précédente semble avoir été interrompue. Veuillez continuer en complétant votre dernière pensée ou explication.',
+            'stream_timeout_error': 'La connexion de streaming n\'a pas reçu de nouveau contenu depuis 60 secondes, il s\'agit probablement d\'un problème de connexion.',
+
+            # Messages d'erreur API
+            'api_version_model_error': 'Erreur de version API ou de nom de modèle: {message}\n\nVeuillez mettre à jour l\'URL de base de l\'API vers "{base_url}" et le modèle vers "{model}" ou un autre modèle disponible dans les paramètres.',
             'api_format_error': 'Erreur de format de requête API: {message}',
-            'api_key_invalid': 'Clé API invalide ou non autorisée: {message}\n\nVeuillez vérifier votre clé API et vous assurer que l\'accès API est activé.',
-            'api_rate_limit': 'Limite de fréquence de requêtes dépassée, veuillez réessayer plus tard\n\nVous avez peut-être dépassé le quota d\'utilisation gratuite. Cela pourrait être dû à:\n1. Trop de requêtes par minute\n2. Trop de requêtes par jour\n3. Trop de jetons d\'entrée par minute',
-            
+            'api_key_invalid': 'Clé API invalide ou non autorisée: {message}\n\nVeuillez vérifier votre clé API et vous assurer que l\'accès à l\'API est activé.',
+            'api_rate_limit': 'Limite de taux de requête dépassée, veuillez réessayer plus tard\n\nVous avez peut-être dépassé le quota d\'utilisation gratuit. Cela peut être dû à:\n1. Trop de requêtes par minute\n2. Trop de requêtes par jour\n3. Trop de jetons d\'entrée par minute',
+
             # Erreurs de configuration
             'missing_config_key': 'Clé de configuration requise manquante: {key}',
             'api_base_url_required': 'URL de base API requise',
             'model_name_required': 'Nom du modèle requis',
             'api_key_empty': 'La clé API est vide. Veuillez entrer une clé API valide.',
-            
+
             # Récupération de la liste des modèles
             'fetching_models_from': 'Récupération des modèles depuis {url}',
             'successfully_fetched_models': '{count} modèles {provider} récupérés avec succès',
             'failed_to_fetch_models': 'Échec de la récupération des modèles : {error}',
-            
+
             # Informations à propos
             'author_name': 'Sheldon',
             'user_manual': 'Manuel d\'Utilisateur',
             'about_plugin': 'Pourquoi Ask AI Plugin?',
             'learn_how_to_use': 'Comment Utiliser',
             'email': 'iMessage',
-            
+
             # Configurations spécifiques au modèle
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
@@ -190,7 +209,47 @@ class FrenchTranslation(BaseTranslation):
             'model_display_name_custom': 'Personnalisé',
             'model_enable_streaming': 'Activer le streaming',
             'model_disable_ssl_verify': 'Désactiver la vérification SSL',
-            
+
+            # AI Switcher
+            'current_ai': 'IA Actuelle',
+            'no_configured_models': 'Aucune IA configurée - Veuillez configurer dans les paramètres',
+
+            # Info spécifique au fournisseur
+            'nvidia_free_info': '💡 Les nouveaux utilisateurs bénéficient de 6 mois d\'accès API gratuit - Aucune carte de crédit requise',
+
             # Messages système communs
             'default_system_message': 'Vous êtes un expert en analyse de livres. Votre tâche est d\'aider les utilisateurs à mieux comprendre les livres en fournissant des questions et des analyses perspicaces.',
+
+            # Paramètres de délai de requête
+            'request_timeout_label': 'Délai d\'attente de la requête:',
+            'seconds': 'secondes',
+            'request_timeout_error': 'Délai d\'attente de la requête dépassé. Délai actuel: {timeout} secondes',
+
+            # Paramètres d'IA parallèle
+            'parallel_ai_count_label': 'Nombre d\'IA parallèles:',
+            'parallel_ai_count_tooltip': 'Nombre de modèles d\'IA à interroger simultanément (1-2 disponibles, 3-4 à venir)',
+            'parallel_ai_notice': 'Remarque: Cela n\'affecte que l\'envoi des questions. Les questions aléatoires utilisent toujours une seule IA.',
+            'suggest_maximize': 'Conseil: Maximisez la fenêtre pour une meilleure visualisation avec 3 IAs',
+            'ai_panel_label': 'IA {index}:',
+            'no_ai_available': 'Aucune IA disponible pour ce panneau',
+            'add_more_ai_providers': 'Veuillez ajouter plus de fournisseurs d\'IA dans les paramètres',
+            'select_ai': '-- Sélectionner l\'IA --',
+            'coming_soon': 'Bientôt disponible',
+            'advanced_feature_tooltip': 'Cette fonctionnalité est en cours de développement. Restez à l\'écoute des mises à jour!',
+
+            # Titres de section d'exportation PDF
+            'pdf_book_metadata': 'MÉTADONNÉES DU LIVRE',
+            'pdf_question': 'QUESTION',
+            'pdf_answer': 'RÉPONSE',
+            'pdf_ai_model_info': 'INFORMATIONS SUR LE MODÈLE D\'IA',
+            'pdf_generated_by': 'GÉNÉRÉ PAR',
+            'pdf_provider': 'Fournisseur',
+            'pdf_model': 'Modèle',
+            'pdf_api_base_url': 'URL de base de l\'API',
+            'pdf_panel': 'Panneau',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Logiciel',
+            'pdf_generated_time': 'Heure de génération',
+            'pdf_info_not_available': 'Information non disponible',
         }

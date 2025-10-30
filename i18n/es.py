@@ -47,17 +47,26 @@ class SpanishTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Guardar',
             'send_button': 'Enviar',
+            'stop_button': 'Detener',
             'suggest_button': 'Pregunta Aleatoria',
             'copy_response': 'Copiar Respuesta',
             'copy_question_response': 'Copiar P&&R',
+            'export_pdf': 'Exportar PDF',
             'copied': '¡Copiado!',
+            'pdf_exported': '¡PDF Exportado!',
+            'export_pdf_dialog_title': 'Exportar a PDF',
+            'export_pdf_error': 'Error al exportar PDF: {0}',
+            'no_question': 'Sin pregunta',
+            'no_response': 'Sin respuesta',
             'saved': 'Guardado',
             'close_button': 'Cerrar',
             
             # UI - Campos de configuración
             'token_label': 'Clave API:',
+            'api_key_label': 'Clave API:',
             'model_label': 'Modelo:',
-            'language_label': 'Idioma',
+            'language_label': 'Idioma:',
+            'language_label_old': 'Idioma',
             'base_url_label': 'URL Base:',
             'base_url_placeholder': 'Predeterminado: {default_api_base_url}',
             'shortcut': 'Tecla de Atajo',
@@ -65,7 +74,6 @@ class SpanishTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': 'Modelo',
-            'current_ai': 'IA Actual:',
             'action': 'Acción',
             'reset_button': 'Restablecer',
             'prompt_template': 'Plantilla de Prompt',
@@ -82,7 +90,7 @@ class SpanishTranslation(BaseTranslation):
             'menu_ask': 'Preguntar a {model}',
             
             # UI - Mensajes de estado
-            'loading': 'Cargando',
+            'loading': 'Cargando...',
             'loading_text': 'Preguntando',
             'save_success': 'Configuración guardada',
             'sending': 'Enviando...',
@@ -101,6 +109,7 @@ class SpanishTranslation(BaseTranslation):
             'invalid_params': 'Parámetros inválidos',
             'warning': 'Advertencia',
             'success': 'Éxito',
+            'error': 'Error',
             
             # Campos de metadatos
             'metadata_title': 'Título',
@@ -112,6 +121,16 @@ class SpanishTranslation(BaseTranslation):
             'no_metadata': 'Sin metadatos',
             'no_series': 'Sin serie',
             'unknown': 'Desconocido',
+
+            # Multi-book feature
+            'books_unit': ' libros',
+            'new_conversation': 'Nueva Conversación',
+            'single_book': 'Libro Único',
+            'multi_book': 'Multi-Libro',
+            'deleted': 'Eliminado',
+            'history': 'Historial',
+            'multi_book_template_label': 'Plantilla de Prompt Multi-Libro:',
+            'multi_book_placeholder_hint': 'Use {books_metadata} para información del libro, {query} para la pregunta del usuario',
             
             # Mensajes de error
             'error': 'Error: ',
@@ -120,7 +139,7 @@ class SpanishTranslation(BaseTranslation):
             'request_failed': 'Solicitud fallida',
             'question_too_long': 'Pregunta demasiado larga',
             'auth_token_required_title': 'Clave API Requerida',
-            'auth_token_required_message': 'Por favor configura la clave API en Configuración del Plugin',
+            'auth_token_required_message': 'Por favor configura la clave API en Configuración del Plugin.',
             'error_preparing_request': 'Error al preparar la solicitud',
             'empty_suggestion': 'Sugerencia vacía',
             'process_suggestion_error': 'Error al procesar sugerencia',
@@ -169,12 +188,12 @@ class SpanishTranslation(BaseTranslation):
             'missing_config_key': 'Falta clave de configuración requerida: {key}',
             'api_base_url_required': 'Se requiere URL Base API',
             'model_name_required': 'Se requiere nombre de modelo',
-            'api_key_empty': 'La clave API está vacía. Por favor, ingrese una clave API válida.',
             
             # Obtención de lista de modelos
             'fetching_models_from': 'Obteniendo modelos desde {url}',
             'successfully_fetched_models': '{count} modelos {provider} obtenidos exitosamente',
             'failed_to_fetch_models': 'Error al obtener modelos: {error}',
+            'api_key_empty': 'La clave API está vacía. Por favor, ingrese una clave API válida.',
             
             # Información de Acerca de
             'author_name': 'Sheldon',
@@ -190,7 +209,47 @@ class SpanishTranslation(BaseTranslation):
             'model_display_name_custom': 'Personalizado',
             'model_enable_streaming': 'Habilitar streaming',
             'model_disable_ssl_verify': 'Deshabilitar verificación SSL',
+
+            # AI Switcher
+            'current_ai': 'IA Actual',
+            'no_configured_models': 'No hay IA configurada - Por favor configure en ajustes',
             
-            # Mensajes del sistema comunes
+            # Provider specific info
+            'nvidia_free_info': '💡 Los nuevos usuarios obtienen 6 meses de acceso gratuito a la API - No se requiere tarjeta de crédito',
+            
+            # Common system messages
             'default_system_message': 'Eres un experto en análisis de libros. Tu tarea es ayudar a los usuarios a entender mejor los libros proporcionando preguntas y análisis perspicaces.',
+            
+            # Request timeout settings
+            'request_timeout_label': 'Tiempo de espera de solicitud:',
+            'seconds': 'segundos',
+            'request_timeout_error': 'Tiempo de espera de solicitud agotado. Tiempo de espera actual: {timeout} segundos',
+            
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Recuento de IA paralelas:',
+            'parallel_ai_count_tooltip': 'Número de modelos de IA a consultar simultáneamente (1-2 disponibles, 3-4 próximamente)',
+            'parallel_ai_notice': 'Nota: Esto solo afecta el envío de preguntas. Las preguntas aleatorias siempre usan una sola IA.',
+            'suggest_maximize': 'Sugerencia: Maximice la ventana para una mejor visualización con 3 IAs',
+            'ai_panel_label': 'IA {index}:',
+            'no_ai_available': 'No hay IA disponible para este panel',
+            'add_more_ai_providers': 'Por favor, agregue más proveedores de IA en ajustes',
+            'select_ai': '-- Seleccionar IA --',
+            'coming_soon': 'Próximamente',
+            'advanced_feature_tooltip': 'Esta función está en desarrollo. ¡Manténgase atento a las actualizaciones!',
+            
+            # PDF export section titles
+            'pdf_book_metadata': 'METADATOS DEL LIBRO',
+            'pdf_question': 'PREGUNTA',
+            'pdf_answer': 'RESPUESTA',
+            'pdf_ai_model_info': 'INFORMACIÓN DEL MODELO DE IA',
+            'pdf_generated_by': 'GENERADO POR',
+            'pdf_provider': 'Proveedor',
+            'pdf_model': 'Modelo',
+            'pdf_api_base_url': 'URL Base de API',
+            'pdf_panel': 'Panel',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Software',
+            'pdf_generated_time': 'Hora de Generación',
+            'pdf_info_not_available': 'Información no disponible',
         }

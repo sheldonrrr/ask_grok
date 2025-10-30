@@ -74,12 +74,12 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': '模型',
-            'current_ai': '当前AI:',
+            'current_ai': '当前AI',
             'action': '操作',
             'reset_button': '重置',
-            'prompt_template': '提示词模板:',
-            'ask_prompts': '提问提示词:',
-            'random_questions_prompts': '随机问题提示词:',
+            'prompt_template': '提示词模板',
+            'ask_prompts': '提问提示词',
+            'random_questions_prompts': '随机问题提示词',
             'display': '显示',
             
             # UI - 对话框元素
@@ -110,6 +110,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'invalid_params': '无效的参数',
             'warning': '警告',
             'success': '成功',
+            'error': '错误',
             
             # 元数据字段
             'metadata_title': '标题',
@@ -198,9 +199,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             # 关于信息
             'author_name': 'Sheldon',
             'user_manual': '用户手册',
+            'about_plugin': '关于 Ask AI Plugin',
             'learn_how_to_use': '观看教程视频',
             'email': 'iMessage',
-            'about_plugin': '关于 Ask AI Plugin',
             
             # 模型特定配置
             'model_display_name_grok': 'Grok(x.AI)',
@@ -208,9 +209,14 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定义',
             'model_enable_streaming': '启用流式传输',
+            'model_disable_ssl_verify': '禁用 SSL 验证', # 补充缺失
+            
+            # AI Switcher
+            'current_ai': '当前AI',
+            'no_configured_models': '未配置 AI - 请在设置中配置', # 补充缺失
             
             # 提供商特定信息
-            'nvidia_free_info': '新用户可获得 6 个月免费 API 访问权限 - 无需信用卡',
+            'nvidia_free_info': '💡 新用户可获得 6 个月免费 API 访问权限 - 无需信用卡', # 补充缺失的图标和完整信息
             
             # 通用系统消息
             'default_system_message': '您是一位书籍分析专家。您的任务是通过提供有洞察力的问题和分析，帮助用户更好地理解书籍。',
@@ -222,9 +228,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # 并行AI设置
             'parallel_ai_count_label': '并行AI数量：',
-            'parallel_ai_count_tooltip': '同时请求的AI数量（1-2可用，3-4即将推出）。仅对发送问题生效，随机问题始终使用单个AI。',
-            'parallel_ai_notice': '每个响应窗口都有独立的AI切换器。请确保已配置足够数量的AI服务商。',
-            'suggest_maximize': '使用3个AI时建议最大化窗口以获得更好的显示效果',
+            'parallel_ai_count_tooltip': '同时请求的AI数量（1-2可用，3-4即将推出）', # 修正tooltip
+            'parallel_ai_notice': '注意：这仅影响发送问题。随机问题始终使用单个AI。', # 修正notice
+            'suggest_maximize': '提示：使用3个AI时建议最大化窗口以获得更好的显示效果', # 修正
             'ai_panel_label': 'AI {index}：',
             'no_ai_available': '此面板没有可用的AI',
             'add_more_ai_providers': '请在设置中添加更多AI服务商',
@@ -237,7 +243,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'pdf_question': '问题',
             'pdf_answer': '回答',
             'pdf_ai_model_info': 'AI模型信息',
-            'pdf_generated_by': '生成信息',
+            'pdf_generated_by': '生成信息', # 修正
             'pdf_provider': '提供商',
             'pdf_model': '模型',
             'pdf_api_base_url': 'API基础URL',

@@ -47,17 +47,26 @@ class NorwegianTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Lagre',
             'send_button': 'Send',
+            'stop_button': 'Stopp',
             'suggest_button': 'Tilfeldig spørsmål',
             'copy_response': 'Kopier svar',
             'copy_question_response': 'Kopier S&&S',
+            'export_pdf': 'Eksporter PDF',
             'copied': 'Kopiert!',
+            'pdf_exported': 'PDF eksportert!',
+            'export_pdf_dialog_title': 'Eksporter til PDF',
+            'export_pdf_error': 'Feil ved PDF-eksport: {0}',
+            'no_question': 'Ingen spørsmål',
+            'no_response': 'Ingen svar',
             'saved': 'Lagret',
             'close_button': 'Lukk',
             
             # UI - Konfigurasjonsfelter
             'token_label': 'API-nøkkel:',
+            'api_key_label': 'API-nøkkel:',
             'model_label': 'Modell:',
-            'language_label': 'Språk',
+            'language_label': 'Språk:',
+            'language_label_old': 'Språk',
             'base_url_label': 'Base-URL:',
             'base_url_placeholder': 'Standard: {default_api_base_url}',
             'shortcut': 'Snarvei',
@@ -65,7 +74,6 @@ class NorwegianTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': 'Modell',
-            'current_ai': 'Nåværende AI:',
             'action': 'Handling',
             'reset_button': 'Tilbakestill',
             'prompt_template': 'Promptmal',
@@ -82,7 +90,7 @@ class NorwegianTranslation(BaseTranslation):
             'menu_ask': 'Spør {model}',
             
             # UI - Statusmeldinger
-            'loading': 'Laster',
+            'loading': 'Laster...',
             'loading_text': 'Stiller spørsmål',
             'save_success': 'Innstillinger lagret',
             'sending': 'Sender...',
@@ -101,6 +109,7 @@ class NorwegianTranslation(BaseTranslation):
             'invalid_params': 'Ugyldige parametere',
             'warning': 'Advarsel',
             'success': 'Suksess',
+            'error': 'Feil',
             
             # Metadatafelter
             'metadata_title': 'Tittel',
@@ -112,6 +121,16 @@ class NorwegianTranslation(BaseTranslation):
             'no_metadata': 'Ingen metadata',
             'no_series': 'Ingen serie',
             'unknown': 'Ukjent',
+
+            # Multi-bok funksjon
+            'books_unit': ' bøker',
+            'new_conversation': 'Ny samtale',
+            'single_book': 'Enkel bok',
+            'multi_book': 'Multi-bok',
+            'deleted': 'Slettet',
+            'history': 'Historikk',
+            'multi_book_template_label': 'Multi-bok Promptmal:',
+            'multi_book_placeholder_hint': 'Bruk {books_metadata} for bokinformasjon, {query} for brukerens spørsmål',
             
             # Feilmeldinger
             'error': 'Feil: ',
@@ -120,7 +139,7 @@ class NorwegianTranslation(BaseTranslation):
             'request_failed': 'Forespørsel mislyktes',
             'question_too_long': 'Spørsmålet er for langt',
             'auth_token_required_title': 'API-nøkkel påkrevd',
-            'auth_token_required_message': 'Vennligst sett API-nøkkelen i Plugin-konfigurasjonen',
+            'auth_token_required_message': 'Vennligst sett API-nøkkelen i Plugin-konfigurasjonen.',
             'error_preparing_request': 'Feil ved forberedelse av forespørsel',
             'empty_suggestion': 'Tom forslag',
             'process_suggestion_error': 'Feil ved behandling av forslag',
@@ -147,7 +166,7 @@ class NorwegianTranslation(BaseTranslation):
             
             # API-svarhåndtering
             'api_request_failed': 'API-forespørsel mislyktes: {error}',
-            'api_content_extraction_failed': 'Kunne ikke hente innhold fra API-svar',
+            'api_content_extraction_failed': 'Klarte ikke å hente innhold fra API-svar',
             'api_invalid_response': 'Mottok ikke et gyldig API-svar',
             'api_unknown_error': 'Ukjent feil: {error}',
             
@@ -190,7 +209,47 @@ class NorwegianTranslation(BaseTranslation):
             'model_display_name_custom': 'Tilpasset',
             'model_enable_streaming': 'Aktiver streaming',
             'model_disable_ssl_verify': 'Deaktiver SSL-verifisering',
+
+            # AI Switcher
+            'current_ai': 'Nåværende AI',
+            'no_configured_models': 'Ingen AI konfigurert - Vennligst konfigurer i innstillingene',
+            
+            # Provider spesifikk info
+            'nvidia_free_info': '💡 Nye brukere får 6 måneder gratis API-tilgang - Ingen kredittkort kreves',
             
             # Generelle systemmeldinger
             'default_system_message': 'Du er en ekspert på bokanalyse. Din oppgave er å hjelpe brukere med å forstå bøker bedre ved å gi innsiktsfulle spørsmål og analyser.',
+
+            # Forespørsel tidsavbrudd innstillinger
+            'request_timeout_label': 'Forespørsel tidsavbrudd:',
+            'seconds': 'sekunder',
+            'request_timeout_error': 'Forespørsel tidsavbrudd. Nåværende tidsavbrudd: {timeout} sekunder',
+            
+            # Parallelle AI innstillinger
+            'parallel_ai_count_label': 'Antall parallelle AI-er:',
+            'parallel_ai_count_tooltip': 'Antall AI-modeller å spørre samtidig (1-2 tilgjengelig, 3-4 kommer snart)',
+            'parallel_ai_notice': 'Merk: Dette påvirker bare sending av spørsmål. Tilfeldige spørsmål bruker alltid én enkelt AI.',
+            'suggest_maximize': 'Tips: Maksimer vinduet for bedre visning med 3 AI-er',
+            'ai_panel_label': 'AI {index}:',
+            'no_ai_available': 'Ingen AI tilgjengelig for dette panelet',
+            'add_more_ai_providers': 'Vennligst legg til flere AI-leverandører i innstillingene',
+            'select_ai': '-- Velg AI --',
+            'coming_soon': 'Kommer snart',
+            'advanced_feature_tooltip': 'Denne funksjonen er under utvikling. Følg med for oppdateringer!',
+            
+            # PDF-eksport seksjonstitler
+            'pdf_book_metadata': 'BOK METADATA',
+            'pdf_question': 'SPØRSMÅL',
+            'pdf_answer': 'SVAR',
+            'pdf_ai_model_info': 'AI MODELL INFORMASJON',
+            'pdf_generated_by': 'GENERERT AV',
+            'pdf_provider': 'Leverandør',
+            'pdf_model': 'Modell',
+            'pdf_api_base_url': 'API Base-URL',
+            'pdf_panel': 'Panel',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Programvare',
+            'pdf_generated_time': 'Generert tid',
+            'pdf_info_not_available': 'Informasjon ikke tilgjengelig',
         }
