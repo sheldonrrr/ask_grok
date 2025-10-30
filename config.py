@@ -143,6 +143,7 @@ prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = {}
 prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
+prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -279,17 +280,8 @@ class ModelConfigWidget(QWidget):
             # Nvidia 特殊提示：免费 API Key 信息
             if self.model_id == 'nvidia':
                 info_label = QLabel(self.i18n.get('nvidia_free_info', 
-                    '💡 New users get 6 months free API access - No credit card required'))
-                info_label.setStyleSheet("""
-                    QLabel {
-                        background-color: #e8f5e9;
-                        color: #2e7d32;
-                        padding: 8px 12px;
-                        border-radius: 4px;
-                        border-left: 3px solid #4caf50;
-                        font-size: 12px;
-                    }
-                """)
+                    'New users get 6 months free API access - No credit card required'))
+                info_label.setStyleSheet("color: palette(mid); padding: 5px 0;")
                 info_label.setWordWrap(True)
                 main_layout.addWidget(info_label)
             
@@ -342,6 +334,16 @@ class ModelConfigWidget(QWidget):
             self.model_combo.setEditable(False)
             self.model_combo.currentTextChanged.connect(self.on_config_changed)
             model_select_layout.addWidget(self.model_combo)
+            
+            # 从缓存加载模型列表
+            prefs = get_prefs()
+            cached_models = prefs.get('cached_models', {})
+            if self.model_id in cached_models and cached_models[self.model_id]:
+                logger.info(f"从缓存加载 {len(cached_models[self.model_id])} 个模型")
+                self.model_combo.addItems(cached_models[self.model_id])
+            
+            # 添加按钮之间的间距
+            model_select_layout.addSpacing(8)
             
             # 加载模型按钮
             self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'))
@@ -489,7 +491,7 @@ class ModelConfigWidget(QWidget):
         return has_auth and has_model
     
     def on_config_changed(self):
-        """配置变更时发出信号"""
+        """配置变更处理"""
         self.config_changed.emit()
     
     def on_load_models_clicked(self):
@@ -536,6 +538,13 @@ class ModelConfigWidget(QWidget):
                 
                 self.model_combo.clear()
                 self.model_combo.addItems(models)
+                
+                # 保存到缓存
+                prefs = get_prefs()
+                cached_models = prefs.get('cached_models', {})
+                cached_models[self.model_id] = models
+                prefs['cached_models'] = cached_models
+                logger.info(f"已缓存 {len(models)} 个模型到 {self.model_id}")
                 
                 # 如果有保存的模型名称，尝试选中
                 saved_model = config.get('model', '')
@@ -609,15 +618,13 @@ class ModelConfigWidget(QWidget):
                 if index >= 0:
                     self.model_combo.setCurrentIndex(index)
                 else:
-                    # 模型不在列表中，切换到自定义
-                    logger.info(f"[load_model_config] 模型不在列表中，切换到自定义")
-                    self.use_custom_model_checkbox.setChecked(True)
+                    # 模型不在列表中，但不自动切换到自定义，只在自定义输入框显示
+                    logger.info(f"[load_model_config] 模型不在列表中，在自定义输入框显示")
                     self.custom_model_input.setText(model_name)
             else:
                 # 列表为空，如果有模型名称则显示在自定义输入框
                 if model_name:
-                    logger.info(f"[load_model_config] 列表为空，使用自定义模式")
-                    self.use_custom_model_checkbox.setChecked(True)
+                    logger.info(f"[load_model_config] 列表为空，在自定义输入框显示")
                     self.custom_model_input.setText(model_name)
         
         logger.info(f"[load_model_config] 加载完成 - checkbox.isChecked()={self.use_custom_model_checkbox.isChecked()}, custom_input.isEnabled()={self.custom_model_input.isEnabled()}")
@@ -963,6 +970,7 @@ class ConfigDialog(QWidget):
         parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count:'))
         parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
             'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
+        parallel_label.setStyleSheet("QLabel { padding: 0; }")
         parallel_layout.addWidget(parallel_label)
         
         self.parallel_ai_combo = QComboBox(self)
@@ -988,18 +996,26 @@ class ConfigDialog(QWidget):
         index = self.parallel_ai_combo.findData(current_parallel)
         if index >= 0:
             self.parallel_ai_combo.setCurrentIndex(index)
-        self.parallel_ai_combo.currentIndexChanged.connect(self.on_config_changed)
+        self.parallel_ai_combo.currentIndexChanged.connect(self.on_parallel_count_changed)
         self.parallel_ai_combo.setMaximumWidth(150)
         parallel_layout.addWidget(self.parallel_ai_combo)
         parallel_layout.addStretch()
         
         model_layout.addLayout(parallel_layout)
         
+        # 并行AI选择器容器（动态显示）
+        self.panel_ai_selectors_layout = QVBoxLayout()
+        self.panel_ai_selectors = []  # 保存AI选择器的引用
+        model_layout.addLayout(self.panel_ai_selectors_layout)
+        
+        # 初始化AI选择器
+        self._update_panel_ai_selectors()
+        
         # 添加并行AI提示信息
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
-            'Note: Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
+            'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
         parallel_notice.setWordWrap(True)
-        parallel_notice.setStyleSheet("color: #666; font-size: 11px; padding: 5px 0;")
+        parallel_notice.setStyleSheet("color: palette(mid); padding: 5px 0;")
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
@@ -1116,7 +1132,7 @@ class ConfigDialog(QWidget):
         
         # 添加占位符说明
         placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
-        placeholder_hint.setStyleSheet("color: #888; font-size: 11px; font-style: italic;")
+        placeholder_hint.setStyleSheet("color: palette(mid); font-style: italic; padding: 5px 0;")
         placeholder_hint.setWordWrap(True)
         multi_book_template_layout.addWidget(placeholder_hint)
         
@@ -1674,6 +1690,97 @@ class ConfigDialog(QWidget):
         # 更新模型下拉框中的显示名称
         self.update_model_name_display()
         logger.debug("更新了模型下拉框中的显示名称")
+    
+    def on_parallel_count_changed(self):
+        """并行AI数量变更处理"""
+        self._update_panel_ai_selectors()
+        self.on_config_changed()
+    
+    def _update_panel_ai_selectors(self):
+        """更新并行AI选择器"""
+        # 清除旧的选择器
+        for widget in self.panel_ai_selectors:
+            widget.deleteLater()
+        self.panel_ai_selectors.clear()
+        
+        # 获取当前并行数量
+        parallel_count = self.parallel_ai_combo.currentData()
+        if not parallel_count or parallel_count <= 1:
+            return
+        
+        # 获取已配置的AI列表
+        prefs = get_prefs()
+        models_config = prefs.get('models', {})
+        configured_ais = []
+        for model_id, config in models_config.items():
+            if config.get('enabled', False):
+                # 检查是否有API Key（Ollama不需要）
+                if model_id == 'ollama':
+                    configured_ais.append((model_id, config.get('display_name', model_id)))
+                elif model_id == 'grok':
+                    if config.get('auth_token', '').strip():
+                        configured_ais.append((model_id, config.get('display_name', model_id)))
+                else:
+                    if config.get('api_key', '').strip():
+                        configured_ais.append((model_id, config.get('display_name', model_id)))
+        
+        if not configured_ais:
+            return
+        
+        # 读取当前的AI选择
+        saved_selections = prefs.get('panel_ai_selections', {})
+        
+        # 为每个面板创建选择器
+        for i in range(parallel_count):
+            panel_layout = QHBoxLayout()
+            
+            panel_label = QLabel(f"{self.i18n.get('ai_panel_label', 'AI {index}:').format(index=i+1)}")
+            panel_layout.addWidget(panel_label)
+            
+            panel_combo = QComboBox()
+            panel_combo.setMinimumWidth(200)
+            
+            # 添加AI选项
+            for ai_id, display_name in configured_ais:
+                panel_combo.addItem(display_name, ai_id)
+            
+            # 设置当前选中的AI
+            saved_ai = saved_selections.get(f'panel_{i}')
+            if saved_ai:
+                index = panel_combo.findData(saved_ai)
+                if index >= 0:
+                    panel_combo.setCurrentIndex(index)
+            
+            # 连接信号
+            panel_combo.currentIndexChanged.connect(lambda idx, panel_idx=i: self._on_panel_ai_selector_changed(panel_idx))
+            
+            panel_layout.addWidget(panel_combo)
+            panel_layout.addStretch()
+            
+            # 添加到布局
+            container = QWidget()
+            container.setLayout(panel_layout)
+            self.panel_ai_selectors_layout.addWidget(container)
+            self.panel_ai_selectors.append(container)
+    
+    def _on_panel_ai_selector_changed(self, panel_index):
+        """面板AI选择器变更处理"""
+        # 保存选择
+        prefs = get_prefs()
+        selections = prefs.get('panel_ai_selections', {})
+        
+        # 获取当前选中的AI
+        if panel_index < len(self.panel_ai_selectors):
+            container = self.panel_ai_selectors[panel_index]
+            combo = container.findChild(QComboBox)
+            if combo:
+                ai_id = combo.currentData()
+                if ai_id:
+                    selections[f'panel_{panel_index}'] = ai_id
+                    logger.info(f"配置页面：保存面板 {panel_index} 的AI选择: {ai_id}")
+        
+        prefs['panel_ai_selections'] = selections
+        self.on_config_changed()
     
     def save_settings(self):
         """保存设置"""

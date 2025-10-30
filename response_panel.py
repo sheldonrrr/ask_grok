@@ -56,16 +56,12 @@ class ResponsePanel(QWidget):
         # === Header 区域（横向） ===
         header_layout = QHBoxLayout()
         
-        # AI标签
-        ai_label = QLabel(self.i18n.get('ai_panel_label', 'AI {index}:').format(index=self.panel_index + 1))
-        ai_label.setStyleSheet("font-weight: bold; font-size: 12px;")
-        header_layout.addWidget(ai_label)
-        
-        # AI切换器
+        # AI切换器（直接显示模型名称，不需要"AI 1:"标签）
         self.ai_switcher = QComboBox()
         self.ai_switcher.setMinimumWidth(200)
         self.ai_switcher.currentIndexChanged.connect(self.on_ai_switched)
         # 修复hover时字体消失的问题
+        # 完全使用系统默认样式，不自定义 drop-down 和 down-arrow
         self.ai_switcher.setStyleSheet("""
             QComboBox {
                 color: palette(text);
@@ -78,9 +74,6 @@ class ResponsePanel(QWidget):
                 color: palette(text);
                 background: palette(midlight);
                 border: 1px solid palette(highlight);
-            }
-            QComboBox::drop-down {
-                border: none;
             }
             QComboBox QAbstractItemView {
                 color: palette(text);
@@ -164,8 +157,10 @@ class ResponsePanel(QWidget):
         self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
         self.copy_btn.setStyleSheet("""
             QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
                 border: 1px solid palette(mid);
                 border-radius: 3px;
                 background: transparent;
@@ -179,8 +174,10 @@ class ResponsePanel(QWidget):
         self.copy_qa_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
         self.copy_qa_btn.setStyleSheet("""
             QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
                 border: 1px solid palette(mid);
                 border-radius: 3px;
                 background: transparent;
@@ -194,8 +191,10 @@ class ResponsePanel(QWidget):
         self.export_btn = QPushButton(self.i18n.get('export_pdf', 'Export PDF'))
         self.export_btn.setStyleSheet("""
             QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
+                color: palette(text);
+                padding: 2px 12px;
+                min-height: 1.2em;
+                max-height: 1.2em;
                 border: 1px solid palette(mid);
                 border-radius: 3px;
                 background: transparent;
@@ -322,14 +321,16 @@ class ResponsePanel(QWidget):
             logger.warning(f"面板 {self.panel_index} 没有选中的AI")
             return
         
-        logger.info(f"面板 {self.panel_index} 开始请求 AI: {target_model_id}")
+        logger.info(f"[面板 {self.panel_index}] 开始请求 AI: {target_model_id}")
         self.request_started.emit(self.panel_index)
         
         # 更新响应处理器的AI标识符（用于历史记录）
         self.response_handler.ai_id = target_model_id
+        logger.info(f"[面板 {self.panel_index}] 已设置 ai_id={target_model_id} 用于历史记录")
         
         # 调用响应处理器发送请求，传递model_id参数
         self.response_handler.start_async_request(prompt, model_id=target_model_id)
+        logger.info(f"[面板 {self.panel_index}] 异步请求已启动")
     
     def get_response_text(self):
         """获取响应文本
@@ -471,9 +472,7 @@ class ResponsePanel(QWidget):
                     provider_label = self.i18n.get('pdf_provider', 'Provider')
                     model_label = self.i18n.get('pdf_model', 'Model')
                     api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
-                    panel_label = self.i18n.get('pdf_panel', 'Panel')
                     
-                    model_info_lines.append(f"{panel_label}: {self.panel_index + 1}")
                     model_info_lines.append(f"{provider_label}: {provider}")
                     model_info_lines.append(f"{model_label}: {model_name}")
                     if api_url:

@@ -23,6 +23,7 @@ from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
 from calibre.utils.resources import get_path as I
 import sys
 import os
+import time
 
 # 添加 lib 目录到 Python 路径
 lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
@@ -330,35 +331,35 @@ class AboutWidget(QWidget):
         # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
         self.about_label.setText(f"""
         <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-            <div style='font-size: 24px; font-weight: bold; color: palette(window-text); margin: 10px 0;'>Ask AI Plugin</div>
-            <div style='font-size: 14px; color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
-            <div style='font-size: 13px; color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
+            <div style='font-weight: bold; color: palette(window-text); margin: 10px 0; font-size: 1.5em;'>Ask AI Plugin</div>
+            <div style='color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
+            <div style='color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
             
             <div style='display: flex; flex-direction: column; align-items: center; margin: 15px 0;'>
                 <div style='margin: 8px 0;'>
                     <a href='http://simp.ly/publish/FwMSSr' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none;'>
                        {self.i18n.get('user_manual', 'User Manual')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='http://simp.ly/publish/xYW5Tr' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none;'>
                        {self.i18n.get('about_plugin', 'Why Ask AI Plugin?')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='https://youtu.be/QdeZgkT1fpw' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none;'>
                        {self.i18n.get('learn_how_to_use', 'How to Use')} ↗
                     </a>
                 </div>
                 
                 <div style='margin: 8px 0;'>
                     <a href='imessage://sheldonrrr@gmail.com' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
+                       style='color: palette(link); text-decoration: none;'>
                        {self.i18n.get('email', 'iMessage')}: sheldonrrr@gmail.com
                     </a>
                 </div>
@@ -1184,27 +1185,62 @@ class AskDialog(QDialog):
             if matched_history:
                 self.input_area.setPlainText(matched_history['question'])
                 
-                # 兼容新旧格式：优先使用answers字典，回退到answer字段
-                if 'answers' in matched_history and matched_history['answers']:
-                    # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
-                    first_ai_id = list(matched_history['answers'].keys())[0]
-                    answer_data = matched_history['answers'][first_ai_id]
-                    answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
-                    logger.info(f"加载新格式历史记录，AI: {first_ai_id}")
-                elif 'answer' in matched_history:
-                    # 旧格式：直接使用answer字段
-                    answer_text = matched_history['answer']
-                    logger.info("加载旧格式历史记录")
+                # 检查是否有多面板模式
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    # 多面板模式：为每个面板加载对应AI的历史响应
+                    logger.info(f"多面板模式，加载历史记录到 {len(self.response_panels)} 个面板")
+                    
+                    if 'answers' in matched_history and matched_history['answers']:
+                        for panel in self.response_panels:
+                            ai_id = panel.get_selected_ai()
+                            if ai_id and ai_id in matched_history['answers']:
+                                # 找到匹配的AI响应
+                                answer_data = matched_history['answers'][ai_id]
+                                answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+                                panel.response_handler._update_ui_from_signal(
+                                    answer_text,
+                                    is_response=True,
+                                    is_history=True
+                                )
+                                logger.info(f"为面板 {panel.panel_index} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                            elif 'default' in matched_history['answers'] and panel.panel_index == 0:
+                                # 向后兼容：如果没有匹配的AI，第一个面板使用default
+                                answer_data = matched_history['answers']['default']
+                                answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+                                panel.response_handler._update_ui_from_signal(
+                                    answer_text,
+                                    is_response=True,
+                                    is_history=True
+                                )
+                                logger.info(f"为面板 {panel.panel_index} 加载默认历史响应（长度: {len(answer_text)}）")
+                    else:
+                        logger.warning("历史记录中没有answers字段")
                 else:
-                    answer_text = ""
-                    logger.warning("历史记录中没有找到答案内容")
+                    # 单面板模式（向后兼容）
+                    logger.info("单面板模式，加载历史记录")
+                    
+                    # 兼容新旧格式：优先使用answers字典，回退到answer字段
+                    if 'answers' in matched_history and matched_history['answers']:
+                        # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
+                        first_ai_id = list(matched_history['answers'].keys())[0]
+                        answer_data = matched_history['answers'][first_ai_id]
+                        answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+                        logger.info(f"加载新格式历史记录，AI: {first_ai_id}")
+                    elif 'answer' in matched_history:
+                        # 旧格式：直接使用answer字段
+                        answer_text = matched_history['answer']
+                        logger.info("加载旧格式历史记录")
+                    else:
+                        answer_text = ""
+                        logger.warning("历史记录中没有找到答案内容")
+                    
+                    if answer_text:
+                        self.response_handler._update_ui_from_signal(
+                            answer_text, 
+                            is_response=True,
+                            is_history=True
+                        )
                 
-                if answer_text:
-                    self.response_handler._update_ui_from_signal(
-                        answer_text, 
-                        is_response=True,
-                        is_history=True
-                    )
                 logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
             else:
                 logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
@@ -1658,16 +1694,13 @@ class AskDialog(QDialog):
         title_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         top_bar.addWidget(title_label)
         
-        # 书籍信息标签
+        # 书籍信息标签（仅在多书模式下显示）
         if self.is_multi_book:
             book_count = len(self.books_info)
             books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
-        else:
-            books_info_text = f"({self.book_info.title[:30]}{'...' if len(self.book_info.title) > 30 else ''})"
-        
-        self.books_info_label = QLabel(books_info_text)
-        self.books_info_label.setStyleSheet("color: #888; font-size: 12px; margin-left: 8px;")
-        top_bar.addWidget(self.books_info_label)
+            self.books_info_label = QLabel(books_info_text)
+            self.books_info_label.setStyleSheet("color: #888; font-size: 12px; margin-left: 8px;")
+            top_bar.addWidget(self.books_info_label)
         
         top_bar.addStretch()
         
@@ -1979,17 +2012,21 @@ class AskDialog(QDialog):
         
         # 开始异步请求 - 并行发送到所有面板
         logger.info("开始并行异步请求...")
+        parallel_start_time = time.time()
         try:
             if hasattr(self, 'response_panels') and self.response_panels:
                 # 多面板模式：并行发送到所有面板
                 for panel in self.response_panels:
                     selected_ai = panel.get_selected_ai()
                     if selected_ai:
-                        logger.info(f"向面板 {panel.panel_index} (AI: {selected_ai}) 发送请求")
+                        request_time = time.time()
+                        elapsed_ms = (request_time - parallel_start_time) * 1000
+                        logger.info(f"[+{elapsed_ms:.2f}ms] 向面板 {panel.panel_index} (AI: {selected_ai}) 发送请求")
                         panel.send_request(prompt, model_id=selected_ai)
                     else:
                         logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")
-                logger.info(f"已向 {len(self.response_panels)} 个面板发送请求")
+                total_time = (time.time() - parallel_start_time) * 1000
+                logger.info(f"所有请求已发出，总耗时: {total_time:.2f}ms，面板数: {len(self.response_panels)}")
             else:
                 # 向后兼容：单面板模式
                 self.response_handler.start_async_request(prompt)

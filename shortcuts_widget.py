@@ -90,7 +90,6 @@ class ShortcutsWidget(QWidget):
         # 创建快捷键标签样式
         label_style = """
             QLabel {
-                font-size: 13px;
                 color: palette(text);
                 padding: 2px;
             }

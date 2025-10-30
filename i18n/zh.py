@@ -210,7 +210,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_enable_streaming': '启用流式传输',
             
             # 提供商特定信息
-            'nvidia_free_info': '💡 新用户可获得 6 个月免费 API 访问权限 - 无需信用卡',
+            'nvidia_free_info': '新用户可获得 6 个月免费 API 访问权限 - 无需信用卡',
             
             # 通用系统消息
             'default_system_message': '您是一位书籍分析专家。您的任务是通过提供有洞察力的问题和分析，帮助用户更好地理解书籍。',
@@ -223,8 +223,8 @@ class SimplifiedChineseTranslation(BaseTranslation):
             # 并行AI设置
             'parallel_ai_count_label': '并行AI数量：',
             'parallel_ai_count_tooltip': '同时请求的AI数量（1-2可用，3-4即将推出）。仅对发送问题生效，随机问题始终使用单个AI。',
-            'parallel_ai_notice': '注意：每个响应窗口都有独立的AI切换器。请确保已配置足够数量的AI服务商。',
-            'suggest_maximize': '提示：使用3个AI时建议最大化窗口以获得更好的显示效果',
+            'parallel_ai_notice': '每个响应窗口都有独立的AI切换器。请确保已配置足够数量的AI服务商。',
+            'suggest_maximize': '使用3个AI时建议最大化窗口以获得更好的显示效果',
             'ai_panel_label': 'AI {index}：',
             'no_ai_available': '此面板没有可用的AI',
             'add_more_ai_providers': '请在设置中添加更多AI服务商',

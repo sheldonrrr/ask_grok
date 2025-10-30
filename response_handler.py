@@ -886,6 +886,7 @@ class ResponseHandler(QObject):
                         
                         # 使用新的保存方法，传递AI标识符
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
+                        logger.info(f"[历史记录] 准备保存: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}, 响应长度={len(text)}")
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
                             mode,
@@ -894,7 +895,7 @@ class ResponseHandler(QObject):
                             text,
                             ai_id=ai_id
                         )
-                        logger.info(f"成功保存问询历史: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}")
+                        logger.info(f"[历史记录] ✓ 保存成功: UID={parent_dialog.current_uid}, AI={ai_id}")
                     elif hasattr(self, 'current_metadata') and self.current_metadata:
                         # 向后兼容旧版本
                         question = self.input_area.toPlainText()
