@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel,
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
                             QFrame, QCheckBox)
-from PyQt5.QtCore import pyqtSignal, QTimer, Qt
+from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
 from .models.gemini import GeminiModel
@@ -21,12 +21,19 @@ from .models.openrouter import OpenRouterModel
 from .models.ollama import OllamaModel
 from calibre.utils.config import JSONConfig
 
-from .i18n import get_default_template, get_translation, get_suggestion_template, get_all_languages
+from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
 from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
+from .widgets import NoScrollComboBox, apply_button_style
+from .ui_constants import (
+    SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
+    MARGIN_MEDIUM, PADDING_MEDIUM,
+    get_groupbox_style, get_separator_style
+)
 
 # 初始化日志
 logger = logging.getLogger(__name__)
+
 
 # 创建配置对象
 prefs = JSONConfig('plugins/ask_ai_plugin')
@@ -230,13 +237,13 @@ class ModelConfigWidget(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         
         # 创建表单布局
-        layout = QFormLayout()
-        layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-        layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-        layout.setHorizontalSpacing(15)
-        layout.setVerticalSpacing(10)
-        main_layout.addLayout(layout)
+        model_layout = QFormLayout()
+        model_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
+        model_layout.setHorizontalSpacing(SPACING_MEDIUM)  # 标签和字段间距
+        model_layout.setVerticalSpacing(SPACING_SMALL)     # 行间距
+        model_layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)  # 标签右对齐
+        model_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
+        main_layout.addLayout(model_layout)
         
         # 计算基础宽度
         font_metrics = QFontMetrics(self.font())
@@ -292,7 +299,7 @@ class ModelConfigWidget(QWidget):
                 self.api_key_edit.textChanged.connect(self.on_config_changed)
                 self.api_key_edit.setMaximumHeight(62)
                 self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
-                layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
+                model_layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
             else:
                 # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
                 self.api_key_edit = None
@@ -304,15 +311,6 @@ class ModelConfigWidget(QWidget):
             separator.setStyleSheet("border-top: 1px dashed #aaaaaa; margin-top: 15px; margin-bottom: 15px; background: none;")
             separator.setMinimumHeight(10)
             main_layout.addWidget(separator)
-            
-            # 创建一个新的表单布局用于模型参数
-            model_layout = QFormLayout()
-            model_layout.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
-            model_layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            model_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-            model_layout.setHorizontalSpacing(15)
-            model_layout.setVerticalSpacing(10)
-            main_layout.addLayout(model_layout)
             
             # API Base URL 输入框
             self.api_base_edit = QLineEdit(self)
@@ -329,7 +327,7 @@ class ModelConfigWidget(QWidget):
             model_select_layout = QHBoxLayout()
             
             # 模型下拉框
-            self.model_combo = QComboBox(self)
+            self.model_combo = NoScrollComboBox(self)
             self.model_combo.setMinimumWidth(int(base_width * 0.7))
             self.model_combo.setEditable(False)
             self.model_combo.currentTextChanged.connect(self.on_config_changed)
@@ -348,7 +346,8 @@ class ModelConfigWidget(QWidget):
             # 加载模型按钮
             self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'))
             self.load_models_button.clicked.connect(self.on_load_models_clicked)
-            self.load_models_button.setMinimumWidth(100)
+            # 增加按钮宽度以适应不同字体大小（16px、14px等）
+            apply_button_style(self.load_models_button, min_width=200)
             model_select_layout.addWidget(self.load_models_button)
             
             model_layout.addRow(self.i18n.get('model_label', 'Model:'), model_select_layout)
@@ -384,12 +383,9 @@ class ModelConfigWidget(QWidget):
             reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
             reset_button.setProperty('isResetButton', True)  # 添加属性标记
             reset_button.clicked.connect(self.reset_model_params)
-            
-            # 使用QDialogButtonBox来保持与关闭按钮一致的样式
-            button_box = QHBoxLayout()
-            button_box.addWidget(reset_button)
-            button_box.addStretch()  # 添加弹性空间，使按钮靠左
-            main_layout.addLayout(button_box)
+            reset_button.setToolTip(self.i18n.get('reset_tooltip', 'Reset to default value'))
+            apply_button_style(reset_button)
+            model_layout.addRow("", reset_button)
     
     def get_config(self):
         """获取当前配置"""
@@ -652,6 +648,21 @@ class ModelConfigWidget(QWidget):
         if hasattr(self, 'enable_streaming_checkbox'):
             self.enable_streaming_checkbox.setText(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
             logger.debug("更新了流式传输复选框文本")
+        
+        # 更新"使用自定义模型名称"复选框
+        if hasattr(self, 'use_custom_model_checkbox'):
+            self.use_custom_model_checkbox.setText(self.i18n.get('use_custom_model', 'Use custom model name'))
+            logger.debug("更新了使用自定义模型名称复选框文本")
+        
+        # 更新"加载模型"按钮
+        if hasattr(self, 'load_models_button'):
+            self.load_models_button.setText(self.i18n.get('load_models', 'Load Models'))
+            logger.debug("更新了加载模型按钮文本")
+        
+        # 更新自定义模型输入框的placeholder
+        if hasattr(self, 'custom_model_input'):
+            self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
+            logger.debug("更新了自定义模型输入框placeholder")
             
         for label in self.findChildren(QLabel):
             # 先检查objectName
@@ -863,33 +874,44 @@ class ConfigDialog(QWidget):
         # 创建内容容器
         content_widget = QWidget()
         content_layout = QVBoxLayout()
+        content_layout.setSpacing(SPACING_LARGE)  # GroupBox之间使用大间距
+        content_layout.setContentsMargins(0, 0, 0, 0)
         content_widget.setLayout(content_layout)
         
         # 1. 顶部：语言选择
         lang_group = QGroupBox(self.i18n.get('display', 'Display'))
-        lang_group.setStyleSheet("QGroupBox { border: 1px dashed #cccccc; padding: 15px; margin-top: 5px; margin-bottom: 5px; } QGroupBox::title { font-weight: bold; color: #666666; padding: 0 5px; subcontrol-origin: margin; subcontrol-position: top left; left: 10px; }")
+        lang_group.setObjectName('groupbox_display')  # 设置ObjectName用于语言切换
+        lang_group.setStyleSheet(get_groupbox_style())
         lang_layout = QVBoxLayout()
+        lang_layout.setSpacing(SPACING_SMALL)
         
-        self.lang_combo = QComboBox(self)
+        self.lang_combo = NoScrollComboBox(self)
         for code, name in SUPPORTED_LANGUAGES:
             self.lang_combo.addItem(name, code)
         current_index = self.lang_combo.findData(get_prefs()['language'])
         self.lang_combo.setCurrentIndex(current_index)
         self.lang_combo.currentIndexChanged.connect(self.on_language_changed)
-        lang_layout.addWidget(QLabel(self.i18n.get('language_label', 'Language:')))
+        language_label = QLabel(self.i18n.get('language_label', 'Language:'))
+        language_label.setObjectName('label_language')
+        lang_layout.addWidget(language_label)
         lang_layout.addWidget(self.lang_combo)
         lang_group.setLayout(lang_layout)
 
         # 2. 中部：AI模型选择和配置
         model_group = QGroupBox(self.i18n.get('ai_models', 'AI'))
-        model_group.setStyleSheet("QGroupBox { border: 1px dashed #cccccc; padding: 15px; margin-top: 5px; margin-bottom: 5px; } QGroupBox::title { font-weight: bold; color: #666666; padding: 0 5px; subcontrol-origin: margin; subcontrol-position: top left; left: 10px; }")
+        model_group.setObjectName('groupbox_ai_models')  # 设置ObjectName用于语言切换
+        model_group.setStyleSheet(get_groupbox_style())
         model_layout = QVBoxLayout()
+        model_layout.setSpacing(SPACING_MEDIUM)
 
         # 添加模型选择下拉框
         model_select_layout = QHBoxLayout()
-        model_select_layout.addWidget(QLabel(self.i18n.get('current_ai', 'Current AI:')))
+        model_select_layout.setSpacing(SPACING_SMALL)
+        current_ai_label = QLabel(self.i18n.get('current_ai', 'Current AI:'))
+        current_ai_label.setObjectName('label_current_ai')
+        model_select_layout.addWidget(current_ai_label)
 
-        self.model_combo = QComboBox()
+        self.model_combo = NoScrollComboBox()
         # 使用有序列表来定义模型显示顺序（按使用频率和影响力排序）
         # OpenAI 第一，Custom 最后
         model_mapping = [
@@ -926,9 +948,9 @@ class ConfigDialog(QWidget):
         
         # 创建模型配置布局
         self.models_layout = QVBoxLayout()
-        # 设置合适的边距和间距
-        self.models_layout.setContentsMargins(10, 10, 10, 10)
-        self.models_layout.setSpacing(10)
+        # 使用统一的间距规范
+        self.models_layout.setContentsMargins(0, 0, 0, 0)
+        self.models_layout.setSpacing(SPACING_MEDIUM)
         
         # 添加模型配置控件
         self.setup_model_widgets()
@@ -940,18 +962,19 @@ class ConfigDialog(QWidget):
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Plain)
-        separator.setStyleSheet("border-top: 1px dashed #aaaaaa; margin-top: 15px; margin-bottom: 15px; background: none;")
-        separator.setMinimumHeight(10)
+        separator.setStyleSheet(get_separator_style())
         model_layout.addWidget(separator)
         
         # 添加请求超时时间设置
         timeout_layout = QHBoxLayout()
+        timeout_layout.setSpacing(SPACING_SMALL)
         timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout:'))
+        timeout_label.setObjectName('label_request_timeout')
         timeout_layout.addWidget(timeout_label)
         
         self.timeout_input = QLineEdit(self)
         self.timeout_input.setText(str(get_prefs().get('request_timeout', 60)))
-        self.timeout_input.setPlaceholderText('60')
+        self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
         self.timeout_input.setMaximumWidth(100)
         # 只允许输入数字
         from PyQt5.QtGui import QIntValidator
@@ -967,13 +990,14 @@ class ConfigDialog(QWidget):
         
         # 添加并行AI数量设置
         parallel_layout = QHBoxLayout()
+        parallel_layout.setSpacing(SPACING_SMALL)
         parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count:'))
+        parallel_label.setObjectName('label_parallel_ai_count')
         parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
             'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
-        parallel_label.setStyleSheet("QLabel { padding: 0; }")
         parallel_layout.addWidget(parallel_label)
         
-        self.parallel_ai_combo = QComboBox(self)
+        self.parallel_ai_combo = NoScrollComboBox(self)
         # 添加选项1-4，但3-4置灰（保留入口，吸引高级用户）
         for i in range(1, 5):
             display_text = str(i)
@@ -1020,18 +1044,16 @@ class ConfigDialog(QWidget):
         
         model_group.setLayout(model_layout)
         
-        # 添加间距
-        spacer2 = QWidget()
-        spacer2.setFixedHeight(15)
-        content_layout.addWidget(spacer2)
-        
         # 3. 底部：提示词模板配置
         template_group = QGroupBox(self.i18n.get('prompt_template', 'Prompts'))
-        template_group.setStyleSheet("QGroupBox { border: 1px dashed #cccccc; padding: 15px; margin-top: 5px; margin-bottom: 5px; } QGroupBox::title { font-weight: bold; color: #666666; padding: 0 5px; subcontrol-origin: margin; subcontrol-position: top left; left: 10px; }")
+        template_group.setObjectName('groupbox_prompt_template')  # 设置ObjectName用于语言切换
+        template_group.setStyleSheet(get_groupbox_style())
         template_layout = QVBoxLayout()
+        template_layout.setSpacing(SPACING_MEDIUM)
         
         # 主提示词模板
         main_template_layout = QVBoxLayout()
+        main_template_layout.setSpacing(SPACING_SMALL)
         main_template_layout.addWidget(QLabel(self.i18n.get('ask_prompts', 'Ask Prompts:')))
         
         self.template_edit = QPlainTextEdit(self)
@@ -1062,6 +1084,7 @@ class ConfigDialog(QWidget):
         
         # 随机问题提示词
         random_questions_layout = QVBoxLayout()
+        random_questions_layout.setSpacing(SPACING_SMALL)
         random_questions_layout.addWidget(QLabel(self.i18n.get('random_questions_prompts', 'Random Questions Prompts:')))
         
         self.random_questions_edit = QPlainTextEdit(self)
@@ -1105,6 +1128,7 @@ class ConfigDialog(QWidget):
         
         # 多书提示词模板
         multi_book_template_layout = QVBoxLayout()
+        multi_book_template_layout.setSpacing(SPACING_SMALL)
         multi_book_template_layout.addWidget(QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template:')))
         
         self.multi_book_template_edit = QPlainTextEdit(self)
@@ -1464,6 +1488,11 @@ class ConfigDialog(QWidget):
         self.template_edit.setPlaceholderText(self.i18n.get('template_placeholder', 'Enter your prompt template here...'))
         logger.debug(f"更新了模板内容为语言 {lang_code} 的默认模板")
         
+        # 更新多书模板内容
+        self.multi_book_template_edit.setPlainText(get_multi_book_template(lang_code))
+        self.multi_book_template_edit.setPlaceholderText(self.i18n.get('multi_book_template_placeholder', 'Enter your multi-book prompt template here...'))
+        logger.debug(f"更新了多书模板内容为语言 {lang_code} 的默认模板")
+        
         # 更新随机问题提示词
         random_questions = get_prefs().get('random_questions', {})
         saved_questions = random_questions.get(lang_code)
@@ -1559,6 +1588,9 @@ class ConfigDialog(QWidget):
                     label.setText(value)
                     logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     
+        # 更新initial_values中的语言，避免重复触发语言变更检测
+        self.initial_values['language'] = lang_code
+        
         # 发出语言改变信号，通知其他组件更新界面
         logger.debug(f"发送语言变更信号: {lang_code}")
         self.language_changed.emit(lang_code)
@@ -1585,69 +1617,39 @@ class ConfigDialog(QWidget):
             self.tab_widget.setTabText(0, self.i18n.get('general_tab', 'General'))
             self.tab_widget.setTabText(1, self.i18n.get('ai_models', 'AI'))
         
-        # 更新GroupBox标题
-        for group_box in self.findChildren(QGroupBox):
-            if group_box.title() == self.i18n.get('display', 'Display') or group_box.title() == 'Display':
-                group_box.setTitle(self.i18n.get('display', 'Display'))
-                logger.debug("更新了Display GroupBox标题")
-            elif group_box.title() == self.i18n.get('ai_models', 'AI') or group_box.title() == 'AI':
-                group_box.setTitle(self.i18n.get('ai_models', 'AI'))
-                logger.debug("更新了AI GroupBox标题")
+        # 更新GroupBox标题（使用ObjectName，语言无关）
+        groupbox_map = {
+            'groupbox_display': ('display', 'Display'),
+            'groupbox_ai_models': ('ai_models', 'AI'),
+            'groupbox_prompt_template': ('prompt_template', 'Prompts')
+        }
         
-        # 更新所有标签文本
-        known_labels = {
-            'language': self.i18n.get('language_label', 'Language:'),
-            'current_ai': self.i18n.get('current_ai', 'Current AI:'),
-            'api_key': self.i18n.get('api_key_label', 'API Key:'),
-            'base_url': self.i18n.get('base_url_label', 'Base URL:'),
-            'model': self.i18n.get('model_label', 'Model:'),
-            'ask_prompts': self.i18n.get('ask_prompts', 'Ask Prompts:'),
-            'random_questions': self.i18n.get('random_questions_prompts', 'Random Questions Prompts:'),
-            'prompt_template': self.i18n.get('prompt_template', 'Prompt Template:')
+        for group_box in self.findChildren(QGroupBox):
+            obj_name = group_box.objectName()
+            if obj_name in groupbox_map:
+                i18n_key, fallback = groupbox_map[obj_name]
+                new_title = self.i18n.get(i18n_key, fallback)
+                old_title = group_box.title()
+                group_box.setTitle(new_title)
+                logger.debug(f"更新了GroupBox标题 [{obj_name}]: {old_title} -> {new_title}")
+        
+        # 更新所有标签文本（使用ObjectName，语言无关）
+        label_map = {
+            'label_language': ('language_label', 'Language:'),
+            'label_current_ai': ('current_ai', 'Current AI:'),
+            'label_request_timeout': ('request_timeout_label', 'Request Timeout:'),
+            'label_parallel_ai_count': ('parallel_ai_count_label', 'Parallel AI Count:'),
         }
         
         # 对每个标签进行处理
-        for child in self.findChildren(QLabel):
-            # 先检查objectName
-            if hasattr(child, 'objectName') and child.objectName():
-                obj_name = child.objectName().lower()
-                for key, value in known_labels.items():
-                    if key in obj_name:
-                        child.setText(value)
-                        logger.debug(f"基于objectName更新了{key}标签为: {value}")
-                        break
-            
-            # 如果没有匹配到objectName，则尝试匹配当前文本
-            current_text = child.text()
-            if current_text in known_labels.values():
-                continue  # 已经是最新的翻译，无需更新
-            
-            # 检查关键字匹配
-            current_text_lower = current_text.lower()
-            if ('language' in current_text_lower or '语言' in current_text or '言語' in current_text_lower):
-                child.setText(known_labels['language'])
-                logger.debug(f"基于关键字更新了语言标签为: {known_labels['language']}")
-            elif ('current' in current_text_lower and 'ai' in current_text_lower) or '当前' in current_text:
-                child.setText(known_labels['current_ai'])
-                logger.debug(f"基于关键字更新了当前AI标签为: {known_labels['current_ai']}")
-            elif ('api' in current_text_lower or ('key' in current_text_lower or 'token' in current_text_lower)) or '密钥' in current_text_lower or 'clé' in current_text_lower:
-                child.setText(known_labels['api_key'])
-                logger.debug(f"基于关键字更新了API Key标签为: {known_labels['api_key']}")
-            elif ('base' in current_text_lower and 'url' in current_text_lower) or '基础' in current_text or 'base' in current_text_lower:
-                child.setText(known_labels['base_url'])
-                logger.debug(f"基于关键字更新了Base URL标签为: {known_labels['base_url']}")
-            elif 'model' in current_text_lower or '模型' in current_text or 'modèle' in current_text_lower:
-                child.setText(known_labels['model'])
-                logger.debug(f"基于关键字更新了Model标签为: {known_labels['model']}")
-            elif ('ask' in current_text_lower and 'prompt' in current_text_lower) or '提问提示' in current_text:
-                child.setText(known_labels['ask_prompts'])
-                logger.debug(f"基于关键字更新了Ask Prompts标签为: {known_labels['ask_prompts']}")
-            elif ('random' in current_text_lower and ('question' in current_text_lower or 'prompt' in current_text_lower)) or '随机问题' in current_text:
-                child.setText(known_labels['random_questions'])
-                logger.debug(f"基于关键字更新了Random Questions Prompts标签为: {known_labels['random_questions']}")
-            elif ('prompt' in current_text_lower and 'template' in current_text_lower) or '提示模板' in current_text or '提示词模板' in current_text:
-                child.setText(known_labels['prompt_template'])
-                logger.debug(f"基于关键字更新了Prompt Template标签为: {known_labels['prompt_template']}")
+        for label in self.findChildren(QLabel):
+            obj_name = label.objectName()
+            if obj_name in label_map:
+                i18n_key, fallback = label_map[obj_name]
+                new_text = self.i18n.get(i18n_key, fallback)
+                old_text = label.text()
+                label.setText(new_text)
+                logger.debug(f"更新了标签 [{obj_name}]: {old_text} -> {new_text}")
         
         # 更新所有按钮文本
         reset_text = self.i18n.get('reset_button', 'Reset to Default')
@@ -1690,6 +1692,58 @@ class ConfigDialog(QWidget):
         # 更新模型下拉框中的显示名称
         self.update_model_name_display()
         logger.debug("更新了模型下拉框中的显示名称")
+        
+        # 更新占位符提示文本（多书提示词模板说明）
+        for label in self.findChildren(QLabel):
+            text = label.text()
+            # 检查是否是占位符提示（包含 {books_metadata} 或 {query}）
+            if '{books_metadata}' in text or '{query}' in text or 'book information' in text.lower() or '书籍信息' in text or 'информац' in text.lower():
+                label.setText(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
+                logger.debug("更新了多书提示词占位符提示文本")
+                break
+        
+        # 更新"秒"标签
+        for label in self.findChildren(QLabel):
+            text = label.text()
+            if text in ['seconds', '秒', 'секунд', 'secondes', 'Sekunden', 'sekuntia']:
+                label.setText(self.i18n.get('seconds', 'seconds'))
+                logger.debug("更新了秒标签文本")
+                break
+        
+        # 更新超时输入框的placeholder
+        if hasattr(self, 'timeout_input'):
+            self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
+            logger.debug("更新了超时输入框placeholder")
+        
+        # 更新多书提示词模板的默认内容（如果当前内容为空或为默认值）
+        if hasattr(self, 'multi_book_template_edit'):
+            current_text = self.multi_book_template_edit.toPlainText().strip()
+            # 获取当前语言代码
+            current_lang = self.lang_combo.currentData() if hasattr(self, 'lang_combo') else 'en'
+            # 获取该语言的默认多书模板
+            default_multi_book_template = get_multi_book_template(current_lang)
+            # 如果当前内容为空，则填充默认模板
+            if not current_text:
+                self.multi_book_template_edit.setPlainText(default_multi_book_template)
+                logger.debug(f"更新了多书模板为语言 {current_lang} 的默认值")
+            # 如果当前内容是其他语言的默认模板，也更新为当前语言的默认模板
+            else:
+                # 检查是否是任何语言的默认模板
+                all_langs = get_all_languages()
+                is_default_template = False
+                for lang_code in all_langs.keys():
+                    try:
+                        lang_default = get_multi_book_template(lang_code)
+                        # 移除空格和换行符进行比较
+                        if current_text.replace(' ', '').replace('\n', '') == lang_default.replace(' ', '').replace('\n', ''):
+                            is_default_template = True
+                            break
+                    except:
+                        pass
+                
+                if is_default_template:
+                    self.multi_book_template_edit.setPlainText(default_multi_book_template)
+                    logger.debug(f"检测到默认模板，更新为语言 {current_lang} 的默认值")
     
     def on_parallel_count_changed(self):
         """并行AI数量变更处理"""
@@ -1737,7 +1791,7 @@ class ConfigDialog(QWidget):
             panel_label = QLabel(f"{self.i18n.get('ai_panel_label', 'AI {index}:').format(index=i+1)}")
             panel_layout.addWidget(panel_label)
             
-            panel_combo = QComboBox()
+            panel_combo = NoScrollComboBox()
             panel_combo.setMinimumWidth(200)
             
             # 添加AI选项

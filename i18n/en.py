@@ -29,6 +29,10 @@ class EnglishTranslation(BaseTranslation):
         return """You are an expert book reviewer. For the book "{title}" by {author}, publish language is {language}, generate ONE insightful question that helps readers better understand the book's core ideas, practical applications, or unique perspectives. Rules: 1. Return ONLY the question, without any introduction or explanation 2. Focus on the book's substance, not just its title 3. Make the question practical and thought-provoking 4. Keep it concise (30-200 words) 5. Be creative and generate a different question each time, even for the same book"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Here is information about multiple books: {books_metadata} User question: {query} Please answer the question based on the above book information."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin information

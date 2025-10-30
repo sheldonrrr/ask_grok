@@ -26,7 +26,11 @@ class SimplifiedChineseTranslation(BaseTranslation):
     
     @property
     def suggestion_template(self) -> str:
-        return '您是一位专业的书评人。对于{author}的书籍“{title}”，发布语言为{language}，请提出一个富有洞察力的问题，帮助读者更好地理解本书的核心思想、实际应用或独特视角。规则：1. 只返回问题，无需任何引言或解释；2. 关注书籍内容，而不仅仅是标题；3. 问题务实且发人深省；4. 保持简洁（30-200 字）；5. 发挥创意，即使是针对同一本书，每次都要提出不同的问题。'
+        return '您是一位专业的书评人。对于{author}的书籍"{title}"，发布语言为{language}，请提出一个富有洞察力的问题，帮助读者更好地理解本书的核心思想、实际应用或独特视角。规则：1. 只返回问题，无需任何引言或解释；2. 关注书籍内容，而不仅仅是标题；3. 问题务实且发人深省；4. 保持简洁（30-200 字）；5. 发挥创意，即使是针对同一本书，每次都要提出不同的问题。'
+    
+    @property
+    def multi_book_default_template(self) -> str:
+        return """以下是关于多本书籍的信息：{books_metadata} 用户问题：{query} 请基于以上书籍信息回答问题。"""
     
     @property
     def translations(self) -> dict:

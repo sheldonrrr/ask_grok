@@ -8,8 +8,12 @@
 
 import logging
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                            QComboBox, QTextBrowser, QPushButton, QSizePolicy)
+                            QTextBrowser, QPushButton, QSizePolicy)
 from PyQt5.QtCore import Qt, pyqtSignal
+from calibre_plugins.ask_ai_plugin.widgets import NoScrollComboBox, apply_button_style
+from calibre_plugins.ask_ai_plugin.ui_constants import (
+    SPACING_SMALL, SPACING_MEDIUM, PADDING_MEDIUM
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,50 +54,17 @@ class ResponsePanel(QWidget):
         """设置UI布局"""
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
-        main_layout.setSpacing(8)
+        main_layout.setContentsMargins(PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM)
+        main_layout.setSpacing(SPACING_MEDIUM)
         
         # === Header 区域（横向） ===
         header_layout = QHBoxLayout()
+        header_layout.setSpacing(SPACING_SMALL)
         
         # AI切换器（直接显示模型名称，不需要"AI 1:"标签）
-        self.ai_switcher = QComboBox()
+        self.ai_switcher = NoScrollComboBox()
         self.ai_switcher.setMinimumWidth(200)
         self.ai_switcher.currentIndexChanged.connect(self.on_ai_switched)
-        # 修复hover时字体消失的问题
-        # 完全使用系统默认样式，不自定义 drop-down 和 down-arrow
-        self.ai_switcher.setStyleSheet("""
-            QComboBox {
-                color: palette(text);
-                background: palette(base);
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                padding: 3px 5px;
-            }
-            QComboBox:hover {
-                color: palette(text);
-                background: palette(midlight);
-                border: 1px solid palette(highlight);
-            }
-            QComboBox QAbstractItemView {
-                color: palette(text);
-                background: palette(base);
-                selection-color: palette(highlighted-text);
-                selection-background-color: palette(highlight);
-            }
-            QComboBox QAbstractItemView::item {
-                color: palette(text);
-                padding: 5px;
-            }
-            QComboBox QAbstractItemView::item:hover {
-                color: palette(text);
-                background: palette(midlight);
-            }
-            QComboBox QAbstractItemView::item:selected {
-                color: palette(highlighted-text);
-                background: palette(highlight);
-            }
-        """)
         header_layout.addWidget(self.ai_switcher)
         header_layout.addStretch()
         
@@ -151,58 +122,20 @@ class ResponsePanel(QWidget):
         
         main_layout.addWidget(self.response_area, stretch=1)  # stretch=1 让它占据剩余空间
         
-        # === Button Bar（横向） ===
+        # === Button Bar（操作按钮） ===
         button_layout = QHBoxLayout()
+        button_layout.setSpacing(SPACING_SMALL)
         
-        self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
-        self.copy_btn.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
+        self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy'))
+        apply_button_style(self.copy_btn, min_width=80)
         self.copy_btn.clicked.connect(self.copy_response)
         
         self.copy_qa_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
-        self.copy_qa_btn.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
+        apply_button_style(self.copy_qa_btn, min_width=100)
         self.copy_qa_btn.clicked.connect(self.copy_question_response)
         
         self.export_btn = QPushButton(self.i18n.get('export_pdf', 'Export PDF'))
-        self.export_btn.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
+        apply_button_style(self.export_btn, min_width=100)
         self.export_btn.clicked.connect(self.export_to_pdf)
         
         button_layout.addWidget(self.copy_btn)

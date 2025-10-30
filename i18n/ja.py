@@ -29,6 +29,10 @@ class JapaneseTranslation(BaseTranslation):
         return """あなたは本のレビューの専門家です。{author}著の本「{title}」公開言語は「{language}」について、読者が本の核心的な考え、実用的な応用、または独自の視点をよりよく理解するのに役立つような、1つの洞察に富んだ質問を生成してください。ルール： 1. 質問のみを返し、導入や説明は不要です 2. 本の内容に焦点を当て、タイトルだけに焦点を当てないでください 3. 質問を実用的で考えさせられるようにしてください 4. 30〜200文字以内に保ちます 5. 創造的に、同じ本でも毎回異なる質問を生成してください"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """複数の本に関する情報は次のとおりです：{books_metadata} ユーザーの質問：{query} 上記の本の情報に基づいて質問に答えてください。"""
+    
+    @property
     def translations(self) -> dict:
         return {
             # プラグイン情報

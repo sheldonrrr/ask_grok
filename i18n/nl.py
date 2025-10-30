@@ -29,6 +29,10 @@ class DutchTranslation(BaseTranslation):
         return """U bent een expert in boekrecensies. Voor het boek "{title}" van {author}, publiceren taal is {language}, genereert u ÉÉN inzichtelijke vraag die lezers helpt om het boek beter te begrijpen. Regels: 1. Retourneer ALLEEN de vraag, zonder inleiding of uitleg 2. Concentreer u op de inhoud van het boek, niet alleen op de titel 3. Maak de vraag praktisch en nadenkend 4. Houd het kort (30-200 woorden) 5. Wees creatief en genereer elke keer een andere vraag, zelfs voor hetzelfde boek"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Hier is informatie over meerdere boeken: {books_metadata} Gebruikersvraag: {query} Beantwoord de vraag a.u.b. op basis van de bovenstaande boekinformatie."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin informatie

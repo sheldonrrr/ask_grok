@@ -29,6 +29,10 @@ class GermanTranslation(BaseTranslation):
         return """Sie sind ein Buchexperte. Generieren Sie für das Buch \"{title}\" von {author}, Sprache: {language}, EINE aufschlussreiche Frage, die den Lesern hilft, die Kernideen des Buches, praktische Anwendungen oder einzigartige Perspektiven besser zu verstehen. Regeln: 1. Geben Sie NUR die Frage zurück, ohne Einleitung oder Erklärung 2. Konzentrieren Sie sich auf den Inhalt des Buches, nicht nur auf den Titel 3. Stellen Sie eine praktische und zum Nachdenken anregende Frage 4. Halten Sie es kurz (30-200 Wörter) 5. Seien Sie kreativ und generieren Sie jedes Mal eine andere Frage, auch für dasselbe Buch"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Hier sind Informationen über mehrere Bücher: {books_metadata} Benutzerfrage: {query} Bitte beantworten Sie die Frage basierend auf den obigen Buchinformationen."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin-Informationen

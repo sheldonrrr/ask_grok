@@ -29,6 +29,10 @@ class CantoneseTranslation(BaseTranslation):
         return """你係一個專業嘅書評家。對於「{title}」這本由{author}寫嘅書，出版語言係{language}，生成一個有見地嘅問題，幫助讀者更加理解這本書嘅核心思想、實踐應用或者獨特觀點。規則：1. 只返回問題本身，唔使介紹或解釋 2. 將焦點放在書嘅內容上，唔係標題 3. 令問題具有實用性同啟發性 4. 保持精簡（30-200字） 5. 發揮創意，就算係同一本書，每次都要生成唔同嘅問題"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """以下係關於多本書嘅信息：{books_metadata} 用戶問題：{query} 請基於以上書籍信息回答問題。"""
+    
+    @property
     def translations(self) -> dict:
         return {
             # 插件信息

@@ -29,6 +29,10 @@ class FinnishTranslation(BaseTranslation):
         return """Olet kirja-arvostelun asiantuntija. Kirjalle "{title}" kirjailijana {author}, julkaisukieli on {language}, luo YKSI oivaltava kysymys, joka auttaa lukijoita ymmärtämään kirjaa paremmin. Säännöt: 1. Palauta VAIN kysymys, ilman johdantoa tai selitystä 2. Keskity kirjan sisältöön, älä pelkästään otsikkoon 3. Tee kysymyksestä käytännöllinen ja ajatuksia herättävä 4. Pidä se lyhyenä (30-200 sanaa) 5. Ole luova ja luo eri kysymys joka kerta, myös samalle kirjalle"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Tässä on tietoa useista kirjoista: {books_metadata} Käyttäjän kysymys: {query} Vastaa kysymykseen yllä olevan kirjatiedon perusteella."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin tiedot

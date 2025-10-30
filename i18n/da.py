@@ -26,7 +26,11 @@ class DanishTranslation(BaseTranslation):
     
     @property
     def suggestion_template(self) -> str:
-        return """Du er en ekspert i boganmeldelser. For bogen "{title}" af {author},publiceringssprog er {language}, generér ÉT indsigtfuldt spørgsmål, der hjælper læserne med at forstå bogen bedre. Regler: 1. Returner KUN spørgsmålet, uden introduktion eller forklaring 2. Fokuser på bogens indhold, ikke kun titlen 3. Gør spørgsmålet praktisk og tankevækkende 4. Hold det kort (30-200 ord) 5. Vær kreativ og generer et andet spørsmål hver gang, selv for samme bog"""
+        return """Du er en ekspert i boganmeldelser. For bogen "{title}" af {author},publiceringssprog er {language}, generér ÉT indsigtfuldt spørgsmål, der hjælper læserne med at forstå bogen bedre. Regler: 1. Returner KUN spørgsmålet, uden introduktion eller forklaring 2. Fokuser på bogens indhold, ikke kun titlen 3. Gør spørgsmålet praktisk og tankevækkende 4. Hold det kort (30-200 ord) 5. Vær kreativ og generer et andet spørgsmål hver gang, selv for samme bog"""
+    
+    @property
+    def multi_book_default_template(self) -> str:
+        return """Her er information om flere bøger: {books_metadata} Brugerens spørgsmål: {query} Besvar venligst spørgsmålet baseret på ovenstående boginformation."""
     
     @property
     def translations(self) -> dict:

@@ -29,6 +29,10 @@ class NorwegianTranslation(BaseTranslation):
         return """Du er en ekspert i bokanmeldelser. For boken "{title}" av {author}, publiceringsspråk er {language}, generer ÉT innsiktsfullt spørsmål som hjelper lesere med å forstå boken bedre. Regler: 1. Returner KUN spørsmålet, uten introduksjon eller forklaring 2. Fokuser på bokens innhold, ikke bare tittelen 3. Gjør spørsmålet praktisk og tankevekkende 4. Hold det kort (30-200 ord) 5. Vær kreativ og generer et annet spørsmål hver gang, selv for samme bok"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Her er informasjon om flere bøker: {books_metadata} Brukerens spørsmål: {query} Vennligst svar på spørsmålet basert på bokinformasjonen ovenfor."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin informasjon

@@ -49,7 +49,7 @@ Import the file to calibre custom plugins:
 - **Ollama** - https://ollama.ai/ (Local AI models)
 - **Custom** - Any OpenAI-compatible API endpoint
 
-### Free API Key
+### Free Nvidia API Key
 
 Recently, Nvidia released a free API key for llama, Deepseek-r1, you can get free API key from [here](https://build.nvidia.com/).
 

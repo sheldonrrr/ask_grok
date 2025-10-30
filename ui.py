@@ -20,6 +20,11 @@ from calibre_plugins.ask_ai_plugin.api import APIClient
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
+from calibre_plugins.ask_ai_plugin.ui_constants import (
+    SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
+    MARGIN_MEDIUM, PADDING_MEDIUM
+)
 from calibre.utils.resources import get_path as I
 import sys
 import os
@@ -468,12 +473,25 @@ class TabDialog(QDialog):
         self.tab_widget.setTabText(2, self.i18n['about'])
         logger.debug("已更新标签页标题")
         
-        # 更新关闭按钮文本
+        # 更新保存按钮文本
+        if hasattr(self, 'save_button'):
+            self.save_button.setText(self.i18n.get('save_button', 'Save'))
+            logger.debug("已更新保存按钮文本")
+        
+        # 更新所有按钮文本（包括关闭按钮）
+        for button in self.findChildren(QPushButton):
+            button_text = button.text()
+            # 更新关闭按钮
+            if button_text in ['Close', '关闭', 'Закрыть', 'Fermer', 'Schließen', 'Cerrar', 'Chiudi', 'Fechar', 'Sluiten', 'Stäng', 'Lukk', 'Sulje', 'Luk', '閉じる', '關閉', '闭']:
+                button.setText(self.i18n.get('close_button', 'Close'))
+                logger.debug("已更新关闭按钮文本")
+        
+        # 也更新QDialogButtonBox中的按钮（如果存在）
         for button_box in self.findChildren(QDialogButtonBox):
             close_button = button_box.button(QDialogButtonBox.Close)
             if close_button:
                 close_button.setText(self.i18n.get('close_button', 'Close'))
-                logger.debug("已更新关闭按钮文本")
+                logger.debug("已更新QDialogButtonBox关闭按钮文本")
         
         # 确保 ConfigDialog 实例也更新了语言
         if hasattr(self.config_widget, 'config_dialog'):
@@ -601,13 +619,8 @@ class TabDialog(QDialog):
     def reject(self):
         """处理关闭按钮"""
         # 如果配置页面有未保存的更改，先重置字段
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
-            # 直接调用重置方法
-            self.config_widget.config_dialog.reset_to_initial_values()
-            # 重置保存按钮状态
-            if hasattr(self, 'save_button'):
-                self.save_button.setEnabled(False)
         super().reject()
+
 
 from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
 from calibre_plugins.ask_ai_plugin.random_question import SuggestionHandler
@@ -973,8 +986,15 @@ class AskDialog(QDialog):
         if uid is None:
             # 新对话
             self.input_area.clear()
-            self.response_area.clear()
-            logger.info("切换到新对话")
+            
+            # 清空所有面板（如果是多面板模式）
+            if hasattr(self, 'response_panels') and self.response_panels:
+                for panel in self.response_panels:
+                    panel.response_area.clear()
+                logger.info(f"切换到新对话，已清空 {len(self.response_panels)} 个面板")
+            else:
+                self.response_area.clear()
+                logger.info("切换到新对话")
             return
         
         history = self.response_handler.history_manager.get_history_by_uid(uid)
@@ -1023,28 +1043,53 @@ class AskDialog(QDialog):
         if 'answers' in history and isinstance(history['answers'], dict):
             # 新格式：多AI响应
             if hasattr(self, 'response_panels') and self.response_panels:
-                # 多面板模式：为每个面板加载对应AI的响应
-                for panel in self.response_panels:
-                    ai_id = panel.get_selected_ai()
-                    if ai_id and ai_id in history['answers']:
-                        answer_data = history['answers'][ai_id]
-                        answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
-                        panel.response_handler._update_ui_from_signal(
-                            answer_text,
-                            is_response=True,
-                            is_history=True
-                        )
-                        logger.info(f"为面板加载AI {ai_id} 的历史响应")
-                    elif 'default' in history['answers']:
-                        # 向后兼容：如果没有匹配的AI，使用default
-                        answer_data = history['answers']['default']
-                        answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
-                        panel.response_handler._update_ui_from_signal(
-                            answer_text,
-                            is_response=True,
-                            is_history=True
-                        )
-                        break  # 只加载到第一个面板
+                # 多面板模式：根据历史记录中的AI响应来加载
+                # 获取历史记录中所有AI的ID（排除'default'）
+                history_ai_ids = [ai_id for ai_id in history['answers'].keys() if ai_id != 'default']
+                
+                # 如果历史记录中没有具体AI ID，只有default，则使用default
+                if not history_ai_ids and 'default' in history['answers']:
+                    history_ai_ids = ['default']
+                
+                logger.info(f"历史记录中包含 {len(history_ai_ids)} 个AI响应: {history_ai_ids}")
+                
+                # 为每个历史AI响应分配一个面板
+                for idx, ai_id in enumerate(history_ai_ids):
+                    if idx >= len(self.response_panels):
+                        logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
+                        break
+                    
+                    panel = self.response_panels[idx]
+                    answer_data = history['answers'][ai_id]
+                    answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                    
+                    # 如果历史记录中的AI不是'default'，设置面板的AI选择器
+                    if ai_id != 'default':
+                        # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
+                        panel.ai_switcher.blockSignals(True)
+                        # 尝试在AI切换器中选中对应的AI
+                        for i in range(panel.ai_switcher.count()):
+                            if panel.ai_switcher.itemData(i) == ai_id:
+                                panel.ai_switcher.setCurrentIndex(i)
+                                logger.info(f"面板 {idx} 切换到AI: {ai_id}")
+                                break
+                        panel.ai_switcher.blockSignals(False)
+                    
+                    # 加载历史响应
+                    panel.response_handler._update_ui_from_signal(
+                        answer_text,
+                        is_response=True,
+                        is_history=True
+                    )
+                    logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                
+                # 清空未使用的面板
+                for idx in range(len(history_ai_ids), len(self.response_panels)):
+                    self.response_panels[idx].response_area.clear()
+                    logger.debug(f"清空未使用的面板 {idx}")
+                
+                # 统一更新所有面板的AI切换器（实现互斥逻辑）
+                self._update_all_panel_ai_switchers()
             else:
                 # 单面板模式：加载default或第一个AI的响应
                 if 'default' in history['answers']:
@@ -1684,10 +1729,13 @@ class AskDialog(QDialog):
         self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 600))
         
         layout = QVBoxLayout()
+        layout.setSpacing(SPACING_MEDIUM)  # 使用统一的中等间距
+        layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
         self.setLayout(layout)
         
         # 创建顶部栏：标题 + 书籍信息（移除全局AI切换器，每个面板有自己的切换器）
         top_bar = QHBoxLayout()
+        top_bar.setSpacing(SPACING_SMALL)
         
         # 左侧：对话标题
         title_label = QLabel(self.i18n['menu_title'])
@@ -1735,6 +1783,7 @@ class AskDialog(QDialog):
         
         # 创建操作区域
         action_layout = QHBoxLayout()
+        action_layout.setSpacing(SPACING_SMALL)
         
         # 创建历史记录切换按钮
         history_button = self._create_history_switcher()
@@ -1743,7 +1792,7 @@ class AskDialog(QDialog):
         # 创建随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        self.suggest_button.setMinimumWidth(80)
+        apply_button_style(self.suggest_button, min_width=120)
         self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
         # 创建随机问题动作和快捷键
@@ -1756,22 +1805,6 @@ class AskDialog(QDialog):
         self.suggest_action.triggered.connect(self.generate_suggestion)
         self.addAction(self.suggest_action)
         
-        # 设置按钮样式
-        self.suggest_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(mid);
-                color: white;
-            }
-        """)
         action_layout.addWidget(self.suggest_button)
         
         # 添加弹性空间
@@ -1780,19 +1813,16 @@ class AskDialog(QDialog):
         # 创建停止按钮
         self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
         self.stop_button.clicked.connect(self.stop_request)
-        self.stop_button.setMinimumWidth(80)
+        apply_button_style(self.stop_button, min_width=100)
         self.stop_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.stop_button.setVisible(False)  # 初始隐藏
-        
-        # 设置停止按钮样式
+        # 停止按钮特殊样式（红色警告色）
         self.stop_button.setStyleSheet("""
             QPushButton {
                 color: #d32f2f;
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
+                padding: 5px 12px;
                 border: 1px solid #d32f2f;
+                border-radius: 3px;
             }
             QPushButton:hover:enabled {
                 background-color: #ffebee;
@@ -1807,7 +1837,7 @@ class AskDialog(QDialog):
         # 创建发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
-        self.send_button.setMinimumWidth(80)
+        apply_button_style(self.send_button, min_width=100)
         self.send_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
 
         # 创建发送动作和快捷键
@@ -1819,22 +1849,6 @@ class AskDialog(QDialog):
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
 
-        # 设置发送按钮样式
-        self.send_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(mid);
-            }
-        """)
         action_layout.addWidget(self.send_button)
         
         layout.addLayout(action_layout)

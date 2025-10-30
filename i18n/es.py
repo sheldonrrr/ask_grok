@@ -29,6 +29,10 @@ class SpanishTranslation(BaseTranslation):
         return """Eres un experto en reseñas de libros. Para el libro \"{title}\" de {author}, cuyo idioma de publicación es {language}, genera UNA pregunta perspicaz que ayude a los lectores a comprender mejor las ideas centrales del libro, sus aplicaciones prácticas o perspectivas únicas. Reglas: 1. Devuelve SOLO la pregunta, sin introducción ni explicación 2. Concéntrate en el contenido del libro, no solo en su título 3. Haz que la pregunta sea práctica y estimulante 4. Sé conciso (30-200 palabras) 5. Sé creativo y genera una pregunta diferente cada vez, incluso para el mismo libro"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Aquí está la información sobre varios libros: {books_metadata} Pregunta del usuario: {query} Por favor, responda a la pregunta basándose en la información de los libros anterior."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Información del plugin

@@ -29,6 +29,10 @@ class TraditionalChineseTranslation(BaseTranslation):
         return """您是一位專業的書評家。對於「{title}」這本由{author}所寫的書，出版語言為{language}，請生成一個有見地的問題，幫助讀者更好地理解這本書的核心思想、實踐應用或獨特觀點。規則：1. 只返回問題本身，不需要任何介紹或解釋 2. 將焦點放在書的內容上，而不僅僅是標題 3. 使問題具有實用性和啟發性 4. 保持精簡（30-200字） 5. 請發揮創意，即使是同一本書，每次也要生成不同的問題"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """以下是關於多本書籍的資訊：{books_metadata} 用戶問題：{query} 請基於以上書籍資訊回答問題。"""
+    
+    @property
     def translations(self) -> dict:
         return {
         # 插件信息

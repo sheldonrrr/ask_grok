@@ -228,6 +228,12 @@ def get_suggestion_template(lang_code: str) -> str:
     return translation.suggestion_template
 
 
+def get_multi_book_template(lang_code: str) -> str:
+    """获取指定语言代码的多书默认模板"""
+    translation = TranslationRegistry.get_translation(lang_code)
+    return translation.multi_book_default_template
+
+
 def get_all_languages() -> Dict[str, str]:
     """获取所有可用语言"""
     return TranslationRegistry.get_all_languages()
