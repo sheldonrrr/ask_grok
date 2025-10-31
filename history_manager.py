@@ -65,7 +65,7 @@ class HistoryManager:
         
         return f"{timestamp}_{hash_suffix}"
     
-    def save_history(self, uid, mode, books_metadata, question, answer, ai_id=None):
+    def save_history(self, uid, mode, books_metadata, question, answer, ai_id=None, model_info=None):
         """
         保存历史记录（支持多AI响应）
         
@@ -76,6 +76,7 @@ class HistoryManager:
             question: 用户问题
             answer: AI回答（单个AI）或字典（多个AI）
             ai_id: AI标识符（可选，用于多AI场景）
+            model_info: 模型信息字典（可选），包含provider_name, model, api_base等
         """
         # 如果历史记录不存在，创建新的
         if uid not in self.histories:
@@ -110,17 +111,25 @@ class HistoryManager:
         # 更新或添加AI的响应
         if ai_id:
             # 多AI场景：保存特定AI的响应
-            self.histories[uid]['answers'][ai_id] = {
+            answer_data = {
                 'answer': answer,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
+            # 如果提供了模型信息，保存它
+            if model_info:
+                answer_data['model_info'] = model_info
+            self.histories[uid]['answers'][ai_id] = answer_data
             logger.info(f"历史记录已保存: UID={uid}, AI={ai_id}, 模式={mode}, 问题长度={len(question)}, 答案长度={len(answer)}")
         else:
             # 单AI场景（向后兼容）：使用'default'作为key
-            self.histories[uid]['answers']['default'] = {
+            answer_data = {
                 'answer': answer,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
+            # 如果提供了模型信息，保存它
+            if model_info:
+                answer_data['model_info'] = model_info
+            self.histories[uid]['answers']['default'] = answer_data
             logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}, 问题长度={len(question)}, 答案长度={len(answer)}")
         
         self._save_histories()

@@ -134,13 +134,19 @@ class ResponsePanel(QWidget):
         apply_button_style(self.copy_qa_btn, min_width=100)
         self.copy_qa_btn.clicked.connect(self.copy_question_response)
         
-        self.export_btn = QPushButton(self.i18n.get('export_pdf', 'Export PDF'))
-        apply_button_style(self.export_btn, min_width=100)
+        self.export_btn = QPushButton(self.i18n.get('export_current_qa', 'Export Current Q&A'))
+        apply_button_style(self.export_btn, min_width=120)
         self.export_btn.clicked.connect(self.export_to_pdf)
+        
+        self.export_all_btn = QPushButton(self.i18n.get('export_history', 'Export History'))
+        apply_button_style(self.export_all_btn, min_width=100)
+        self.export_all_btn.clicked.connect(self.export_all_history_to_pdf)
+        self.export_all_btn.setEnabled(False)  # 默认禁用，当历史记录>=2时启用
         
         button_layout.addWidget(self.copy_btn)
         button_layout.addWidget(self.copy_qa_btn)
         button_layout.addWidget(self.export_btn)
+        button_layout.addWidget(self.export_all_btn)
         button_layout.addStretch()
         
         main_layout.addLayout(button_layout)
@@ -234,7 +240,69 @@ class ResponsePanel(QWidget):
         ai_id = self.ai_switcher.currentData()
         if ai_id:
             logger.info(f"面板 {self.panel_index} 切换到 AI: {ai_id}")
+            
+            # 检查是否需要询问用户是否设为默认AI
+            self._check_and_prompt_default_ai(ai_id)
+            
             self.ai_changed.emit(self.panel_index, ai_id)
+    
+    def _check_and_prompt_default_ai(self, selected_ai_id):
+        """检查并询问用户是否将选择的AI设为默认
+        
+        Args:
+            selected_ai_id: 用户选择的AI ID
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        from calibre_plugins.ask_ai_plugin.config import prefs
+        
+        # 只在单面板模式下提示
+        if not hasattr(self.parent_dialog, 'response_panels'):
+            return
+        
+        panel_count = len(self.parent_dialog.response_panels)
+        if panel_count != 1:
+            logger.debug(f"多面板模式（{panel_count}个面板），跳过默认AI提示")
+            return
+        
+        # 获取config中当前的默认AI
+        current_default_ai = prefs.get('selected_model', 'grok')
+        
+        # 如果选择的AI与默认AI相同，不提示
+        if selected_ai_id == current_default_ai:
+            logger.debug(f"选择的AI ({selected_ai_id}) 与默认AI相同，跳过提示")
+            return
+        
+        # 获取AI的显示名称
+        ai_display_name = self.ai_switcher.currentText()
+        
+        # 弹出确认对话框
+        msg_title = self.i18n.get('set_default_ai_title', 'Set Default AI')
+        msg_text = self.i18n.get(
+            'set_default_ai_message',
+            'You have switched to "{0}". Would you like to set it as the default AI for future queries?'
+        ).format(ai_display_name)
+        
+        reply = QMessageBox.question(
+            self,
+            msg_title,
+            msg_text,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No  # 默认选择No，避免误操作
+        )
+        
+        if reply == QMessageBox.Yes:
+            # 用户选择Yes，更新config
+            prefs.set('selected_model', selected_ai_id)
+            logger.info(f"用户确认将 {selected_ai_id} 设为默认AI")
+            
+            # 显示成功提示
+            success_msg = self.i18n.get(
+                'set_default_ai_success',
+                'Default AI has been set to "{0}".'
+            ).format(ai_display_name)
+            QMessageBox.information(self, self.i18n.get('info', 'Information'), success_msg)
+        else:
+            logger.debug(f"用户取消将 {selected_ai_id} 设为默认AI")
     
     def send_request(self, prompt, model_id=None):
         """发送请求到选中的AI
@@ -452,9 +520,9 @@ class ResponsePanel(QWidget):
             github_label = self.i18n.get('pdf_github', 'GitHub')
             software_label = self.i18n.get('pdf_software', 'Software')
             time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
-            content_parts.append(f"{plugin_label}: Ask AI Plugin (Calibre Plugin)")
+            content_parts.append(f"{plugin_label}: Ask AI Plugin (calibre Plugin)")
             content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
-            content_parts.append(f"{software_label}: Calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{software_label}: calibre E-book Manager (https://calibre-ebook.com)")
             content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             content_parts.append(separator)
             
@@ -473,6 +541,240 @@ class ResponsePanel(QWidget):
             
         except Exception as e:
             logger.error(f"面板 {self.panel_index} 导出PDF失败: {str(e)}", exc_info=True)
+            error_msg = self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                error_msg
+            )
+    
+    def update_export_all_button_state(self):
+        """更新导出历史记录按钮的状态"""
+        if not hasattr(self, 'export_all_btn'):
+            return
+        
+        # 获取当前书籍的历史记录数量
+        history_count = 0
+        if hasattr(self.parent_dialog, 'books_info') and hasattr(self.parent_dialog, 'response_handler'):
+            if hasattr(self.parent_dialog.response_handler, 'history_manager'):
+                book_ids = [book.id for book in self.parent_dialog.books_info]
+                all_histories = self.parent_dialog.response_handler.history_manager.get_related_histories(book_ids)
+                history_count = len(all_histories)
+        
+        # 历史记录>=2条时启用按钮
+        self.export_all_btn.setEnabled(history_count >= 2)
+        logger.debug(f"面板 {self.panel_index} 历史记录数量: {history_count}, 导出历史按钮状态: {'启用' if history_count >= 2 else '禁用'}")
+    
+    def export_all_history_to_pdf(self):
+        """导出当前书籍的所有历史记录为单个PDF文件"""
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from PyQt5.QtPrintSupport import QPrinter
+        from PyQt5.QtGui import QTextDocument
+        from datetime import datetime
+        import re
+        
+        logger.info(f"面板 {self.panel_index} 开始导出全部历史记录PDF")
+        
+        # 获取当前书籍的所有历史记录
+        if not hasattr(self.parent_dialog, 'books_info') or not hasattr(self.parent_dialog, 'response_handler'):
+            logger.warning("无法获取父对话框信息")
+            return
+        
+        if not hasattr(self.parent_dialog.response_handler, 'history_manager'):
+            logger.warning("无法获取历史记录管理器")
+            return
+        
+        book_ids = [book.id for book in self.parent_dialog.books_info]
+        all_histories = self.parent_dialog.response_handler.history_manager.get_related_histories(book_ids)
+        
+        if len(all_histories) < 2:
+            logger.warning(f"历史记录数量不足: {len(all_histories)}")
+            QMessageBox.information(
+                self,
+                self.i18n.get('info', 'Information'),
+                self.i18n.get('export_history_insufficient', 'Need at least 2 history records to export.')
+            )
+            return
+        
+        # 生成默认文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        book_title = self.parent_dialog.books_info[0].title if self.parent_dialog.books_info else "unknown"
+        # 清理文件名中的非法字符
+        safe_title = "".join(c for c in book_title if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
+        default_filename = f"ask_ai_all_history_{safe_title}_{timestamp}.pdf"
+        
+        # 打开文件保存对话框
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            self.i18n.get('export_all_history_dialog_title', 'Export All History to PDF'),
+            default_filename,
+            "PDF Files (*.pdf)"
+        )
+        
+        if not file_path:
+            logger.debug("用户取消了全部历史记录PDF导出")
+            return
+        
+        try:
+            # 创建打印机对象
+            printer = QPrinter()
+            printer.setOutputFileName(file_path)
+            
+            # 构建完整内容
+            content_parts = []
+            separator = "=" * 60
+            
+            # 1. 添加标题
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('export_all_history_title', 'ALL Q&A HISTORY'))
+            content_parts.append(separator)
+            content_parts.append("")
+            
+            # 2. 添加完整的书籍元数据信息（与导出当前问答一致）
+            if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
+                book_metadata = self.parent_dialog.book_metadata
+                content_parts.append(separator)
+                content_parts.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                content_parts.append(separator)
+                
+                if book_metadata.get('title'):
+                    title_label = self.i18n.get('metadata_title', 'Title')
+                    content_parts.append(f"{title_label}: {book_metadata['title']}")
+                
+                if book_metadata.get('authors'):
+                    authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
+                    authors_label = self.i18n.get('metadata_authors', 'Authors')
+                    content_parts.append(f"{authors_label}: {authors}")
+                
+                if book_metadata.get('publisher'):
+                    publisher_label = self.i18n.get('metadata_publisher', 'Publisher')
+                    content_parts.append(f"{publisher_label}: {book_metadata['publisher']}")
+                
+                if book_metadata.get('pubdate'):
+                    pubdate = str(book_metadata['pubdate'])
+                    # 只保留年月，去掉详细时间
+                    if 'T' in pubdate:
+                        pubdate = pubdate.split('T')[0]
+                    if len(pubdate) > 7:
+                        pubdate = pubdate[:7]
+                    pubdate_label = self.i18n.get('metadata_pubyear', 'Publication Date')
+                    content_parts.append(f"{pubdate_label}: {pubdate}")
+                
+                if book_metadata.get('languages'):
+                    languages = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
+                    languages_label = self.i18n.get('metadata_language', 'Languages')
+                    content_parts.append(f"{languages_label}: {languages}")
+                
+                content_parts.append("")
+            
+            # 3. 添加每条历史记录
+            for idx, history in enumerate(all_histories, 1):
+                content_parts.append(separator)
+                content_parts.append(f"{self.i18n.get('history_record', 'Record')} #{idx} - {history['timestamp']}")
+                content_parts.append(separator)
+                content_parts.append("")
+                
+                # 问题
+                question_label = self.i18n.get('question_label', 'Question')
+                content_parts.append(f"{question_label}:")
+                question_text = history.get('question', self.i18n.get('no_question', 'No question'))
+                content_parts.append(question_text)
+                content_parts.append("")
+                
+                # 所有AI的回答
+                answers = history.get('answers', {})
+                if answers:
+                    answer_label = self.i18n.get('answer_label', 'Answer')
+                    for ai_id, answer_data in answers.items():
+                        # 获取模型信息（只获取一次）
+                        model_info = answer_data.get('model_info', {})
+                        
+                        # AI模型标识 - 优先使用model_info中的provider_name（有正确大小写）
+                        if model_info and model_info.get('provider_name'):
+                            ai_display = model_info.get('provider_name')
+                        elif ai_id != 'default':
+                            # 将ai_id首字母大写，使其更规范
+                            ai_display = ai_id.capitalize() if ai_id else 'Unknown'
+                        else:
+                            ai_display = self.i18n.get('default_ai', 'Default AI')
+                        
+                        content_parts.append(f"{answer_label} ({ai_display}):")
+                        content_parts.append("-" * 40)
+                        
+                        # 获取回答并去除Markdown格式
+                        answer_text = answer_data.get('answer', self.i18n.get('no_response', 'No response'))
+                        # 去除Markdown格式：标题、粗体、斜体、代码块等
+                        answer_text = re.sub(r'#{1,6}\s+', '', answer_text)  # 去除标题
+                        answer_text = re.sub(r'\*\*(.+?)\*\*', r'\1', answer_text)  # 去除粗体
+                        answer_text = re.sub(r'\*(.+?)\*', r'\1', answer_text)  # 去除斜体
+                        answer_text = re.sub(r'`(.+?)`', r'\1', answer_text)  # 去除行内代码
+                        answer_text = re.sub(r'```[\s\S]*?```', '', answer_text)  # 去除代码块
+                        answer_text = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', answer_text)  # 去除链接，保留文本
+                        
+                        content_parts.append(answer_text)
+                        content_parts.append("")
+                        
+                        # 添加该回答的AI模型信息
+                        content_parts.append(f"[{self.i18n.get('pdf_ai_model_info', 'AI MODEL')}]")
+                        
+                        # 使用之前获取的model_info（第628行）
+                        if model_info:
+                            provider = model_info.get('provider_name', ai_display)
+                            model_name = model_info.get('model', '')
+                            api_base = model_info.get('api_base', '')
+                            
+                            provider_label = self.i18n.get('pdf_provider', 'Provider')
+                            model_label = self.i18n.get('pdf_model', 'Model')
+                            
+                            content_parts.append(f"  {provider_label}: {provider}")
+                            if model_name:
+                                content_parts.append(f"  {model_label}: {model_name}")
+                            if api_base:
+                                api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
+                                content_parts.append(f"  {api_url_label}: {api_base}")
+                        else:
+                            # 向后兼容：如果没有model_info，只显示AI提供商名称（已经首字母大写）
+                            content_parts.append(f"  {self.i18n.get('pdf_provider', 'Provider')}: {ai_display}")
+                        
+                        answer_timestamp = answer_data.get('timestamp', '')
+                        if answer_timestamp:
+                            content_parts.append(f"  {self.i18n.get('pdf_generated_time', 'Time')}: {answer_timestamp}")
+                        content_parts.append("")
+                else:
+                    content_parts.append(self.i18n.get('no_response', 'No response'))
+                    content_parts.append("")
+            
+            # 4. 添加生成信息（与导出当前问答一致）
+            content_parts.append("")
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
+            content_parts.append(separator)
+            plugin_label = self.i18n.get('pdf_plugin', 'Plugin')
+            github_label = self.i18n.get('pdf_github', 'GitHub')
+            software_label = self.i18n.get('pdf_software', 'Software')
+            time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
+            total_records_label = self.i18n.get('total_records', 'Total Records')
+            content_parts.append(f"{plugin_label}: Ask AI Plugin (calibre Plugin)")
+            content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"{software_label}: calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(f"{total_records_label}: {len(all_histories)}")
+            content_parts.append(separator)
+            
+            # 合并内容并导出
+            content = "\n".join(content_parts)
+            doc = QTextDocument()
+            doc.setPlainText(content)
+            doc.print(printer)
+            
+            logger.info(f"全部历史记录PDF导出成功: {file_path}, 共 {len(all_histories)} 条记录")
+            
+            # 显示成功提示
+            success_msg = self.i18n.get('pdf_exported', 'PDF Exported!')
+            self._show_copy_tooltip(self.export_all_btn, success_msg)
+            
+        except Exception as e:
+            logger.error(f"导出全部历史记录PDF失败: {str(e)}", exc_info=True)
             error_msg = self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
             QMessageBox.warning(
                 self,

@@ -956,6 +956,9 @@ class AskDialog(QDialog):
     
     def _load_related_histories(self):
         """加载当前书籍关联的所有历史记录"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not hasattr(self.response_handler, 'history_manager'):
             return
         
@@ -965,6 +968,7 @@ class AskDialog(QDialog):
         # 获取当前书籍的所有历史记录
         book_ids = [book.id for book in self.books_info]
         all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
+        logger.info(f"[历史记录菜单] 加载历史记录: 书籍ID={book_ids}, 找到 {len(all_histories)} 条记录")
         
         if not all_histories:
             # 如果没有历史记录，只显示提示，不显示其他选项
@@ -980,13 +984,15 @@ class AskDialog(QDialog):
         self.history_menu.addSeparator()
         
         # 历史记录列表（按时间倒序显示）
-        for history in all_histories:
+        for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
             # 显示问题的前30个字符
             question_preview = history.get('question', '')[:30]
             if len(history.get('question', '')) > 30:
                 question_preview += '...'
             display_text = f"{question_preview} - {history['timestamp']}"
+            
+            logger.debug(f"[历史记录菜单] 添加记录 {idx+1}: UID={history['uid']}, 问题={question_preview}, 时间={history['timestamp']}")
             
             action = self.history_menu.addAction(display_text)
             action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
@@ -1374,8 +1380,20 @@ class AskDialog(QDialog):
                         )
                 
                 logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
+                
+                # 更新导出历史按钮状态
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        if hasattr(panel, 'update_export_all_button_state'):
+                            panel.update_export_all_button_state()
             else:
                 logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
+                
+                # 即使没有匹配的历史记录，也要更新按钮状态（可能有其他历史记录）
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        if hasattr(panel, 'update_export_all_button_state'):
+                            panel.update_export_all_button_state()
                 
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
@@ -2002,6 +2020,13 @@ class AskDialog(QDialog):
         import logging
         logger = logging.getLogger(__name__)
         logger.info("=== 开始处理用户问题 ===")
+        
+        # 检查当前UID是否已有历史记录，如果有则生成新UID（避免覆盖已有记录）
+        if hasattr(self, 'response_handler') and hasattr(self.response_handler, 'history_manager'):
+            if self.current_uid in self.response_handler.history_manager.histories:
+                old_uid = self.current_uid
+                self.current_uid = self._generate_uid()
+                logger.info(f"检测到已有历史记录，生成新UID: {old_uid} -> {self.current_uid}")
         
         # 检查 token 是否有效
         if not self._check_auth_token():

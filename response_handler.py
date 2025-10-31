@@ -985,8 +985,33 @@ class ResponseHandler(QObject):
                         # 确定模式
                         mode = 'multi' if parent_dialog.is_multi_book else 'single'
                         
-                        # 使用新的保存方法，传递AI标识符
+                        # 使用新的保存方法，传递AI标识符和模型信息
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
+                        
+                        # 获取模型信息 - 优先从面板的API对象获取（面板切换AI时会更新）
+                        model_info = None
+                        api_obj = None
+                        
+                        # 尝试从父对话框的面板获取API对象
+                        if hasattr(parent_dialog, 'response_panels') and parent_dialog.response_panels:
+                            # 找到当前ResponseHandler对应的面板
+                            for panel in parent_dialog.response_panels:
+                                if hasattr(panel, 'response_handler') and panel.response_handler == self:
+                                    api_obj = panel.api
+                                    break
+                        
+                        # 如果没有找到面板的API，回退到使用ResponseHandler的API
+                        if not api_obj and hasattr(self, 'api'):
+                            api_obj = self.api
+                        
+                        # 从API对象提取模型信息
+                        if api_obj:
+                            model_info = {
+                                'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                'model': getattr(api_obj, 'model', 'Unknown'),
+                                'api_base': getattr(api_obj, 'api_base', '')
+                            }
+                        
                         logger.info(f"[历史记录] 准备保存: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}, 响应长度={len(text)}")
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
@@ -994,9 +1019,21 @@ class ResponseHandler(QObject):
                             parent_dialog.books_metadata,
                             question,
                             text,
-                            ai_id=ai_id
+                            ai_id=ai_id,
+                            model_info=model_info
                         )
                         logger.info(f"[历史记录] ✓ 保存成功: UID={parent_dialog.current_uid}, AI={ai_id}")
+                        
+                        # 刷新历史记录菜单
+                        if hasattr(parent_dialog, '_load_related_histories'):
+                            parent_dialog._load_related_histories()
+                            logger.info(f"[历史记录] 已刷新历史记录菜单")
+                        
+                        # 更新导出全部历史记录按钮状态
+                        if hasattr(parent_dialog, 'response_panels') and parent_dialog.response_panels:
+                            for panel in parent_dialog.response_panels:
+                                if hasattr(panel, 'update_export_all_button_state'):
+                                    panel.update_export_all_button_state()
                     elif hasattr(self, 'current_metadata') and self.current_metadata:
                         # 向后兼容旧版本
                         question = self.input_area.toPlainText()
