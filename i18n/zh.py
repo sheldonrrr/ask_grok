@@ -134,6 +134,12 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'multi_book': '多书',
             'deleted': '已删除',
             'history': '历史记录',
+            'no_history': '暂无历史记录',
+            'clear_current_book_history': '清空当前书籍历史记录',
+            'confirm_clear_book_history': '确定要清空以下书籍的所有历史记录吗？\n{book_titles}',
+            'confirm': '确认',
+            'success': '成功',
+            'history_cleared': '已清空 {deleted_count} 条历史记录。',
             'multi_book_template_label': '多书提示词模板:',
             'multi_book_placeholder_hint': '使用 {books_metadata} 表示书籍信息，{query} 表示用户问题',
             

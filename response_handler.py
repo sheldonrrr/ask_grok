@@ -18,6 +18,9 @@ from calibre.utils.config import config_dir
 # 导入历史记录管理器
 from .history_manager import HistoryManager
 
+# 导入UI常量
+from .ui_constants import FONT_SIZE_MEDIUM
+
 # 配置日志目录
 log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
 os.makedirs(log_dir, exist_ok=True)
@@ -158,6 +161,12 @@ class ResponseHandler(QObject):
         self.signal = ResponseSignals()
         self.history_manager = HistoryManager()
         self.current_metadata = None  # 存储当前书籍的元数据
+        
+        # 智能滚动控制变量
+        self._user_is_scrolling = False  # 用户是否正在主动滚动
+        self._last_scroll_value = 0  # 上次滚动位置
+        self._scroll_resume_timer = None  # 恢复自动滚动的定时器
+        self._last_html_update_time = 0  # 上次HTML更新时间
     
     def _process_think_tags_for_stream(self, text):
         """处理流式响应中的 think 标签
@@ -223,6 +232,11 @@ class ResponseHandler(QObject):
         self.i18n = i18n
         self.api = api
         self.input_area = input_area  # 保存输入区域的引用
+        
+        # 连接滚动条信号以检测用户滚动
+        scrollbar = self.response_area.verticalScrollBar()
+        if scrollbar:
+            scrollbar.valueChanged.connect(self._on_scroll_value_changed)
 
     def update_i18n(self, i18n):
         """更新国际化文本对象"""
@@ -666,7 +680,7 @@ class ResponseHandler(QObject):
                     <div style="
                         text-align: left;
                         color: palette(text);
-                        font-size: 13px;
+                        font-size: {FONT_SIZE_MEDIUM}pt;
                         font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {base_text}{self._animation_dots[self._animation_dot_index]}
@@ -710,9 +724,9 @@ class ResponseHandler(QObject):
             str: 格式化后的HTML字符串
         """
         # 基础样式
-        base_style = """
+        base_style = f"""
             color: palette(text);
-            font-size: 13px;
+            font-size: {FONT_SIZE_MEDIUM}pt;
             margin: 15px 0;
             padding: 10px;
             font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -830,8 +844,53 @@ class ResponseHandler(QObject):
             self._markdown_worker.deleteLater()
             self._markdown_worker = None
 
+    def _on_scroll_value_changed(self, value):
+        """滚动条值变化时的回调，用于检测用户主动滚动"""
+        scrollbar = self.response_area.verticalScrollBar()
+        if not scrollbar:
+            return
+        
+        # 检测是否是用户主动滚动（而非程序自动滚动）
+        # 如果滚动位置发生变化，且不在底部，说明用户在主动滚动
+        if value != self._last_scroll_value:
+            is_at_bottom = value >= scrollbar.maximum() - 5
+            
+            # 如果用户离开底部，标记为正在滚动
+            if not is_at_bottom and not self._user_is_scrolling:
+                self._user_is_scrolling = True
+                logger.info(f"[Smart Scroll] 用户开始滚动，暂停自动更新")
+            
+            # 如果用户滚动到底部，恢复自动滚动
+            elif is_at_bottom and self._user_is_scrolling:
+                self._user_is_scrolling = False
+                logger.info(f"[Smart Scroll] 用户回到底部，恢复自动更新")
+            
+            # 更新上次滚动位置
+            self._last_scroll_value = value
+            
+            # 重置恢复定时器：如果用户停止滚动2秒，自动恢复
+            if self._user_is_scrolling:
+                if self._scroll_resume_timer:
+                    self._scroll_resume_timer.stop()
+                self._scroll_resume_timer = QTimer()
+                self._scroll_resume_timer.setSingleShot(True)
+                self._scroll_resume_timer.timeout.connect(self._resume_auto_scroll)
+                self._scroll_resume_timer.start(2000)  # 2秒后恢复
+    
+    def _resume_auto_scroll(self):
+        """恢复自动滚动（用户停止滚动2秒后）"""
+        scrollbar = self.response_area.verticalScrollBar()
+        if scrollbar:
+            # 检查是否在底部附近（100像素内）
+            is_near_bottom = scrollbar.value() >= scrollbar.maximum() - 100
+            if is_near_bottom:
+                self._user_is_scrolling = False
+                logger.info(f"[Smart Scroll] 用户停止滚动且接近底部，恢复自动更新")
+    
     def _set_html_response(self, html):
         """设置HTML响应并确保正确的样式"""
+        import time
+        
         # 只在HTML长度较大时记录日志（每1000字符记录一次）
         if not hasattr(self, '_last_html_log_size'):
             self._last_html_log_size = 0
@@ -841,19 +900,61 @@ class ResponseHandler(QObject):
             self._last_html_log_size = len(html)
         
         try:
+            scrollbar = self.response_area.verticalScrollBar()
+            if not scrollbar:
+                self.response_area.setHtml(html)
+                self.response_area.setAlignment(Qt.AlignLeft)
+                return
+            
+            # 如果用户正在滚动，降低更新频率（500ms一次）
+            current_time = time.time()
+            if self._user_is_scrolling:
+                if current_time - self._last_html_update_time < 0.5:
+                    return  # 跳过本次更新
+            
+            self._last_html_update_time = current_time
+            
+            # 保存当前滚动位置和状态
+            old_value = scrollbar.value()
+            old_maximum = scrollbar.maximum()
+            was_at_bottom = old_value >= old_maximum - 5
+            
+            # 临时断开滚动条信号，避免setHtml触发valueChanged导致误判
+            scrollbar.valueChanged.disconnect(self._on_scroll_value_changed)
+            
             # 设置HTML内容
             self.response_area.setHtml(html)
             self.response_area.setAlignment(Qt.AlignLeft)
             
-            # 滚动到文档底部，显示最新内容
-            scrollbar = self.response_area.verticalScrollBar()
-            if scrollbar:
-                scrollbar.setValue(scrollbar.maximum())
+            # 决定滚动行为
+            new_maximum = scrollbar.maximum()
             
-            # 强制更新UI
-            QApplication.processEvents()
+            if self._user_is_scrolling:
+                # 用户正在主动滚动，保持绝对位置（不计算相对位置，避免抖动）
+                # 尽量保持用户看到的内容不变
+                scrollbar.setValue(min(old_value, new_maximum))
+                self._last_scroll_value = scrollbar.value()
+            elif was_at_bottom:
+                # 用户在底部且未主动滚动，自动滚动到最新内容
+                scrollbar.setValue(new_maximum)
+                self._last_scroll_value = new_maximum
+            else:
+                # 用户不在底部也未主动滚动（可能刚开始），保持原位置
+                scrollbar.setValue(min(old_value, new_maximum))
+                self._last_scroll_value = scrollbar.value()
+            
+            # 重新连接滚动条信号
+            scrollbar.valueChanged.connect(self._on_scroll_value_changed)
+            
         except Exception as e:
             logger.error(f"[Set HTML] 更新UI时出错: {str(e)}")
+            # 确保信号重新连接
+            try:
+                scrollbar = self.response_area.verticalScrollBar()
+                if scrollbar:
+                    scrollbar.valueChanged.connect(self._on_scroll_value_changed)
+            except:
+                pass
 
 
     def _update_ui_from_signal(self, text, is_response, is_history=False):

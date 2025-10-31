@@ -23,7 +23,8 @@ from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
 from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
 from calibre_plugins.ask_ai_plugin.ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
-    MARGIN_MEDIUM, PADDING_MEDIUM
+    MARGIN_MEDIUM, PADDING_MEDIUM,
+    FONT_SIZE_LARGE
 )
 from calibre.utils.resources import get_path as I
 import sys
@@ -958,45 +959,71 @@ class AskDialog(QDialog):
         if not hasattr(self.response_handler, 'history_manager'):
             return
         
-        current_book_ids = [book.id for book in self.books_info]
-        all_histories = self.response_handler.history_manager.get_related_histories(current_book_ids)
-        
+        # 清空菜单
         self.history_menu.clear()
         
-        # 新对话选项
-        new_action = self.history_menu.addAction(self.i18n.get('new_conversation', '新对话'))
-        new_action.triggered.connect(lambda: self._on_history_switched(None))
+        # 获取当前书籍的所有历史记录
+        book_ids = [book.id for book in self.books_info]
+        all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
         
-        if all_histories:
-            self.history_menu.addSeparator()
+        if not all_histories:
+            # 如果没有历史记录，只显示提示，不显示其他选项
+            no_history_action = self.history_menu.addAction(self.i18n.get('no_history', 'No history records'))
+            no_history_action.setEnabled(False)
+            return
         
-        # 历史记录列表（统一显示格式）
+        # 有历史记录时，添加"新对话"选项
+        new_conversation_action = self.history_menu.addAction(self.i18n.get('new_conversation', 'New Conversation'))
+        new_conversation_action.triggered.connect(self._on_new_conversation)
+        
+        # 添加分隔线
+        self.history_menu.addSeparator()
+        
+        # 历史记录列表（按时间倒序显示）
         for history in all_histories:
             book_count = len(history['books'])
-            display_text = f"{book_count}{self.i18n.get('books_unit', '本书')} - {history['timestamp']}"
+            # 显示问题的前30个字符
+            question_preview = history.get('question', '')[:30]
+            if len(history.get('question', '')) > 30:
+                question_preview += '...'
+            display_text = f"{question_preview} - {history['timestamp']}"
             
             action = self.history_menu.addAction(display_text)
             action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
+        
+        # 在底部添加分隔线和清空选项
+        self.history_menu.addSeparator()
+        clear_action = self.history_menu.addAction(self.i18n.get('clear_current_book_history', 'Clear Current Book History'))
+        clear_action.triggered.connect(self._on_clear_current_book_history)
+    
+    def _on_new_conversation(self):
+        """新对话事件：清空输入和响应区域，并生成新的UID"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 生成新的UID，确保新对话不会覆盖旧的历史记录
+        self.current_uid = self._generate_uid()
+        logger.info(f"新对话已生成新的UID: {self.current_uid}")
+        
+        # 清空输入区域
+        self.input_area.clear()
+        
+        # 清空所有面板的响应区域
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                panel.clear_response()
+            logger.info(f"切换到新对话，已清空 {len(self.response_panels)} 个面板")
+        else:
+            # 单面板模式（向后兼容）
+            self.response_area.clear()
+            logger.info("切换到新对话，已清空响应区域")
     
     def _on_history_switched(self, uid):
         """历史记录切换事件"""
         import logging
         logger = logging.getLogger(__name__)
         
-        if uid is None:
-            # 新对话
-            self.input_area.clear()
-            
-            # 清空所有面板（如果是多面板模式）
-            if hasattr(self, 'response_panels') and self.response_panels:
-                for panel in self.response_panels:
-                    panel.response_area.clear()
-                logger.info(f"切换到新对话，已清空 {len(self.response_panels)} 个面板")
-            else:
-                self.response_area.clear()
-                logger.info("切换到新对话")
-            return
-        
+        # 获取历史记录
         history = self.response_handler.history_manager.get_history_by_uid(uid)
         if not history:
             logger.warning(f"未找到历史记录: {uid}")
@@ -1115,6 +1142,66 @@ class AskDialog(QDialog):
             )
         
         logger.info("历史记录切换完成")
+    
+    def _on_clear_current_book_history(self):
+        """清空当前书籍的历史记录"""
+        from PyQt5.QtWidgets import QMessageBox
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 确认对话框
+        book_count = len(self.books_info)
+        book_titles = ', '.join([book.title[:20] for book in self.books_info[:3]])
+        if book_count > 3:
+            book_titles += f" ... ({book_count} books)"
+        
+        confirm_msg = self.i18n.get(
+            'confirm_clear_book_history',
+            'Are you sure you want to clear all history for:\n{book_titles}?'
+        ).format(book_titles=book_titles)
+        
+        reply = QMessageBox.question(
+            self,
+            self.i18n.get('confirm', 'Confirm'),
+            confirm_msg,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply != QMessageBox.Yes:
+            return
+        
+        # 获取当前书籍的所有历史记录
+        book_ids = [book.id for book in self.books_info]
+        all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
+        
+        # 删除所有相关历史记录
+        deleted_count = 0
+        for history in all_histories:
+            uid = history['uid']
+            if self.response_handler.history_manager.delete_history(uid):
+                deleted_count += 1
+        
+        logger.info(f"已清空当前书籍的 {deleted_count} 条历史记录")
+        
+        # 清空当前界面
+        self.input_area.clear()
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                panel.clear_response()
+        else:
+            self.response_area.clear()
+        
+        # 重新加载历史记录菜单
+        self._load_related_histories()
+        
+        # 显示成功消息
+        success_msg = self.i18n.get('history_cleared', '{deleted_count} history records cleared.').format(deleted_count=deleted_count)
+        QMessageBox.information(
+            self,
+            self.i18n.get('success', 'Success'),
+            success_msg
+        )
     
     def _select_books_in_calibre(self, book_ids):
         """在 Calibre 主界面中选中指定书籍"""
@@ -1739,7 +1826,7 @@ class AskDialog(QDialog):
         
         # 左侧：对话标题
         title_label = QLabel(self.i18n['menu_title'])
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+        title_label.setStyleSheet(f"font-weight: bold; font-size: {FONT_SIZE_LARGE}pt;")
         top_bar.addWidget(title_label)
         
         # 书籍信息标签（仅在多书模式下显示）

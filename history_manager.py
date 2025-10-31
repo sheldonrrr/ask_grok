@@ -87,6 +87,11 @@ class HistoryManager:
                 'question': question,
                 'answers': {}  # 改为字典，支持多个AI的响应
             }
+        else:
+            # 历史记录已存在，更新问题（以防用户修改了问题）
+            self.histories[uid]['question'] = question
+            # 更新时间戳为最新的响应时间
+            self.histories[uid]['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         # 确保answers键存在（兼容旧格式）
         if 'answers' not in self.histories[uid]:
@@ -109,14 +114,14 @@ class HistoryManager:
                 'answer': answer,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
-            logger.info(f"历史记录已保存: UID={uid}, AI={ai_id}, 模式={mode}")
+            logger.info(f"历史记录已保存: UID={uid}, AI={ai_id}, 模式={mode}, 问题长度={len(question)}, 答案长度={len(answer)}")
         else:
             # 单AI场景（向后兼容）：使用'default'作为key
             self.histories[uid]['answers']['default'] = {
                 'answer': answer,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
-            logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}")
+            logger.info(f"历史记录已保存: UID={uid}, 模式={mode}, 书籍数={len(books_metadata)}, 问题长度={len(question)}, 答案长度={len(answer)}")
         
         self._save_histories()
     
@@ -146,6 +151,28 @@ class HistoryManager:
     def get_history_by_uid(self, uid):
         """根据 UID 获取历史记录"""
         return self.histories.get(uid)
+    
+    def delete_history(self, uid):
+        """删除指定UID的历史记录
+        
+        Args:
+            uid: 历史记录的唯一标识符
+            
+        Returns:
+            bool: 删除成功返回True，失败返回False
+        """
+        try:
+            if uid in self.histories:
+                del self.histories[uid]
+                self._save_histories()
+                logger.info(f"已删除历史记录: {uid}")
+                return True
+            else:
+                logger.warning(f"历史记录不存在: {uid}")
+                return False
+        except Exception as e:
+            logger.error(f"删除历史记录失败: {str(e)}")
+            return False
     
     def clear_history(self):
         """清空所有历史记录"""

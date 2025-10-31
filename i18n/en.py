@@ -133,6 +133,12 @@ class EnglishTranslation(BaseTranslation):
             'multi_book': 'Multi-Book',
             'deleted': 'Deleted',
             'history': 'History',
+            'no_history': 'No history records',
+            'clear_current_book_history': 'Clear Current Book History',
+            'confirm_clear_book_history': 'Are you sure you want to clear all history for:\n{book_titles}?',
+            'confirm': 'Confirm',
+            'success': 'Success',
+            'history_cleared': '{deleted_count} history records cleared.',
             'multi_book_template_label': 'Multi-Book Prompt Template:',
             'multi_book_placeholder_hint': 'Use {books_metadata} for book information, {query} for user question',
             
