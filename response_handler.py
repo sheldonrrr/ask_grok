@@ -974,11 +974,18 @@ class ResponseHandler(QObject):
             self.set_markdown_response(text)
             logger.info(f"[Markdown Process] Markdown处理完成, 耗时: {(time.time() - md_start)*1000:.2f}ms")
             
+            # 更新按钮状态（收到响应后启用相关按钮）
+            parent_dialog = self.parent()
+            if parent_dialog and hasattr(parent_dialog, 'response_panels'):
+                for panel in parent_dialog.response_panels:
+                    if hasattr(panel, 'response_handler') and panel.response_handler == self:
+                        panel.update_button_states()
+                        break
+            
             # 如果不是从历史记录加载的，保存到历史记录
             if not is_history:
                 try:
                     # 获取父对话框以访问多书相关属性
-                    parent_dialog = self.parent()
                     if parent_dialog and hasattr(parent_dialog, 'current_uid'):
                         question = self.input_area.toPlainText()
                         

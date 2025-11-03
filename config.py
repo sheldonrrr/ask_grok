@@ -1166,10 +1166,49 @@ class ConfigDialog(QWidget):
         # 将布局设置应用到模板组
         template_group.setLayout(template_layout)
         
+        # 4. 危险区域：重置所有数据
+        reset_group = QGroupBox(self.i18n.get('reset_all_data', 'Reset All Data'))
+        reset_group.setObjectName('groupbox_reset_data')
+        reset_group.setStyleSheet(get_groupbox_style() + "QGroupBox { border-color: #dc3545; }")  # 红色边框表示危险操作
+        reset_layout = QVBoxLayout()
+        reset_layout.setSpacing(SPACING_SMALL)
+        
+        # 警告文字
+        warning_label = QLabel(self.i18n.get('reset_all_data_warning', 
+            'This will delete all API Keys, prompt templates, and local history records. Please proceed with caution.'))
+        warning_label.setWordWrap(True)
+        warning_label.setStyleSheet("color: #dc3545; font-weight: bold; padding: 5px 0;")
+        reset_layout.addWidget(warning_label)
+        
+        # 重置按钮
+        self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
+        self.reset_button.setObjectName('button_reset_all_data')
+        self.reset_button.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+            QPushButton:pressed {
+                background-color: #bd2130;
+            }
+        """)
+        self.reset_button.clicked.connect(self.on_reset_all_data)
+        reset_layout.addWidget(self.reset_button)
+        
+        reset_group.setLayout(reset_layout)
+        
         # 添加所有组件到内容布局
         content_layout.addWidget(lang_group)
         content_layout.addWidget(model_group)
         content_layout.addWidget(template_group)
+        content_layout.addWidget(reset_group)
         content_layout.addStretch()
         
         # 将内容容器设置到主滚动区域
@@ -2103,3 +2142,107 @@ class ConfigDialog(QWidget):
         #self.save_button.setEnabled(False)
         #self.save_success_label.setText('')
         #self.save_success_label.hide()
+    
+    def on_reset_all_data(self):
+        """重置所有插件数据"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 显示确认对话框
+        from PyQt5.QtWidgets import QMessageBox
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n.get('reset_all_data_confirm_title', 'Confirm Reset'))
+        msg_box.setText(self.i18n.get('reset_all_data_confirm_message',
+            'Are you sure you want to reset the plugin to its initial state?\n\n'
+            'This will permanently delete:\n'
+            '• All API Keys\n'
+            '• All custom prompt templates\n'
+            '• All conversation history\n'
+            '• All plugin settings\n\n'
+            'This action cannot be undone!'))
+        msg_box.setIcon(QMessageBox.Warning)
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        
+        # 自定义按钮文本
+        yes_button = msg_box.button(QMessageBox.Yes)
+        no_button = msg_box.button(QMessageBox.No)
+        yes_button.setText(self.i18n.get('yes', 'Yes'))
+        no_button.setText(self.i18n.get('no', 'No'))
+        
+        result = msg_box.exec_()
+        
+        if result == QMessageBox.Yes:
+            try:
+                logger.info("开始重置所有插件数据...")
+                
+                # 保存当前的语言设置（重置时不删除语言选择）
+                current_language = get_prefs().get('language', 'en')
+                logger.info(f"保存当前语言设置: {current_language}")
+                
+                # 1. 删除配置文件
+                from calibre.utils.config import JSONConfig
+                import os
+                
+                # 获取配置文件路径
+                config_dir = os.path.join(os.path.expanduser('~'), '.config', 'calibre', 'plugins')
+                config_file = os.path.join(config_dir, 'ask_ai_plugin.json')
+                
+                if os.path.exists(config_file):
+                    os.remove(config_file)
+                    logger.info(f"已删除配置文件: {config_file}")
+                
+                # 2. 删除历史记录文件
+                # 删除v2版本的历史记录JSON文件
+                history_v2_path = os.path.join(config_dir, 'ask_ai_plugin_history_v2.json')
+                if os.path.exists(history_v2_path):
+                    os.remove(history_v2_path)
+                    logger.info(f"已删除历史记录文件(v2): {history_v2_path}")
+                
+                # 删除旧版本的历史记录数据库（如果存在）
+                history_db_path = os.path.join(config_dir, 'ask_ai_plugin_history.db')
+                if os.path.exists(history_db_path):
+                    os.remove(history_db_path)
+                    logger.info(f"已删除历史记录数据库(旧版): {history_db_path}")
+                
+                # 3. 删除日志文件（可选）
+                log_dir = os.path.join(os.path.expanduser('~'), '.config', 'calibre', 'ask_grok_logs')
+                if os.path.exists(log_dir):
+                    import shutil
+                    shutil.rmtree(log_dir)
+                    logger.info(f"已删除日志目录: {log_dir}")
+                
+                # 4. 强制重新加载配置（这会触发默认值的重新初始化）
+                get_prefs(force_reload=True)
+                logger.info("已强制重新加载配置，使用默认值")
+                
+                # 5. 恢复语言设置（保留用户的语言选择）
+                prefs = get_prefs()
+                prefs['language'] = current_language
+                # 根据恢复的语言设置，重新加载对应语言的默认模板
+                prefs['template'] = get_default_template(current_language)
+                prefs['multi_book_template'] = get_multi_book_template(current_language)
+                # 随机问题提示词
+                if 'random_questions' not in prefs:
+                    prefs['random_questions'] = {}
+                prefs['random_questions'][current_language] = get_suggestion_template(current_language)
+                prefs.commit()
+                logger.info(f"已恢复语言设置并加载对应语言的默认模板: {current_language}")
+                
+                # 显示成功消息
+                QMessageBox.information(
+                    self,
+                    self.i18n.get('success', 'Success'),
+                    self.i18n.get('reset_all_data_success', 
+                        'All plugin data has been reset successfully. Please restart calibre for changes to take effect.')
+                )
+                
+                logger.info("所有插件数据已成功重置")
+                
+            except Exception as e:
+                logger.error(f"重置插件数据失败: {str(e)}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    self.i18n.get('error', 'Error'),
+                    self.i18n.get('reset_all_data_failed', 'Failed to reset plugin data: {error}').format(error=str(e))
+                )

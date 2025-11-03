@@ -183,40 +183,118 @@ class AskAIPluginUI(InterfaceAction):
         dlg.exec_()
     
     def show_dialog(self):
-        self.initialize_api()
+        logger.info("=" * 50)
+        logger.info("show_dialog() 被调用")
         
-        # 获取选中的书籍
-        rows = self.gui.library_view.selectionModel().selectedRows()
-        if not rows or len(rows) == 0:
-            return
-        
-        # 获取书籍信息
-        db = self.gui.current_db
-        
-        # 支持多书选择
-        if len(rows) == 1:
-            # 单书模式（向后兼容）
-            book_id = self.gui.library_view.model().id(rows[0])
-            mi = db.get_metadata(book_id, index_is_id=True)
-            books_info = mi
-        else:
-            # 多书模式
-            books_info = []
-            for row in rows:
-                book_id = self.gui.library_view.model().id(row)
+        try:
+            self.initialize_api()
+            logger.info("API 初始化完成")
+            
+            # 检查是否有配置的AI模型
+            if not self.api or not self.api._ai_model:
+                logger.warning("未配置AI模型，显示友好提示")
+                from PyQt5.QtWidgets import QMessageBox
+                
+                # 创建自定义消息框
+                msg_box = QMessageBox(self.gui)
+                msg_box.setWindowTitle(self.i18n.get('no_ai_configured_title', 'No AI Configured'))
+                msg_box.setText(self.i18n.get('no_ai_configured_message', 
+                    'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\n'
+                    '📱 **Recommended for Beginners:**\n'
+                    '• **Nvidia AI** - Get 6 months FREE API access with just your phone number (no credit card required)\n'
+                    '• **Ollama** - Run AI models locally on your computer (completely free and private)\n\n'
+                    'Would you like to open the settings to configure an AI provider now?'))
+                msg_box.setIcon(QMessageBox.Information)
+                
+                # 添加自定义按钮（按从左到右的顺序）
+                open_settings_btn = msg_box.addButton(
+                    self.i18n.get('open_settings', 'Plugin Configuration'), 
+                    QMessageBox.AcceptRole
+                )
+                ask_anyway_btn = msg_box.addButton(
+                    self.i18n.get('ask_anyway', 'Ask Anyway'), 
+                    QMessageBox.ActionRole
+                )
+                later_btn = msg_box.addButton(
+                    self.i18n.get('later', 'Later'), 
+                    QMessageBox.RejectRole
+                )
+                
+                msg_box.exec_()
+                
+                clicked_btn = msg_box.clickedButton()
+                
+                # 如果用户点击"打开设置"
+                if clicked_btn == open_settings_btn:
+                    self.show_configuration()
+                    return
+                # 如果用户点击"仍要询问"，继续执行，打开询问弹窗
+                elif clicked_btn == ask_anyway_btn:
+                    logger.info("用户选择仍要询问，继续打开询问弹窗")
+                    # 不return，继续执行下面的代码
+                # 如果用户点击"稍后"，直接返回
+                else:
+                    return
+            
+            # 获取选中的书籍
+            rows = self.gui.library_view.selectionModel().selectedRows()
+            logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
+            
+            if not rows or len(rows) == 0:
+                logger.warning("没有选中的书籍，提示用户选择书籍")
+                # 提示用户选择书籍
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self.gui,
+                    self.i18n.get('no_book_selected_title', 'No Book Selected'),
+                    self.i18n.get('no_book_selected_message', 'Please select a book before asking questions.')
+                )
+                return
+            
+            # 获取书籍信息
+            db = self.gui.current_db
+            logger.info("获取数据库实例成功")
+            
+            # 支持多书选择
+            if len(rows) == 1:
+                # 单书模式（向后兼容）
+                book_id = self.gui.library_view.model().id(rows[0])
                 mi = db.get_metadata(book_id, index_is_id=True)
-                books_info.append(mi)
-        
-        # 显示对话框
-        d = AskDialog(self.gui, books_info, self.api)
-        
-        # 保存对话框实例的引用
-        self.ask_dialog = d
-        
-        # 对话框关闭时清除引用
-        d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
-        
-        d.exec_()
+                books_info = mi
+                logger.info(f"单书模式: book_id={book_id}, title={mi.title}")
+            else:
+                # 多书模式
+                books_info = []
+                for row in rows:
+                    book_id = self.gui.library_view.model().id(row)
+                    mi = db.get_metadata(book_id, index_is_id=True)
+                    books_info.append(mi)
+                logger.info(f"多书模式: 共 {len(books_info)} 本书")
+            
+            # 显示对话框
+            logger.info("准备创建 AskDialog 实例")
+            d = AskDialog(self.gui, books_info, self.api)
+            logger.info("AskDialog 实例创建成功")
+            
+            # 保存对话框实例的引用
+            self.ask_dialog = d
+            
+            # 对话框关闭时清除引用
+            d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
+            
+            logger.info("准备显示对话框 (exec_)")
+            d.exec_()
+            logger.info("对话框已关闭")
+            
+        except Exception as e:
+            logger.error(f"show_dialog() 发生异常: {str(e)}", exc_info=True)
+            # 显示错误消息给用户
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self.gui,
+                "错误",
+                f"打开询问弹窗时发生错误:\n{str(e)}"
+            )
     
     def show_about(self):
         """显示关于对话框"""
@@ -696,12 +774,23 @@ class AskDialog(QDialog):
             books_info: 单个 Metadata 对象（单书模式）或 Metadata 列表（多书模式）
             history_uid: 可选，用于加载特定历史记录
         """
-        super().__init__(gui)
-        self.gui = gui
-        self.api = api
-        prefs = get_prefs()
-        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-        self.i18n = get_translation(language)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("AskDialog.__init__() 开始")
+        
+        try:
+            super().__init__(gui)
+            logger.info("QDialog 初始化完成")
+            
+            self.gui = gui
+            self.api = api
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            self.i18n = get_translation(language)
+            logger.info(f"语言设置: {language}")
+        except Exception as e:
+            logger.error(f"AskDialog.__init__() 初始化阶段1失败: {str(e)}", exc_info=True)
+            raise
         
         # 统一处理为列表
         if isinstance(books_info, list):
@@ -761,6 +850,15 @@ class AskDialog(QDialog):
         self.setMinimumWidth(600)  # 增加最小宽度
         self.setMinimumHeight(600)
         
+        # 设置窗口标志，启用最大化和最小化按钮
+        from PyQt5.QtCore import Qt
+        self.setWindowFlags(
+            Qt.Window |  # 作为独立窗口
+            Qt.WindowMaximizeButtonHint |  # 启用最大化按钮
+            Qt.WindowCloseButtonHint |  # 启用关闭按钮
+            Qt.WindowTitleHint  # 显示标题栏
+        )
+        
         # 创建 UI
         self.setup_ui()
         
@@ -777,6 +875,9 @@ class AskDialog(QDialog):
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
+        
+        # 监听输入框内容变化，动态切换按钮高光状态
+        self.input_area.textChanged.connect(self._update_button_focus)
         
         # 加载历史记录
         self._load_history()
@@ -1115,6 +1216,8 @@ class AskDialog(QDialog):
                         is_history=True
                     )
                     logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                    # 设置当前问题并更新按钮状态
+                    panel.set_current_question(question)
                 
                 # 清空未使用的面板
                 for idx in range(len(history_ai_ids), len(self.response_panels)):
@@ -1398,20 +1501,7 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
     
-    def clear_history(self):
-        """清除当前书籍的历史记录"""
-        if not hasattr(self, 'book_metadata') or not self.book_metadata:
-            return
-            
-        try:
-            if hasattr(self.response_handler, 'history_manager'):
-                # 这里需要实现清除特定书籍历史记录的逻辑
-                # 由于当前设计是所有历史记录在一个文件中，我们需要更新文件内容
-                # 这需要修改HistoryManager类
-                self.statusBar.showMessage(self.i18n.get('clear_history_not_supported', 'Clear history for single book is not supported yet'))
-        except Exception as e:
-            logger.error(f"清除历史记录失败: {str(e)}")
-            self.statusBar.showMessage(self.i18n.get('clear_history_failed', 'Failed to clear history'))
+    # 注意：clear_history() 方法已废弃，使用 _on_clear_current_book_history() 代替
     
     def closeEvent(self, event):
         # 保存窗口大小
@@ -1476,11 +1566,6 @@ class AskDialog(QDialog):
             model_display_name = self.api.model_display_name
             logger.debug(f"更新模型信息: {model_display_name}")
             
-            # 刷新模型切换器
-            if hasattr(self, 'model_switcher'):
-                self._populate_model_switcher()
-                logger.debug("已更新模型切换器")
-            
             # 更新窗口标题
             if hasattr(self, 'book_info') and self.book_info:
                 self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
@@ -1491,76 +1576,10 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"更新模型信息时出错: {str(e)}")
     
-    def _populate_model_switcher(self):
-        """填充模型切换器，只显示已配置的模型"""
-        from calibre_plugins.ask_ai_plugin.config import get_prefs
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        prefs = get_prefs()
-        models_config = prefs.get('models', {})
-        current_model = prefs.get('selected_model', 'grok')
-        
-        # 阻止信号触发
-        self.model_switcher.blockSignals(True)
-        self.model_switcher.clear()
-        
-        # 获取所有已配置的模型
-        configured_count = 0
-        for model_id, config in models_config.items():
-            if config.get('is_configured', False):
-                provider_name = config.get('display_name', model_id)
-                model_name = config.get('model', 'unknown')
-                display_text = f"{provider_name} - {model_name}"
-                
-                self.model_switcher.addItem(display_text, model_id)
-                configured_count += 1
-                
-                # 选中当前模型
-                if model_id == current_model:
-                    self.model_switcher.setCurrentIndex(self.model_switcher.count() - 1)
-        
-        # 如果没有配置的模型，显示警告
-        if configured_count == 0:
-            self.model_switcher.addItem(self.i18n.get('no_configured_models', 'No AI configured - Please configure in settings'), None)
-            self.model_switcher.setEnabled(False)
-            logger.warning("没有已配置的 AI 模型")
-        else:
-            self.model_switcher.setEnabled(True)
-            logger.debug(f"已加载 {configured_count} 个已配置的模型")
-        
-        # 恢复信号
-        self.model_switcher.blockSignals(False)
+    # 注意：_populate_model_switcher() 方法已废弃，因为全局模型切换器已被移除
     
-    def on_model_switched(self, index):
-        """处理模型切换事件"""
-        from calibre_plugins.ask_ai_plugin.config import get_prefs
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        model_id = self.model_switcher.itemData(index)
-        if not model_id:
-            return
-        
-        # 保存新选择
-        prefs = get_prefs()
-        old_model = prefs.get('selected_model', 'grok')
-        
-        if model_id == old_model:
-            return  # 没有变化，不需要处理
-        
-        prefs['selected_model'] = model_id
-        logger.info(f"切换模型: {old_model} -> {model_id}")
-        
-        # 重新加载 API 客户端
-        self.api.reload_model()
-        
-        # 更新窗口标题
-        model_display_name = self.api.model_display_name
-        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
-        
-        # 在状态栏显示切换提示
-        self.statusBar.showMessage(f"Switched to {model_display_name}", 3000)
+    # 注意：on_model_switched() 方法已废弃，因为全局模型切换器已被移除
+    # 现在每个面板都有自己的AI切换器，切换逻辑在 response_panel.py 中处理
     
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
@@ -1772,6 +1791,10 @@ class AskDialog(QDialog):
         
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
+        
+        # 初始化完成，允许弹出确认对话框
+        for panel in self.response_panels:
+            panel._is_initializing = False
     
     def _save_panel_ai_selections(self):
         """保存所有面板的AI选择到配置"""
@@ -1859,10 +1882,6 @@ class AskDialog(QDialog):
         
         layout.addLayout(top_bar)
         
-        # 添加一个状态栏用于显示加载状态
-        self.statusBar = QStatusBar()
-        layout.addWidget(self.statusBar)
-        
         # 创建可折叠的书籍元数据树形组件
         metadata_widget = self._create_metadata_widget()
         layout.addWidget(metadata_widget)
@@ -1890,66 +1909,62 @@ class AskDialog(QDialog):
         action_layout = QHBoxLayout()
         action_layout.setSpacing(SPACING_SMALL)
         
-        # 创建历史记录切换按钮
+        # 左侧：历史记录按钮
         history_button = self._create_history_switcher()
         action_layout.addWidget(history_button)
         
-        # 创建随机问题按钮
+        # 添加弹性空间，将右侧按钮推到右边
+        action_layout.addStretch()
+        
+        # 右侧：随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        apply_button_style(self.suggest_button, min_width=120)
+        apply_button_style(self.suggest_button, min_width=100)
         self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.suggest_button.setDefault(True)  # 初始设置为默认按钮（高光状态）
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
         self.suggest_action.setShortcut(QKeySequence("Ctrl+R"))
-
-        # 设置快捷键的范围为窗口级别的
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
-
         self.suggest_action.triggered.connect(self.generate_suggestion)
         self.addAction(self.suggest_action)
         
         action_layout.addWidget(self.suggest_button)
         
-        # 添加弹性空间
-        action_layout.addStretch()
-        
-        # 创建停止按钮
+        # 右侧：停止按钮（初始隐藏）
         self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
         self.stop_button.clicked.connect(self.stop_request)
         apply_button_style(self.stop_button, min_width=100)
-        self.stop_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.stop_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.stop_button.setVisible(False)  # 初始隐藏
-        # 停止按钮特殊样式（红色警告色）
+        # 停止按钮使用柔和的橙色调，表示这是一个常规的中断操作
         self.stop_button.setStyleSheet("""
             QPushButton {
-                color: #d32f2f;
+                color: #f57c00;
                 padding: 5px 12px;
-                border: 1px solid #d32f2f;
-                border-radius: 3px;
+                text-align: center;
             }
             QPushButton:hover:enabled {
-                background-color: #ffebee;
+                background-color: #fff3e0;
             }
             QPushButton:pressed {
-                background-color: #d32f2f;
+                background-color: #ffb74d;
                 color: white;
             }
         """)
         action_layout.addWidget(self.stop_button)
         
-        # 创建发送按钮
+        # 右侧：发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
         apply_button_style(self.send_button, min_width=100)
-        self.send_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.send_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.send_button.setDefault(False)  # 初始不是默认按钮
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
         self.send_action.setShortcut(QKeySequence("Ctrl+Enter" if not sys.platform == 'darwin' else "Cmd+Enter"))
-
-        # 设置快捷键的范围为窗口级别的
         self.send_action.setShortcutContext(Qt.WindowShortcut)
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
@@ -1967,9 +1982,25 @@ class AskDialog(QDialog):
             self.response_area = self.response_panels[0].response_area
             self.response_handler = self.response_panels[0].response_handler
     
+    def _update_button_focus(self):
+        """根据输入框内容动态切换按钮的高光状态"""
+        has_text = bool(self.input_area.toPlainText().strip())
+        
+        if has_text:
+            # 输入框有内容：发送按钮高光，随机问题按钮取消高光
+            self.send_button.setDefault(True)
+            self.suggest_button.setDefault(False)
+        else:
+            # 输入框为空：随机问题按钮高光，发送按钮取消高光
+            self.suggest_button.setDefault(True)
+            self.send_button.setDefault(False)
+    
     def generate_suggestion(self):
         """生成随机问题（只发送到第一个AI面板）"""
-        if not self.api:
+        # 检查是否有有效的AI配置
+        if not self.api or not self.api._ai_model:
+            logger.warning("未配置有效的AI服务，显示提示")
+            self._show_ai_service_required_dialog()
             return
         
         # 随机问题只使用第一个AI（不并行）
@@ -1978,10 +2009,40 @@ class AskDialog(QDialog):
             first_panel = self.response_panels[0]
             if not first_panel.get_selected_ai():
                 logger.warning("第一个面板没有选中AI，无法生成随机问题")
+                self._show_ai_service_required_dialog()
                 return
         
         self.suggestion_handler.generate(self.book_info)
 
+    def _show_ai_service_required_dialog(self):
+        """显示需要AI服务的提示对话框"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n.get('auth_token_required_title', 'AI Service Required'))
+        msg_box.setText(self.i18n.get('auth_token_required_message', 
+            'Please configure a valid AI service in Plugin Configuration.'))
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 添加两个按钮：打开配置（左侧）和确认（右侧）
+        open_config_btn = msg_box.addButton(
+            self.i18n.get('open_configuration', 'Open Configuration'),
+            QMessageBox.AcceptRole
+        )
+        ok_btn = msg_box.addButton(
+            self.i18n.get('confirm', 'OK'),
+            QMessageBox.RejectRole
+        )
+        
+        msg_box.exec_()
+        
+        # 如果用户点击"打开配置"
+        if msg_box.clickedButton() == open_config_btn:
+            # 获取主UI实例并打开配置
+            from calibre_plugins.ask_ai_plugin import ask_ai_plugin
+            if hasattr(ask_ai_plugin, 'show_configuration'):
+                ask_ai_plugin.show_configuration()
+    
     def _check_auth_token(self):
         """检查当前选择的模型是否设置了API Key"""
         from calibre_plugins.ask_ai_plugin.config import get_prefs
@@ -2000,15 +2061,8 @@ class AskDialog(QDialog):
             return True
             
         if not token or not token.strip():
-            # 只显示一个警告对话框，不自动打开配置窗口
-            from PyQt5.QtWidgets import QMessageBox
-            
-            # 显示警告信息
-            QMessageBox.information(
-                self,
-                self.i18n.get('auth_token_required_title', 'API Key Required'),
-                self.i18n.get('auth_token_required_message', 'Please set your API Key in the configuration dialog.')
-            )
+            # 显示友好的提示对话框
+            self._show_ai_service_required_dialog()
             
             # 直接返回False，表示验证失败
             return False
@@ -2143,6 +2197,9 @@ class AskDialog(QDialog):
             if hasattr(self, 'response_panels') and self.response_panels:
                 # 多面板模式：并行发送到所有面板
                 for panel in self.response_panels:
+                    # 设置当前问题（用于按钮状态判断）
+                    panel.set_current_question(question)
+                    
                     selected_ai = panel.get_selected_ai()
                     if selected_ai:
                         request_time = time.time()
@@ -2194,6 +2251,21 @@ class AskDialog(QDialog):
             if ((event.modifiers() & Qt.ControlModifier or event.modifiers() & Qt.MetaModifier) and 
                 (event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter)):
                 self.send_question()
+                return True
+            
+            # 处理单独的 Enter 键：根据输入框内容决定触发哪个按钮
+            if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+                # 检查是否有修饰键（Shift等），如果有则不处理（允许换行）
+                if event.modifiers() & (Qt.ShiftModifier | Qt.AltModifier):
+                    return False
+                
+                has_text = bool(self.input_area.toPlainText().strip())
+                if has_text:
+                    # 输入框有内容：触发发送
+                    self.send_question()
+                else:
+                    # 输入框为空：触发随机问题
+                    self.generate_suggestion()
                 return True
         return False
 
@@ -2433,10 +2505,6 @@ class AskDialog(QDialog):
         # 更新输入区域占位符文本
         if hasattr(self, 'input_area'):
             self.input_area.setPlaceholderText(self.i18n.get('ask_placeholder', 'Ask about this book...'))
-        
-        # 更新模型切换器
-        if hasattr(self, 'model_switcher'):
-            self._populate_model_switcher()
         
         # 更新复制按钮文本
         if hasattr(self, 'copy_response_btn'):

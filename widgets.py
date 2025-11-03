@@ -17,6 +17,14 @@ class NoScrollComboBox(QComboBox):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
+        
+        # 只设置必要的左侧间距，其他完全使用Qt默认样式
+        # 这样可以确保在所有平台（Linux/macOS/Windows）和主题（浅色/深色）下都正常工作
+        self.setStyleSheet("""
+            QComboBox {
+                padding-left: 8px;
+            }
+        """)
     
     def wheelEvent(self, event):
         """重写滚轮事件，只在下拉菜单展开时才处理"""

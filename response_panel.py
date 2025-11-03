@@ -48,13 +48,20 @@ class ResponsePanel(QWidget):
         self.i18n = i18n
         self.response_handler = None  # 将在setup后初始化
         
+        # 标志：是否正在初始化（用于避免初始化时弹出确认对话框）
+        self._is_initializing = True
+        
+        # 当前问题（用于按钮状态判断）
+        self.current_question = ""
+        
         self.setup_ui()
         
     def setup_ui(self):
         """设置UI布局"""
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM)
+        # 去掉左右间距，只保留上下间距，让响应区域与上方的提问框、元数据框左右对齐
+        main_layout.setContentsMargins(0, PADDING_MEDIUM, 0, PADDING_MEDIUM)
         main_layout.setSpacing(SPACING_MEDIUM)
         
         # === Header 区域（横向） ===
@@ -129,14 +136,17 @@ class ResponsePanel(QWidget):
         self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy'))
         apply_button_style(self.copy_btn, min_width=80)
         self.copy_btn.clicked.connect(self.copy_response)
+        self.copy_btn.setEnabled(False)  # 默认禁用，收到回复后启用
         
         self.copy_qa_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
         apply_button_style(self.copy_qa_btn, min_width=100)
         self.copy_qa_btn.clicked.connect(self.copy_question_response)
+        self.copy_qa_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
         
         self.export_btn = QPushButton(self.i18n.get('export_current_qa', 'Export Current Q&A'))
         apply_button_style(self.export_btn, min_width=120)
         self.export_btn.clicked.connect(self.export_to_pdf)
+        self.export_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
         
         self.export_all_btn = QPushButton(self.i18n.get('export_history', 'Export History'))
         apply_button_style(self.export_all_btn, min_width=100)
@@ -242,7 +252,9 @@ class ResponsePanel(QWidget):
             logger.info(f"面板 {self.panel_index} 切换到 AI: {ai_id}")
             
             # 检查是否需要询问用户是否设为默认AI
-            self._check_and_prompt_default_ai(ai_id)
+            # 如果用户取消切换，则不触发 ai_changed 信号
+            if not self._check_and_prompt_default_ai(ai_id):
+                return
             
             self.ai_changed.emit(self.panel_index, ai_id)
     
@@ -251,18 +263,26 @@ class ResponsePanel(QWidget):
         
         Args:
             selected_ai_id: 用户选择的AI ID
+            
+        Returns:
+            bool: True表示继续切换AI，False表示用户取消切换
         """
-        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtWidgets import QMessageBox, QPushButton
         from calibre_plugins.ask_ai_plugin.config import prefs
+        
+        # 如果正在初始化，跳过提示（避免在恢复上次选择时弹出确认框）
+        if self._is_initializing:
+            logger.debug("面板正在初始化，跳过默认AI提示")
+            return True
         
         # 只在单面板模式下提示
         if not hasattr(self.parent_dialog, 'response_panels'):
-            return
+            return True
         
         panel_count = len(self.parent_dialog.response_panels)
         if panel_count != 1:
             logger.debug(f"多面板模式（{panel_count}个面板），跳过默认AI提示")
-            return
+            return True
         
         # 获取config中当前的默认AI
         current_default_ai = prefs.get('selected_model', 'grok')
@@ -270,27 +290,35 @@ class ResponsePanel(QWidget):
         # 如果选择的AI与默认AI相同，不提示
         if selected_ai_id == current_default_ai:
             logger.debug(f"选择的AI ({selected_ai_id}) 与默认AI相同，跳过提示")
-            return
+            return True
         
         # 获取AI的显示名称
         ai_display_name = self.ai_switcher.currentText()
         
-        # 弹出确认对话框
+        # 弹出确认对话框（使用自定义按钮文字以支持本地化）
         msg_title = self.i18n.get('set_default_ai_title', 'Set Default AI')
         msg_text = self.i18n.get(
             'set_default_ai_message',
             'You have switched to "{0}". Would you like to set it as the default AI for future queries?'
         ).format(ai_display_name)
         
-        reply = QMessageBox.question(
-            self,
-            msg_title,
-            msg_text,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No  # 默认选择No，避免误操作
-        )
+        # 创建消息框
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(msg_title)
+        msg_box.setText(msg_text)
+        msg_box.setIcon(QMessageBox.Question)
         
-        if reply == QMessageBox.Yes:
+        # 添加本地化的按钮
+        yes_text = self.i18n.get('yes', 'Yes')
+        no_text = self.i18n.get('no', 'No')
+        yes_button = msg_box.addButton(yes_text, QMessageBox.YesRole)
+        no_button = msg_box.addButton(no_text, QMessageBox.NoRole)
+        msg_box.setDefaultButton(no_button)  # 默认选择No，避免误操作
+        
+        msg_box.exec_()
+        clicked_button = msg_box.clickedButton()
+        
+        if clicked_button == yes_button:
             # 用户选择Yes，更新config
             prefs.set('selected_model', selected_ai_id)
             logger.info(f"用户确认将 {selected_ai_id} 设为默认AI")
@@ -301,8 +329,23 @@ class ResponsePanel(QWidget):
                 'Default AI has been set to "{0}".'
             ).format(ai_display_name)
             QMessageBox.information(self, self.i18n.get('info', 'Information'), success_msg)
+            return True
         else:
-            logger.debug(f"用户取消将 {selected_ai_id} 设为默认AI")
+            # 用户选择No，恢复到之前的AI选择
+            logger.debug(f"用户取消将 {selected_ai_id} 设为默认AI，恢复之前的选择")
+            
+            # 阻止信号，避免递归调用
+            self.ai_switcher.blockSignals(True)
+            
+            # 恢复到默认AI
+            index = self.ai_switcher.findData(current_default_ai)
+            if index >= 0:
+                self.ai_switcher.setCurrentIndex(index)
+            
+            # 恢复信号
+            self.ai_switcher.blockSignals(False)
+            
+            return False
     
     def send_request(self, prompt, model_id=None):
         """发送请求到选中的AI
@@ -790,3 +833,25 @@ class ResponsePanel(QWidget):
     def clear_response(self):
         """清空响应区域"""
         self.response_area.clear()
+    
+    def update_button_states(self):
+        """根据当前内容更新按钮状态"""
+        # 获取当前的问题和回答
+        has_response = bool(self.response_area.toPlainText().strip())
+        has_question = bool(self.current_question.strip()) if hasattr(self, 'current_question') and self.current_question else False
+        
+        # 复制回答按钮：只要有回答就启用
+        self.copy_btn.setEnabled(has_response)
+        
+        # 复制问答按钮：有问题和回答时启用
+        self.copy_qa_btn.setEnabled(has_question and has_response)
+        
+        # 导出当前问答按钮：有问题和回答时启用
+        self.export_btn.setEnabled(has_question and has_response)
+        
+        logger.debug(f"面板 {self.panel_index} 按钮状态更新: 有回答={has_response}, 有问题={has_question}")
+    
+    def set_current_question(self, question):
+        """设置当前问题（用于按钮状态判断）"""
+        self.current_question = question
+        self.update_button_states()
