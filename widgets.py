@@ -13,6 +13,7 @@ class NoScrollComboBox(QComboBox):
     """
     自定义QComboBox，禁用未展开时的滚轮事件
     只有在下拉菜单展开时才允许滚轮滚动
+    修复了下拉菜单在鼠标悬停时消失的问题
     """
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -25,6 +26,13 @@ class NoScrollComboBox(QComboBox):
                 padding-left: 8px;
             }
         """)
+        
+        # 设置下拉列表视图的鼠标跟踪，防止下拉菜单在hover时消失
+        self.view().setMouseTracking(True)
+        
+        # 确保下拉列表使用系统默认样式（包括 hover 效果）
+        # 不设置任何自定义背景色，让 Qt 使用默认的 palette
+        self.view().setStyleSheet("")
     
     def wheelEvent(self, event):
         """重写滚轮事件，只在下拉菜单展开时才处理"""

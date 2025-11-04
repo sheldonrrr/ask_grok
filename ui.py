@@ -39,10 +39,8 @@ if lib_dir not in sys.path:
 import markdown2
 import bleach
 
-# 导入插件实例
-import calibre_plugins.ask_ai_plugin.ui as ask_grok_plugin
-
 # 存储插件实例的全局变量
+# 注意：不要在这里导入自己，会导致循环导入
 plugin_instance = None
 
 def get_suggestion_template_from_ui(lang_code):
@@ -200,10 +198,10 @@ class AskAIPluginUI(InterfaceAction):
                 msg_box.setWindowTitle(self.i18n.get('no_ai_configured_title', 'No AI Configured'))
                 msg_box.setText(self.i18n.get('no_ai_configured_message', 
                     'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\n'
-                    '📱 **Recommended for Beginners:**\n'
-                    '• **Nvidia AI** - Get 6 months FREE API access with just your phone number (no credit card required)\n'
-                    '• **Ollama** - Run AI models locally on your computer (completely free and private)\n\n'
-                    'Would you like to open the settings to configure an AI provider now?'))
+                    'Recommended for Beginners:\n'
+                    '• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n'
+                    '• Ollama - Run AI models locally on your computer (completely free and private)\n\n'
+                    'Would you like to open the plugin configuration to set up an AI provider now?'))
                 msg_box.setIcon(QMessageBox.Information)
                 
                 # 添加自定义按钮（按从左到右的顺序）
@@ -587,22 +585,22 @@ class TabDialog(QDialog):
         self.about_widget.update_content()
         
         # 通知主界面更新菜单，直接传递新语言参数
-        logger.debug(f"通知主界面更新菜单，语言: {new_language}")
-        ask_grok_plugin.plugin_instance.update_menu_texts(new_language)
-        
-        # 更新主对话框的界面语言
-        if (hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
-            ask_grok_plugin.plugin_instance.ask_dialog):
-            logger.debug(f"更新主对话框的界面语言为: {new_language}")
-            # 如果存在update_language方法，直接调用
-            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'update_language'):
-                ask_grok_plugin.plugin_instance.ask_dialog.update_language(new_language)
+        if plugin_instance:
+            logger.debug(f"通知主界面更新菜单，语言: {new_language}")
+            plugin_instance.update_menu_texts(new_language)
             
-            # 更新 response_handler 和 suggestion_handler 的 i18n 对象
-            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler'):
-                logger.debug("更新对话框组件的i18n对象")
-                ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
-                ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
+            # 更新主对话框的界面语言
+            if hasattr(plugin_instance, 'ask_dialog') and plugin_instance.ask_dialog:
+                logger.debug(f"更新主对话框的界面语言为: {new_language}")
+                # 如果存在update_language方法，直接调用
+                if hasattr(plugin_instance.ask_dialog, 'update_language'):
+                    plugin_instance.ask_dialog.update_language(new_language)
+                
+                # 更新 response_handler 和 suggestion_handler 的 i18n 对象
+                if hasattr(plugin_instance.ask_dialog, 'suggestion_handler'):
+                    logger.debug("更新对话框组件的i18n对象")
+                    plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
+                    plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
@@ -615,16 +613,12 @@ class TabDialog(QDialog):
         
         # 更新已打开的AskDialog实例的模型信息
         try:
-            if (hasattr(ask_grok_plugin, 'plugin_instance') and 
-                ask_grok_plugin.plugin_instance and 
-                hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
-                ask_grok_plugin.plugin_instance.ask_dialog):
-                
+            if plugin_instance and hasattr(plugin_instance, 'ask_dialog') and plugin_instance.ask_dialog:
                 # 确保 AskDialog 的 API 实例也被重新加载
-                if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'api'):
-                    ask_grok_plugin.plugin_instance.ask_dialog.api.reload_model()
+                if hasattr(plugin_instance.ask_dialog, 'api'):
+                    plugin_instance.ask_dialog.api.reload_model()
                 # 然后更新 UI 显示
-                ask_grok_plugin.plugin_instance.ask_dialog.update_model_info()
+                plugin_instance.ask_dialog.update_model_info()
                 logger.info("配置已保存，模型信息已更新")
         except Exception as e:
             logger.error(f"更新模型信息时出错: {str(e)}")
@@ -825,15 +819,10 @@ class AskDialog(QDialog):
         logger = logging.getLogger(__name__)
         logger.debug("连接AskDialog到语言变更信号")
         
-        # 获取TabDialog实例并连接语言变更信号
-        try:
-            from calibre_plugins.ask_ai_plugin import ask_grok_plugin
-            if hasattr(ask_grok_plugin, 'plugin_instance') and ask_grok_plugin.plugin_instance:
-                # 将当前对话框保存到插件实例中，方便其他组件访问
-                ask_grok_plugin.plugin_instance.ask_dialog = self
-                logger.debug("已将AskDialog实例保存到插件实例中")
-        except Exception as e:
-            logger.error(f"连接语言变更信号时出错: {str(e)}")
+        # 将当前对话框保存到插件实例中，方便其他组件访问
+        if plugin_instance:
+            plugin_instance.ask_dialog = self
+            logger.debug("已将AskDialog实例保存到插件实例中")
         
         
         # 设置当前书籍元数据到response_handler

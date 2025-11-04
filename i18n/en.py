@@ -197,7 +197,7 @@ class EnglishTranslation(BaseTranslation):
             'reset_all_data': 'Reset All Data',
             'reset_all_data_warning': 'This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.',
             'reset_all_data_confirm_title': 'Confirm Reset',
-            'reset_all_data_confirm_message': 'Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings\n\nThis action cannot be undone!',
+            'reset_all_data_confirm_message': 'Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings (language preference will be preserved)\n\nThis action cannot be undone!',
             'reset_all_data_success': 'All plugin data has been reset successfully. Please restart calibre for changes to take effect.',
             'reset_all_data_failed': 'Failed to reset plugin data: {error}',
             'random_question_error': 'Error generating random question',
@@ -260,7 +260,6 @@ class EnglishTranslation(BaseTranslation):
             
             # Common system messages
             'default_system_message': 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.',
-            'api_content_extraction_failed': 'Unable to extract content from API response',
             
             # Request timeout settings
             'request_timeout_label': 'Request Timeout:',

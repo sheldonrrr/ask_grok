@@ -197,7 +197,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'reset_all_data': '重置所有数据',
             'reset_all_data_warning': '这将会删除所有API密钥、提示词模板和本地历史记录。您的语言偏好将被保留。请慎重操作。',
             'reset_all_data_confirm_title': '确认重置',
-            'reset_all_data_confirm_message': '您确定要将插件重置为初始状态吗？\n\n这将永久删除：\n• 所有API密钥\n• 所有自定义提示词模板\n• 所有对话历史记录\n• 所有插件设置\n\n此操作无法撤销！',
+            'reset_all_data_confirm_message': '您确定要将插件重置为初始状态吗？\n\n这将永久删除：\n• 所有API密钥\n• 所有自定义提示词模板\n• 所有对话历史记录\n• 所有插件设置（会保留当前选中的语言配置信息）\n\n此操作无法撤销！',
             'reset_all_data_success': '所有插件数据已成功重置。请重启calibre以使更改生效。',
             'reset_all_data_failed': '重置插件数据失败：{error}',
             'random_question_error': '生成随机问题时出错',
@@ -250,7 +250,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定义',
             'model_enable_streaming': '启用流式传输',
-            'model_disable_ssl_verify': '禁用 SSL 验证', # 补充缺失
             
             # AI Switcher
             'current_ai': '当前AI',

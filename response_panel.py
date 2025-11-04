@@ -164,9 +164,11 @@ class ResponsePanel(QWidget):
         # 设置最小高度，防止按钮覆盖响应区域
         self.setMinimumHeight(350)  # 确保有足够空间显示所有元素
         
-        # 添加边框样式（使用QWidget而不是类名）
+        # 添加边框样式
+        # 使用 ResponsePanel 类名选择器，避免影响子控件（如 QComboBox 的下拉列表）
+        self.setObjectName("ResponsePanel")
         self.setStyleSheet("""
-            QWidget {
+            #ResponsePanel {
                 border: 1px solid palette(mid);
                 border-radius: 4px;
                 background: palette(base);

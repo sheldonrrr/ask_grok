@@ -302,19 +302,8 @@ class APIClient:
             selected_model = prefs.get('selected_model', 'grok')  # 仍然使用字符串作为配置键
             models_config = prefs.get('models', {})
             
-            # 添加调试日志
-            logger.debug(f"当前选中的模型: {selected_model}")
-            # 安全记录所有模型配置，隐藏API Key
-            safe_models_config = safe_log_config(models_config)
-            logger.debug(f"所有模型配置: {safe_models_config}")
-            
             # 获取选中模型的配置
             model_config = models_config.get(selected_model, {})
-            
-            # 添加调试日志
-            # 安全记录选中模型的配置，隐藏API Key
-            safe_model_config = safe_log_config(model_config)
-            logger.debug(f"选中模型的配置: {safe_model_config}")
             
             # 获取对应的AIProvider枚举值
             provider = self._get_provider_from_model_name(selected_model)
@@ -342,7 +331,11 @@ class APIClient:
                 self._ai_model = None
                 
         except Exception as e:
-            logger.error(f"加载 AI 模型时出错: {str(e)}")
+            # 如果是缺少配置，使用 WARNING 级别；其他错误使用 ERROR
+            if "Missing required configuration" in str(e):
+                logger.warning(f"AI 模型配置不完整: {str(e)}")
+            else:
+                logger.error(f"加载 AI 模型时出错: {str(e)}")
             self._model_name = None
             self._ai_model = None
     
