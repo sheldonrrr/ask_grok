@@ -4,8 +4,10 @@ Custom AI 模型实现
 支持用户自定义的本地或远程API模型，如Ollama等
 """
 import json
-import requests
 from typing import Dict, Any, Optional
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation

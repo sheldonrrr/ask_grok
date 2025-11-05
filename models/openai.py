@@ -2,10 +2,12 @@
 OpenAI AI Model Implementation
 """
 import json
-import requests
 import time
 import logging
 from typing import Dict, Any, Optional
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation

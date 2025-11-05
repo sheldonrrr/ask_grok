@@ -182,8 +182,8 @@ class OpenRouterModel(BaseAIModel):
         :raises Exception: 当请求失败时抛出异常
         """
         import json
-        import requests
         import time
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
         
         # OpenRouter 总是返回流式响应（text/event-stream）
         # 无论配置如何，都必须使用流式处理

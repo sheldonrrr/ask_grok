@@ -4,9 +4,11 @@ Google Gemini 模型实现
 import json
 import re
 import time
-import requests
 from typing import Dict, Any, Optional
 import logging
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation

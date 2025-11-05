@@ -11,17 +11,15 @@ import sys
 import json
 import logging
 
-# 首先设置插件目录和lib路径
+# 设置插件目录
 PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 添加 lib 目录到 Python 路径，确保在导入任何第三方库之前
-lib_dir = os.path.join(PLUGIN_DIR, 'lib')
-if lib_dir not in sys.path:
-    sys.path.insert(0, lib_dir)
-    print(f'已添加lib目录到Python路径: {lib_dir}')
+# 注意：第三方库已移至 lib/ask_ai_plugin_vendor/ 命名空间
+# 不再需要 sys.path.insert，所有导入使用完整的命名空间路径
+# 这样可以避免与其他 calibre 插件的依赖冲突
 
 # 版本信息 - 硬编码以确保跨平台兼容性
-VERSION = (1, 2, 3) # 版本号推送触发
+VERSION = (1, 3, 1) # 版本号推送触发
 VERSION_STRING = '.'.join(map(str, VERSION))
 PLUGIN_NAME = 'Ask AI Plugin'
 PLUGIN_DESCRIPTION = 'Ask questions about books using multiple AI providers'
@@ -83,7 +81,7 @@ class AskAIPlugin(InterfaceActionBase):
     description         = 'Ask questions about books using multiple AI providers'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 3, 0)
+    version             = (1, 3, 1)
     minimum_calibre_version = (6, 0, 0)
     icon                = 'images/ask_ai_plugin.png'
 

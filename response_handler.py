@@ -3,14 +3,16 @@
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
 from PyQt5.QtWidgets import QApplication
-import markdown2
-import bleach
 import logging
 import os
 import sys
 import time
 from datetime import datetime
 from threading import Thread
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import bleach
 
 # 使用 Calibre 配置目录存储日志
 from calibre.utils.config import config_dir

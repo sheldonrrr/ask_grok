@@ -434,7 +434,7 @@ class BaseAIModel(ABC):
         :raises Exception: 当 API 请求失败时抛出异常
         """
         import logging
-        import requests
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
         
         logger = logging.getLogger(self.get_logger_name())
         

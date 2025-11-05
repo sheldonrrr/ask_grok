@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-import requests
-import urllib3
 from typing import Optional, Dict, Any, Tuple, Union, List
 import logging
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import urllib3
+
 from .i18n import get_translation
 from .models import AIModelFactory, BaseAIModel
 from .models.base import AIProvider, DEFAULT_MODELS, DEFAULT_PROVIDER

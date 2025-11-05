@@ -31,13 +31,9 @@ import sys
 import os
 import time
 
-# 添加 lib 目录到 Python 路径
-lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
-if lib_dir not in sys.path:
-    sys.path.insert(0, lib_dir)
-
-import markdown2
-import bleach
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import bleach
 
 # 存储插件实例的全局变量
 # 注意：不要在这里导入自己，会导致循环导入
@@ -304,6 +300,24 @@ class AskAIPluginUI(InterfaceAction):
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
         dlg.exec_()
+    
+    def config_widget(self):
+        """
+        返回配置对话框组件
+        这个方法被 calibre 的插件系统调用，用于显示插件配置界面
+        """
+        from calibre_plugins.ask_ai_plugin.config import ConfigDialog
+        return ConfigDialog(self.gui)
+    
+    def save_settings(self, config_widget):
+        """
+        保存配置对话框中的设置
+        
+        Args:
+            config_widget: 由 config_widget() 方法返回的配置组件
+        """
+        if hasattr(config_widget, 'save_settings'):
+            config_widget.save_settings()
 
     def update_menu_texts(self, language=None):
         """更新菜单项的文本
