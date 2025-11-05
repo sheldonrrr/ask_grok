@@ -4,6 +4,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime
 from enum import auto
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
@@ -828,6 +829,10 @@ class AskDialog(QDialog):
         # 确保 SuggestionHandler 正确初始化
         self.suggestion_handler = SuggestionHandler(parent=self)
         
+        # 临时缓存：用于暂存随机问题（在用户点击发送前不保存历史）
+        self._pending_random_question = None
+        self._is_generating_random_question = False
+        
         # 连接语言变更信号
         import logging
         logger = logging.getLogger(__name__)
@@ -1388,10 +1393,33 @@ class AskDialog(QDialog):
         import logging
         logger = logging.getLogger(__name__)
         
-        if not hasattr(self.response_handler, 'history_manager'):
-            return
-            
         try:
+            # 首先检查是否有待发送的随机问题
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            
+            if str(book_ids) in pending_questions:
+                pending_data = pending_questions[str(book_ids)]
+                logger.info(f"发现待发送的随机问题: uid={pending_data['uid']}, 时间={pending_data['timestamp']}")
+                
+                # 恢复待发送的随机问题状态
+                self.current_uid = pending_data['uid']
+                self._pending_random_question = pending_data['question']
+                self._is_generating_random_question = True
+                self.input_area.setPlainText(pending_data['question'])
+                
+                # 清空响应区域（因为还没有AI回答）
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        panel.clear_response()
+                else:
+                    self.response_area.clear()
+                
+                logger.info("已恢复待发送的随机问题状态，等待用户点击发送")
+                # 不从临时存储中删除，等用户发送后再删除
+                return
+            
             # 获取当前书籍ID集合
             current_book_ids = set([book.id for book in self.books_info])
             
@@ -1989,6 +2017,17 @@ class AskDialog(QDialog):
         """根据输入框内容动态切换按钮的高光状态"""
         has_text = bool(self.input_area.toPlainText().strip())
         
+        # 如果用户修改了输入框内容，清除随机问题相关的临时状态
+        if hasattr(self, '_pending_random_question'):
+            current_text = self.input_area.toPlainText()
+            if current_text != self._pending_random_question:
+                # 用户修改了随机问题，清除临时缓存和标记
+                if self._pending_random_question is not None:
+                    logger.debug("用户修改了输入框内容，清除随机问题临时状态")
+                    self._pending_random_question = None
+                    if hasattr(self, '_is_generating_random_question'):
+                        self._is_generating_random_question = False
+        
         if has_text:
             # 输入框有内容：发送按钮高光，随机问题按钮取消高光
             self.send_button.setDefault(True)
@@ -1997,6 +2036,35 @@ class AskDialog(QDialog):
             # 输入框为空：随机问题按钮高光，发送按钮取消高光
             self.suggest_button.setDefault(True)
             self.send_button.setDefault(False)
+    
+    def _has_history_data(self):
+        """检查当前UID是否有历史记录（有AI回答）
+        
+        Returns:
+            bool: 如果有历史记录且包含AI回答返回True，否则返回False
+        """
+        if not hasattr(self, 'response_handler') or not hasattr(self.response_handler, 'history_manager'):
+            return False
+        
+        history = self.response_handler.history_manager.get_history_by_uid(self.current_uid)
+        if not history:
+            return False
+        
+        # 检查是否有AI回答
+        answers = history.get('answers', {})
+        if not answers:
+            return False
+        
+        # 检查是否有任何非空的回答
+        for ai_id, answer_data in answers.items():
+            if isinstance(answer_data, dict):
+                answer = answer_data.get('answer', '')
+            else:
+                answer = answer_data
+            if answer and answer.strip():
+                return True
+        
+        return False
     
     def generate_suggestion(self):
         """生成随机问题（只发送到第一个AI面板）"""
@@ -2014,6 +2082,15 @@ class AskDialog(QDialog):
                 logger.warning("第一个面板没有选中AI，无法生成随机问题")
                 self._show_ai_service_required_dialog()
                 return
+        
+        # 检查是否有历史数据
+        if self._has_history_data():
+            logger.info("检测到当前有历史记录，点击随机问题将创建新会话")
+            # 创建新会话
+            self._on_new_conversation()
+        
+        # 标记这是一个随机问题请求
+        self._is_generating_random_question = True
         
         self.suggestion_handler.generate(self.book_info)
 
@@ -2075,15 +2152,35 @@ class AskDialog(QDialog):
     def send_question(self):
         """发送问题"""
         import logging
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         logger = logging.getLogger(__name__)
         logger.info("=== 开始处理用户问题 ===")
         
-        # 检查当前UID是否已有历史记录，如果有则生成新UID（避免覆盖已有记录）
-        if hasattr(self, 'response_handler') and hasattr(self.response_handler, 'history_manager'):
-            if self.current_uid in self.response_handler.history_manager.histories:
-                old_uid = self.current_uid
-                self.current_uid = self._generate_uid()
-                logger.info(f"检测到已有历史记录，生成新UID: {old_uid} -> {self.current_uid}")
+        # 检查是否是随机问题请求
+        is_random_question = hasattr(self, '_is_generating_random_question') and self._is_generating_random_question
+        
+        # 如果是随机问题，已经在generate_suggestion中创建了新会话，这里不需要再创建
+        # 如果不是随机问题，检查当前UID是否已有历史记录
+        if not is_random_question:
+            if hasattr(self, 'response_handler') and hasattr(self.response_handler, 'history_manager'):
+                if self.current_uid in self.response_handler.history_manager.histories:
+                    old_uid = self.current_uid
+                    self.current_uid = self._generate_uid()
+                    logger.info(f"检测到已有历史记录，生成新UID: {old_uid} -> {self.current_uid}")
+        else:
+            logger.info("随机问题请求，使用已创建的新会话UID")
+            # 清除临时存储中的待发送随机问题（因为用户已经点击发送）
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            if str(book_ids) in pending_questions:
+                del pending_questions[str(book_ids)]
+                prefs['pending_random_questions'] = pending_questions
+                logger.info(f"已清除临时存储中的待发送随机问题: book_ids={book_ids}")
+            
+            # 重置标记和临时缓存
+            self._is_generating_random_question = False
+            self._pending_random_question = None
         
         # 检查 token 是否有效
         if not self._check_auth_token():
@@ -2153,7 +2250,6 @@ class AskDialog(QDialog):
                 logger.info(f"模板变量准备完成: {template_vars}")
                 
                 # 获取配置的模板
-                from calibre_plugins.ask_ai_plugin.config import get_prefs
                 prefs = get_prefs()
                 template = prefs.get('template', '')
                 
@@ -2524,6 +2620,23 @@ class AskDialog(QDialog):
     
     def closeEvent(self, event):
         """处理窗口关闭事件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 如果有待发送的随机问题，保存到临时存储
+        if hasattr(self, '_pending_random_question') and self._pending_random_question:
+            # 使用书籍ID作为key保存待发送的随机问题和新会话UID
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            pending_questions[str(book_ids)] = {
+                'question': self._pending_random_question,
+                'uid': self.current_uid,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            prefs['pending_random_questions'] = pending_questions
+            logger.info(f"保存待发送的随机问题到临时存储: book_ids={book_ids}, uid={self.current_uid}")
+        
         # 准备关闭，让线程自然结束
         self.response_handler.prepare_close()
         self.suggestion_handler.prepare_close()  # 改用 prepare_close

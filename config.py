@@ -333,12 +333,25 @@ class ModelConfigWidget(QWidget):
             self.model_combo.currentTextChanged.connect(self.on_config_changed)
             model_select_layout.addWidget(self.model_combo)
             
+            # 添加占位符选项
+            placeholder_text = self.i18n.get('select_model', '-- No Model --')
+            self.model_combo.addItem(placeholder_text)
+            
             # 从缓存加载模型列表
             prefs = get_prefs()
             cached_models = prefs.get('cached_models', {})
             if self.model_id in cached_models and cached_models[self.model_id]:
                 logger.info(f"从缓存加载 {len(cached_models[self.model_id])} 个模型")
                 self.model_combo.addItems(cached_models[self.model_id])
+            else:
+                # 没有缓存时，添加提示项
+                hint_text = self.i18n.get('request_model_list', 'Please request model list')
+                self.model_combo.addItem(hint_text)
+                # 禁用提示项
+                model = self.model_combo.model()
+                item = model.item(1)  # 第二项是提示项
+                if item:
+                    item.setEnabled(False)
             
             # 添加按钮之间的间距
             model_select_layout.addSpacing(8)
@@ -490,6 +503,101 @@ class ModelConfigWidget(QWidget):
         """配置变更处理"""
         self.config_changed.emit()
     
+    def _find_best_default_model(self, models):
+        """智能匹配最佳默认模型
+        
+        Args:
+            models: 模型列表
+            
+        Returns:
+            int: 最佳匹配的模型索引（1-based，0是占位符）
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if not models or len(models) == 0:
+            return 0  # 返回占位符
+        
+        # 获取当前AI的默认模型名称
+        from .models.base import AIProvider, get_current_model_config
+        
+        default_model_name = None
+        if self.model_id == 'grok':
+            provider = AIProvider.AI_GROK
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'gemini':
+            provider = AIProvider.AI_GEMINI
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'deepseek':
+            provider = AIProvider.AI_DEEPSEEK
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'openai':
+            provider = AIProvider.AI_OPENAI
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'anthropic':
+            provider = AIProvider.AI_ANTHROPIC
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'nvidia':
+            provider = AIProvider.AI_NVIDIA
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'openrouter':
+            provider = AIProvider.AI_OPENROUTER
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'ollama':
+            provider = AIProvider.AI_OLLAMA
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        
+        if not default_model_name:
+            logger.info(f"未找到 {self.model_id} 的默认模型配置，使用第一个模型")
+            return 1  # 返回第一个实际模型
+        
+        logger.info(f"尝试匹配默认模型: {default_model_name}")
+        
+        # 1. 精确匹配
+        for i, model in enumerate(models):
+            if model == default_model_name:
+                logger.info(f"找到精确匹配的模型: {model} at index {i+1}")
+                return i + 1  # +1 因为索引0是占位符
+        
+        # 2. 部分匹配（包含关系）
+        for i, model in enumerate(models):
+            if default_model_name in model or model in default_model_name:
+                logger.info(f"找到部分匹配的模型: {model} at index {i+1}")
+                return i + 1
+        
+        # 3. 模糊匹配（最长公共子串）
+        best_match_index = 0
+        best_match_score = 0
+        
+        for i, model in enumerate(models):
+            # 计算相似度（简单的字符重叠）
+            model_lower = model.lower()
+            default_lower = default_model_name.lower()
+            
+            # 计算公共字符数
+            common_chars = sum(1 for c in default_lower if c in model_lower)
+            score = common_chars / max(len(default_lower), 1)
+            
+            if score > best_match_score:
+                best_match_score = score
+                best_match_index = i + 1
+        
+        if best_match_score > 0.3:  # 至少30%的相似度
+            logger.info(f"找到模糊匹配的模型: {models[best_match_index-1]} (score={best_match_score:.2f}) at index {best_match_index}")
+            return best_match_index
+        
+        # 4. 没有找到匹配，返回第一个模型
+        logger.info(f"未找到匹配的模型，使用第一个模型: {models[0]}")
+        return 1
+    
     def on_load_models_clicked(self):
         """点击加载模型按钮"""
         import logging
@@ -533,6 +641,10 @@ class ModelConfigWidget(QWidget):
                 logger.info(f"Successfully loaded {len(models)} models")
                 
                 self.model_combo.clear()
+                # 先添加占位符
+                placeholder_text = self.i18n.get('select_model', '-- No Model --')
+                self.model_combo.addItem(placeholder_text)
+                # 再添加模型列表
                 self.model_combo.addItems(models)
                 
                 # 保存到缓存
@@ -543,11 +655,27 @@ class ModelConfigWidget(QWidget):
                 logger.info(f"已缓存 {len(models)} 个模型到 {self.model_id}")
                 
                 # 如果有保存的模型名称，尝试选中
-                saved_model = config.get('model', '')
-                if saved_model:
+                saved_model = config.get('model', '').strip()
+                selected_index = 0  # 默认占位符
+                
+                if saved_model and saved_model != placeholder_text:
+                    # 有有效的保存模型（不是空字符串，也不是占位符文本）
                     index = self.model_combo.findText(saved_model)
-                    if index >= 0:
-                        self.model_combo.setCurrentIndex(index)
+                    if index >= 0 and index > 0:  # 确保不是占位符
+                        selected_index = index
+                        logger.info(f"找到保存的模型，选中索引: {index}, 模型: {saved_model}")
+                    else:
+                        # 模型不在列表中，尝试智能匹配默认模型
+                        selected_index = self._find_best_default_model(models)
+                        logger.info(f"保存的模型不在列表中，智能选择模型索引: {selected_index}")
+                else:
+                    # 没有保存的模型或保存的是占位符，尝试智能匹配默认模型
+                    selected_index = self._find_best_default_model(models)
+                    logger.info(f"没有有效的保存模型，智能选择模型索引: {selected_index}")
+                
+                # 设置选中的索引
+                self.model_combo.setCurrentIndex(selected_index)
+                logger.info(f"已设置模型下拉框索引为: {selected_index}, 当前显示: {self.model_combo.currentText()}")
                 
                 QMessageBox.information(
                     self,
@@ -608,19 +736,22 @@ class ModelConfigWidget(QWidget):
         else:
             # 尝试在下拉框中选中（如果列表已加载）
             logger.info(f"[load_model_config] 使用下拉框模式 - combo.count()={self.model_combo.count()}")
-            if self.model_combo.count() > 0:
+            if self.model_combo.count() > 1:  # 大于1表示有占位符+实际模型
                 index = self.model_combo.findText(model_name)
                 logger.info(f"[load_model_config] 查找模型 '{model_name}' - index={index}")
                 if index >= 0:
                     self.model_combo.setCurrentIndex(index)
                 else:
-                    # 模型不在列表中，但不自动切换到自定义，只在自定义输入框显示
-                    logger.info(f"[load_model_config] 模型不在列表中，在自定义输入框显示")
-                    self.custom_model_input.setText(model_name)
+                    # 模型不在列表中，重置为占位符，并在自定义输入框显示
+                    logger.info(f"[load_model_config] 模型不在列表中，重置为占位符")
+                    self.model_combo.setCurrentIndex(0)
+                    if model_name:
+                        self.custom_model_input.setText(model_name)
             else:
-                # 列表为空，如果有模型名称则显示在自定义输入框
+                # 只有占位符（没有实际模型），重置为占位符
+                logger.info(f"[load_model_config] 只有占位符，重置为占位符")
+                self.model_combo.setCurrentIndex(0)
                 if model_name:
-                    logger.info(f"[load_model_config] 列表为空，在自定义输入框显示")
                     self.custom_model_input.setText(model_name)
         
         logger.info(f"[load_model_config] 加载完成 - checkbox.isChecked()={self.use_custom_model_checkbox.isChecked()}, custom_input.isEnabled()={self.custom_model_input.isEnabled()}")
@@ -1801,54 +1932,114 @@ class ConfigDialog(QWidget):
         if not parallel_count or parallel_count <= 1:
             return
         
-        # 获取已配置的AI列表
+        # 获取已配置的AI列表（细节1：显示"AI服务 + 模型名称"）
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         configured_ais = []
         for model_id, config in models_config.items():
             if config.get('enabled', False):
                 # 检查是否有API Key（Ollama不需要）
+                has_key = False
                 if model_id == 'ollama':
-                    configured_ais.append((model_id, config.get('display_name', model_id)))
+                    has_key = True
                 elif model_id == 'grok':
-                    if config.get('auth_token', '').strip():
-                        configured_ais.append((model_id, config.get('display_name', model_id)))
+                    has_key = bool(config.get('auth_token', '').strip())
                 else:
-                    if config.get('api_key', '').strip():
-                        configured_ais.append((model_id, config.get('display_name', model_id)))
-        
-        if not configured_ais:
-            return
+                    has_key = bool(config.get('api_key', '').strip())
+                
+                if has_key:
+                    # 构建显示文本：AI服务名 + 模型名
+                    display_name = config.get('display_name', model_id)
+                    model_name = config.get('model', '')
+                    if model_name:
+                        display_text = f"{display_name} ({model_name})"
+                    else:
+                        display_text = display_name
+                    configured_ais.append((model_id, display_text))
         
         # 读取当前的AI选择
         saved_selections = prefs.get('panel_ai_selections', {})
+        
+        # 获取当前选中的主要AI
+        current_ai = prefs.get('selected_model', 'grok')
         
         # 为每个面板创建选择器
         for i in range(parallel_count):
             panel_layout = QHBoxLayout()
             
             panel_label = QLabel(f"{self.i18n.get('ai_panel_label', 'AI {index}:').format(index=i+1)}")
+            panel_label.setMinimumWidth(60)  # 固定标签宽度，保持对齐
             panel_layout.addWidget(panel_label)
             
+            # 细节3：始终显示下拉框（即使没有配置AI）
             panel_combo = NoScrollComboBox()
-            panel_combo.setMinimumWidth(200)
+            # 细节2：下拉框充满右侧空间
+            panel_combo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             
             # 添加AI选项
-            for ai_id, display_name in configured_ais:
-                panel_combo.addItem(display_name, ai_id)
+            # 对于AI 1：显示所有已配置的AI
+            # 对于AI 2及以上：只有当配置的AI数量 > 面板索引时才显示
+            should_show_ais = (i == 0) or (len(configured_ais) > i)
             
-            # 设置当前选中的AI
+            # 先添加占位符选项（与询问弹窗保持一致）
+            placeholder_text = self.i18n.get('select_ai', '-- Select AI --')
+            panel_combo.addItem(placeholder_text, None)
+            
+            if should_show_ais and configured_ais:
+                # 有足够的AI时，添加AI列表
+                for ai_id, display_text in configured_ais:
+                    panel_combo.addItem(display_text, ai_id)
+            else:
+                # 没有足够的AI时，添加提示项
+                hint_text = self.i18n.get('add_more_ai_providers', 'Please add more AI providers in settings')
+                panel_combo.addItem(hint_text, None)
+                # 禁用提示项，使其无法被选中
+                model = panel_combo.model()
+                item = model.item(1)  # 第二项是提示项
+                if item:
+                    item.setEnabled(False)
+            
+            # 智能选择默认AI
+            default_ai = None
+            if should_show_ais and configured_ais:
+                if i == 0:
+                    # AI 1：默认选择当前主要AI
+                    default_ai = current_ai
+                elif i == 1 and len(configured_ais) >= 2:
+                    # AI 2：选择下一个不同的AI
+                    for ai_id, _ in configured_ais:
+                        if ai_id != current_ai:
+                            default_ai = ai_id
+                            break
+            
+            # 设置当前选中的AI：优先使用保存的选择，其次使用智能选择
             saved_ai = saved_selections.get(f'panel_{i}')
-            if saved_ai:
+            if saved_ai and should_show_ais and configured_ais:
                 index = panel_combo.findData(saved_ai)
                 if index >= 0:
                     panel_combo.setCurrentIndex(index)
+                else:
+                    # 保存的AI不存在，重置为占位符
+                    panel_combo.setCurrentIndex(0)
+            elif default_ai and should_show_ais and configured_ais:
+                index = panel_combo.findData(default_ai)
+                if index >= 0:
+                    panel_combo.setCurrentIndex(index)
+                    # 保存默认选择
+                    if 'panel_ai_selections' not in prefs:
+                        prefs['panel_ai_selections'] = {}
+                    prefs['panel_ai_selections'][f'panel_{i}'] = default_ai
+                else:
+                    # 默认AI不存在，重置为占位符
+                    panel_combo.setCurrentIndex(0)
+            else:
+                # 没有保存的选择且没有默认AI，显示占位符
+                panel_combo.setCurrentIndex(0)
             
-            # 连接信号
+            # 连接信号触发保存按钮
             panel_combo.currentIndexChanged.connect(lambda idx, panel_idx=i: self._on_panel_ai_selector_changed(panel_idx))
             
             panel_layout.addWidget(panel_combo)
-            panel_layout.addStretch()
             
             # 添加到布局
             container = QWidget()

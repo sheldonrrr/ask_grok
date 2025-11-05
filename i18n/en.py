@@ -275,6 +275,8 @@ class EnglishTranslation(BaseTranslation):
             'no_ai_available': 'No AI available for this panel',
             'add_more_ai_providers': 'Please add more AI providers in settings',
             'select_ai': '-- Select AI --',
+            'select_model': '-- Select Model --',
+            'request_model_list': 'Please request model list',
             'coming_soon': 'Coming Soon',
             'advanced_feature_tooltip': 'This feature is under development. Stay tuned for updates!',
             

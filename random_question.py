@@ -51,11 +51,19 @@ class SuggestionWorker(QThread):
             # 记录书籍信息
             logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 语言: {language}")
             
-            # 准备提示词
-            template = get_suggestion_template(get_prefs()['language'])
+            # 准备提示词 - 从配置中获取用户自定义的随机问题提示词
+            lang_code = get_prefs()['language']
+            template = self.api.get_random_question_prompt(lang_code)
+            
+            # 如果用户没有配置，则使用默认模板
+            if not template:
+                template = get_suggestion_template(lang_code)
+                logger.info("用户未配置随机问题提示词，使用默认模板")
+            else:
+                logger.info("使用用户配置的随机问题提示词")
             
             # 记录使用的模板
-            logger.info(f"使用的问题随机问题模板: {template}")
+            logger.info(f"使用的问题随机问题模板: {template[:200]}...")
             
             # 格式化提示词，包含完整的书籍信息
             prompt = template.format(
@@ -268,6 +276,12 @@ class SuggestionHandler(QObject):
             else:
                 # 这是一个有效的建议
                 logger.debug(f"收到有效随机问题，准备更新UI")
+                
+                # 将随机问题暂存到父对话框的临时变量中
+                parent_dialog = self.suggest_button.window() if self.suggest_button else None
+                if parent_dialog and hasattr(parent_dialog, '_pending_random_question'):
+                    parent_dialog._pending_random_question = suggestion
+                    logger.info(f"随机问题已暂存到临时变量，等待用户点击发送: {suggestion[:50]}...")
                 
                 # 更新输入框
                 if self.input_area:

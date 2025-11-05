@@ -273,8 +273,10 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'suggest_maximize': '提示：使用3个AI时建议最大化窗口以获得更好的显示效果', # 修正
             'ai_panel_label': 'AI {index}：',
             'no_ai_available': '此面板没有可用的AI',
-            'add_more_ai_providers': '请在设置中添加更多AI服务商',
+            'add_more_ai_providers': '请添加更多AI服务商',
             'select_ai': '-- 选择AI --',
+            'select_model': '-- 切换Model --',
+            'request_model_list': '请请求模型列表',
             'coming_soon': '即将推出',
             'advanced_feature_tooltip': '此功能正在开发中，敬请期待！',
             
