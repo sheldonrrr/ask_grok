@@ -274,6 +274,8 @@ class FinnishTranslation(BaseTranslation):
             'no_ai_available': 'Ei tekoälyä käytettävissä tälle paneelille',
             'add_more_ai_providers': 'Lisää tekoälyntarjoajia asetuksissa',
             'select_ai': '-- Valitse tekoäly --',
+            'select_model': '-- Vaihda Malli --',
+            'request_model_list': 'Pyydä malliluettelo',
             'coming_soon': 'Tulossa pian',
             'advanced_feature_tooltip': 'Tämä ominaisuus on kehitysvaiheessa. Pysy kuulolla päivityksistä!',
             

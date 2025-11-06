@@ -275,6 +275,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'no_ai_available': '此面板沒有可用的AI',
         'add_more_ai_providers': '請在設定中添加更多AI服務商',
         'select_ai': '-- 選擇AI --',
+        'select_model': '-- 切換Model --',
+        'request_model_list': '請請求模型列表',
         'coming_soon': '即將推出',
         'advanced_feature_tooltip': '此功能正在開發中，敬請期待！',
         

@@ -259,6 +259,8 @@ class SwedishTranslation(BaseTranslation):
             'no_ai_available': 'Ingen AI tillgänglig för denna panel',
             'add_more_ai_providers': 'Vänligen lägg till fler AI-leverantörer i inställningarna',
             'select_ai': '-- Välj AI --',
+            'select_model': '-- Byt Modell --',
+            'request_model_list': 'Vänligen begär modelllista',
             'coming_soon': 'Kommer snart',
             'advanced_feature_tooltip': 'Denna funktion är under utveckling. Håll utkik efter uppdateringar!',
 

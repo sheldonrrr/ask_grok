@@ -273,6 +273,8 @@ class NorwegianTranslation(BaseTranslation):
             'no_ai_available': 'Ingen AI tilgjengelig for dette panelet',
             'add_more_ai_providers': 'Vennligst legg til flere AI-leverandører i innstillingene',
             'select_ai': '-- Velg AI --',
+            'select_model': '-- Bytt Modell --',
+            'request_model_list': 'Vennligst be om modellliste',
             'coming_soon': 'Kommer snart',
             'advanced_feature_tooltip': 'Denne funksjonen er under utvikling. Følg med for oppdateringer!',
             

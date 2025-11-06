@@ -275,6 +275,8 @@ class DanishTranslation(BaseTranslation):
             'no_ai_available': 'Ingen AI tilgængelig for dette panel',
             'add_more_ai_providers': 'Tilføj venligst flere AI-udbydere i indstillingerne',
             'select_ai': '-- Vælg AI --',
+            'select_model': '-- Skift Model --',
+            'request_model_list': 'Anmod venligst om modelliste',
             'coming_soon': 'Kommer snart',
             'advanced_feature_tooltip': 'Denne funktion er under udvikling. Følg med for opdateringer!',
             

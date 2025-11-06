@@ -274,6 +274,8 @@ class RussianTranslation(BaseTranslation):
             'no_ai_available': 'Нет доступного ИИ для этой панели',
             'add_more_ai_providers': 'Пожалуйста, добавьте больше провайдеров ИИ в настройках',
             'select_ai': '-- Выбрать ИИ --',
+            'select_model': '-- Переключить Модель --',
+            'request_model_list': 'Пожалуйста, запросите список моделей',
             'coming_soon': 'Скоро',
             'advanced_feature_tooltip': 'Эта функция находится в разработке. Следите за обновлениями!',
 

@@ -268,6 +268,8 @@ class CantoneseTranslation(BaseTranslation):
             'no_ai_available': '呢個面板冇可用嘅 AI',
             'add_more_ai_providers': '請喺設定中添加更多 AI 提供商',
             'select_ai': '-- 選擇 AI --',
+            'select_model': '-- 切換 Model --',
+            'request_model_list': '請請求模型列表',
             'coming_soon': '即將推出',
             'advanced_feature_tooltip': '呢個功能開發緊。請留意更新！',
             

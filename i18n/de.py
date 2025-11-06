@@ -275,6 +275,8 @@ class GermanTranslation(BaseTranslation):
             'no_ai_available': 'Keine KI für dieses Panel verfügbar',
             'add_more_ai_providers': 'Bitte fügen Sie weitere KI-Anbieter in den Einstellungen hinzu',
             'select_ai': '-- KI auswählen --',
+            'select_model': '-- Modell wechseln --',
+            'request_model_list': 'Bitte Modellliste anfordern',
             'coming_soon': 'Demnächst verfügbar',
             'advanced_feature_tooltip': 'Diese Funktion befindet sich in der Entwicklung. Bleiben Sie dran für Updates!',
             

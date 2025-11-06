@@ -330,7 +330,7 @@ class ModelConfigWidget(QWidget):
             self.model_combo = NoScrollComboBox(self)
             self.model_combo.setMinimumWidth(int(base_width * 0.7))
             self.model_combo.setEditable(False)
-            self.model_combo.currentTextChanged.connect(self.on_config_changed)
+            self.model_combo.currentTextChanged.connect(self.on_model_combo_changed)
             model_select_layout.addWidget(self.model_combo)
             
             # 添加占位符选项
@@ -391,13 +391,31 @@ class ModelConfigWidget(QWidget):
             self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
             model_layout.addRow("", self.enable_streaming_checkbox)
             
-            # 添加重置按钮
-            reset_button = QPushButton(self.i18n.get('reset_button', 'Reset to Default'))
+            # 添加重置按钮（红色警告样式）
+            reset_button = QPushButton(self.i18n.get('reset_current_ai', 'Reset Current AI to Default'))
             reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
             reset_button.setProperty('isResetButton', True)  # 添加属性标记
             reset_button.clicked.connect(self.reset_model_params)
-            reset_button.setToolTip(self.i18n.get('reset_tooltip', 'Reset to default value'))
-            apply_button_style(reset_button)
+            reset_button.setToolTip(self.i18n.get('reset_tooltip', 'Reset current AI to default values'))
+            
+            # 应用红色警告样式（与 Reset All Data 保持一致）
+            reset_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    min-width: 200px;
+                }
+                QPushButton:hover {
+                    background-color: #c82333;
+                }
+                QPushButton:pressed {
+                    background-color: #bd2130;
+                }
+            """)
             model_layout.addRow("", reset_button)
     
     def get_config(self):
@@ -467,7 +485,17 @@ class ModelConfigWidget(QWidget):
         else:
             # 使用下拉框选中的模型
             config['use_custom_model_name'] = False
-            config['model'] = self.model_combo.currentText().strip() if hasattr(self, 'model_combo') else ''
+            if hasattr(self, 'model_combo'):
+                current_text = self.model_combo.currentText().strip()
+                # 过滤掉占位符文本，避免保存无效的模型名称
+                placeholder_texts = ['-- 切换Model --', '-- Select Model --', '-- No Model --', 
+                                   '请请求模型列表', 'Please request model list']
+                if current_text in placeholder_texts:
+                    config['model'] = ''  # 占位符不保存
+                else:
+                    config['model'] = current_text
+            else:
+                config['model'] = ''
         
         # 流式传输选项（如果存在）
         if hasattr(self, 'enable_streaming_checkbox'):
@@ -677,6 +705,20 @@ class ModelConfigWidget(QWidget):
                 self.model_combo.setCurrentIndex(selected_index)
                 logger.info(f"已设置模型下拉框索引为: {selected_index}, 当前显示: {self.model_combo.currentText()}")
                 
+                # 自动保存配置
+                parent = self.parent()
+                config_dialog = None
+                while parent:
+                    if isinstance(parent, ConfigDialog):
+                        config_dialog = parent
+                        break
+                    parent = parent.parent()
+                
+                if config_dialog:
+                    logger.info(f"加载模型成功后自动保存配置")
+                    config_dialog.save_settings()
+                    logger.info(f"配置已自动保存")
+                
                 QMessageBox.information(
                     self,
                     self.i18n.get('success', 'Success'),
@@ -695,6 +737,38 @@ class ModelConfigWidget(QWidget):
         
         # 使用 QTimer 延迟执行，避免阻塞
         QTimer.singleShot(100, fetch_models)
+    
+    def on_model_combo_changed(self, text):
+        """模型下拉框变化时自动保存"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 过滤掉占位符文本，避免保存无效选择
+        placeholder_texts = ['-- 切换Model --', '-- Select Model --', '-- No Model --', 
+                           '请请求模型列表', 'Please request model list']
+        
+        if text in placeholder_texts:
+            logger.info(f"模型下拉框变化为占位符，不触发保存: {text}")
+            return
+        
+        logger.info(f"模型下拉框变化: {text}，触发自动保存")
+        
+        # 查找父对话框并自动保存（不标记为输入框变化）
+        parent = self.parent()
+        config_dialog = None
+        while parent:
+            if isinstance(parent, ConfigDialog):
+                config_dialog = parent
+                break
+            parent = parent.parent()
+        
+        if config_dialog:
+            logger.info(f"模型切换后自动保存配置")
+            config_dialog.save_settings()
+            logger.info(f"配置已自动保存")
+        else:
+            # 如果找不到父对话框，至少触发配置变更信号
+            self.on_config_changed()
     
     def on_custom_model_toggled(self, state):
         """切换自定义模型名称"""
@@ -717,8 +791,22 @@ class ModelConfigWidget(QWidget):
             # 设置焦点到输入框
             self.custom_model_input.setFocus()
         
-        # 触发配置变更
-        self.on_config_changed()
+        # 自动保存配置
+        parent = self.parent()
+        config_dialog = None
+        while parent:
+            if isinstance(parent, ConfigDialog):
+                config_dialog = parent
+                break
+            parent = parent.parent()
+        
+        if config_dialog:
+            logger.info(f"切换自定义模型模式后自动保存配置")
+            config_dialog.save_settings()
+            logger.info(f"配置已自动保存")
+        else:
+            # 如果找不到父对话框，至少触发配置变更信号
+            self.on_config_changed()
     
     def load_model_config(self):
         """加载模型配置"""
@@ -822,8 +910,8 @@ class ModelConfigWidget(QWidget):
                 label.setText(known_labels['model'])
                 logger.debug(f"基于关键字更新了Model标签为: {known_labels['model']}")
         
-        reset_text = self.i18n.get('reset_button', 'Reset to Default')
-        reset_tooltip = self.i18n.get('reset_tooltip', 'Reset to default value')
+        reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
+        reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
         
         for button in self.findChildren(QPushButton):
             if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
@@ -838,7 +926,7 @@ class ModelConfigWidget(QWidget):
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
                 logger.debug(f"基于工具提示更新了Reset按钮文本为: {reset_text}")
-            elif button.text() in ['Reset to Default', '重置', 'Réinitialiser', 'リセット']:
+            elif button.text() in ['Reset to Default', 'Reset Current AI to Default', '重置', '重置当前AI为默认值', 'Réinitialiser', 'リセット']:
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
                 logger.debug(f"基于当前文本更新了Reset按钮文本为: {reset_text}")
@@ -880,8 +968,65 @@ class ModelConfigWidget(QWidget):
                 ))
                 logger.debug("更新了API Base URL占位符")
     
+    def _get_ai_display_name(self):
+        """获取AI的显示名称（翻译后的）"""
+        display_name_key = f"model_display_name_{self.model_id}"
+        from .models.base import AIProvider, DEFAULT_MODELS
+        
+        # 尝试从 DEFAULT_MODELS 获取
+        provider_map = {
+            'grok': AIProvider.AI_GROK,
+            'gemini': AIProvider.AI_GEMINI,
+            'deepseek': AIProvider.AI_DEEPSEEK,
+            'custom': AIProvider.AI_CUSTOM,
+            'openai': AIProvider.AI_OPENAI,
+            'anthropic': AIProvider.AI_ANTHROPIC,
+            'nvidia': AIProvider.AI_NVIDIA,
+            'openrouter': AIProvider.AI_OPENROUTER,
+            'ollama': AIProvider.AI_OLLAMA,
+        }
+        
+        provider = provider_map.get(self.model_id)
+        if provider and provider in DEFAULT_MODELS:
+            default_name = DEFAULT_MODELS[provider].display_name
+            return self.i18n.get(display_name_key, default_name)
+        
+        # 回退到 model_id
+        return self.model_id.capitalize()
+    
     def reset_model_params(self):
-        """重置模型参数为默认值，保留 API Key"""
+        """重置模型参数为默认值，清除所有配置"""
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        logger = logging.getLogger(__name__)
+        
+        # 获取AI的显示名称
+        ai_display_name = self._get_ai_display_name()
+        
+        # 显示确认对话框
+        confirm_title = self.i18n.get('reset_ai_confirm_title', 'Confirm Reset')
+        confirm_message = self.i18n.get('reset_ai_confirm_message', 
+            'About to reset {ai_name} to default state.\n\n'
+            'This will clear:\n'
+            '• API Key\n'
+            '• Custom model name\n'
+            '• Other configured parameters\n\n'
+            'Continue?').format(ai_name=ai_display_name)
+        
+        reply = QMessageBox.question(
+            self,
+            confirm_title,
+            confirm_message,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No  # 默认选择 No
+        )
+        
+        if reply != QMessageBox.Yes:
+            logger.info(f"用户取消了重置 {self.model_id} 的操作")
+            return
+        
+        logger.info(f"用户确认重置 {self.model_id}")
+        
         # 获取对应的AIProvider和ModelConfig
         model_config = None
         
@@ -905,30 +1050,90 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_OLLAMA
         else:
             # 未知模型，无法重置
+            logger.warning(f"未知模型 ID: {self.model_id}，无法重置")
             return
             
         # 获取模型配置
         model_config = get_current_model_config(provider)
         
         if model_config:
-            # 更新 UI 元素，保留 API Key
+            logger.info(f"开始重置模型 {self.model_id} 的参数")
+            
+            # 1. 清除 API Key / Auth Token（Ollama 除外）
+            if self.model_id != 'ollama':
+                if hasattr(self, 'api_key_edit') and self.api_key_edit:
+                    self.api_key_edit.clear()
+                    logger.info(f"已清除 {self.model_id} 的 API Key")
+            
+            # 2. 重置 API Base URL
             self.api_base_edit.setText(model_config.default_api_base_url)
+            logger.info(f"已重置 API Base URL 为: {model_config.default_api_base_url}")
             
-            # 重置模型名称：清空下拉框，使用自定义输入框填入默认值
+            # 3. 重置模型名称：清空下拉框，添加占位符，清空自定义输入框
             self.model_combo.clear()
-            self.use_custom_model_checkbox.setChecked(True)
-            self.custom_model_input.setText(model_config.default_model_name)
+            placeholder_text = self.i18n.get('select_model', '-- Select Model --')
+            self.model_combo.addItem(placeholder_text)
+            hint_text = self.i18n.get('request_model_list', 'Please request model list')
+            self.model_combo.addItem(hint_text)
+            # 禁用提示项
+            model = self.model_combo.model()
+            item = model.item(1)
+            if item:
+                item.setEnabled(False)
+            self.model_combo.setCurrentIndex(0)  # 选中占位符
             
-            # 如果存在流式传输选项，则设置为默认值（通常为True）
+            # 取消自定义模式，清空自定义输入框
+            self.use_custom_model_checkbox.setChecked(False)
+            self.custom_model_input.clear()
+            logger.info("已重置模型选择为占位符状态")
+            
+            # 4. 重置流式传输选项
             if hasattr(self, 'enable_streaming_checkbox'):
                 self.enable_streaming_checkbox.setChecked(True)
+                logger.info("已重置流式传输选项为启用")
                 
-            # 重置Custom模型的特殊配置
-            if self.model_id == 'custom' and hasattr(self, 'disable_ssl_verify_checkbox'):
-                self.disable_ssl_verify_checkbox.setChecked(False)  # 默认启用SSL验证
-        
-        # 触发配置变更信号
-        self.on_config_changed()
+            # 5. 重置 Custom 模型的特殊配置
+            if self.model_id == 'custom':
+                if hasattr(self, 'disable_ssl_verify_checkbox'):
+                    self.disable_ssl_verify_checkbox.setChecked(False)  # 默认启用SSL验证
+                    logger.info("已重置 SSL 验证选项为启用")
+                if hasattr(self, 'http_referer_edit'):
+                    self.http_referer_edit.clear()
+                    logger.info("已清除 HTTP Referer")
+            
+            # 6. 重置 OpenRouter 的特殊配置
+            if self.model_id == 'openrouter' and hasattr(self, 'http_referer_edit'):
+                self.http_referer_edit.clear()
+                logger.info("已清除 OpenRouter HTTP Referer")
+            
+            # 7. 更新配置文件中的 is_configured 状态
+            prefs = get_prefs()
+            if 'models' in prefs and self.model_id in prefs['models']:
+                prefs['models'][self.model_id]['is_configured'] = False
+                logger.info(f"已将 {self.model_id} 标记为未配置状态")
+            
+            # 8. 通知父对话框更新模型列表的对钩标记
+            # 通过发射信号让 ConfigDialog 更新模型名称显示
+            config_dialog = None
+            parent = self.parent()
+            while parent:
+                if isinstance(parent, ConfigDialog):
+                    config_dialog = parent
+                    config_dialog.update_model_names()
+                    logger.info("已通知父对话框更新模型列表显示")
+                    break
+                parent = parent.parent()
+            
+            # 9. 自动保存配置（重置已经有二次确认，无需再次手动保存）
+            if config_dialog:
+                logger.info(f"开始自动保存重置后的配置")
+                config_dialog.save_settings()
+                logger.info(f"模型 {self.model_id} 重置完成并已自动保存")
+            else:
+                # 如果找不到父对话框，至少触发配置变更信号
+                self.on_config_changed()
+                logger.warning(f"未找到父对话框，无法自动保存配置")
+                logger.info(f"模型 {self.model_id} 重置完成")
 
 
 class ConfigDialog(QWidget):
@@ -948,6 +1153,9 @@ class ConfigDialog(QWidget):
         # 保存初始值
         self.initial_values = {}
         self.model_widgets = {}
+        
+        # 跟踪是否有未保存的输入框变化
+        self.has_unsaved_input_changes = False
         
         # 初始化模型工厂（注意：这些模型已经在 models/__init__.py 中注册过了）
         AIModelFactory.register_model('grok', GrokModel)
@@ -1453,6 +1661,10 @@ class ConfigDialog(QWidget):
         # 调用on_config_changed检查是否有变更
         self.on_config_changed()
     
+    def update_model_names(self):
+        """更新模型列表显示（包括对钩标记）- 别名方法"""
+        self.update_model_name_display()
+    
     def update_model_name_display(self):
         """更新模型下拉框中的模型名称显示，使用当前语言的翻译"""
         import logging
@@ -1765,8 +1977,10 @@ class ConfigDialog(QWidget):
         logger.debug(f"发送语言变更信号: {lang_code}")
         self.language_changed.emit(lang_code)
         
-        # 标记配置已更改
-        self.on_config_changed()
+        # 语言切换后自动保存配置
+        logger.info(f"语言切换后自动保存配置")
+        self.save_settings()
+        logger.info(f"配置已自动保存")
     
     def retranslate_ui(self):
         """更新界面文字"""
@@ -1822,8 +2036,8 @@ class ConfigDialog(QWidget):
                 logger.debug(f"更新了标签 [{obj_name}]: {old_text} -> {new_text}")
         
         # 更新所有按钮文本
-        reset_text = self.i18n.get('reset_button', 'Reset to Default')
-        reset_tooltip = self.i18n.get('reset_tooltip', 'Reset to default value')
+        reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
+        reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
         #save_text = self.i18n.get('save_button', 'Save')
         
         for button in self.findChildren(QPushButton):
@@ -1843,7 +2057,7 @@ class ConfigDialog(QWidget):
                 button.setToolTip(reset_tooltip)
                 logger.debug(f"基于工具提示更新了Reset按钮文本为: {reset_text}")
             # 通过当前文本识别
-            elif button.text() in ['Reset to Default', '重置', 'Réinitialiser', 'リセット']:
+            elif button.text() in ['Reset to Default', 'Reset Current AI to Default', '重置', '重置当前AI为默认值', 'Réinitialiser', 'リセット']:
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
                 logger.debug(f"基于当前文本更新了Reset按钮文本为: {reset_text}")
@@ -1917,8 +2131,15 @@ class ConfigDialog(QWidget):
     
     def on_parallel_count_changed(self):
         """并行AI数量变更处理"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         self._update_panel_ai_selectors()
-        self.on_config_changed()
+        
+        # 并行AI数量切换后自动保存配置
+        logger.info(f"并行AI数量切换后自动保存配置")
+        self.save_settings()
+        logger.info(f"配置已自动保存")
     
     def _update_panel_ai_selectors(self):
         """更新并行AI选择器"""
@@ -2118,6 +2339,9 @@ class ConfigDialog(QWidget):
         # 更新按钮状态
         #self.save_button.setEnabled(False)
         
+        # 重置未保存的输入框变化标志
+        self.has_unsaved_input_changes = False
+        
         # 显示保存成功提示
         if hasattr(self, 'save_success_label'):
             self.save_success_label.setText(self.i18n.get('save_success', 'Settings saved successfully!'))
@@ -2292,6 +2516,9 @@ class ConfigDialog(QWidget):
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
+        # 标记有未保存的输入框变化
+        self.has_unsaved_input_changes = True
+        
         # 检查是否有配置变更
         has_changes = self.check_for_changes()
         

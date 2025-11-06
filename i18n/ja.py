@@ -274,6 +274,8 @@ class JapaneseTranslation(BaseTranslation):
             'no_ai_available': 'このパネルで利用可能なAIはありません',
             'add_more_ai_providers': '設定でAIプロバイダーを追加してください',
             'select_ai': '-- AIを選択 --',
+            'select_model': '-- モデルを切り替え --',
+            'request_model_list': 'モデルリストをリクエストしてください',
             'coming_soon': '近日公開',
             'advanced_feature_tooltip': 'この機能は開発中です。更新情報にご期待ください！',
             

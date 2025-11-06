@@ -706,8 +706,44 @@ class TabDialog(QDialog):
     
     def reject(self):
         """处理关闭按钮"""
-        # 如果配置页面有未保存的更改，先重置字段
-        super().reject()
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        logger = logging.getLogger(__name__)
+        
+        # 检查是否有未保存的输入框变化
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+            config_dialog = self.config_widget.config_dialog
+            
+            if config_dialog.has_unsaved_input_changes:
+                logger.info("检测到未保存的输入框变化，显示确认对话框")
+                
+                # 弹出确认对话框
+                reply = QMessageBox.question(
+                    self,
+                    self.i18n.get('unsaved_changes_title', 'Unsaved Changes'),
+                    self.i18n.get('unsaved_changes_message', 'You have unsaved changes. What would you like to do?'),
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                    QMessageBox.Cancel  # 默认选择取消
+                )
+                
+                if reply == QMessageBox.Save:
+                    # 保存并关闭
+                    logger.info("用户选择保存并关闭")
+                    config_dialog.save_settings()
+                    super().reject()
+                elif reply == QMessageBox.Discard:
+                    # 不保存，直接关闭
+                    logger.info("用户选择不保存，直接关闭")
+                    super().reject()
+                else:
+                    # 取消关闭
+                    logger.info("用户取消关闭操作")
+                    return
+            else:
+                # 没有未保存的变化，直接关闭
+                super().reject()
+        else:
+            super().reject()
 
 
 from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler

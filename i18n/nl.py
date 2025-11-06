@@ -267,6 +267,8 @@ class DutchTranslation(BaseTranslation):
             'no_ai_available': 'Geen AI beschikbaar voor dit paneel',
             'add_more_ai_providers': 'Voeg meer AI-providers toe in de instellingen a.u.b.',
             'select_ai': '-- Selecteer AI --',
+            'select_model': '-- Wissel Model --',
+            'request_model_list': 'Vraag de modellijst aan a.u.b.',
             'coming_soon': 'Binnenkort beschikbaar',
             'advanced_feature_tooltip': 'Deze functie is in ontwikkeling. Blijf op de hoogte van updates!',
             

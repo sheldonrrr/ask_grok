@@ -274,6 +274,8 @@ class PortugueseTranslation(BaseTranslation):
             'no_ai_available': 'Nenhuma IA disponível para este painel',
             'add_more_ai_providers': 'Por favor, adicione mais provedores de IA nas configurações',
             'select_ai': '-- Selecione IA --',
+            'select_model': '-- Trocar Modelo --',
+            'request_model_list': 'Por favor, solicite a lista de modelos',
             'coming_soon': 'Em Breve',
             'advanced_feature_tooltip': 'Este recurso está em desenvolvimento. Fique ligado para atualizações!',
             
