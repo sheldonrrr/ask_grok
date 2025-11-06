@@ -199,6 +199,53 @@ def get_translation(lang_code: str) -> Dict[str, str]:
     return translation.translations
 
 
+def format_http_error(e: Exception, lang_code: str = 'en') -> str:
+    """
+    格式化 HTTP 错误信息为用户友好格式
+    
+    :param e: 异常对象（requests.exceptions.HTTPError 或其他）
+    :param lang_code: 语言代码
+    :return: 格式化的错误信息（用户友好描述 + 技术细节）
+    """
+    from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+    
+    translations = get_translation(lang_code)
+    
+    # 检查是否是 HTTPError
+    if isinstance(e, requests.exceptions.HTTPError):
+        status_code = e.response.status_code if e.response is not None else None
+        
+        # 根据状态码选择错误描述
+        if status_code == 401:
+            user_msg = translations.get('error_401', 
+                'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+        elif status_code == 403:
+            user_msg = translations.get('error_403', 
+                'Access denied. Please check: API Key has sufficient permissions, no regional access restrictions.')
+        elif status_code == 404:
+            user_msg = translations.get('error_404', 
+                'API endpoint not found. Please check if the API Base URL configuration is correct.')
+        elif status_code == 429:
+            user_msg = translations.get('error_429', 
+                'Too many requests, rate limit reached. Please try again later.')
+        elif status_code and 500 <= status_code < 600:
+            user_msg = translations.get('error_5xx', 
+                'Server error. Please try again later or check the service provider status.')
+        else:
+            user_msg = translations.get('error_unknown', 'Unknown error.')
+    elif isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+        # 网络连接错误或超时
+        user_msg = translations.get('error_network', 
+            'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+    else:
+        # 其他错误
+        user_msg = translations.get('error_unknown', 'Unknown error.')
+    
+    # 格式化完整错误信息
+    technical_label = translations.get('technical_details', 'Technical Details')
+    return f"{user_msg}\n\n{technical_label}: {str(e)}"
+
+
 def get_model_specific_translation(key: str, lang_code: str, provider: AIProvider = DEFAULT_PROVIDER) -> str:
     """获取指定语言代码的特定 AI 提供商翻译"""
     translation = TranslationRegistry.get_translation(lang_code)
@@ -438,6 +485,13 @@ class BaseAIModel(ABC):
         
         logger = logging.getLogger(self.get_logger_name())
         
+        # 获取 i18n 翻译（在 try 块之前，确保异常处理中可用）
+        from ..i18n import get_translation
+        language = self.config.get('language', 'en')
+        logger.debug(f"Fetching models with language: {language}")
+        translations = get_translation(language)
+        logger.debug(f"Translation for error_401: {translations.get('error_401', 'NOT FOUND')[:50]}...")
+        
         try:
             # 获取配置
             api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
@@ -446,10 +500,6 @@ class BaseAIModel(ABC):
             endpoint = self.get_models_endpoint()
             url = self.prepare_models_request_url(api_base_url, endpoint)
             headers = self.prepare_models_request_headers()
-            
-            # 获取 i18n 翻译
-            from ..i18n import get_translation
-            translations = get_translation(self.config.get('language', 'en'))
             
             # 发送请求
             logger.info(translations.get('fetching_models_from', 'Fetching models from {url}').format(url=url))
@@ -468,11 +518,64 @@ class BaseAIModel(ABC):
                                             provider=provider_name))
             return sorted(models)
             
+        except requests.exceptions.HTTPError as e:
+            # HTTP 错误 - 根据状态码提供友好提示
+            status_code = e.response.status_code if e.response is not None else None
+            
+            # 选择对应的错误描述
+            if status_code == 401:
+                user_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+            elif status_code == 403:
+                user_msg = translations.get('error_403', 
+                    'Access denied. Please check: API Key has sufficient permissions, no regional access restrictions.')
+            elif status_code == 404:
+                user_msg = translations.get('error_404', 
+                    'API endpoint not found. Please check if the API Base URL configuration is correct.')
+            elif status_code == 429:
+                user_msg = translations.get('error_429', 
+                    'Too many requests, rate limit reached. Please try again later.')
+            elif status_code and 500 <= status_code < 600:
+                user_msg = translations.get('error_5xx', 
+                    'Server error. Please try again later or check the service provider status.')
+            else:
+                user_msg = translations.get('error_unknown', 'Unknown error.')
+            
+            # 格式化完整错误信息：用户友好描述 + 技术细节
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Failed to fetch models: {str(e)}")
+            raise Exception(error_msg)
+            
+        except requests.exceptions.ConnectionError as e:
+            # 网络连接错误
+            user_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Network connection error: {str(e)}")
+            raise Exception(error_msg)
+            
+        except requests.exceptions.Timeout as e:
+            # 超时错误
+            user_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: Connection timeout"
+            
+            logger.error(f"Request timeout: {str(e)}")
+            raise Exception(error_msg)
+            
         except requests.exceptions.RequestException as e:
-            logger.error(translations.get('failed_to_fetch_models', 
-                                         'Failed to fetch models: {error}').format(error=str(e)))
-            raise Exception(translations.get('failed_to_fetch_models', 
-                                           'Failed to fetch models: {error}').format(error=str(e)))
+            # 其他请求异常
+            user_msg = translations.get('error_unknown', 'Unknown error.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Request error: {str(e)}")
+            raise Exception(error_msg)
 
 
 class AIModelFactory:

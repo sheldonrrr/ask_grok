@@ -44,29 +44,27 @@ class NoScrollComboBox(QComboBox):
             event.ignore()
 
 
-def apply_button_style(button, min_width=None, padding="5px 12px"):
+def apply_button_style(button, min_width=None, padding=None):
     """
     为按钮应用统一的样式
     
     Args:
         button: QPushButton实例
-        min_width: 最小宽度（可选）
-        padding: 内边距，默认为"5px 12px"（上下5px，左右12px）
+        min_width: 最小宽度（可选，单位：像素，默认使用 STANDARD_BUTTON_MIN_WIDTH）
+        padding: 内边距（可选，默认使用 STANDARD_BUTTON_PADDING）
     
     功能：
     - 添加合适的内边距，防止文字过于拥挤
     - 文字居中对齐
-    - 如果指定了min_width，设置最小宽度
+    - 设置最小宽度
     """
-    if min_width:
-        button.setMinimumWidth(min_width)
+    from .ui_constants import get_standard_button_style, STANDARD_BUTTON_MIN_WIDTH
     
-    button.setStyleSheet(f"""
-        QPushButton {{
-            padding: {padding};
-            text-align: center;
-        }}
-    """)
+    # 使用标准样式
+    if min_width is None:
+        min_width = STANDARD_BUTTON_MIN_WIDTH
+    
+    button.setStyleSheet(get_standard_button_style(min_width))
 
 
 def create_styled_button(text, parent=None, min_width=None, padding="5px 12px", tooltip=None):

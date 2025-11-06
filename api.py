@@ -248,8 +248,8 @@ class APIClient:
             error_msg = self.i18n.get('request_timeout_error', 'Request timeout. Current timeout: {timeout} seconds').format(timeout=self._timeout)
             raise AIAPIError(error_msg, error_type="timeout_error") from e
         except Exception as e:
-            # 处理其他未知错误
-            error_msg = f"{self.i18n.get('unknown_error', 'Unknown error')}: {str(e)}"
+            # 处理其他未知错误（错误信息可能已经格式化好）
+            error_msg = str(e)
             raise AIAPIError(error_msg, error_type="unknown_error") from e
         finally:
             # 恢复原始模型
@@ -288,6 +288,11 @@ class APIClient:
                 logger.warning(f"未找到模型 {model_id} 的配置")
                 return
             
+            # 确保配置中包含语言设置，用于错误信息国际化
+            if 'language' not in model_config:
+                model_config['language'] = prefs.get('language', 'en')
+                logger.debug(f"Added language to model config: {model_config['language']}")
+            
             # 创建模型实例
             self._model_name = model_id
             self._ai_model = AIModelFactory.create_model(model_id, model_config)
@@ -323,6 +328,11 @@ class APIClient:
             
             # 创建模型实例
             if model_config:
+                # 确保配置中包含语言设置，用于错误信息国际化
+                if 'language' not in model_config:
+                    model_config['language'] = prefs.get('language', 'en')
+                    logger.debug(f"Added language to model config: {model_config['language']}")
+                
                 self._model_name = selected_model
                 self._ai_model = AIModelFactory.create_model(selected_model, model_config)
                 # 安全记录模型配置，隐藏API Key
@@ -428,15 +438,13 @@ class APIClient:
         except AIAPIError as api_error:
             # 记录详细的 API 错误信息
             logger.error(f"{model_name} API 错误: {str(api_error)}")
-            # 返回带有更详细错误信息的错误消息
-            error_msg = self.i18n.get('api_error_template', 'API request failed: {error}')
-            return f"Error: {error_msg.format(error=str(api_error))}"
+            # 直接返回错误信息（已经格式化好：用户友好描述 + 技术细节）
+            return str(api_error)
         except Exception as e:
             # 记录详细的异常信息
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
-            # 处理其他未知错误
-            error_msg = self.i18n.get('random_question_error', 'Error generating random question')
-            return f"Error: {error_msg}: {str(e)}"
+            # 直接返回异常信息（已经格式化好）
+            return str(e)
     
     def reload_model(self):
         """重新加载当前选择的模型"""
@@ -591,8 +599,14 @@ class APIClient:
                     logger.warning(f"fetch_available_models: {error_msg}")
                     return False, error_msg
             
-            # 3. 创建临时模型实例
+            # 3. 创建临时模型实例（添加语言设置）
             logger.debug(f"Creating temporary model instance for {model_name}")
+            # 确保配置中包含语言设置，用于错误信息国际化
+            if 'language' not in config:
+                from .config import get_prefs
+                prefs = get_prefs()
+                config['language'] = prefs.get('language', 'en')
+                logger.debug(f"Added language to config: {config['language']}")
             temp_model = AIModelFactory.create_model(model_name, config)
             
             # 4. 调用模型的 fetch_available_models 方法
@@ -615,9 +629,10 @@ class APIClient:
             return False, error_msg
             
         except Exception as e:
-            error_msg = self.i18n.get('unknown_error', 'Unknown error occurred')
-            logger.error(f"Unexpected error while fetching models for {model_name}: {str(e)}")
-            return False, f"{error_msg}: {str(e)}"
+            # 异常信息已经在 models/base.py 中格式化好（用户友好描述 + 技术细节）
+            error_msg = str(e)
+            logger.error(f"Unexpected error while fetching models for {model_name}: {error_msg}")
+            return False, error_msg
 
 
 # 创建 APIClient 的全局实例，供其他模块导入使用

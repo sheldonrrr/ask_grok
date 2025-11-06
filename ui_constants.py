@@ -110,3 +110,25 @@ def get_separator_style():
 FORM_LABEL_WIDTH = 150          # 表单标签宽度
 FORM_SPACING = SPACING_MEDIUM   # 表单项之间的间距
 FORM_MARGIN = MARGIN_MEDIUM     # 表单边距
+
+# ============ 标准按钮样式 ============
+STANDARD_BUTTON_MIN_WIDTH = 120  # 标准按钮最小宽度
+STANDARD_BUTTON_PADDING = "5px 12px"  # 标准按钮内边距
+
+def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
+    """
+    获取标准按钮样式
+    
+    Args:
+        min_width: 最小宽度（默认 120px）
+    
+    Returns:
+        str: 按钮的 CSS 样式字符串
+    """
+    return f"""
+        QPushButton {{
+            padding: {STANDARD_BUTTON_PADDING};
+            text-align: center;
+            min-width: {min_width}px;
+        }}
+    """

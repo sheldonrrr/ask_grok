@@ -775,38 +775,13 @@ class ResponseHandler(QObject):
         """
         self._stop_loading_timer()
         
-        # 获取本地化错误信息
-        error_prefix = self.i18n.get('error', 'Error: ')
-        request_failed = self.i18n.get('request_failed', 'Request failed')
-        invalid_token = self.i18n.get('invalid_token', 'Invalid token. Please check your API token validable in settings.')
-        
-        # 处理错误信息
+        # 处理错误信息（已经格式化好：用户友好描述 + 技术细节）
         error_str = str(error_msg)
         
-        # 根据错误类型设置标题和错误类型
-        if error_type == 'auth_error' or (hasattr(error_msg, 'error_type') and error_msg.error_type == 'auth_error'):
-            title = self.i18n.get('auth_error_title', 'Authentication Error')
-            error_type = 'auth'
-            message = error_str if error_str else invalid_token
-        elif 'template_error' in error_str:
-            title = error_str
-            message = ""
-            error_type = 'default'
-        else:
-            title = f"{error_prefix}{request_failed}"
-            message = error_str if error_str != title else ""
-            error_type = 'api' if error_type == 'unknown' else error_type
-        
-        # 生成错误HTML
-        error_html = self._format_error_html(
-            title=title,
-            message=message,
-            error_type=error_type
-        )
-        
-        # 更新UI
+        # 统一使用纯文本显示所有错误（保留格式化好的换行）
         if self.response_area:
-            self.response_area.setHtml(error_html)
+            self.response_area.setPlainText(error_str)
+            self.response_area.setAlignment(Qt.AlignLeft)
         
         # 恢复按钮状态
         self.send_button.setEnabled(True)
@@ -814,6 +789,10 @@ class ResponseHandler(QObject):
             self.send_button.setText(self.i18n.get('send_button', 'Send'))
         else:
             self.send_button.setText('Send')
+        
+        # 恢复按钮的原始样式（使用标准样式）
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
+        self.send_button.setStyleSheet(get_standard_button_style())
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""
@@ -1054,22 +1033,9 @@ class ResponseHandler(QObject):
             
         # 处理非响应状态（如加载中）
         self.send_button.setText(text)
-        self.send_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(midlight);
-                color: white;
-            }
-        """)
+        # 设置固定宽度，避免文字变化导致按钮忽大忽小
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
+        self.send_button.setStyleSheet(get_standard_button_style())
         self.send_button.setEnabled(False)
         
         # 根据文本内容判断当前状态

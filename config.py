@@ -229,7 +229,11 @@ class ModelConfigWidget(QWidget):
         self.config = config
         self.i18n = i18n
         self.initial_values = {}
+        
+        # 初始化标志，用于避免初始化时触发变化检测
+        self._is_initializing = True
         self.setup_ui()
+        self._is_initializing = False
     
     def setup_ui(self):
         # 创建主布局
@@ -296,7 +300,7 @@ class ModelConfigWidget(QWidget):
             if self.model_id != 'ollama':
                 self.api_key_edit = QTextEdit(self)
                 self.api_key_edit.setPlainText(self.config.get(api_key_field_name, ''))
-                self.api_key_edit.textChanged.connect(self.on_config_changed)
+                self.api_key_edit.textChanged.connect(self.on_api_key_changed)
                 self.api_key_edit.setMaximumHeight(62)
                 self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
                 model_layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
@@ -357,11 +361,14 @@ class ModelConfigWidget(QWidget):
             model_select_layout.addSpacing(8)
             
             # 加载模型按钮
-            self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'))
+            self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'), self)
             self.load_models_button.clicked.connect(self.on_load_models_clicked)
             # 增加按钮宽度以适应不同字体大小（16px、14px等）
             apply_button_style(self.load_models_button, min_width=200)
             model_select_layout.addWidget(self.load_models_button)
+            
+            # 初始化按钮状态
+            self.update_load_models_button_state()
             
             model_layout.addRow(self.i18n.get('model_label', 'Model:'), model_select_layout)
             
@@ -488,9 +495,7 @@ class ModelConfigWidget(QWidget):
             if hasattr(self, 'model_combo'):
                 current_text = self.model_combo.currentText().strip()
                 # 过滤掉占位符文本，避免保存无效的模型名称
-                placeholder_texts = ['-- 切换Model --', '-- Select Model --', '-- No Model --', 
-                                   '请请求模型列表', 'Please request model list']
-                if current_text in placeholder_texts:
+                if self._is_placeholder_text(current_text):
                     config['model'] = ''  # 占位符不保存
                 else:
                     config['model'] = current_text
@@ -527,9 +532,68 @@ class ModelConfigWidget(QWidget):
         
         return has_auth and has_model
     
+    def on_api_key_changed(self):
+        """API Key 变化时的处理"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 清除当前 AI 的模型缓存
+        from .config import get_prefs
+        prefs = get_prefs()
+        cached_models = prefs.get('cached_models', {})
+        if self.model_id in cached_models:
+            del cached_models[self.model_id]
+            prefs['cached_models'] = cached_models
+            logger.info(f"API Key 变化，已清除 {self.model_id} 的模型缓存")
+        
+        # 更新 Load Models 按钮状态
+        self.update_load_models_button_state()
+        
+        # 触发配置变更信号
+        self.on_config_changed()
+    
     def on_config_changed(self):
         """配置变更处理"""
+        # 如果正在初始化，不发送信号
+        if hasattr(self, '_is_initializing') and self._is_initializing:
+            return
         self.config_changed.emit()
+    
+    def update_load_models_button_state(self):
+        """更新 Load Models 按钮的启用/禁用状态"""
+        if not hasattr(self, 'load_models_button'):
+            return
+        
+        # Ollama 不需要 API Key，始终可用
+        if self.model_id == 'ollama':
+            self.load_models_button.setEnabled(True)
+            return
+        
+        # 其他 AI 需要检查 API Key
+        api_key = self.get_api_key()
+        self.load_models_button.setEnabled(bool(api_key))
+    
+    def _is_placeholder_text(self, text):
+        """检查文本是否是占位符（基于 i18n key）
+        
+        Args:
+            text: 要检查的文本
+            
+        Returns:
+            bool: 如果是占位符返回 True，否则返回 False
+        """
+        if not text:
+            return True
+        
+        # 获取所有可能的占位符文本（基于 i18n key）
+        placeholder_keys = ['select_model', 'request_model_list']
+        
+        for key in placeholder_keys:
+            placeholder_value = self.i18n.get(key, '')
+            if text == placeholder_value:
+                return True
+        
+        return False
     
     def _find_best_default_model(self, models):
         """智能匹配最佳默认模型
@@ -644,12 +708,21 @@ class ModelConfigWidget(QWidget):
                 )
                 return
         
-        # 2. 禁用按钮，显示加载状态
+        # 2. 清除缓存，强制使用当前输入框的 API Key 重新加载
+        prefs = get_prefs()
+        cached_models = prefs.get('cached_models', {})
+        if self.model_id in cached_models:
+            del cached_models[self.model_id]
+            prefs['cached_models'] = cached_models
+            logger.info(f"清除 {self.model_id} 的模型缓存，强制重新加载")
+        
+        # 3. 禁用按钮，显示加载状态
         self.load_models_button.setEnabled(False)
         self.load_models_button.setText(self.i18n.get('loading', 'Loading...'))
         
-        # 3. 获取当前配置
+        # 4. 获取当前配置（从输入框实时获取）
         config = self.get_config()
+        logger.info(f"使用当前输入框的配置加载模型，API Key: {'***' if config.get('api_key') or config.get('auth_token') else 'empty'}")
         
         # 4. 创建 API 客户端并获取模型列表
         from .api import APIClient
@@ -705,6 +778,11 @@ class ModelConfigWidget(QWidget):
                 self.model_combo.setCurrentIndex(selected_index)
                 logger.info(f"已设置模型下拉框索引为: {selected_index}, 当前显示: {self.model_combo.currentText()}")
                 
+                # 确保取消勾选"使用自定义模型名称"，使用下拉框中的模型
+                if hasattr(self, 'use_custom_model_checkbox'):
+                    self.use_custom_model_checkbox.setChecked(False)
+                    logger.info(f"已取消勾选使用自定义模型名称，使用下拉框中的模型")
+                
                 # 自动保存配置
                 parent = self.parent()
                 config_dialog = None
@@ -725,14 +803,14 @@ class ModelConfigWidget(QWidget):
                     self.i18n.get('models_loaded', 'Successfully loaded {count} models').format(count=len(models))
                 )
             else:
-                # 失败：显示错误
+                # 失败：显示错误（错误信息已经格式化好：用户友好描述 + 技术细节）
                 error_msg = result
                 logger.error(f"Failed to load models: {error_msg}")
                 
                 QMessageBox.critical(
                     self,
                     self.i18n.get('error', 'Error'),
-                    self.i18n.get('load_models_failed', 'Failed to load models: {error}').format(error=error_msg)
+                    error_msg
                 )
         
         # 使用 QTimer 延迟执行，避免阻塞
@@ -744,10 +822,7 @@ class ModelConfigWidget(QWidget):
         logger = logging.getLogger(__name__)
         
         # 过滤掉占位符文本，避免保存无效选择
-        placeholder_texts = ['-- 切换Model --', '-- Select Model --', '-- No Model --', 
-                           '请请求模型列表', 'Please request model list']
-        
-        if text in placeholder_texts:
+        if self._is_placeholder_text(text):
             logger.info(f"模型下拉框变化为占位符，不触发保存: {text}")
             return
         
@@ -783,11 +858,16 @@ class ModelConfigWidget(QWidget):
         
         logger.info(f"[on_custom_model_toggled] 切换后 - model_combo.isEnabled()={self.model_combo.isEnabled()}, custom_model_input.isEnabled()={self.custom_model_input.isEnabled()}")
         
-        # 如果切换到自定义，复制当前选中的模型名称
+        # 如果切换到自定义，复制当前选中的模型名称（排除占位符）
         if use_custom:
-            if self.model_combo.currentText():
-                logger.info(f"[on_custom_model_toggled] 复制模型名称: {self.model_combo.currentText()}")
-                self.custom_model_input.setText(self.model_combo.currentText())
+            current_text = self.model_combo.currentText()
+            
+            # 使用 _is_placeholder_text 方法检查是否是占位符
+            if not self._is_placeholder_text(current_text):
+                logger.info(f"[on_custom_model_toggled] 复制模型名称: {current_text}")
+                self.custom_model_input.setText(current_text)
+            else:
+                logger.info(f"[on_custom_model_toggled] 当前是占位符，不复制: {current_text}")
             # 设置焦点到输入框
             self.custom_model_input.setFocus()
         
@@ -1106,13 +1186,23 @@ class ModelConfigWidget(QWidget):
                 self.http_referer_edit.clear()
                 logger.info("已清除 OpenRouter HTTP Referer")
             
-            # 7. 更新配置文件中的 is_configured 状态
+            # 7. 清除模型缓存
             prefs = get_prefs()
+            cached_models = prefs.get('cached_models', {})
+            if self.model_id in cached_models:
+                del cached_models[self.model_id]
+                prefs['cached_models'] = cached_models
+                logger.info(f"已清除 {self.model_id} 的模型缓存")
+            
+            # 8. 更新配置文件中的 is_configured 状态
             if 'models' in prefs and self.model_id in prefs['models']:
                 prefs['models'][self.model_id]['is_configured'] = False
                 logger.info(f"已将 {self.model_id} 标记为未配置状态")
             
-            # 8. 通知父对话框更新模型列表的对钩标记
+            # 9. 更新 Load Models 按钮状态
+            self.update_load_models_button_state()
+            
+            # 10. 通知父对话框更新模型列表的对钩标记
             # 通过发射信号让 ConfigDialog 更新模型名称显示
             config_dialog = None
             parent = self.parent()
@@ -1157,6 +1247,9 @@ class ConfigDialog(QWidget):
         # 跟踪是否有未保存的输入框变化
         self.has_unsaved_input_changes = False
         
+        # 初始化标志，用于避免初始化时触发变化检测
+        self._is_initializing = True
+        
         # 初始化模型工厂（注意：这些模型已经在 models/__init__.py 中注册过了）
         AIModelFactory.register_model('grok', GrokModel)
         AIModelFactory.register_model('gemini', GeminiModel)
@@ -1170,6 +1263,10 @@ class ConfigDialog(QWidget):
         
         self.setup_ui()
         self.load_initial_values()
+        
+        # 初始化完成，开始跟踪变化
+        self._is_initializing = False
+        self.has_unsaved_input_changes = False  # 重置标志
         
     def get_auth_token_without_bearer(self, token):
         """从 token 中移除 'Bearer ' 前缀"""
@@ -2516,6 +2613,10 @@ class ConfigDialog(QWidget):
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
+        # 如果正在初始化，不标记为有变化
+        if self._is_initializing:
+            return
+        
         # 标记有未保存的输入框变化
         self.has_unsaved_input_changes = True
         

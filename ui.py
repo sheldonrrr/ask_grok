@@ -717,21 +717,39 @@ class TabDialog(QDialog):
             if config_dialog.has_unsaved_input_changes:
                 logger.info("检测到未保存的输入框变化，显示确认对话框")
                 
-                # 弹出确认对话框
-                reply = QMessageBox.question(
-                    self,
-                    self.i18n.get('unsaved_changes_title', 'Unsaved Changes'),
-                    self.i18n.get('unsaved_changes_message', 'You have unsaved changes. What would you like to do?'),
-                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
-                    QMessageBox.Cancel  # 默认选择取消
+                # 创建自定义按钮的确认对话框
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle(self.i18n.get('unsaved_changes_title', 'Unsaved Changes'))
+                msg_box.setText(self.i18n.get('unsaved_changes_message', 'You have unsaved changes. What would you like to do?'))
+                msg_box.setIcon(QMessageBox.Question)
+                
+                # 添加自定义按钮（支持 i18n）
+                save_button = msg_box.addButton(
+                    self.i18n.get('save_and_close', 'Save and Close'), 
+                    QMessageBox.AcceptRole
+                )
+                discard_button = msg_box.addButton(
+                    self.i18n.get('discard_changes', 'Discard Changes'), 
+                    QMessageBox.DestructiveRole
+                )
+                cancel_button = msg_box.addButton(
+                    self.i18n.get('cancel', 'Cancel'), 
+                    QMessageBox.RejectRole
                 )
                 
-                if reply == QMessageBox.Save:
+                # 设置默认按钮为取消
+                msg_box.setDefaultButton(cancel_button)
+                
+                # 显示对话框
+                msg_box.exec_()
+                clicked_button = msg_box.clickedButton()
+                
+                if clicked_button == save_button:
                     # 保存并关闭
                     logger.info("用户选择保存并关闭")
                     config_dialog.save_settings()
                     super().reject()
-                elif reply == QMessageBox.Discard:
+                elif clicked_button == discard_button:
                     # 不保存，直接关闭
                     logger.info("用户选择不保存，直接关闭")
                     super().reject()
@@ -1986,7 +2004,7 @@ class AskDialog(QDialog):
         # 右侧：随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        apply_button_style(self.suggest_button, min_width=100)
+        apply_button_style(self.suggest_button, min_width=120)  # 设置固定宽度，与加载状态一致
         self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.suggest_button.setDefault(True)  # 初始设置为默认按钮（高光状态）
         
@@ -2002,30 +2020,15 @@ class AskDialog(QDialog):
         # 右侧：停止按钮（初始隐藏）
         self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
         self.stop_button.clicked.connect(self.stop_request)
-        apply_button_style(self.stop_button, min_width=100)
+        apply_button_style(self.stop_button, min_width=120)  # 使用标准样式和固定宽度
         self.stop_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.stop_button.setVisible(False)  # 初始隐藏
-        # 停止按钮使用柔和的橙色调，表示这是一个常规的中断操作
-        self.stop_button.setStyleSheet("""
-            QPushButton {
-                color: #f57c00;
-                padding: 5px 12px;
-                text-align: center;
-            }
-            QPushButton:hover:enabled {
-                background-color: #fff3e0;
-            }
-            QPushButton:pressed {
-                background-color: #ffb74d;
-                color: white;
-            }
-        """)
         action_layout.addWidget(self.stop_button)
         
         # 右侧：发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
-        apply_button_style(self.send_button, min_width=100)
+        apply_button_style(self.send_button, min_width=120)  # 设置固定宽度，与加载状态一致
         self.send_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.send_button.setDefault(False)  # 初始不是默认按钮
 

@@ -106,6 +106,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'reset_tooltip': '重置当前AI到默认值',
             'unsaved_changes_title': '未保存的更改',
             'unsaved_changes_message': '您有未保存的更改。您想要：',
+            'save_and_close': '保存并关闭',
+            'discard_changes': '不保存',
+            'cancel': '取消',
             'prompt_template': '提示词模板',
             'ask_prompts': '提问提示词',
             'random_questions_prompts': '随机问题提示词',
@@ -168,7 +171,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'multi_book_template_label': '多书提示词模板:',
             'multi_book_placeholder_hint': '使用 {books_metadata} 表示书籍信息，{query} 表示用户问题',
             
-            'error': '错误: ',
+            # 错误消息（注意：'error' 已在前面定义，这里是其他错误类型）
             'network_error': '连接错误',
             'request_timeout': '请求超时',
             'request_failed': '请求失败',
@@ -241,7 +244,17 @@ class SimplifiedChineseTranslation(BaseTranslation):
             # 模型列表获取
             'fetching_models_from': '正在从 {url} 获取模型',
             'successfully_fetched_models': '成功获取 {count} 个 {provider} 模型',
-            'failed_to_fetch_models': '获取模型失败：{error}',
+            'failed_to_fetch_models': '加载模型失败：{error}',
+            
+            # 模型获取错误信息
+            'error_401': 'API Key 验证失败。请检查：API Key 是否正确、账户余额是否充足、API Key 是否已过期。',
+            'error_403': '访问被拒绝。请检查：API Key 权限是否足够、是否有地区访问限制。',
+            'error_404': 'API 端点不存在。请检查 API Base URL 配置是否正确。',
+            'error_429': '请求过于频繁，已达到速率限制。请稍后重试。',
+            'error_5xx': '服务器错误。请稍后重试，或检查服务提供商状态。',
+            'error_network': '网络连接失败。请检查网络连接、代理设置或防火墙配置。',
+            'error_unknown': '未知错误。',
+            'technical_details': '技术细节',
             
             # 关于信息
             'author_name': 'Sheldon',

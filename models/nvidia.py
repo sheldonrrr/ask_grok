@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
-from .base import BaseAIModel
+from .base import BaseAIModel, format_http_error
 from ..i18n import get_translation
 
 
@@ -201,8 +201,8 @@ class NvidiaModel(BaseAIModel):
                         
                 except requests.exceptions.RequestException as e:
                     logger.error(f"Nvidia API request error: {str(e)}")
-                    translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
+                    error_msg = format_http_error(e, self.config.get('language', 'en'))
+                    raise Exception(error_msg)
             
             # Non-streaming mode
             else:
@@ -245,8 +245,8 @@ class NvidiaModel(BaseAIModel):
         except requests.exceptions.RequestException as e:
             logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
             logger.error(f"Nvidia API request error: {str(e)}")
-            translations = get_translation(self.config.get('language', 'en'))
-            raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
+            error_msg = format_http_error(e, self.config.get('language', 'en'))
+            raise Exception(error_msg)
     
     def send_message(self, prompt: str, callback: callable) -> None:
         """

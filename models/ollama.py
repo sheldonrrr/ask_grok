@@ -256,6 +256,12 @@ class OllamaModel(BaseAIModel):
         :return: 模型名称列表
         :raises Exception: 当请求失败时抛出异常
         """
+        # 获取 i18n 翻译（在 try 块之前，确保异常处理中可用）
+        language = self.config.get('language', 'en')
+        logger.debug(f"Ollama fetching models with language: {language}")
+        translations = get_translation(language)
+        logger.debug(f"Ollama translation for error_401: {translations.get('error_401', 'NOT FOUND')[:50]}...")
+        
         try:
             headers = self.prepare_headers()
             # Ollama 模型列表端点
@@ -280,22 +286,76 @@ class OllamaModel(BaseAIModel):
                 return models
             
             # 如果响应格式不符合预期
-            translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models: {error}').format(error='Invalid response format')
-            logger.error(f"{error_msg}, response: {json.dumps(result, ensure_ascii=False)[:200]}...")
+            user_msg = translations.get('error_unknown', 'Unknown error.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: Invalid response format"
+            logger.error(f"Invalid Ollama response format, response: {json.dumps(result, ensure_ascii=False)[:200]}...")
             raise Exception(error_msg)
             
-        except requests.exceptions.RequestException as e:
-            translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get('failed_to_fetch_models', 'Failed to fetch models: {error}').format(error=str(e))
-            logger.error(f"Ollama fetch models error: {str(e)}")
+        except requests.exceptions.HTTPError as e:
+            # HTTP 错误 - 根据状态码提供友好提示
+            status_code = e.response.status_code if e.response is not None else None
+            
+            # 选择对应的错误描述
+            if status_code == 401:
+                user_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+            elif status_code == 403:
+                user_msg = translations.get('error_403', 
+                    'Access denied. Please check: API Key has sufficient permissions, no regional access restrictions.')
+            elif status_code == 404:
+                user_msg = translations.get('error_404', 
+                    'API endpoint not found. Please check if the API Base URL configuration is correct.')
+            elif status_code == 429:
+                user_msg = translations.get('error_429', 
+                    'Too many requests, rate limit reached. Please try again later.')
+            elif status_code and 500 <= status_code < 600:
+                user_msg = translations.get('error_5xx', 
+                    'Server error. Please try again later or check the service provider status.')
+            else:
+                user_msg = translations.get('error_unknown', 'Unknown error.')
+            
+            # 格式化完整错误信息
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Ollama HTTP error: {str(e)}")
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     error_detail = e.response.json()
                     logger.error(f"Error details: {json.dumps(error_detail, ensure_ascii=False)}")
                 except:
                     logger.error(f"Response content: {e.response.text[:500]}")
-            raise Exception(f"{error_msg}: {str(e)}") from e
+            raise Exception(error_msg)
+            
+        except requests.exceptions.ConnectionError as e:
+            # 网络连接错误
+            user_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Ollama connection error: {str(e)}")
+            raise Exception(error_msg)
+            
+        except requests.exceptions.Timeout as e:
+            # 超时错误
+            user_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: Connection timeout"
+            
+            logger.error(f"Ollama request timeout: {str(e)}")
+            raise Exception(error_msg)
+            
+        except requests.exceptions.RequestException as e:
+            # 其他请求异常
+            user_msg = translations.get('error_unknown', 'Unknown error.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
+            
+            logger.error(f"Ollama request error: {str(e)}")
+            raise Exception(error_msg)
     
     def supports_streaming(self) -> bool:
         """

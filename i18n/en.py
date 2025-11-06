@@ -105,6 +105,9 @@ class EnglishTranslation(BaseTranslation):
             'reset_tooltip': 'Reset current AI to default values',
             'unsaved_changes_title': 'Unsaved Changes',
             'unsaved_changes_message': 'You have unsaved changes. What would you like to do?',
+            'save_and_close': 'Save and Close',
+            'discard_changes': 'Discard Changes',
+            'cancel': 'Cancel',
             'prompt_template': 'Prompt Template',
             'ask_prompts': 'Ask Prompts',
             'random_questions_prompts': 'Random Questions Prompts',
@@ -167,8 +170,7 @@ class EnglishTranslation(BaseTranslation):
             'multi_book_template_label': 'Multi-Book Prompt Template:',
             'multi_book_placeholder_hint': 'Use {books_metadata} for book information, {query} for user question',
             
-            # Error messages
-            'error': 'Error: ',  # 同时用于error_prefix
+            # Error messages (Note: 'error' is already defined above, these are other error types)
             'network_error': 'Connection error',
             'request_timeout': 'Request timeout',
             'request_failed': 'Request failed',
@@ -240,8 +242,18 @@ class EnglishTranslation(BaseTranslation):
             # Model list fetching
             'fetching_models_from': 'Fetching models from {url}',
             'successfully_fetched_models': 'Successfully fetched {count} {provider} models',
-            'failed_to_fetch_models': 'Failed to fetch models: {error}',
+            'failed_to_fetch_models': 'Failed to load models: {error}',
             'api_key_empty': 'API Key is empty. Please enter a valid API Key.',
+            
+            # Error messages for model fetching
+            'error_401': 'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.',
+            'error_403': 'Access denied. Please check: API Key has sufficient permissions, no regional access restrictions.',
+            'error_404': 'API endpoint not found. Please check if the API Base URL configuration is correct.',
+            'error_429': 'Too many requests, rate limit reached. Please try again later.',
+            'error_5xx': 'Server error. Please try again later or check the service provider status.',
+            'error_network': 'Network connection failed. Please check network connection, proxy settings, or firewall configuration.',
+            'error_unknown': 'Unknown error.',
+            'technical_details': 'Technical Details',
             
             # About information
             'author_name': 'Sheldon',
