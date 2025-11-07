@@ -125,10 +125,9 @@ class SuggestionHandler(QObject):
         self.suggest_button = None
         self.i18n = {} # 初始化为空字典
         self._worker = None
-        self._loading_timer = None
+        self._button_animation = None  # 使用统一的按钮加载动画
         self._request_cancelled = False
         self._original_input = ''
-        self._original_button_text = ''
         self._response_text = ''
         self.api = None
         self._cleanup_timer = None
@@ -146,12 +145,18 @@ class SuggestionHandler(QObject):
         else:
             self.i18n = i18n
         
+        # 初始化按钮加载动画
+        from .ui_constants import ButtonLoadingAnimation
+        self._button_animation = ButtonLoadingAnimation(
+            button=self.suggest_button,
+            loading_text=self.i18n.get('loading_text', 'Loading'),
+            original_text=self.i18n.get('suggest_button', 'Random Question')
+        )
+        
         # 初始化状态
         self._request_cancelled = False
-        self._loading_timer = None
         self._worker = None
         self._original_input = ''
-        self._original_button_text = ''
         self._response_text = ''
         self._cleanup_timer = None
 
@@ -163,35 +168,25 @@ class SuggestionHandler(QObject):
             self.suggest_button.setText(self.i18n.get('suggest_button', 'Random Question'))
 
     def _setup_loading_animation(self):
-        """设置加载动画定时器"""
+        """设置加载动画（使用统一的按钮动画工具类）"""
+        # 启动按钮加载动画
+        if self._button_animation:
+            self._button_animation.start()
+        
+        # 更新响应区域显示加载文本
         loading_text = self.i18n.get('loading_text', 'Loading')
-        dots = ['', '.', '..', '...']
-        current_dot = [0]
+        if self.response_area:
+            self.response_area.setText(f"{loading_text}...")
 
-        def update_loading():
-            # 只在非取消状态且没有响应时显示加载动画
-            if not self._response_text and not self._request_cancelled:
-                # 更新响应区域
-                self.response_area.setText(f"{loading_text}{dots[current_dot[0]]}")
-                # 更新按钮文本
-                self.suggest_button.setText(f"{loading_text}{dots[current_dot[0]]}")
-                current_dot[0] = (current_dot[0] + 1) % len(dots)
-
-        self._loading_timer = QTimer(self)
-        self._loading_timer.timeout.connect(update_loading)
-        self._loading_timer.start(250)
-
-    def _stop_loading_timer(self):
-        """停止加载动画定时器"""
+    def _stop_loading_animation(self):
+        """停止加载动画"""
         try:
-            logger.debug("停止加载定时器")
-            if hasattr(self, '_loading_timer') and self._loading_timer is not None:
-                if self._loading_timer.isActive():
-                    self._loading_timer.stop()
-                self._loading_timer.deleteLater()
-                self._loading_timer = None
+            logger.debug("停止加载动画")
+            if self._button_animation:
+                self._button_animation.stop()
+            logger.debug("加载动画已停止")
         except Exception as e:
-            logger.error(f"停止加载定时器时出错: {str(e)}")
+            logger.error(f"停止加载动画时出错: {str(e)}")
             
     def _stop_timeout_timer(self):
         """停止超时检查定时器"""
@@ -256,7 +251,7 @@ class SuggestionHandler(QObject):
             
             # 停止加载动画和超时计时器
             if not self._request_cancelled:
-                self._stop_loading_timer()
+                self._stop_loading_animation()
                 self._stop_timeout_timer()
                 self._request_cancelled = True
             
@@ -321,7 +316,7 @@ class SuggestionHandler(QObject):
         """处理错误"""
         if not self._request_cancelled:
             self._request_cancelled = True
-            self._stop_loading_timer()
+            self._stop_loading_animation()
             self._stop_timeout_timer()  # 停止超时计时器
             
         if self.response_area:
@@ -378,7 +373,7 @@ class SuggestionHandler(QObject):
             logger.warning(f"清理工作线程时出错: {str(e)}")
         finally:
             self._worker = None
-            self._stop_loading_timer()
+            self._stop_loading_animation()
             self._stop_cleanup_timer()
 
     def generate(self, book_info):
@@ -465,7 +460,7 @@ class SuggestionHandler(QObject):
 
     def prepare_close(self):
         """准备关闭，清理资源但不影响线程运行"""
-        self._stop_loading_timer()
+        self._stop_loading_animation()
         self._stop_cleanup_timer()
         self._request_cancelled = True
         
@@ -476,7 +471,7 @@ class SuggestionHandler(QObject):
 
     def cleanup(self):
         """清理资源"""
-        self._stop_loading_timer()
+        self._stop_loading_animation()
         self._stop_cleanup_timer()
         self._request_cancelled = True
         self._cleanup_worker()

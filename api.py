@@ -570,13 +570,14 @@ class APIClient:
         
         return self._model_name.capitalize()
     
-    def fetch_available_models(self, model_name: str, config: Dict[str, Any]) -> Tuple[bool, Union[List[str], str]]:
+    def fetch_available_models(self, model_name, config, skip_verification=False): 
         """
         从 AI 提供商获取可用模型列表
         
         Args:
             model_name: 模型提供商名称 ('grok', 'openai', 'gemini', etc.)
             config: 模型配置字典，包含 api_key, api_base_url 等
+            skip_verification: 跳过 API Key 验证
             
         Returns:
             Tuple[bool, Union[List[str], str]]: 
@@ -623,8 +624,8 @@ class APIClient:
                 logger.info(f"[{model_name}] 模型实例创建成功")
             
             # 4. 调用模型的 fetch_available_models 方法
-            logger.info(f"Fetching available models for {model_name}")
-            models = temp_model.fetch_available_models()
+            logger.info(f"Fetching available models for {model_name}, skip_verification={skip_verification}")
+            models = temp_model.fetch_available_models(skip_verification=skip_verification)
             
             # 5. 返回成功结果
             logger.info(f"Successfully fetched {len(models)} models for {model_name}")
@@ -645,6 +646,57 @@ class APIClient:
             # 异常信息已经在 models/base.py 中格式化好（用户友好描述 + 技术细节）
             error_msg = str(e)
             logger.error(f"Unexpected error while fetching models for {model_name}: {error_msg}")
+            return False, error_msg
+    
+    def test_model(self, model_name, config, test_model_name=None):
+        """
+        测试指定的模型是否可用
+        
+        Args:
+            model_name: 模型提供商名称 ('grok', 'openai', 'gemini', 'ollama', etc.)
+            config: 模型配置字典，包含 api_key, api_base_url 等
+            test_model_name: 要测试的模型名称（对于 Ollama，如果为 None 则使用配置的默认模型）
+            
+        Returns:
+            Tuple[bool, str]: 
+                - (True, success_message): 成功
+                - (False, error_message): 失败，返回错误消息
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 确保配置中包含语言设置
+            if 'language' not in config:
+                from .config import get_prefs
+                prefs = get_prefs()
+                config['language'] = prefs.get('language', 'en')
+            
+            # 创建临时模型实例
+            logger.info(f"[{model_name}] 创建模型实例进行测试")
+            temp_model = AIModelFactory.create_model(model_name, config)
+            
+            # 调用验证方法
+            if model_name == 'ollama':
+                # Ollama 需要指定测试模型
+                if test_model_name is None:
+                    test_model_name = config.get('model', temp_model.DEFAULT_MODEL)
+                logger.info(f"[Ollama] 测试模型: {test_model_name}")
+                temp_model.verify_api_key_with_test_request(test_model=test_model_name)
+            else:
+                # 其他模型使用默认验证
+                logger.info(f"[{model_name}] 测试 API Key 有效性")
+                temp_model.verify_api_key_with_test_request()
+            
+            # 测试成功
+            success_msg = self.i18n.get('model_test_success', 'Model test successful')
+            logger.info(f"[{model_name}] 模型测试成功")
+            return True, success_msg
+            
+        except Exception as e:
+            # 测试失败，返回错误信息（已经格式化好）
+            error_msg = str(e)
+            logger.error(f"[{model_name}] 模型测试失败: {error_msg}")
             return False, error_msg
 
 

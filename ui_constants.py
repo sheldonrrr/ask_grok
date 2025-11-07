@@ -132,3 +132,129 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             min-width: {min_width}px;
         }}
     """
+
+
+# ============ 按钮加载动画工具类 ============
+class ButtonLoadingAnimation:
+    """
+    按钮加载动画工具类
+    提供统一的按钮加载动画效果，避免重复代码
+    
+    使用示例:
+        # 创建动画实例
+        self.loading_animation = ButtonLoadingAnimation(
+            button=self.my_button,
+            loading_text='加载中',
+            original_text='加载模型'
+        )
+        
+        # 开始加载
+        self.loading_animation.start()
+        
+        # 停止加载
+        self.loading_animation.stop()
+    """
+    
+    def __init__(self, button, loading_text='Loading', original_text=None, interval=250):
+        """
+        初始化按钮加载动画
+        
+        Args:
+            button: QPushButton 实例
+            loading_text: 加载时显示的文本（默认 'Loading'）
+            original_text: 原始按钮文本（如果为 None，则使用按钮当前文本）
+            interval: 动画更新间隔（毫秒，默认 250ms）
+        """
+        from PyQt5.QtCore import QTimer
+        
+        self.button = button
+        self.loading_text = loading_text
+        self.original_text = original_text if original_text else button.text()
+        self.interval = interval
+        
+        self.timer = None
+        self.dots = ['', '.', '..', '...']
+        self.current_dot_index = 0
+        self.is_running = False
+    
+    def start(self):
+        """开始加载动画"""
+        if self.is_running:
+            return
+        
+        from PyQt5.QtCore import QTimer
+        
+        self.is_running = True
+        self.current_dot_index = 0
+        
+        # 禁用按钮
+        self.button.setEnabled(False)
+        
+        # 创建定时器
+        self.timer = QTimer()
+        self.timer.timeout.connect(self._update_animation)
+        self.timer.start(self.interval)
+        
+        # 立即更新一次
+        self._update_animation()
+    
+    def stop(self, restore_text=True):
+        """
+        停止加载动画
+        
+        Args:
+            restore_text: 是否恢复原始文本（默认 True）
+        """
+        if not self.is_running:
+            return
+        
+        self.is_running = False
+        
+        # 停止定时器
+        if self.timer is not None:
+            self.timer.stop()
+            self.timer.deleteLater()
+            self.timer = None
+        
+        # 恢复按钮状态
+        self.button.setEnabled(True)
+        if restore_text:
+            self.button.setText(self.original_text)
+    
+    def _update_animation(self):
+        """更新动画（内部方法）"""
+        if not self.is_running:
+            return
+        
+        # 更新按钮文本
+        self.button.setText(f"{self.loading_text}{self.dots[self.current_dot_index]}")
+        
+        # 更新点的索引
+        self.current_dot_index = (self.current_dot_index + 1) % len(self.dots)
+    
+    def set_loading_text(self, text):
+        """
+        设置加载文本
+        
+        Args:
+            text: 新的加载文本
+        """
+        self.loading_text = text
+    
+    def set_original_text(self, text):
+        """
+        设置原始文本
+        
+        Args:
+            text: 新的原始文本
+        """
+        self.original_text = text
+    
+    def is_active(self):
+        """
+        检查动画是否正在运行
+        
+        Returns:
+            bool: 动画是否正在运行
+        """
+        return self.is_running

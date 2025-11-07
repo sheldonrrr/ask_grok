@@ -247,7 +247,7 @@ class OllamaModel(BaseAIModel):
                     logger.error(f"Response content: {e.response.text[:500]}")
             raise Exception(error_msg) from e
     
-    def fetch_available_models(self) -> List[str]:
+    def fetch_available_models(self, skip_verification: bool = False) -> List[str]:
         """
         从 Ollama API 获取可用模型列表
         
@@ -283,6 +283,25 @@ class OllamaModel(BaseAIModel):
             if 'models' in result and isinstance(result['models'], list):
                 models = [model['name'] for model in result['models'] if 'name' in model]
                 logger.info(f"Successfully fetched {len(models)} Ollama models")
+                
+                # 验证 Ollama 服务是否可用（重要！）
+                # 可以通过 skip_verification 参数跳过验证，稍后手动验证
+                if not skip_verification:
+                    # 使用配置的默认模型进行验证，而不是列表中的第一个模型
+                    logger.info("[Ollama] ========== 开始验证服务有效性 ==========")
+                    try:
+                        # 使用配置中的模型名称（用户最常用的模型）
+                        configured_model = self.config.get('model', self.DEFAULT_MODEL)
+                        logger.info(f"[Ollama] 使用配置的模型 '{configured_model}' 进行服务验证")
+                        self.verify_api_key_with_test_request(test_model=configured_model)
+                        logger.info("[Ollama] ========== 服务验证通过 ==========")
+                    except Exception as verify_error:
+                        logger.error("[Ollama] ========== 服务验证失败 ==========")
+                        logger.error(f"[Ollama] 验证错误: {str(verify_error)}")
+                        raise
+                else:
+                    logger.info("[Ollama] 跳过自动验证，稍后手动验证")
+                
                 return models
             
             # 如果响应格式不符合预期
@@ -395,16 +414,20 @@ class OllamaModel(BaseAIModel):
             "enable_streaming": True,  # 默认启用流式传输
         }
     
-    def verify_api_key_with_test_request(self) -> None:
+    def verify_api_key_with_test_request(self, test_model: str = None) -> None:
         """
         验证 Ollama 服务是否可用
         虽然 Ollama 是本地服务不需要 API Key，但需要验证服务是否正在运行
+        
+        :param test_model: 用于测试的模型名称，如果为 None 则使用默认模型
         """
         import logging
         from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
         from ..i18n import get_translation
         
-        logger.info("[Ollama] 验证本地服务是否可用...")
+        logger.info("=" * 80)
+        logger.info("[Ollama] ========== 开始验证 Ollama 本地服务是否可用 ==========")
+        logger.info("=" * 80)
         provider_name = self.get_provider_name()
         
         try:
@@ -412,19 +435,24 @@ class OllamaModel(BaseAIModel):
             api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
             test_url = f"{api_base_url}/api/generate"
             
-            # 使用默认模型发送最小的测试请求
+            # 使用指定的模型或默认模型发送最小的测试请求
+            model_to_test = test_model if test_model else self.DEFAULT_MODEL
+            logger.info(f"[Ollama] 测试模型: {model_to_test}")
+            
             test_data = {
-                "model": self.DEFAULT_MODEL,
+                "model": model_to_test,
                 "prompt": "hi",
                 "stream": False
             }
             
             logger.info(f"[{provider_name}] 发送测试请求验证服务: {test_url}")
             
+            # Ollama 本地服务超时时间较短（5秒）
+            timeout_seconds = 5
             response = requests.post(
                 test_url,
                 json=test_data,
-                timeout=10,
+                timeout=timeout_seconds,
                 verify=False
             )
             
@@ -433,11 +461,18 @@ class OllamaModel(BaseAIModel):
             
             # 检查响应状态码
             if response.status_code == 404:
-                # 404 可能是模型不存在，但服务是运行的
+                # 404 可能是模型不存在
                 # 检查响应内容来确定
                 if "model" in response.text.lower() and "not found" in response.text.lower():
-                    logger.info(f"[{provider_name}] 服务运行正常，但默认模型不存在（这是正常的）")
-                    return
+                    logger.error(f"[{provider_name}] 模型 '{model_to_test}' 未找到或未启动")
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('ollama_model_not_available', 
+                        'Model "{model}" is not available. Please check:\n'
+                        '1. Is the model started? Run: ollama run {model}\n'
+                        '2. Is the model name correct?\n'
+                        '3. Is the model downloaded? Run: ollama pull {model}').format(model=model_to_test)
+                    tech_details = translations.get('technical_details', 'Technical Details')
+                    raise Exception(f"{error_msg}\n\n{tech_details}: {response.text}")
                 else:
                     logger.error(f"[{provider_name}] 服务端点不存在")
                     translations = get_translation(self.config.get('language', 'en'))
@@ -458,7 +493,10 @@ class OllamaModel(BaseAIModel):
                 
         except requests.exceptions.ConnectionError as e:
             # 连接错误 - 服务未运行
-            logger.error(f"[{provider_name}] 无法连接到 Ollama 服务: {str(e)}")
+            logger.error("=" * 80)
+            logger.error(f"[{provider_name}] ❌ 无法连接到 Ollama 服务: {str(e)}")
+            logger.error(f"[{provider_name}] ❌ 服务地址: {api_base_url}")
+            logger.error("=" * 80)
             translations = get_translation(self.config.get('language', 'en'))
             error_msg = translations.get('ollama_service_not_running', 
                 'Ollama service is not running. Please start Ollama service first.')
@@ -472,7 +510,7 @@ class OllamaModel(BaseAIModel):
             error_msg = translations.get('ollama_service_timeout', 
                 'Ollama service connection timeout. Please check if the service is running properly.')
             tech_details = translations.get('technical_details', 'Technical Details')
-            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout")
+            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout after {timeout_seconds} seconds")
         
         except requests.exceptions.RequestException as e:
             # 其他请求错误

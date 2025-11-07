@@ -4,7 +4,7 @@
 定义了所有 AI 模型需要实现的接口和基础功能。
 """
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 from enum import Enum, auto
 
 
@@ -458,7 +458,7 @@ class BaseAIModel(ABC):
         class_name = self.__class__.__name__.lower().replace('model', '')
         return f'calibre_plugins.ask_ai_plugin.models.{class_name}'
     
-    def fetch_available_models(self) -> list:
+    def fetch_available_models(self, skip_verification: bool = False) -> List[str]:
         """
         通用的获取模型列表实现
         
@@ -527,8 +527,18 @@ class BaseAIModel(ABC):
                                             provider=provider_name))
             
             # 验证 API Key 是否有效（某些提供商的 /models 端点是公开的）
-            logger.info(f"[{provider_name}] 开始验证 API Key 有效性...")
-            self.verify_api_key_with_test_request()
+            # 可以通过 skip_verification 参数跳过验证，稍后手动验证
+            if not skip_verification:
+                logger.info(f"[{provider_name}] ========== 开始验证 API Key/服务有效性 ==========")
+                try:
+                    self.verify_api_key_with_test_request()
+                    logger.info(f"[{provider_name}] ========== API Key/服务验证通过 ==========")
+                except Exception as verify_error:
+                    logger.error(f"[{provider_name}] ========== API Key/服务验证失败 ==========")
+                    logger.error(f"[{provider_name}] 验证错误: {str(verify_error)}")
+                    raise
+            else:
+                logger.info(f"[{provider_name}] 跳过自动验证，稍后手动验证")
             
             return sorted(models)
             
@@ -625,11 +635,13 @@ class BaseAIModel(ABC):
             
             logger.info(f"[{provider_name}] 发送测试请求验证 API Key: {test_url}")
             
+            # 在线模型超时时间较长（15秒）
+            timeout_seconds = 15
             response = requests.post(
                 test_url,
                 headers=headers,
                 json=test_data,
-                timeout=10,
+                timeout=timeout_seconds,
                 verify=False
             )
             
@@ -664,6 +676,15 @@ class BaseAIModel(ABC):
             else:
                 logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
                 
+        except requests.exceptions.Timeout as e:
+            # 超时错误 - 添加超时时间信息
+            logger.error(f"[{provider_name}] API Key 验证请求超时: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            tech_details = translations.get('technical_details', 'Technical Details')
+            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout after {timeout_seconds} seconds")
+        
         except requests.exceptions.RequestException as e:
             logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
             # 如果是 401 错误，抛出友好的错误信息

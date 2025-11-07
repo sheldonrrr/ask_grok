@@ -130,7 +130,8 @@ class EnglishTranslation(BaseTranslation):
             'formatting': 'Request successful, formatting',
             
             # UI - Model list feature
-            'load_models': 'Load Models',
+            'load_models': 'Load Model List',
+            'test_current_model': 'Test Current Model',
             'use_custom_model': 'Use custom model name',
             'custom_model_placeholder': 'Enter custom model name',
             'model_placeholder': 'Please load models first',
@@ -256,6 +257,11 @@ class EnglishTranslation(BaseTranslation):
             'technical_details': 'Technical Details',
             'ollama_service_not_running': 'Ollama service is not running. Please start Ollama service first.',
             'ollama_service_timeout': 'Ollama service connection timeout. Please check if the service is running properly.',
+            'ollama_model_not_available': 'Model "{model}" is not available. Please check:\n1. Is the model started? Run: ollama run {model}\n2. Is the model name correct?\n3. Is the model downloaded? Run: ollama pull {model}',
+            'model_test_success': 'Model test successful! Configuration saved.',
+            'test_model_prompt': 'Models loaded successfully! Would you like to test the selected model "{model}"?',
+            'test_model_button': 'Test Model',
+            'skip': 'Skip',
             
             # About information
             'author_name': 'Sheldon',

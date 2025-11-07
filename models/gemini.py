@@ -568,11 +568,13 @@ class GeminiModel(BaseAIModel):
             
             logger.info(f"[{provider_name}] 发送测试请求验证 API Key")
             
+            # 在线模型超时时间（15秒）
+            timeout_seconds = 15
             response = requests.post(
                 url,
                 headers=headers,
                 json=test_data,
-                timeout=10,
+                timeout=timeout_seconds,
                 verify=False
             )
             
@@ -593,6 +595,15 @@ class GeminiModel(BaseAIModel):
             else:
                 logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
                 
+        except requests.exceptions.Timeout as e:
+            # 超时错误 - 添加超时时间信息
+            logger.error(f"[{provider_name}] API Key 验证请求超时: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            tech_details = translations.get('technical_details', 'Technical Details')
+            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout after {timeout_seconds} seconds")
+        
         except requests.exceptions.RequestException as e:
             logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
             if hasattr(e, 'response') and e.response is not None:

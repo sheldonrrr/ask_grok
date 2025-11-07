@@ -131,7 +131,8 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'formatting': '请求成功，正在格式化',
             
             # UI - 模型列表功能
-            'load_models': '加载模型',
+            'load_models': '加载模型列表',
+            'test_current_model': '测试当前模型',
             'use_custom_model': '使用自定义模型名称',
             'custom_model_placeholder': '输入自定义模型名称',
             'model_placeholder': '请先加载模型',
@@ -257,6 +258,11 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'technical_details': '技术细节',
             'ollama_service_not_running': 'Ollama 服务未运行。请先启动 Ollama 服务。',
             'ollama_service_timeout': 'Ollama 服务连接超时。请检查服务是否正常运行。',
+            'ollama_model_not_available': '模型 "{model}" 不可用。请检查：\n1. 模型是否已启动？运行：ollama run {model}\n2. 模型名称是否正确？\n3. 模型是否已下载？运行：ollama pull {model}',
+            'model_test_success': '模型测试成功！配置已保存。',
+            'test_model_prompt': '模型列表加载成功！是否测试选中的模型 "{model}"？',
+            'test_model_button': '测试模型',
+            'skip': '跳过',
             
             # 关于信息
             'author_name': 'Sheldon',

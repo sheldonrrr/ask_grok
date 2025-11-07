@@ -7,7 +7,7 @@ import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
-                            QFrame, QCheckBox)
+                            QFrame, QCheckBox, QMessageBox)
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
@@ -230,6 +230,13 @@ class ModelConfigWidget(QWidget):
         self.i18n = i18n
         self.initial_values = {}
         
+        # 加载动画实例（在 setup_ui 后初始化）
+        self.load_models_animation = None
+        
+        # 跟踪模型列表加载状态和测试的模型
+        self._models_loaded = False  # 是否已加载模型列表
+        self._tested_model = None    # 已测试的模型名称
+        
         # 初始化标志，用于避免初始化时触发变化检测
         self._is_initializing = True
         self.setup_ui()
@@ -366,6 +373,14 @@ class ModelConfigWidget(QWidget):
             # 增加按钮宽度以适应不同字体大小（16px、14px等）
             apply_button_style(self.load_models_button, min_width=200)
             model_select_layout.addWidget(self.load_models_button)
+            
+            # 初始化加载动画
+            from .ui_constants import ButtonLoadingAnimation
+            self.load_models_animation = ButtonLoadingAnimation(
+                button=self.load_models_button,
+                loading_text=self.i18n.get('loading_text', 'Loading'),
+                original_text=self.i18n.get('load_models', 'Load Models')
+            )
             
             # 初始化按钮状态
             self.update_load_models_button_state()
@@ -724,9 +739,8 @@ class ModelConfigWidget(QWidget):
             prefs['cached_models'] = cached_models
             logger.info(f"清除 {self.model_id} 的模型缓存，强制重新加载")
         
-        # 3. 禁用按钮，显示加载状态
-        self.load_models_button.setEnabled(False)
-        self.load_models_button.setText(self.i18n.get('loading', 'Loading...'))
+        # 3. 启动加载动画
+        self.load_models_animation.start()
         
         # 4. 获取当前配置（从输入框实时获取）
         config = self.get_config()
@@ -742,11 +756,11 @@ class ModelConfigWidget(QWidget):
         
         # 使用 QTimer 异步执行，避免阻塞 UI
         def fetch_models():
-            success, result = api_client.fetch_available_models(self.model_id, config)
+            # 第一步：加载模型列表（跳过验证）
+            success, result = api_client.fetch_available_models(self.model_id, config, skip_verification=True)
             
-            # 恢复按钮状态
-            self.load_models_button.setEnabled(True)
-            self.load_models_button.setText(self.i18n.get('load_models', 'Load Models'))
+            # 停止加载动画
+            self.load_models_animation.stop()
             
             if success:
                 # 成功：填充下拉框
@@ -795,25 +809,37 @@ class ModelConfigWidget(QWidget):
                     self.use_custom_model_checkbox.setChecked(False)
                     logger.info(f"已取消勾选使用自定义模型名称，使用下拉框中的模型")
                 
-                # 自动保存配置
-                parent = self.parent()
-                config_dialog = None
-                while parent:
-                    if isinstance(parent, ConfigDialog):
-                        config_dialog = parent
-                        break
-                    parent = parent.parent()
+                # 第二步：询问用户是否测试选中的模型
+                selected_model = self.model_combo.currentText()
+                placeholder_text = self.i18n.get('select_model', '-- No Model --')
                 
-                if config_dialog:
-                    logger.info(f"加载模型成功后自动保存配置")
-                    config_dialog.save_settings()
-                    logger.info(f"配置已自动保存")
-                
-                QMessageBox.information(
-                    self,
-                    self.i18n.get('success', 'Success'),
-                    self.i18n.get('models_loaded', 'Successfully loaded {count} models').format(count=len(models))
-                )
+                if selected_model and selected_model != placeholder_text:
+                    # 创建自定义对话框，带"测试模型"和"跳过"按钮
+                    msg_box = QMessageBox(self)
+                    msg_box.setWindowTitle(self.i18n.get('success', 'Success'))
+                    msg_box.setText(self.i18n.get('test_model_prompt', 
+                        'Models loaded successfully! Would you like to test the selected model "{model}"?').format(model=selected_model))
+                    msg_box.setIcon(QMessageBox.Question)
+                    
+                    # 添加按钮
+                    test_button = msg_box.addButton(self.i18n.get('test_model_button', 'Test Model'), QMessageBox.AcceptRole)
+                    skip_button = msg_box.addButton(self.i18n.get('skip', 'Skip'), QMessageBox.RejectRole)
+                    
+                    msg_box.exec_()
+                    
+                    if msg_box.clickedButton() == test_button:
+                        # 用户选择测试模型
+                        self._test_selected_model(selected_model, config)
+                    else:
+                        # 用户跳过测试，直接保存配置
+                        self._save_config_after_load()
+                else:
+                    # 没有选中有效模型，只显示成功消息
+                    QMessageBox.information(
+                        self,
+                        self.i18n.get('success', 'Success'),
+                        self.i18n.get('models_loaded', 'Successfully loaded {count} models').format(count=len(models))
+                    )
             else:
                 # 失败：显示错误（错误信息已经格式化好：用户友好描述 + 技术细节）
                 error_msg = result
@@ -827,6 +853,60 @@ class ModelConfigWidget(QWidget):
         
         # 使用 QTimer 延迟执行，避免阻塞
         QTimer.singleShot(100, fetch_models)
+    
+    def _test_selected_model(self, model_name, config):
+        """测试选中的模型"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[{self.model_id}] 开始测试模型: {model_name}")
+        
+        # 更新配置中的模型名称
+        config['model'] = model_name
+        
+        # 创建 API 客户端
+        from .api import APIClient
+        api_client = APIClient(i18n=self.i18n)
+        
+        # 测试模型
+        success, message = api_client.test_model(self.model_id, config, test_model_name=model_name)
+        
+        if success:
+            # 测试成功，保存配置
+            logger.info(f"[{self.model_id}] 模型测试成功")
+            self._save_config_after_load()
+            QMessageBox.information(
+                self,
+                self.i18n.get('success', 'Success'),
+                self.i18n.get('model_test_success', 'Model test successful! Configuration saved.')
+            )
+        else:
+            # 测试失败，显示错误
+            logger.error(f"[{self.model_id}] 模型测试失败: {message}")
+            QMessageBox.critical(
+                self,
+                self.i18n.get('error', 'Error'),
+                message
+            )
+    
+    def _save_config_after_load(self):
+        """加载模型后保存配置"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 查找父级 ConfigDialog
+        parent = self.parent()
+        config_dialog = None
+        while parent:
+            if isinstance(parent, ConfigDialog):
+                config_dialog = parent
+                break
+            parent = parent.parent()
+        
+        if config_dialog:
+            logger.info(f"[{self.model_id}] 加载模型成功后自动保存配置")
+            config_dialog.save_settings()
+            logger.info(f"[{self.model_id}] 配置已自动保存")
     
     def on_model_combo_changed(self, text):
         """模型下拉框变化时自动保存"""
