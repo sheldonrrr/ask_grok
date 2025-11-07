@@ -394,3 +394,89 @@ class OllamaModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    def verify_api_key_with_test_request(self) -> None:
+        """
+        验证 Ollama 服务是否可用
+        虽然 Ollama 是本地服务不需要 API Key，但需要验证服务是否正在运行
+        """
+        import logging
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+        from ..i18n import get_translation
+        
+        logger.info("[Ollama] 验证本地服务是否可用...")
+        provider_name = self.get_provider_name()
+        
+        try:
+            # 发送一个测试请求到 /api/generate 端点
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            test_url = f"{api_base_url}/api/generate"
+            
+            # 使用默认模型发送最小的测试请求
+            test_data = {
+                "model": self.DEFAULT_MODEL,
+                "prompt": "hi",
+                "stream": False
+            }
+            
+            logger.info(f"[{provider_name}] 发送测试请求验证服务: {test_url}")
+            
+            response = requests.post(
+                test_url,
+                json=test_data,
+                timeout=10,
+                verify=False
+            )
+            
+            logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
+            logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
+            
+            # 检查响应状态码
+            if response.status_code == 404:
+                # 404 可能是模型不存在，但服务是运行的
+                # 检查响应内容来确定
+                if "model" in response.text.lower() and "not found" in response.text.lower():
+                    logger.info(f"[{provider_name}] 服务运行正常，但默认模型不存在（这是正常的）")
+                    return
+                else:
+                    logger.error(f"[{provider_name}] 服务端点不存在")
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('ollama_service_not_running', 
+                        'Ollama service is not running. Please start Ollama service first.')
+                    tech_details = translations.get('technical_details', 'Technical Details')
+                    raise Exception(f"{error_msg}\n\n{tech_details}: HTTP 404 - Service not found at {api_base_url}")
+            
+            elif response.status_code == 200:
+                logger.info(f"[{provider_name}] 服务验证成功")
+            
+            elif 400 <= response.status_code < 500:
+                # 4xx 错误说明服务在运行，只是请求有问题（这是可以接受的）
+                logger.info(f"[{provider_name}] 服务运行正常 - 状态码: {response.status_code}")
+            
+            else:
+                logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
+                
+        except requests.exceptions.ConnectionError as e:
+            # 连接错误 - 服务未运行
+            logger.error(f"[{provider_name}] 无法连接到 Ollama 服务: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('ollama_service_not_running', 
+                'Ollama service is not running. Please start Ollama service first.')
+            tech_details = translations.get('technical_details', 'Technical Details')
+            raise Exception(f"{error_msg}\n\n{tech_details}: Connection refused - {api_base_url}")
+        
+        except requests.exceptions.Timeout as e:
+            # 超时错误
+            logger.error(f"[{provider_name}] 连接超时: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('ollama_service_timeout', 
+                'Ollama service connection timeout. Please check if the service is running properly.')
+            tech_details = translations.get('technical_details', 'Technical Details')
+            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout")
+        
+        except requests.exceptions.RequestException as e:
+            # 其他请求错误
+            logger.error(f"[{provider_name}] 服务验证请求失败: {str(e)}")
+            if not isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
+                # 如果不是连接或超时错误，可能服务是运行的
+                logger.info(f"[{provider_name}] 服务可能运行正常（收到非连接错误）")

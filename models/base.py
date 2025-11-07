@@ -495,19 +495,28 @@ class BaseAIModel(ABC):
         try:
             # 获取配置
             api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
+            api_key = self.config.get('api_key', '')
+            logger.info(f"[{self.get_provider_name()}] fetch_available_models - API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
+            logger.debug(f"[{self.get_provider_name()}] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
             
             # 准备请求
             endpoint = self.get_models_endpoint()
             url = self.prepare_models_request_url(api_base_url, endpoint)
+            logger.info(f"[{self.get_provider_name()}] 准备请求头...")
             headers = self.prepare_models_request_headers()
+            logger.info(f"[{self.get_provider_name()}] 请求头准备完成，Authorization: {'存在' if 'Authorization' in headers else '不存在'}")
             
             # 发送请求
             logger.info(translations.get('fetching_models_from', 'Fetching models from {url}').format(url=url))
+            logger.debug(f"[{self.get_provider_name()}] 请求头: {headers}")
             response = requests.get(url, headers=headers, timeout=15, verify=False)
+            logger.info(f"[{self.get_provider_name()}] 响应状态码: {response.status_code}")
+            logger.debug(f"[{self.get_provider_name()}] 响应头: {dict(response.headers)}")
             response.raise_for_status()
             
             # 解析响应
             data = response.json()
+            logger.debug(f"[{self.get_provider_name()}] 响应数据前200个字符: {str(data)[:200]}")
             models = self.parse_models_response(data)
             
             # 记录成功
@@ -516,11 +525,19 @@ class BaseAIModel(ABC):
                                         'Successfully fetched {count} {provider} models').format(
                                             count=len(models), 
                                             provider=provider_name))
+            
+            # 验证 API Key 是否有效（某些提供商的 /models 端点是公开的）
+            logger.info(f"[{provider_name}] 开始验证 API Key 有效性...")
+            self.verify_api_key_with_test_request()
+            
             return sorted(models)
             
         except requests.exceptions.HTTPError as e:
             # HTTP 错误 - 根据状态码提供友好提示
             status_code = e.response.status_code if e.response is not None else None
+            logger.error(f"[{self.get_provider_name()}] HTTP 错误 - 状态码: {status_code}")
+            if e.response is not None:
+                logger.error(f"[{self.get_provider_name()}] 响应内容: {e.response.text[:500]}")
             
             # 选择对应的错误描述
             if status_code == 401:
@@ -576,6 +593,89 @@ class BaseAIModel(ABC):
             
             logger.error(f"Request error: {str(e)}")
             raise Exception(error_msg)
+    
+    def verify_api_key_with_test_request(self) -> None:
+        """
+        通过发送测试请求来验证 API Key 是否有效
+        
+        某些 AI 提供商的 /models 端点是公开的，不需要认证，
+        因此无法通过获取模型列表来验证 API Key 的有效性。
+        这个方法会发送一个最小的测试请求到需要认证的端点来验证。
+        
+        默认实现：发送一个最小的 chat completion 请求
+        子类可以重写此方法来自定义验证逻辑
+        
+        :raises Exception: 当 API Key 无效时抛出异常
+        """
+        import logging
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+        from ..i18n import get_translation
+        
+        logger = logging.getLogger(self.get_logger_name())
+        provider_name = self.get_provider_name()
+        
+        try:
+            # 准备测试请求
+            headers = self.prepare_headers()
+            api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
+            test_url = f"{api_base_url}/chat/completions"
+            
+            # 发送一个最小的测试请求
+            test_data = self.prepare_request_data("hi", max_tokens=1, stream=False)
+            
+            logger.info(f"[{provider_name}] 发送测试请求验证 API Key: {test_url}")
+            
+            response = requests.post(
+                test_url,
+                headers=headers,
+                json=test_data,
+                timeout=10,
+                verify=False
+            )
+            
+            logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
+            logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
+            
+            # 401 = API Key 无效
+            # 400/422 = API Key 有效，但请求参数无效（说明认证通过）
+            # 200 = API Key 有效且请求成功
+            # 404 = 端点不存在，可能是 API Key 无效或配置错误
+            
+            if response.status_code == 401:
+                logger.error(f"[{provider_name}] API Key 无效 - 401 Unauthorized")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: HTTP 401 - Invalid API Key")
+            
+            elif response.status_code == 404:
+                logger.error(f"[{provider_name}] 端点返回 404")
+                logger.error(f"[{provider_name}] 响应内容: {response.text}")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_404', 
+                    'API endpoint not found. Please check if the API Base URL configuration is correct.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: HTTP 404 - This may indicate an invalid API Key or insufficient permissions.")
+            
+            elif response.status_code in [200, 400, 422]:
+                logger.info(f"[{provider_name}] API Key 验证成功 - 状态码: {response.status_code}")
+            
+            else:
+                logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
+            # 如果是 401 错误，抛出友好的错误信息
+            if hasattr(e, 'response') and e.response is not None and e.response.status_code == 401:
+                logger.error(f"[{provider_name}] 响应内容: {e.response.text[:200]}")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            # 其他错误（400, 422等）说明 API Key 是有效的
+            logger.info(f"[{provider_name}] API Key 验证通过（收到非401响应）")
 
 
 class AIModelFactory:

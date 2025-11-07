@@ -464,7 +464,15 @@ class ModelConfigWidget(QWidget):
             config['display_name'] = 'Anthropic (Claude)'  # 设置固定的显示名称
         elif self.model_id == 'nvidia':
             provider = AIProvider.AI_NVIDIA
-            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            # 获取 API Key 并记录详细日志
+            if hasattr(self, 'api_key_edit'):
+                api_key_value = self.api_key_edit.toPlainText().strip()
+                config['api_key'] = api_key_value
+                logger.info(f"[Nvidia get_config] 从输入框获取 API Key: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
+                logger.debug(f"[Nvidia get_config] API Key 前10个字符: {api_key_value[:10] if api_key_value else 'N/A'}")
+            else:
+                config['api_key'] = ''
+                logger.warning(f"[Nvidia get_config] api_key_edit 控件不存在！")
             config['display_name'] = 'Nvidia AI'  # 设置固定的显示名称
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
@@ -722,7 +730,11 @@ class ModelConfigWidget(QWidget):
         
         # 4. 获取当前配置（从输入框实时获取）
         config = self.get_config()
-        logger.info(f"使用当前输入框的配置加载模型，API Key: {'***' if config.get('api_key') or config.get('auth_token') else 'empty'}")
+        api_key_value = config.get('api_key') or config.get('auth_token')
+        logger.info(f"[{self.model_id}] 使用当前输入框的配置加载模型")
+        logger.info(f"[{self.model_id}] API Key 状态: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
+        logger.debug(f"[{self.model_id}] API Key 前10个字符: {api_key_value[:10] if api_key_value else 'N/A'}")
+        logger.info(f"[{self.model_id}] API Base URL: {config.get('api_base_url', 'N/A')}")
         
         # 4. 创建 API 客户端并获取模型列表
         from .api import APIClient

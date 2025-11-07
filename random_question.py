@@ -263,49 +263,40 @@ class SuggestionHandler(QObject):
             # 首先设置响应文本，防止超时检查误判
             self._response_text = suggestion
             
-            # 检查是否是错误消息或空响应
+            # 检查是否是空响应
             if not suggestion:
                 error_msg = self.i18n.get('empty_suggestion', 'Received empty suggestion')
                 if self.response_area:
                     self.response_area.setText(error_msg)
                 self._response_text = None  # 重置响应文本，表示没有有效响应
-            elif isinstance(suggestion, str):
-                # 检查是否包含技术细节标签（使用 i18n key）
-                technical_details_label = self.i18n.get('technical_details', 'Technical Details')
-                if technical_details_label in suggestion:
-                    # 这是一个错误消息（包含技术细节）
-                    logger.error(f"获取随机问题失败: {suggestion[:100]}...")
-                    if self.response_area:
-                        self.response_area.setText(suggestion)
-                    self._response_text = None  # 重置响应文本，表示没有有效响应
+            else:
+                # 这是一个有效的建议
+                logger.debug(f"收到有效随机问题，准备更新UI")
+                
+                # 将随机问题暂存到父对话框的临时变量中
+                parent_dialog = self.suggest_button.window() if self.suggest_button else None
+                if parent_dialog and hasattr(parent_dialog, '_pending_random_question'):
+                    parent_dialog._pending_random_question = suggestion
+                    logger.info(f"随机问题已暂存到临时变量，等待用户点击发送: {suggestion[:50]}...")
+                
+                # 更新输入框
+                if self.input_area:
+                    logger.debug("更新输入框文本")
+                    self.input_area.setText(suggestion)
+                    # 将光标移动到文本末尾
+                    cursor = self.input_area.textCursor()
+                    # 使用正确的QTextCursor常量
+                    cursor.movePosition(QTextCursor.MoveOperation.End)
+                    self.input_area.setTextCursor(cursor)
+                    # 确保输入框获得焦点
+                    self.input_area.setFocus()
                 else:
-                    # 这是一个有效的建议
-                    logger.debug(f"收到有效随机问题，准备更新UI")
-                    
-                    # 将随机问题暂存到父对话框的临时变量中
-                    parent_dialog = self.suggest_button.window() if self.suggest_button else None
-                    if parent_dialog and hasattr(parent_dialog, '_pending_random_question'):
-                        parent_dialog._pending_random_question = suggestion
-                        logger.info(f"随机问题已暂存到临时变量，等待用户点击发送: {suggestion[:50]}...")
-                    
-                    # 更新输入框
-                    if self.input_area:
-                        logger.debug("更新输入框文本")
-                        self.input_area.setText(suggestion)
-                        # 将光标移动到文本末尾
-                        cursor = self.input_area.textCursor()
-                        # 使用正确的QTextCursor常量
-                        cursor.movePosition(QTextCursor.MoveOperation.End)
-                        self.input_area.setTextCursor(cursor)
-                        # 确保输入框获得焦点
-                        self.input_area.setFocus()
-                    else:
-                        logger.debug("input_area不存在")
-                    
-                    # 显示成功消息
-                    if self.response_area:
-                        logger.debug("更新响应区域为成功消息")
-                        self.response_area.setText(self.i18n.get('random_question_success', 'Random question generated successfully!'))
+                    logger.debug("input_area不存在")
+                
+                # 显示成功消息
+                if self.response_area:
+                    logger.debug("更新响应区域为成功消息")
+                    self.response_area.setText(self.i18n.get('random_question_success', 'Random question generated successfully!'))
         except Exception as e:
             error_msg = f"处理建议时出错: {str(e)}"
             logger.error(error_msg, exc_info=True)

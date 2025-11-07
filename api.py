@@ -438,13 +438,13 @@ class APIClient:
         except AIAPIError as api_error:
             # 记录详细的 API 错误信息
             logger.error(f"{model_name} API 错误: {str(api_error)}")
-            # 直接返回错误信息（已经格式化好：用户友好描述 + 技术细节）
-            return str(api_error)
+            # 抛出异常，让调用者处理（会触发 error_occurred 信号）
+            raise
         except Exception as e:
             # 记录详细的异常信息
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
-            # 直接返回异常信息（已经格式化好）
-            return str(e)
+            # 抛出异常，让调用者处理（会触发 error_occurred 信号）
+            raise
     
     def reload_model(self):
         """重新加载当前选择的模型"""
@@ -591,13 +591,19 @@ class APIClient:
                 return False, error_msg
             
             # 2. 验证 API Key（Ollama 不需要）
+            # 先确定 API Key 字段名称
+            api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
+            
             if model_name != 'ollama':
-                api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
                 api_key = config.get(api_key_field, '').strip()
+                logger.info(f"[{model_name}] API 客户端接收到的 API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
+                logger.debug(f"[{model_name}] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
                 if not api_key:
                     error_msg = self.i18n.get('api_key_required', 'API Key is required')
                     logger.warning(f"fetch_available_models: {error_msg}")
                     return False, error_msg
+            else:
+                logger.info(f"[{model_name}] Ollama 是本地服务，跳过 API Key 验证")
             
             # 3. 创建临时模型实例（添加语言设置）
             logger.debug(f"Creating temporary model instance for {model_name}")
@@ -607,7 +613,14 @@ class APIClient:
                 prefs = get_prefs()
                 config['language'] = prefs.get('language', 'en')
                 logger.debug(f"Added language to config: {config['language']}")
+            
+            if model_name != 'ollama':
+                logger.info(f"[{model_name}] 创建模型实例前的配置 - API Key: {'存在' if config.get(api_key_field) else '为空'}")
             temp_model = AIModelFactory.create_model(model_name, config)
+            if model_name != 'ollama':
+                logger.info(f"[{model_name}] 模型实例创建成功，config 中的 API Key: {'存在' if temp_model.config.get(api_key_field) else '为空'}")
+            else:
+                logger.info(f"[{model_name}] 模型实例创建成功")
             
             # 4. 调用模型的 fetch_available_models 方法
             logger.info(f"Fetching available models for {model_name}")

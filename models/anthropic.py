@@ -280,4 +280,64 @@ class AnthropicModel(BaseAIModel):
             'Content-Type': 'application/json'
         }
     
-    # Anthropic 只需重写请求头格式，其他使用基类默认实现
+    def verify_api_key_with_test_request(self) -> None:
+        """
+        Anthropic 使用 /messages 端点和特殊的请求头格式
+        """
+        import logging
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+        from ..i18n import get_translation
+        
+        logger = logging.getLogger(self.get_logger_name())
+        provider_name = self.get_provider_name()
+        
+        try:
+            # Anthropic 的验证：发送一个最小的 messages 请求
+            headers = self.prepare_headers()
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            test_url = f"{api_base_url}/messages"
+            
+            # 最小的测试请求
+            test_data = {
+                "model": self.DEFAULT_MODEL,
+                "messages": [{"role": "user", "content": "hi"}],
+                "max_tokens": 1
+            }
+            
+            logger.info(f"[{provider_name}] 发送测试请求验证 API Key: {test_url}")
+            
+            response = requests.post(
+                test_url,
+                headers=headers,
+                json=test_data,
+                timeout=10,
+                verify=False
+            )
+            
+            logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
+            logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
+            
+            if response.status_code == 401 or response.status_code == 403:
+                logger.error(f"[{provider_name}] API Key 无效 - {response.status_code}")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: HTTP {response.status_code} - Invalid API Key")
+            
+            elif response.status_code in [200, 400, 422]:
+                logger.info(f"[{provider_name}] API Key 验证成功 - 状态码: {response.status_code}")
+            
+            else:
+                logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
+            if hasattr(e, 'response') and e.response is not None:
+                if e.response.status_code in [401, 403]:
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('error_401', 
+                        'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                    tech_details = translations.get('technical_details', 'Technical Details')
+                    raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            logger.info(f"[{provider_name}] API Key 验证通过（收到非401/403响应）")

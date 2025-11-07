@@ -252,15 +252,16 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'error_404': 'API 端点不存在。请检查 API Base URL 配置是否正确。',
             'error_429': '请求过于频繁，已达到速率限制。请稍后重试。',
             'error_5xx': '服务器错误。请稍后重试，或检查服务提供商状态。',
-            'error_network': '网络连接失败。请检查网络连接、代理设置或防火墙配置。',
+            'error_network': '网络连接失败。请检查：网络连接是否正常、代理设置是否正确、防火墙配置是否允许访问。',
             'error_unknown': '未知错误。',
             'technical_details': '技术细节',
+            'ollama_service_not_running': 'Ollama 服务未运行。请先启动 Ollama 服务。',
+            'ollama_service_timeout': 'Ollama 服务连接超时。请检查服务是否正常运行。',
             
             # 关于信息
             'author_name': 'Sheldon',
             'user_manual': '用户手册',
             'about_plugin': '关于 Ask AI Plugin',
-            'learn_how_to_use': '观看教程视频',
             'email': 'iMessage',
             
             # 模型特定配置

@@ -47,7 +47,15 @@ class NvidiaModel(BaseAIModel):
         
         :return: API Key/Token string
         """
-        return self.config.get('api_key', '')
+        import logging
+        logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
+        
+        api_key = self.config.get('api_key', '')
+        logger.info(f"[Nvidia get_token] 从 self.config 获取 API Key: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
+        logger.debug(f"[Nvidia get_token] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
+        logger.debug(f"[Nvidia get_token] self.config 的所有键: {list(self.config.keys())}")
+        
+        return api_key
     
     def validate_token(self) -> bool:
         """
@@ -75,16 +83,23 @@ class NvidiaModel(BaseAIModel):
         
         :return: Request headers dictionary
         """
+        import logging
+        logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
+        
         token = self.get_token()
+        logger.info(f"[Nvidia prepare_headers] get_token() 返回的 token: {'存在' if token else '为空'}, 长度: {len(token) if token else 0}")
+        logger.debug(f"[Nvidia prepare_headers] Token 前10个字符: {token[:10] if token else 'N/A'}")
         
         # Ensure token has Bearer prefix
         if not token.startswith('Bearer '):
             token = f'Bearer {token}'
             
-        return {
+        headers = {
             "Content-Type": "application/json",
             "Authorization": token
         }
+        logger.info(f"[Nvidia prepare_headers] 返回的请求头 Authorization: {headers['Authorization'][:20]}...")
+        return headers
     
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
@@ -308,3 +323,5 @@ class NvidiaModel(BaseAIModel):
         }
     
     # Nvidia 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models
+    # 基类会自动调用 verify_api_key_with_test_request() 来验证 API Key
+    # 因为 Nvidia 的 /v1/models 端点是公开的，不需要认证

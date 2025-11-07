@@ -254,6 +254,8 @@ class EnglishTranslation(BaseTranslation):
             'error_network': 'Network connection failed. Please check network connection, proxy settings, or firewall configuration.',
             'error_unknown': 'Unknown error.',
             'technical_details': 'Technical Details',
+            'ollama_service_not_running': 'Ollama service is not running. Please start Ollama service first.',
+            'ollama_service_timeout': 'Ollama service connection timeout. Please check if the service is running properly.',
             
             # About information
             'author_name': 'Sheldon',

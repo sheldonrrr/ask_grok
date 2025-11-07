@@ -534,4 +534,72 @@ class GeminiModel(BaseAIModel):
                 models.append(model_name)
         return models
     
-    # Gemini 只需重写 URL 格式和响应解析，其他使用基类默认实现
+    def verify_api_key_with_test_request(self) -> None:
+        """
+        Gemini 使用 URL 参数传递 API Key，需要自定义验证逻辑
+        """
+        import logging
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+        from ..i18n import get_translation
+        
+        logger = logging.getLogger(self.get_logger_name())
+        provider_name = self.get_provider_name()
+        
+        try:
+            # Gemini 的验证：发送一个最小的 generateContent 请求
+            api_key = self.config.get('api_key', '')
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            model_name = self.DEFAULT_MODEL
+            
+            # Gemini 的 API Key 通过 URL 参数传递
+            url = f"{api_base_url}/models/{model_name}:generateContent?key={api_key}"
+            
+            # 最小的测试请求
+            test_data = {
+                "contents": [{
+                    "parts": [{"text": "hi"}]
+                }],
+                "generationConfig": {
+                    "maxOutputTokens": 1
+                }
+            }
+            
+            headers = {"Content-Type": "application/json"}
+            
+            logger.info(f"[{provider_name}] 发送测试请求验证 API Key")
+            
+            response = requests.post(
+                url,
+                headers=headers,
+                json=test_data,
+                timeout=10,
+                verify=False
+            )
+            
+            logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
+            logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
+            
+            if response.status_code == 401 or response.status_code == 403:
+                logger.error(f"[{provider_name}] API Key 无效 - {response.status_code}")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: HTTP {response.status_code} - Invalid API Key")
+            
+            elif response.status_code in [200, 400]:
+                logger.info(f"[{provider_name}] API Key 验证成功 - 状态码: {response.status_code}")
+            
+            else:
+                logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
+            if hasattr(e, 'response') and e.response is not None:
+                if e.response.status_code in [401, 403]:
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('error_401', 
+                        'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                    tech_details = translations.get('technical_details', 'Technical Details')
+                    raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            logger.info(f"[{provider_name}] API Key 验证通过（收到非401/403响应）")
