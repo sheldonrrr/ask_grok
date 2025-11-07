@@ -269,10 +269,16 @@ class OllamaModel(BaseAIModel):
             
             logger.debug(f"Fetching Ollama models from: {api_url}")
             
+            # 使用用户配置的请求超时时间
+            from ..config import get_prefs
+            prefs = get_prefs()
+            timeout_seconds = prefs.get('request_timeout', 30)
+            logger.info(f"[Ollama] 获取模型列表超时时间: {timeout_seconds} 秒")
+            
             response = requests.get(
                 api_url,
                 headers=headers,
-                timeout=10,
+                timeout=timeout_seconds,
                 verify=False
             )
             response.raise_for_status()
@@ -447,8 +453,13 @@ class OllamaModel(BaseAIModel):
             
             logger.info(f"[{provider_name}] 发送测试请求验证服务: {test_url}")
             
-            # Ollama 本地服务超时时间较短（5秒）
-            timeout_seconds = 5
+            # Ollama 本地服务超时时间：使用用户配置的请求超时时间
+            # 如果未配置，默认使用 30 秒（本地服务可能需要更长时间加载模型）
+            from ..config import get_prefs
+            prefs = get_prefs()
+            timeout_seconds = prefs.get('request_timeout', 30)
+            logger.info(f"[{provider_name}] 使用超时时间: {timeout_seconds} 秒")
+            
             response = requests.post(
                 test_url,
                 json=test_data,

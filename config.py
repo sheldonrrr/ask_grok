@@ -233,9 +233,8 @@ class ModelConfigWidget(QWidget):
         # 加载动画实例（在 setup_ui 后初始化）
         self.load_models_animation = None
         
-        # 跟踪模型列表加载状态和测试的模型
-        self._models_loaded = False  # 是否已加载模型列表
-        self._tested_model = None    # 已测试的模型名称
+        # 按钮状态标志：是否已加载模型列表
+        self._models_loaded = False
         
         # 初始化标志，用于避免初始化时触发变化检测
         self._is_initializing = True
@@ -368,7 +367,7 @@ class ModelConfigWidget(QWidget):
             model_select_layout.addSpacing(8)
             
             # 加载模型按钮
-            self.load_models_button = QPushButton(self.i18n.get('load_models', 'Load Models'), self)
+            self.load_models_button = QPushButton(self.i18n.get('load_models_list', 'Load Model List'), self)
             self.load_models_button.clicked.connect(self.on_load_models_clicked)
             # 增加按钮宽度以适应不同字体大小（16px、14px等）
             apply_button_style(self.load_models_button, min_width=200)
@@ -379,7 +378,7 @@ class ModelConfigWidget(QWidget):
             self.load_models_animation = ButtonLoadingAnimation(
                 button=self.load_models_button,
                 loading_text=self.i18n.get('loading_text', 'Loading'),
-                original_text=self.i18n.get('load_models', 'Load Models')
+                original_text=self.i18n.get('load_models_list', 'Load Model List')
             )
             
             # 初始化按钮状态
@@ -714,12 +713,16 @@ class ModelConfigWidget(QWidget):
         return 1
     
     def on_load_models_clicked(self):
-        """点击加载模型按钮"""
+        """点击加载模型按钮 - 根据状态执行加载或测试"""
         import logging
-        from PyQt5.QtWidgets import QMessageBox
-        from PyQt5.QtCore import QTimer
         logger = logging.getLogger(__name__)
         
+        # 如果已加载模型，则执行测试
+        if self._models_loaded:
+            self._test_current_model()
+            return
+        
+        # 否则执行加载模型列表
         # 1. 验证 API Key（Ollama 不需要）
         if self.model_id != 'ollama':
             api_key = self.get_api_key()
@@ -809,6 +812,10 @@ class ModelConfigWidget(QWidget):
                     self.use_custom_model_checkbox.setChecked(False)
                     logger.info(f"已取消勾选使用自定义模型名称，使用下拉框中的模型")
                 
+                # 标记模型已加载，更新按钮状态
+                self._models_loaded = True
+                self.update_load_models_button_state()
+                
                 # 第二步：询问用户是否测试选中的模型
                 selected_model = self.model_combo.currentText()
                 placeholder_text = self.i18n.get('select_model', '-- No Model --')
@@ -853,6 +860,86 @@ class ModelConfigWidget(QWidget):
         
         # 使用 QTimer 延迟执行，避免阻塞
         QTimer.singleShot(100, fetch_models)
+    
+    def update_load_models_button_state(self):
+        """更新加载模型按钮的状态和文本"""
+        if self._models_loaded:
+            # 已加载模型，显示"测试当前模型"
+            self.load_models_button.setText(self.i18n.get('test_current_model', 'Test Current Model'))
+            # 更新动画的原始文本
+            self.load_models_animation.original_text = self.i18n.get('test_current_model', 'Test Current Model')
+        else:
+            # 未加载模型，显示"加载模型列表"
+            self.load_models_button.setText(self.i18n.get('load_models_list', 'Load Model List'))
+            # 更新动画的原始文本
+            self.load_models_animation.original_text = self.i18n.get('load_models_list', 'Load Model List')
+    
+    def _test_current_model(self):
+        """测试当前选中的模型"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 获取当前选中的模型
+        selected_model = self.model_combo.currentText()
+        placeholder_text = self.i18n.get('select_model', '-- No Model --')
+        
+        if not selected_model or selected_model == placeholder_text:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('warning', 'Warning'),
+                self.i18n.get('model_placeholder', 'Please load models first')
+            )
+            return
+        
+        # 启动加载动画
+        self.load_models_animation.start()
+        
+        # 强制处理 UI 事件，确保动画显示
+        from PyQt5.QtWidgets import QApplication
+        QApplication.processEvents()
+        
+        # 获取当前配置
+        config = self.get_config()
+        config['model'] = selected_model
+        
+        logger.info(f"[{self.model_id}] 测试当前模型: {selected_model}")
+        
+        # 使用 QTimer 异步执行，避免阻塞 UI
+        def test_model():
+            # 创建 API 客户端
+            from .api import APIClient
+            api_client = APIClient(i18n=self.i18n)
+            
+            # 再次强制处理 UI 事件
+            QApplication.processEvents()
+            
+            # 测试模型
+            success, message = api_client.test_model(self.model_id, config, test_model_name=selected_model)
+            
+            # 停止加载动画
+            self.load_models_animation.stop()
+            
+            if success:
+                # 测试成功，保存配置
+                logger.info(f"[{self.model_id}] 模型测试成功")
+                self._save_config_after_load()
+                QMessageBox.information(
+                    self,
+                    self.i18n.get('success', 'Success'),
+                    self.i18n.get('model_test_success', 'Model test successful! Configuration saved.')
+                )
+            else:
+                # 测试失败，显示错误
+                logger.error(f"[{self.model_id}] 模型测试失败: {message}")
+                QMessageBox.critical(
+                    self,
+                    self.i18n.get('error', 'Error'),
+                    message
+                )
+        
+        # 使用 QTimer 延迟执行，避免阻塞
+        # 延迟 300ms 确保加载动画有时间显示
+        QTimer.singleShot(300, test_model)
     
     def _test_selected_model(self, model_name, config):
         """测试选中的模型"""
@@ -1845,6 +1932,14 @@ class ConfigDialog(QWidget):
         # setup_model_widgets 已经处理了布局初始化和清除工作
         
         self.update_model_name_display()
+        
+        # 重置当前模型的加载状态（切换AI服务商时重置按钮）
+        if model_id in self.model_widgets:
+            widget = self.model_widgets[model_id]
+            if hasattr(widget, '_models_loaded'):
+                widget._models_loaded = False
+                widget.update_load_models_button_state()
+                logger.debug(f"重置模型 {model_id} 的加载状态")
         
         # 切换模型不会自动触发保存按钮的启用，需要用户实际修改配置
         # 调用on_config_changed检查是否有变更

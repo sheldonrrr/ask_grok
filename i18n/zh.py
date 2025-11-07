@@ -131,7 +131,8 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'formatting': '请求成功，正在格式化',
             
             # UI - 模型列表功能
-            'load_models': '加载模型列表',
+            'load_models': '加载模型',
+            'load_models_list': '加载模型列表',
             'test_current_model': '测试当前模型',
             'use_custom_model': '使用自定义模型名称',
             'custom_model_placeholder': '输入自定义模型名称',

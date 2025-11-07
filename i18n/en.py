@@ -130,7 +130,8 @@ class EnglishTranslation(BaseTranslation):
             'formatting': 'Request successful, formatting',
             
             # UI - Model list feature
-            'load_models': 'Load Model List',
+            'load_models': 'Load Models',
+            'load_models_list': 'Load Model List',
             'test_current_model': 'Test Current Model',
             'use_custom_model': 'Use custom model name',
             'custom_model_placeholder': 'Enter custom model name',
