@@ -155,7 +155,7 @@ class ButtonLoadingAnimation:
         self.loading_animation.stop()
     """
     
-    def __init__(self, button, loading_text='Loading', original_text=None, interval=250):
+    def __init__(self, button, loading_text='Loading', original_text=None, interval=250, min_display_time=500):
         """
         初始化按钮加载动画
         
@@ -164,18 +164,23 @@ class ButtonLoadingAnimation:
             loading_text: 加载时显示的文本（默认 'Loading'）
             original_text: 原始按钮文本（如果为 None，则使用按钮当前文本）
             interval: 动画更新间隔（毫秒，默认 250ms）
+            min_display_time: 最小显示时间（毫秒，默认 500ms），避免闪烁
         """
         from PyQt5.QtCore import QTimer
+        import time
         
         self.button = button
         self.loading_text = loading_text
         self.original_text = original_text if original_text else button.text()
         self.interval = interval
+        self.min_display_time = min_display_time
         
         self.timer = None
         self.dots = ['', '.', '..', '...']
         self.current_dot_index = 0
         self.is_running = False
+        self.start_time = None  # 记录开始时间
+        self.pending_stop = False  # 标记是否有待处理的停止请求
     
     def start(self):
         """开始加载动画"""
@@ -183,9 +188,12 @@ class ButtonLoadingAnimation:
             return
         
         from PyQt5.QtCore import QTimer
+        import time
         
         self.is_running = True
         self.current_dot_index = 0
+        self.start_time = time.time()  # 记录开始时间
+        self.pending_stop = False  # 重置待处理停止标记
         
         # 禁用按钮
         self.button.setEnabled(False)
@@ -208,7 +216,32 @@ class ButtonLoadingAnimation:
         if not self.is_running:
             return
         
+        import time
+        from PyQt5.QtCore import QTimer
+        
+        # 计算已经运行的时间
+        if self.start_time is not None:
+            elapsed_time = (time.time() - self.start_time) * 1000  # 转换为毫秒
+            
+            # 如果运行时间小于最小显示时间，延迟停止
+            if elapsed_time < self.min_display_time:
+                remaining_time = int(self.min_display_time - elapsed_time)
+                self.pending_stop = True
+                
+                # 使用 QTimer 延迟停止
+                QTimer.singleShot(remaining_time, lambda: self._do_stop(restore_text))
+                return
+        
+        # 立即停止
+        self._do_stop(restore_text)
+    
+    def _do_stop(self, restore_text=True):
+        """实际执行停止操作（内部方法）"""
+        if not self.is_running and not self.pending_stop:
+            return
+        
         self.is_running = False
+        self.pending_stop = False
         
         # 停止定时器
         if self.timer is not None:

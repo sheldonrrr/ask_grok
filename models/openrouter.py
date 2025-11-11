@@ -185,8 +185,8 @@ class OpenRouterModel(BaseAIModel):
         import time
         from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
         
-        # OpenRouter 总是返回流式响应（text/event-stream）
-        # 无论配置如何，都必须使用流式处理
+        # 检查是否启用流式传输
+        use_streaming = kwargs.get('stream', False)
         stream_callback = kwargs.get('stream_callback', None)
         
         # 准备请求头和数据
@@ -194,16 +194,17 @@ class OpenRouterModel(BaseAIModel):
         data = self.prepare_request_data(prompt, **kwargs)
         
         logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openrouter')
+        logger.debug(f"OpenRouter request - streaming: {use_streaming}, has_callback: {stream_callback is not None}")
+        
+        api_url = f"{self.config['api_base_url']}/chat/completions"
         
         try:
-            # OpenRouter总是使用流式传输
-            if stream_callback:
+            # 根据是否启用流式传输选择不同的处理方式
+            if use_streaming and stream_callback:
                 # 有回调函数：实时流式传输
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                
-                api_url = f"{self.config['api_base_url']}/chat/completions"
                 
                 try:
                     with requests.post(
@@ -239,6 +240,13 @@ class OpenRouterModel(BaseAIModel):
                                         continue
                         
                         logger.info(f"Streaming completed, received {chunk_count} chunks, total length: {len(full_content)}")
+                        
+                        # 检查是否收到了内容
+                        if not full_content:
+                            logger.warning("OpenRouter returned empty content in streaming mode")
+                            translations = get_translation(self.config.get('language', 'en'))
+                            raise Exception(translations.get('empty_response', 'Received empty response from API'))
+                        
                         return full_content
                         
                 except requests.exceptions.RequestException as e:
@@ -246,46 +254,47 @@ class OpenRouterModel(BaseAIModel):
                     translations = get_translation(self.config.get('language', 'en'))
                     raise Exception(translations.get('api_request_failed', 'API request failed: {error}').format(error=str(e)))
             
-            # 无回调函数：收集完整响应后返回
+            # 非流式传输：直接获取完整 JSON 响应
             else:
-                full_content = ""
-                chunk_count = 0
-                
-                api_url = f"{self.config['api_base_url']}/chat/completions"
+                logger.debug("Using non-streaming mode, expecting standard JSON response")
                 
                 try:
-                    with requests.post(
+                    response = requests.post(
                         api_url,
                         headers=headers,
                         json=data,
                         timeout=kwargs.get('timeout', 300),
-                        stream=True,  # 强制使用流式
+                        stream=False,  # 非流式传输
                         verify=False
-                    ) as response:
-                        response.raise_for_status()
-                        
-                        # 处理流式响应
-                        for line in response.iter_lines():
-                            if line:
-                                line_str = line.decode('utf-8')
-                                if line_str.startswith('data: '):
-                                    try:
-                                        if line_str == 'data: [DONE]':
-                                            break
-                                        line_data = json.loads(line_str[6:])
-                                        if 'choices' in line_data and line_data['choices']:
-                                            choice = line_data['choices'][0]
-                                            if 'delta' in choice and 'content' in choice['delta']:
-                                                chunk_text = choice['delta']['content']
-                                                if chunk_text:
-                                                    full_content += chunk_text
-                                                    chunk_count += 1
-                                    except json.JSONDecodeError as je:
-                                        logger.error(f"JSON parse error: {str(je)}, line: {line_str[:50]}...")
-                                        continue
-                        
-                        logger.info(f"Non-streaming mode completed, received {chunk_count} chunks, total: {len(full_content)}")
-                        return full_content
+                    )
+                    response.raise_for_status()
+                    
+                    # 解析标准 JSON 响应
+                    result = response.json()
+                    logger.debug(f"Received JSON response: {json.dumps(result)[:200]}...")
+                    
+                    # 提取内容
+                    if 'choices' in result and result['choices']:
+                        choice = result['choices'][0]
+                        if 'message' in choice and 'content' in choice['message']:
+                            content = choice['message']['content']
+                            logger.info(f"Non-streaming mode completed, content length: {len(content)}")
+                            
+                            # 检查是否收到了内容
+                            if not content:
+                                logger.warning("OpenRouter returned empty content in non-streaming mode")
+                                translations = get_translation(self.config.get('language', 'en'))
+                                raise Exception(translations.get('empty_response', 'Received empty response from API'))
+                            
+                            return content
+                        else:
+                            logger.error(f"Unexpected response structure: {json.dumps(choice)[:200]}...")
+                            translations = get_translation(self.config.get('language', 'en'))
+                            raise Exception(translations.get('api_invalid_response', 'Unable to get valid API response'))
+                    else:
+                        logger.error(f"No choices in response: {json.dumps(result)[:200]}...")
+                        translations = get_translation(self.config.get('language', 'en'))
+                        raise Exception(translations.get('api_invalid_response', 'Unable to get valid API response'))
                         
                 except requests.exceptions.RequestException as e:
                     logger.error(f"OpenRouter API request error: {str(e)}")

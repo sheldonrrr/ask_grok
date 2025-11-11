@@ -949,6 +949,9 @@ class AskDialog(QDialog):
         
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
+        
+        # 检查默认 AI 是否与当前选中的 AI 一致
+        self._check_default_ai_mismatch()
 
     def _generate_uid(self):
         """生成唯一 UID"""
@@ -1876,10 +1879,110 @@ class AskDialog(QDialog):
         
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
+    
+    def _check_default_ai_mismatch(self):
+        """检查配置中的默认 AI 是否与当前选中的 AI 一致
+        
+        如果不一致，弹窗询问用户是否切换到默认 AI
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtCore import QTimer
+        
+        prefs = get_prefs()
+        default_ai = prefs.get('selected_model', 'grok')
+        
+        # 获取第一个面板当前选中的 AI
+        if not self.response_panels:
+            return
+        
+        first_panel = self.response_panels[0]
+        current_ai_id = first_panel.ai_switcher.currentData()
+        
+        # 如果一致，也需要确保 API 使用的是面板选中的 AI（而不是配置中的默认 AI）
+        # 因为用户可能之前选择了"否"，导致面板 AI 与配置不一致
+        if current_ai_id == default_ai:
+            logger.debug(f"当前 AI ({current_ai_id}) 与默认 AI ({default_ai}) 一致")
+            # 仍然需要切换 API 到面板选中的 AI，确保一致性
+            self._switch_api_to_panel_ai(current_ai_id)
+            return
+        
+        # 获取 AI 显示名称
+        from .models.base import DEFAULT_MODELS, AIProvider
+        from .api import APIClient
+        
+        default_ai_provider = APIClient._MODEL_TO_PROVIDER.get(default_ai)
+        current_ai_provider = APIClient._MODEL_TO_PROVIDER.get(current_ai_id)
+        
+        default_ai_name = DEFAULT_MODELS.get(default_ai_provider).display_name if default_ai_provider else default_ai
+        current_ai_name = DEFAULT_MODELS.get(current_ai_provider).display_name if current_ai_provider else current_ai_id
+        
+        logger.info(f"检测到 AI 不一致 - 当前: {current_ai_name} ({current_ai_id}), 默认: {default_ai_name} ({default_ai})")
+        
+        # 使用 QTimer 延迟弹窗，避免在初始化过程中阻塞
+        def show_dialog():
+            reply = QMessageBox.question(
+                self,
+                self.i18n.get('default_ai_mismatch_title', '默认 AI 已更改'),
+                self.i18n.get('default_ai_mismatch_message', 
+                    '检测到配置中的默认 AI 已更改为 "{default_ai}"，\n'
+                    '但当前对话使用的是 "{current_ai}"。\n\n'
+                    '是否切换到新的默认 AI？').format(
+                        default_ai=default_ai_name,
+                        current_ai=current_ai_name
+                    ),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            
+            if reply == QMessageBox.Yes:
+                # 切换到默认 AI
+                logger.info(f"用户选择切换到默认 AI: {default_ai}")
+                
+                # 更新第一个面板的 AI 选择
+                index = first_panel.ai_switcher.findData(default_ai)
+                if index >= 0:
+                    first_panel.ai_switcher.setCurrentIndex(index)
+                    
+                    # 重新加载 API 模型
+                    self.api.reload_model()
+                    
+                    # 更新窗口标题
+                    self._update_window_title()
+                    
+                    logger.info(f"已切换到默认 AI: {default_ai_name}")
+                else:
+                    logger.warning(f"未找到默认 AI: {default_ai}")
+            else:
+                # 用户选择继续使用当前 AI
+                logger.info(f"用户选择继续使用当前 AI: {current_ai_name} ({current_ai_id})")
+                
+                # 强制 API 使用当前面板选中的 AI，而不是配置中的默认 AI
+                self._switch_api_to_panel_ai(current_ai_id)
+        
+        # 延迟 100ms 后显示对话框
+        QTimer.singleShot(100, show_dialog)
         
         # 初始化完成，允许弹出确认对话框
         for panel in self.response_panels:
             panel._is_initializing = False
+    
+    def _switch_api_to_panel_ai(self, ai_id: str):
+        """强制 API 切换到指定的 AI
+        
+        当用户选择不切换到默认 AI 时，需要确保 API 使用面板选中的 AI
+        
+        Args:
+            ai_id: AI 模型 ID（如 'openrouter', 'gemini' 等）
+        """
+        try:
+            # 使用 API 的内部方法切换模型
+            self.api._switch_to_model(ai_id)
+            logger.info(f"API 已切换到面板选中的 AI: {ai_id}")
+            
+            # 更新窗口标题
+            self._update_window_title()
+        except Exception as e:
+            logger.error(f"切换 API 到面板 AI 失败: {str(e)}")
     
     def _save_panel_ai_selections(self):
         """保存所有面板的AI选择到配置"""
@@ -1902,6 +2005,11 @@ class AskDialog(QDialog):
             new_ai_id: 新选中的AI ID
         """
         logger.info(f"面板 {panel_index} 切换到 AI: {new_ai_id}")
+        
+        # 如果是第一个面板切换 AI，同步更新 API 使用的模型
+        # 这样随机问题和发送请求都会使用面板选中的 AI
+        if panel_index == 0 and new_ai_id:
+            self._switch_api_to_panel_ai(new_ai_id)
         
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()

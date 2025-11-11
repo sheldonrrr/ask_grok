@@ -549,6 +549,21 @@ class BaseAIModel(ABC):
             if e.response is not None:
                 logger.error(f"[{self.get_provider_name()}] 响应内容: {e.response.text[:500]}")
             
+            # 特殊处理：检查响应内容中的特定错误信息
+            response_text = e.response.text if e.response is not None else ""
+            
+            # Gemini 地理位置限制错误
+            if status_code == 400 and ('User location is not supported' in response_text or 'FAILED_PRECONDITION' in response_text):
+                user_msg = translations.get('gemini_geo_restriction',
+                    'Gemini API is not available in your region. Please try:\n'
+                    '1. Use a VPN to connect from a supported region\n'
+                    '2. Use other AI providers (OpenAI, Anthropic, DeepSeek, etc.)\n'
+                    '3. Check Google AI Studio for region availability')
+                technical_label = translations.get('technical_details', 'Technical Details')
+                error_msg = f"{user_msg}\n\n{technical_label}: User location is not supported for the API use"
+                logger.error(f"Failed to fetch models: {error_msg}")
+                raise Exception(error_msg)
+            
             # 选择对应的错误描述
             if status_code == 401:
                 user_msg = translations.get('error_401', 

@@ -75,6 +75,8 @@ class EnglishTranslation(BaseTranslation):
             'set_default_ai_title': 'Set Default AI',
             'set_default_ai_message': 'You have switched to "{0}". Would you like to set it as the default AI for future queries?',
             'set_default_ai_success': 'Default AI has been set to "{0}".',
+            'default_ai_mismatch_title': 'Default AI Changed',
+            'default_ai_mismatch_message': 'The default AI in configuration has been changed to "{default_ai}",\nbut the current dialog is using "{current_ai}".\n\nWould you like to switch to the new default AI?',
             'copied': 'Copied!',
             'pdf_exported': 'PDF Exported!',
             'export_pdf_dialog_title': 'Export to PDF',
@@ -121,9 +123,10 @@ class EnglishTranslation(BaseTranslation):
             'menu_title': 'Ask',
             'menu_ask': 'Ask {model}',  # 用于所有模型的菜单项
             
-            # UI - Status messages
-            'loading': 'Loading...',
+            # UI - Status information
+            'loading': 'Loading',
             'loading_text': 'Asking',
+            'loading_models_text': 'Loading models',
             'save_success': 'Settings saved',
             'sending': 'Sending...',
             'requesting': 'Requesting',
@@ -137,6 +140,7 @@ class EnglishTranslation(BaseTranslation):
             'custom_model_placeholder': 'Enter custom model name',
             'model_placeholder': 'Please load models first',
             'models_loaded': 'Successfully loaded {count} models',
+            'models_loaded_with_selection': 'Successfully loaded {count} models.\nSelected model: {model}',
             'load_models_failed': 'Failed to load models: {error}',
             'model_list_not_supported': 'This provider does not support automatic model list fetching',
             'api_key_required': 'Please enter API Key first',
@@ -195,7 +199,8 @@ class EnglishTranslation(BaseTranslation):
             'auth_error_401': 'Unauthorized',
             'auth_error_403': 'Access denied',
             'rate_limit': 'Too many requests',
-            'invalid_json': 'Invalid JSON',
+            'empty_response': 'Received empty response from API',
+            'empty_response_after_filter': 'Response is empty after filtering think tags',
             'no_response': 'No response',
             'template_error': 'Template error',
             'no_model_configured': 'No AI model configured. Please configure an AI model in settings.',
@@ -259,6 +264,7 @@ class EnglishTranslation(BaseTranslation):
             'ollama_service_not_running': 'Ollama service is not running. Please start Ollama service first.',
             'ollama_service_timeout': 'Ollama service connection timeout. Please check if the service is running properly.',
             'ollama_model_not_available': 'Model "{model}" is not available. Please check:\n1. Is the model started? Run: ollama run {model}\n2. Is the model name correct?\n3. Is the model downloaded? Run: ollama pull {model}',
+            'gemini_geo_restriction': 'Gemini API is not available in your region. Please try:\n1. Use a VPN to connect from a supported region\n2. Use other AI providers (OpenAI, Anthropic, DeepSeek, etc.)\n3. Check Google AI Studio for region availability',
             'model_test_success': 'Model test successful! Configuration saved.',
             'test_model_prompt': 'Models loaded successfully! Would you like to test the selected model "{model}"?',
             'test_model_button': 'Test Model',

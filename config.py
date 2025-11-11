@@ -377,7 +377,7 @@ class ModelConfigWidget(QWidget):
             from .ui_constants import ButtonLoadingAnimation
             self.load_models_animation = ButtonLoadingAnimation(
                 button=self.load_models_button,
-                loading_text=self.i18n.get('loading_text', 'Loading'),
+                loading_text=self.i18n.get('loading_models_text', 'Loading'),
                 original_text=self.i18n.get('load_models_list', 'Load Model List')
             )
             
@@ -816,32 +816,27 @@ class ModelConfigWidget(QWidget):
                 self._models_loaded = True
                 self.update_load_models_button_state()
                 
-                # 第二步：询问用户是否测试选中的模型
+                # 显示加载成功消息
                 selected_model = self.model_combo.currentText()
                 placeholder_text = self.i18n.get('select_model', '-- No Model --')
                 
+                # 直接保存配置
+                self._save_config_after_load()
+                
+                # 显示成功消息（只有一个"关闭"按钮）
                 if selected_model and selected_model != placeholder_text:
-                    # 创建自定义对话框，带"测试模型"和"跳过"按钮
-                    msg_box = QMessageBox(self)
-                    msg_box.setWindowTitle(self.i18n.get('success', 'Success'))
-                    msg_box.setText(self.i18n.get('test_model_prompt', 
-                        'Models loaded successfully! Would you like to test the selected model "{model}"?').format(model=selected_model))
-                    msg_box.setIcon(QMessageBox.Question)
-                    
-                    # 添加按钮
-                    test_button = msg_box.addButton(self.i18n.get('test_model_button', 'Test Model'), QMessageBox.AcceptRole)
-                    skip_button = msg_box.addButton(self.i18n.get('skip', 'Skip'), QMessageBox.RejectRole)
-                    
-                    msg_box.exec_()
-                    
-                    if msg_box.clickedButton() == test_button:
-                        # 用户选择测试模型
-                        self._test_selected_model(selected_model, config)
-                    else:
-                        # 用户跳过测试，直接保存配置
-                        self._save_config_after_load()
+                    # 有选中的模型，显示模型名称
+                    QMessageBox.information(
+                        self,
+                        self.i18n.get('success', 'Success'),
+                        self.i18n.get('models_loaded_with_selection', 
+                            'Successfully loaded {count} models.\nSelected model: {model}').format(
+                                count=len(models),
+                                model=selected_model
+                            )
+                    )
                 else:
-                    # 没有选中有效模型，只显示成功消息
+                    # 没有选中有效模型，只显示数量
                     QMessageBox.information(
                         self,
                         self.i18n.get('success', 'Success'),
@@ -891,27 +886,20 @@ class ModelConfigWidget(QWidget):
             )
             return
         
-        # 启动加载动画
-        self.load_models_animation.start()
-        
-        # 强制处理 UI 事件，确保动画显示
-        from PyQt5.QtWidgets import QApplication
-        QApplication.processEvents()
-        
         # 获取当前配置
         config = self.get_config()
         config['model'] = selected_model
         
         logger.info(f"[{self.model_id}] 测试当前模型: {selected_model}")
         
+        # 启动加载动画
+        self.load_models_animation.start()
+        
         # 使用 QTimer 异步执行，避免阻塞 UI
         def test_model():
             # 创建 API 客户端
             from .api import APIClient
             api_client = APIClient(i18n=self.i18n)
-            
-            # 再次强制处理 UI 事件
-            QApplication.processEvents()
             
             # 测试模型
             success, message = api_client.test_model(self.model_id, config, test_model_name=selected_model)
@@ -937,44 +925,10 @@ class ModelConfigWidget(QWidget):
                     message
                 )
         
-        # 使用 QTimer 延迟执行，避免阻塞
-        # 延迟 300ms 确保加载动画有时间显示
-        QTimer.singleShot(300, test_model)
+        # 使用 QTimer 延迟执行，避免阻塞 UI
+        # 延迟 100ms 让动画有时间启动
+        QTimer.singleShot(100, test_model)
     
-    def _test_selected_model(self, model_name, config):
-        """测试选中的模型"""
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        logger.info(f"[{self.model_id}] 开始测试模型: {model_name}")
-        
-        # 更新配置中的模型名称
-        config['model'] = model_name
-        
-        # 创建 API 客户端
-        from .api import APIClient
-        api_client = APIClient(i18n=self.i18n)
-        
-        # 测试模型
-        success, message = api_client.test_model(self.model_id, config, test_model_name=model_name)
-        
-        if success:
-            # 测试成功，保存配置
-            logger.info(f"[{self.model_id}] 模型测试成功")
-            self._save_config_after_load()
-            QMessageBox.information(
-                self,
-                self.i18n.get('success', 'Success'),
-                self.i18n.get('model_test_success', 'Model test successful! Configuration saved.')
-            )
-        else:
-            # 测试失败，显示错误
-            logger.error(f"[{self.model_id}] 模型测试失败: {message}")
-            QMessageBox.critical(
-                self,
-                self.i18n.get('error', 'Error'),
-                message
-            )
     
     def _save_config_after_load(self):
         """加载模型后保存配置"""

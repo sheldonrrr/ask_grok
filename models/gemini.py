@@ -498,11 +498,11 @@ class GeminiModel(BaseAIModel):
         Gemini 获取模型列表时不需要在请求头中添加 API key
         API key 通过 URL 参数传递
         
+        GET 请求不需要 Content-Type 头
+        
         :return: 请求头字典
         """
-        return {
-            "Content-Type": "application/json"
-        }
+        return {}
     
     def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
         """
