@@ -402,7 +402,7 @@ class ResponsePanel(QWidget):
         
         # 从父对话框获取问题
         question = ""
-        if hasattr(self.parent_dialog, 'input_area'):
+        if hasattr(self.parent_dialog, 'input_area') and self.parent_dialog.input_area:
             question = self.parent_dialog.input_area.toPlainText().strip()
         
         response = self.response_area.toPlainText().strip()
@@ -426,7 +426,7 @@ class ResponsePanel(QWidget):
         
         # 从父对话框获取问题
         question = ""
-        if hasattr(self.parent_dialog, 'input_area'):
+        if hasattr(self.parent_dialog, 'input_area') and self.parent_dialog.input_area:
             question = self.parent_dialog.input_area.toPlainText().strip()
         
         # 获取当前面板的响应

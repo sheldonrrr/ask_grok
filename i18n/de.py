@@ -75,6 +75,8 @@ class GermanTranslation(BaseTranslation):
             'set_default_ai_title': 'Standard-KI Festlegen',
             'set_default_ai_message': 'Sie haben zu "{0}" gewechselt. Möchten Sie diese als Standard-KI für zukünftige Anfragen festlegen?',
             'set_default_ai_success': 'Standard-KI wurde auf "{0}" festgelegt.',
+            'default_ai_mismatch_title': 'Standard-KI Geändert',
+            'default_ai_mismatch_message': 'Die Standard-KI in der Konfiguration wurde auf "{default_ai}" geändert,\naber der aktuelle Dialog verwendet "{current_ai}".\n\nMöchten Sie zur neuen Standard-KI wechseln?',
             'copied': 'Kopiert!',
             'pdf_exported': 'PDF exportiert!',
             'export_pdf_dialog_title': 'In PDF exportieren',
@@ -162,7 +164,6 @@ class GermanTranslation(BaseTranslation):
             'multi_book_placeholder_hint': 'Verwenden Sie {books_metadata} für Buchinformationen, {query} für die Benutzerfrage',
             
             # Fehlermeldungen
-            'error': 'Fehler: ',
             'network_error': 'Verbindungsfehler',
             'request_timeout': 'Anfrage-Timeout',
             'request_failed': 'Anfrage fehlgeschlagen',
@@ -186,7 +187,6 @@ class GermanTranslation(BaseTranslation):
             'auth_error_403': 'Zugriff verweigert',
             'rate_limit': 'Zu viele Anfragen',
             'invalid_json': 'Ungültiges JSON',
-            'no_response': 'Keine Antwort',
             'template_error': 'Vorlagenfehler',
             'no_model_configured': 'Kein KI-Modell konfiguriert. Bitte konfigurieren Sie ein KI-Modell in den Einstellungen.',
             'no_ai_configured_title': 'Keine KI konfiguriert',
@@ -252,7 +252,6 @@ class GermanTranslation(BaseTranslation):
             'model_enable_streaming': 'Streaming aktivieren',
             
             # AI Switcher
-            'current_ai': 'Aktuelle KI',
             'no_configured_models': 'Keine KI konfiguriert - Bitte in den Einstellungen konfigurieren',
             
             # Provider specific info
@@ -294,5 +293,37 @@ class GermanTranslation(BaseTranslation):
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',
             'pdf_generated_time': 'Generierte Zeit',
+            'discard_changes': 'Änderungen Verwerfen',
+            'empty_response': 'Leere Antwort von API erhalten',
+            'empty_response_after_filter': 'Antwort ist nach dem Filtern von Think-Tags leer',
+            'error_401': 'API-Schlüssel-Authentifizierung fehlgeschlagen. Bitte prüfen: API-Schlüssel ist korrekt, Konto hat ausreichendes Guthaben, API-Schlüssel ist nicht abgelaufen.',
+            'error_403': 'Zugriff verweigert. Bitte prüfen: API-Schlüssel hat ausreichende Berechtigungen, keine regionalen Zugriffsbeschränkungen.',
+            'error_404': 'API-Endpunkt nicht gefunden. Bitte prüfen Sie, ob die API-Basis-URL-Konfiguration korrekt ist.',
+            'error_429': 'Zu viele Anfragen, Ratenlimit erreicht. Bitte versuchen Sie es später erneut.',
+            'error_5xx': 'Serverfehler. Bitte versuchen Sie es später erneut oder prüfen Sie den Status des Dienstanbieters.',
+            'error_network': 'Netzwerkverbindung fehlgeschlagen. Bitte prüfen Sie Netzwerkverbindung, Proxy-Einstellungen oder Firewall-Konfiguration.',
+            'error_unknown': 'Unbekannter Fehler.',
+            'gemini_geo_restriction': 'Gemini API ist in Ihrer Region nicht verfügbar. Bitte versuchen Sie:\n1. VPN verwenden, um von einer unterstützten Region aus zu verbinden\n2. Andere KI-Anbieter verwenden (OpenAI, Anthropic, DeepSeek usw.)\n3. Google AI Studio für Regionsverfügbarkeit prüfen',
+            'load_models_list': 'Modellliste Laden',
+            'loading_models_text': 'Modelle werden geladen',
+            'model_test_success': 'Modelltest erfolgreich! Konfiguration gespeichert.',
+            'models_loaded_with_selection': '{count} Modelle erfolgreich geladen.\nAusgewähltes Modell: {model}',
+            'ollama_model_not_available': 'Modell "{model}" ist nicht verfügbar. Bitte prüfen:\n1. Ist das Modell gestartet? Ausführen: ollama run {model}\n2. Ist der Modellname korrekt?\n3. Ist das Modell heruntergeladen? Ausführen: ollama pull {model}',
+            'ollama_service_not_running': 'Ollama-Dienst läuft nicht. Bitte starten Sie zuerst den Ollama-Dienst.',
+            'ollama_service_timeout': 'Ollama-Dienst-Verbindungszeitüberschreitung. Bitte prüfen Sie, ob der Dienst ordnungsgemäß läuft.',
+            'reset_ai_confirm_message': '{ai_name} wird auf den Standardzustand zurückgesetzt.\n\nDies wird löschen:\n• API-Schlüssel\n• Benutzerdefinierter Modellname\n• Andere konfigurierte Parameter\n\nFortfahren?',
+            'reset_ai_confirm_title': 'Zurücksetzen Bestätigen',
+            'reset_current_ai': 'Aktuelle KI auf Standard Zurücksetzen',
+            'reset_tooltip': 'Aktuelle KI auf Standardwerte zurücksetzen',
+            'save_and_close': 'Speichern und Schließen',
+            'skip': 'Überspringen',
+            'technical_details': 'Technische Details',
+            'test_current_model': 'Aktuelles Modell Testen',
+            'test_model_button': 'Modell Testen',
+            'test_model_prompt': 'Modelle erfolgreich geladen! Möchten Sie das ausgewählte Modell "{model}" testen?',
+            'unsaved_changes_message': 'Sie haben ungespeicherte Änderungen. Was möchten Sie tun?',
+            'unsaved_changes_title': 'Ungespeicherte Änderungen',
+
+
             'pdf_info_not_available': 'Informationen nicht verfügbar',
         }

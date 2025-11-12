@@ -275,6 +275,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'author_name': 'Sheldon',
             'user_manual': '用户手册',
             'about_plugin': '关于 Ask AI Plugin',
+            'learn_how_to_use': '如何使用',
             'email': 'iMessage',
             
             # 模型特定配置

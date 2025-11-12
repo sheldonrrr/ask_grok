@@ -80,7 +80,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'export_pdf_dialog_title': '匯出為PDF',
         'export_pdf_error': '匯出PDF失敗：{0}',
         'no_question': '無問題',
-        'no_response': '無回答',
         'saved': '已儲存',
         'close_button': '關閉',
         
@@ -162,7 +161,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'multi_book_placeholder_hint': '使用 {books_metadata} 表示書籍資訊，{query} 表示用戶問題',
         
         # 錯誤信息
-        'error': '錯誤: ',
         'network_error': '連線錯誤',
         'request_timeout': '請求超時',
         'request_failed': '請求失敗',
@@ -252,7 +250,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'model_enable_streaming': '啟用串流傳輸',
         
         # AI Switcher
-        'current_ai': '目前AI',
         'no_configured_models': '未配置AI - 請在設定中配置',
         
         # 提供商特定信息
@@ -294,5 +291,39 @@ class TraditionalChineseTranslation(BaseTranslation):
         'pdf_github': 'GitHub',
         'pdf_software': '軟體',
         'pdf_generated_time': '生成時間',
+            'default_ai_mismatch_title': '預設 AI 已變更',
+            'default_ai_mismatch_message': '設定中的預設 AI 已變更為 "{default_ai}",\n但目前的對話框正在使用 "{current_ai}"。\n\n您要切換到新的預設 AI 嗎？',
+            'discard_changes': '放棄變更',
+            'empty_response': '收到來自 API 的空回應',
+            'empty_response_after_filter': '過濾 think 標籤後回應為空',
+            'error_401': 'API 金鑰驗證失敗。請檢查：API 金鑰正確、帳戶有足夠餘額、API 金鑰未過期。',
+            'error_403': '拒絕存取。請檢查：API 金鑰有足夠權限、無地區存取限制。',
+            'error_404': '找不到 API 端點。請檢查 API Base URL 設定是否正確。',
+            'error_429': '請求過多，已達速率限制。請稍後再試。',
+            'error_5xx': '伺服器錯誤。請稍後再試或檢查服務提供者狀態。',
+            'error_network': '網路連線失敗。請檢查網路連線、代理設定或防火牆設定。',
+            'error_unknown': '未知錯誤。',
+            'gemini_geo_restriction': 'Gemini API 在您的地區無法使用。請嘗試：\n1. 使用 VPN 從支援的地區連線\n2. 使用其他 AI 提供者（OpenAI、Anthropic、DeepSeek 等）\n3. 檢查 Google AI Studio 的地區可用性',
+            'load_models_list': '載入模型清單',
+            'loading_models_text': '正在載入模型',
+            'model_test_success': '模型測試成功！設定已儲存。',
+            'models_loaded_with_selection': '成功載入 {count} 個模型。\n已選模型：{model}',
+            'ollama_model_not_available': '模型 "{model}" 無法使用。請檢查：\n1. 模型是否已啟動？執行：ollama run {model}\n2. 模型名稱是否正確？\n3. 模型是否已下載？執行：ollama pull {model}',
+            'ollama_service_not_running': 'Ollama 服務未執行。請先啟動 Ollama 服務。',
+            'ollama_service_timeout': 'Ollama 服務連線逾時。請檢查服務是否正常執行。',
+            'reset_ai_confirm_message': '即將將 {ai_name} 重設為預設狀態。\n\n這將清除：\n• API 金鑰\n• 自訂模型名稱\n• 其他已設定參數\n\n繼續？',
+            'reset_ai_confirm_title': '確認重設',
+            'reset_current_ai': '將目前 AI 重設為預設',
+            'reset_tooltip': '將目前 AI 重設為預設值',
+            'save_and_close': '儲存並關閉',
+            'skip': '略過',
+            'technical_details': '技術詳情',
+            'test_current_model': '測試目前模型',
+            'test_model_button': '測試模型',
+            'test_model_prompt': '模型載入成功！您要測試已選模型 "{model}" 嗎？',
+            'unsaved_changes_message': '您有未儲存的變更。您要怎麼做？',
+            'unsaved_changes_title': '未儲存的變更',
+
+
         'pdf_info_not_available': '資訊不可用',
     }

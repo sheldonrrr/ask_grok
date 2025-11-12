@@ -161,7 +161,6 @@ class DanishTranslation(BaseTranslation):
             'multi_book_placeholder_hint': 'Brug {books_metadata} for boginformation, {query} for brugerens spørgsmål',
             
             # Error messages
-            'error': 'Fejl: ',
             'network_error': 'Forbindelsesfejl',
             'request_timeout': 'Anmodning timeout',
             'request_failed': 'Anmodning mislykkedes',
@@ -185,7 +184,6 @@ class DanishTranslation(BaseTranslation):
             'auth_error_403': 'Adgang nægtet',
             'rate_limit': 'For mange anmodninger',
             'invalid_json': 'Ugyldig JSON',
-            'no_response': 'Intet svar',
             'template_error': 'Skabelonfejl',
             'no_model_configured': 'Ingen AI-model konfigureret. Konfigurer venligst en AI-model i indstillingerne.',
             'no_ai_configured_title': 'Ingen AI Konfigureret',
@@ -259,7 +257,6 @@ class DanishTranslation(BaseTranslation):
             
             # Common system messages
             'default_system_message': 'Du er en ekspert i boganalyse. Din opgave er at hjælpe brugere med at forstå bøger bedre ved at give indsigtsfulde spørgsmål og analyser.',
-            'api_content_extraction_failed': 'Kunne ikke udtrække indhold fra API-svar',
             
             # Request timeout settings
             'request_timeout_label': 'Anmodningstimeout:',
@@ -294,5 +291,39 @@ class DanishTranslation(BaseTranslation):
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',
             'pdf_generated_time': 'Genereret tid',
+            'default_ai_mismatch_title': 'Standard AI Ændret',
+            'default_ai_mismatch_message': 'Standard AI i konfigurationen er ændret til "{default_ai}",\nmen den aktuelle dialog bruger "{current_ai}".\n\nVil du skifte til den nye standard AI?',
+            'discard_changes': 'Kassér Ændringer',
+            'empty_response': 'Modtog tomt svar fra API',
+            'empty_response_after_filter': 'Svar er tomt efter filtrering af think tags',
+            'error_401': 'API-nøgle godkendelse mislykkedes. Tjek venligst: API-nøgle er korrekt, konto har tilstrækkelig saldo, API-nøgle er ikke udløbet.',
+            'error_403': 'Adgang nægtet. Tjek venligst: API-nøgle har tilstrækkelige tilladelser, ingen regionale adgangsbegrænsninger.',
+            'error_404': 'API-endepunkt ikke fundet. Tjek venligst om API Base URL konfigurationen er korrekt.',
+            'error_429': 'For mange anmodninger, hastighedsgrænse nået. Prøv venligst igen senere.',
+            'error_5xx': 'Serverfejl. Prøv venligst igen senere eller tjek tjenesteudbyderens status.',
+            'error_network': 'Netværksforbindelse mislykkedes. Tjek venligst netværksforbindelse, proxy-indstillinger eller firewall-konfiguration.',
+            'error_unknown': 'Ukendt fejl.',
+            'gemini_geo_restriction': 'Gemini API er ikke tilgængelig i din region. Prøv venligst:\n1. Brug en VPN til at forbinde fra en understøttet region\n2. Brug andre AI-udbydere (OpenAI, Anthropic, DeepSeek osv.)\n3. Tjek Google AI Studio for regional tilgængelighed',
+            'load_models_list': 'Indlæs Modelliste',
+            'loading_models_text': 'Indlæser modeller',
+            'model_test_success': 'Modeltest vellykket! Konfiguration gemt.',
+            'models_loaded_with_selection': 'Indlæste {count} modeller med succes.\nValgt model: {model}',
+            'ollama_model_not_available': 'Model "{model}" er ikke tilgængelig. Tjek venligst:\n1. Er modellen startet? Kør: ollama run {model}\n2. Er modelnavnet korrekt?\n3. Er modellen downloadet? Kør: ollama pull {model}',
+            'ollama_service_not_running': 'Ollama-tjeneste kører ikke. Start venligst Ollama-tjenesten først.',
+            'ollama_service_timeout': 'Ollama-tjeneste forbindelse timeout. Tjek venligst om tjenesten kører korrekt.',
+            'reset_ai_confirm_message': 'Ved at nulstille {ai_name} til standardtilstand.\n\nDette vil rydde:\n• API-nøgle\n• Brugerdefineret modelnavn\n• Andre konfigurerede parametre\n\nFortsæt?',
+            'reset_ai_confirm_title': 'Bekræft Nulstilling',
+            'reset_current_ai': 'Nulstil Nuværende AI til Standard',
+            'reset_tooltip': 'Nulstil nuværende AI til standardværdier',
+            'save_and_close': 'Gem og Luk',
+            'skip': 'Spring Over',
+            'technical_details': 'Tekniske Detaljer',
+            'test_current_model': 'Test Nuværende Model',
+            'test_model_button': 'Test Model',
+            'test_model_prompt': 'Modeller indlæst med succes! Vil du teste den valgte model "{model}"?',
+            'unsaved_changes_message': 'Du har ugemte ændringer. Hvad vil du gøre?',
+            'unsaved_changes_title': 'Ugemte Ændringer',
+
+
             'pdf_info_not_available': 'Information ikke tilgængelig',
         }

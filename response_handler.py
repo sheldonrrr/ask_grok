@@ -968,7 +968,8 @@ class ResponseHandler(QObject):
                 try:
                     # 获取父对话框以访问多书相关属性
                     if parent_dialog and hasattr(parent_dialog, 'current_uid'):
-                        question = self.input_area.toPlainText()
+                        # 获取问题文本，如果 input_area 为 None 则使用空字符串
+                        question = self.input_area.toPlainText() if self.input_area else ''
                         
                         # 确定模式
                         mode = 'multi' if parent_dialog.is_multi_book else 'single'
@@ -1024,7 +1025,8 @@ class ResponseHandler(QObject):
                                     panel.update_export_all_button_state()
                     elif hasattr(self, 'current_metadata') and self.current_metadata:
                         # 向后兼容旧版本
-                        question = self.input_area.toPlainText()
+                        # 获取问题文本，如果 input_area 为 None 则使用空字符串
+                        question = self.input_area.toPlainText() if self.input_area else ''
                         # 使用旧版本保存（会被转换为新格式）
                         logger.warning("使用旧版本历史记录保存方法")
                 except Exception as e:
