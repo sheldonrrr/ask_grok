@@ -1116,6 +1116,9 @@ class AskDialog(QDialog):
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
         
+        # 不设置自定义样式，使用 Qt 默认样式（包括 hover 效果）
+        # 宽度限制将在 _load_related_histories 中通过 setMaximumWidth 设置
+        
         self._load_related_histories()
         
         return self.history_button
@@ -1127,6 +1130,16 @@ class AskDialog(QDialog):
         
         if not hasattr(self.response_handler, 'history_manager'):
             return
+        
+        # 动态调整菜单最大宽度，防止超出窗口
+        window_width = self.width()
+        # 菜单最大宽度为窗口宽度的 70%，但不超过 500px，不小于 250px
+        max_menu_width = max(250, min(500, int(window_width * 0.7)))
+        
+        # 使用 setMaximumWidth 而不是 setStyleSheet，这样可以保留 Qt 默认的 hover 效果
+        self.history_menu.setMaximumWidth(max_menu_width)
+        
+        logger.debug(f"历史记录菜单最大宽度设置为: {max_menu_width}px (窗口宽度: {window_width}px)")
         
         # 清空菜单
         self.history_menu.clear()
@@ -1150,11 +1163,16 @@ class AskDialog(QDialog):
         self.history_menu.addSeparator()
         
         # 历史记录列表（按时间倒序显示）
+        # 根据菜单宽度动态计算问题预览的最大字符数
+        # 估算：每个字符约占 8-10px，时间戳约占 150px，留出边距和图标空间
+        max_question_chars = max(15, int((max_menu_width - 200) / 10))
+        
         for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
-            # 显示问题的前30个字符
-            question_preview = history.get('question', '')[:30]
-            if len(history.get('question', '')) > 30:
+            # 显示问题的前 N 个字符（根据菜单宽度动态调整）
+            question_text = history.get('question', '')
+            question_preview = question_text[:max_question_chars]
+            if len(question_text) > max_question_chars:
                 question_preview += '...'
             display_text = f"{question_preview} - {history['timestamp']}"
             
@@ -1633,10 +1651,41 @@ class AskDialog(QDialog):
         QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
 
     def on_resize(self, event):
-        """窗口大小变化时的处理函数"""
+        """窗口大小变化时的处理函数（包含响应式布局调整）"""
         prefs = get_prefs()
         prefs['ask_dialog_width'] = self.width()
         prefs['ask_dialog_height'] = self.height()
+        
+        # 响应式布局调整
+        height = self.height()
+        
+        # 小屏幕优化（高度 < 650px）
+        if height < 650:
+            # 折叠元数据树（如果是多书模式）
+            if hasattr(self, 'metadata_tree') and self.is_multi_book:
+                for i in range(self.metadata_tree.topLevelItemCount()):
+                    item = self.metadata_tree.topLevelItem(i)
+                    if item:
+                        item.setExpanded(False)
+            
+            # 减小输入框高度
+            if hasattr(self, 'input_area'):
+                self.input_area.setFixedHeight(60)
+            
+            # 减小响应面板最小高度
+            if hasattr(self, 'response_panels'):
+                for panel in self.response_panels:
+                    panel.setMinimumHeight(250)
+        else:
+            # 正常尺寸：恢复默认设置
+            if hasattr(self, 'input_area'):
+                self.input_area.setFixedHeight(80)
+            
+            # 恢复响应面板最小高度
+            if hasattr(self, 'response_panels'):
+                for panel in self.response_panels:
+                    panel.setMinimumHeight(350)
+        
         super().resizeEvent(event)
 
     def update_model_info(self):
@@ -2037,24 +2086,41 @@ class AskDialog(QDialog):
             self.parallel_ai_count = 2
             prefs['parallel_ai_count'] = 2
         
-        # 根据并行AI数量动态设置最小宽度和高度
+        # 根据并行AI数量动态设置最小宽度和高度（降低最小高度以适应小屏幕）
         min_widths = {
             1: 600,   # 单个：保持现有
             2: 1000,  # 2个：每个500px
         }
         min_heights = {
-            1: 600,   # 单个：基础高度
-            2: 600,   # 2个横向：同样高度
+            1: 500,   # 单个：降低到500px以适应笔记本
+            2: 500,   # 2个横向：同样高度
         }
         self.setMinimumWidth(min_widths.get(self.parallel_ai_count, 600))
-        self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 600))
+        self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 500))
         
+        # 创建主布局（用于包含滚动区域）
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
+        
+        # 创建滚动区域
+        from PyQt5.QtWidgets import QScrollArea
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        
+        # 创建滚动内容容器
+        scroll_content = QWidget()
         layout = QVBoxLayout()
         layout.setSpacing(SPACING_MEDIUM)  # 使用统一的中等间距
         layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
-        self.setLayout(layout)
+        scroll_content.setLayout(layout)
         
-        # 创建顶部栏：标题 + 书籍信息（移除全局AI切换器，每个面板有自己的切换器）
+        self.scroll_area.setWidget(scroll_content)
+        main_layout.addWidget(self.scroll_area)
+        
+        # 创建顶部栏：标题 + 书籍信息
         top_bar = QHBoxLayout()
         top_bar.setSpacing(SPACING_SMALL)
         

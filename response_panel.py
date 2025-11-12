@@ -129,27 +129,28 @@ class ResponsePanel(QWidget):
         
         main_layout.addWidget(self.response_area, stretch=1)  # stretch=1 让它占据剩余空间
         
-        # === Button Bar（操作按钮） ===
+        # === Button Bar（操作按钮 - 紧凑布局） ===
         button_layout = QHBoxLayout()
         button_layout.setSpacing(SPACING_SMALL)
         
+        # 使用更紧凑的按钮宽度
         self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy'))
-        apply_button_style(self.copy_btn, min_width=80)
+        apply_button_style(self.copy_btn, min_width=70)
         self.copy_btn.clicked.connect(self.copy_response)
         self.copy_btn.setEnabled(False)  # 默认禁用，收到回复后启用
         
         self.copy_qa_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
-        apply_button_style(self.copy_qa_btn, min_width=100)
+        apply_button_style(self.copy_qa_btn, min_width=90)
         self.copy_qa_btn.clicked.connect(self.copy_question_response)
         self.copy_qa_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
         
-        self.export_btn = QPushButton(self.i18n.get('export_current_qa', 'Export Current Q&A'))
-        apply_button_style(self.export_btn, min_width=120)
+        self.export_btn = QPushButton(self.i18n.get('export_current_qa', 'Export Q&A'))
+        apply_button_style(self.export_btn, min_width=100)
         self.export_btn.clicked.connect(self.export_to_pdf)
         self.export_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
         
-        self.export_all_btn = QPushButton(self.i18n.get('export_history', 'Export History'))
-        apply_button_style(self.export_all_btn, min_width=100)
+        self.export_all_btn = QPushButton(self.i18n.get('export_history', 'Export All'))
+        apply_button_style(self.export_all_btn, min_width=90)
         self.export_all_btn.clicked.connect(self.export_all_history_to_pdf)
         self.export_all_btn.setEnabled(False)  # 默认禁用，当历史记录>=2时启用
         
