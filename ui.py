@@ -1300,7 +1300,7 @@ class AskDialog(QDialog):
                     )
                     logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
                     # 设置当前问题并更新按钮状态
-                    panel.set_current_question(question)
+                    panel.set_current_question(history['question'])
                 
                 # 清空未使用的面板
                 for idx in range(len(history_ai_ids), len(self.response_panels)):
@@ -1442,11 +1442,13 @@ class AskDialog(QDialog):
             # 创建新的元数据树
             new_metadata_tree = self._create_metadata_widget()
             
-            # 找到布局中的位置并插入
-            layout = self.layout()
-            # 元数据树应该在状态栏之后，输入区域之前
-            # 通常是索引 2 的位置
-            layout.insertWidget(2, new_metadata_tree)
+            # 找到滚动内容的布局并插入
+            # 由于使用了滚动区域，需要获取 scroll_content 的布局
+            scroll_content = self.scroll_area.widget()
+            layout = scroll_content.layout()
+            # 元数据树应该在顶部栏之后，输入区域之前
+            # 索引 1 的位置（0是顶部栏，1是元数据树，2是输入区域...）
+            layout.insertWidget(1, new_metadata_tree)
             
             # 更新顶部书籍信息标签
             if hasattr(self, 'books_info_label'):
