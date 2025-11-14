@@ -942,7 +942,13 @@ class AskDialog(QDialog):
         self.input_area.textChanged.connect(self._update_button_focus)
         
         # 加载历史记录
-        self._load_history()
+        has_loaded_history = self._load_history()
+        
+        # 初始化后更新所有面板的按钮状态（包括导出历史按钮）
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                if hasattr(panel, 'update_button_states'):
+                    panel.update_button_states()
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
@@ -951,7 +957,9 @@ class AskDialog(QDialog):
         self.resizeEvent = self.on_resize
         
         # 检查默认 AI 是否与当前选中的 AI 一致
-        self._check_default_ai_mismatch()
+        # 只有在没有加载历史记录时才检查（新对话），避免与历史记录的AI冲突
+        if not has_loaded_history:
+            self._check_default_ai_mismatch()
 
     def _generate_uid(self):
         """生成唯一 UID"""
@@ -1107,7 +1115,7 @@ class AskDialog(QDialog):
     
     def _create_history_switcher(self):
         """创建历史记录切换按钮和菜单"""
-        from PyQt5.QtWidgets import QToolButton, QMenu
+        from PyQt5.QtWidgets import QToolButton, QMenu, QActionGroup
         
         self.history_button = QToolButton()
         self.history_button.setText(self.i18n.get('history', '历史记录'))
@@ -1115,6 +1123,10 @@ class AskDialog(QDialog):
         
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
+        
+        # 创建动作组，用于实现单选效果
+        self.history_action_group = QActionGroup(self)
+        self.history_action_group.setExclusive(True)
         
         # 不设置自定义样式，使用 Qt 默认样式（包括 hover 效果）
         # 宽度限制将在 _load_related_histories 中通过 setMaximumWidth 设置
@@ -1155,9 +1167,11 @@ class AskDialog(QDialog):
             no_history_action.setEnabled(False)
             return
         
-        # 有历史记录时，添加"新对话"选项
+        # 有历史记录时，添加“新对话”选项
         new_conversation_action = self.history_menu.addAction(self.i18n.get('new_conversation', 'New Conversation'))
+        new_conversation_action.setCheckable(True)
         new_conversation_action.triggered.connect(self._on_new_conversation)
+        self.history_action_group.addAction(new_conversation_action)
         
         # 添加分隔线
         self.history_menu.addSeparator()
@@ -1166,6 +1180,9 @@ class AskDialog(QDialog):
         # 根据菜单宽度动态计算问题预览的最大字符数
         # 估算：每个字符约占 8-10px，时间戳约占 150px，留出边距和图标空间
         max_question_chars = max(15, int((max_menu_width - 200) / 10))
+        
+        # 标记是否找到匹配的历史记录
+        found_match = False
         
         for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
@@ -1179,7 +1196,20 @@ class AskDialog(QDialog):
             logger.debug(f"[历史记录菜单] 添加记录 {idx+1}: UID={history['uid']}, 问题={question_preview}, 时间={history['timestamp']}")
             
             action = self.history_menu.addAction(display_text)
+            action.setCheckable(True)
+            # 如果是当前UID，设置为选中状态
+            if history['uid'] == self.current_uid:
+                action.setChecked(True)
+                found_match = True
+                logger.debug(f"[历史记录菜单] 当前记录已选中: UID={history['uid']}")
             action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
+            # 添加到动作组，实现单选效果
+            self.history_action_group.addAction(action)
+        
+        # 如果没有找到匹配的历史记录，选中"新对话"
+        if not found_match:
+            new_conversation_action.setChecked(True)
+            logger.debug("[历史记录菜单] 当前为新对话，已选中'新对话'选项")
         
         # 在底部添加分隔线和清空选项
         self.history_menu.addSeparator()
@@ -1207,6 +1237,9 @@ class AskDialog(QDialog):
             # 单面板模式（向后兼容）
             self.response_area.clear()
             logger.info("切换到新对话，已清空响应区域")
+        
+        # 刷新历史记录菜单，更新选中状态
+        self._load_related_histories()
     
     def _on_history_switched(self, uid):
         """历史记录切换事件"""
@@ -1334,6 +1367,9 @@ class AskDialog(QDialog):
             )
         
         logger.info("历史记录切换完成")
+        
+        # 刷新历史记录菜单，更新选中状态
+        self._load_related_histories()
     
     def _on_clear_current_book_history(self):
         """清空当前书籍的历史记录"""
@@ -1466,7 +1502,11 @@ class AskDialog(QDialog):
             logger.error(f"重建元数据组件失败: {str(e)}")
 
     def _load_history(self):
-        """加载历史记录 - 智能匹配当前书籍组合"""
+        """加载历史记录 - 智能匹配当前书籍组合
+        
+        Returns:
+            bool: 如果成功加载了历史记录返回True，否则返回False
+        """
         import logging
         logger = logging.getLogger(__name__)
         
@@ -1495,7 +1535,8 @@ class AskDialog(QDialog):
                 
                 logger.info("已恢复待发送的随机问题状态，等待用户点击发送")
                 # 不从临时存储中删除，等用户发送后再删除
-                return
+                # 这不算加载历史记录，因为还没有AI回答
+                return False
             
             # 获取当前书籍ID集合
             current_book_ids = set([book.id for book in self.books_info])
@@ -1505,7 +1546,7 @@ class AskDialog(QDialog):
             
             if not all_histories:
                 logger.info("没有找到相关历史记录，显示新对话")
-                return
+                return False
             
             # 查找最佳匹配的历史记录
             matched_history = None
@@ -1540,28 +1581,54 @@ class AskDialog(QDialog):
                     logger.info(f"多面板模式，加载历史记录到 {len(self.response_panels)} 个面板")
                     
                     if 'answers' in matched_history and matched_history['answers']:
-                        for panel in self.response_panels:
-                            ai_id = panel.get_selected_ai()
-                            if ai_id and ai_id in matched_history['answers']:
-                                # 找到匹配的AI响应
-                                answer_data = matched_history['answers'][ai_id]
-                                answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
-                                panel.response_handler._update_ui_from_signal(
-                                    answer_text,
-                                    is_response=True,
-                                    is_history=True
-                                )
-                                logger.info(f"为面板 {panel.panel_index} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
-                            elif 'default' in matched_history['answers'] and panel.panel_index == 0:
-                                # 向后兼容：如果没有匹配的AI，第一个面板使用default
-                                answer_data = matched_history['answers']['default']
-                                answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
-                                panel.response_handler._update_ui_from_signal(
-                                    answer_text,
-                                    is_response=True,
-                                    is_history=True
-                                )
-                                logger.info(f"为面板 {panel.panel_index} 加载默认历史响应（长度: {len(answer_text)}）")
+                        # 获取历史记录中所有AI的ID（排除'default'）
+                        history_ai_ids = [ai_id for ai_id in matched_history['answers'].keys() if ai_id != 'default']
+                        
+                        # 如果历史记录中没有具体AI ID，只有default，则使用default
+                        if not history_ai_ids and 'default' in matched_history['answers']:
+                            history_ai_ids = ['default']
+                        
+                        logger.info(f"历史记录中包含 {len(history_ai_ids)} 个AI响应: {history_ai_ids}")
+                        
+                        # 为每个历史AI响应分配一个面板
+                        for idx, ai_id in enumerate(history_ai_ids):
+                            if idx >= len(self.response_panels):
+                                logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
+                                break
+                            
+                            panel = self.response_panels[idx]
+                            answer_data = matched_history['answers'][ai_id]
+                            answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                            
+                            # 如果历史记录中的AI不是'default'，设置面板的AI选择器
+                            if ai_id != 'default':
+                                # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
+                                panel.ai_switcher.blockSignals(True)
+                                # 尝试在AI切换器中选中对应的AI
+                                for i in range(panel.ai_switcher.count()):
+                                    if panel.ai_switcher.itemData(i) == ai_id:
+                                        panel.ai_switcher.setCurrentIndex(i)
+                                        logger.info(f"面板 {idx} 切换到AI: {ai_id}")
+                                        break
+                                panel.ai_switcher.blockSignals(False)
+                            
+                            # 加载历史响应
+                            panel.response_handler._update_ui_from_signal(
+                                answer_text,
+                                is_response=True,
+                                is_history=True
+                            )
+                            logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                            # 设置当前问题并更新按钮状态
+                            panel.set_current_question(matched_history['question'])
+                        
+                        # 清空未使用的面板
+                        for idx in range(len(history_ai_ids), len(self.response_panels)):
+                            self.response_panels[idx].response_area.clear()
+                            logger.debug(f"清空未使用的面板 {idx}")
+                        
+                        # 统一更新所有面板的AI切换器（实现互斥逻辑）
+                        self._update_all_panel_ai_switchers()
                     else:
                         logger.warning("历史记录中没有answers字段")
                 else:
@@ -1597,6 +1664,9 @@ class AskDialog(QDialog):
                     for panel in self.response_panels:
                         if hasattr(panel, 'update_export_all_button_state'):
                             panel.update_export_all_button_state()
+                
+                # 成功加载了历史记录
+                return True
             else:
                 logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
                 
@@ -1606,8 +1676,14 @@ class AskDialog(QDialog):
                         if hasattr(panel, 'update_export_all_button_state'):
                             panel.update_export_all_button_state()
                 
+                # 没有加载历史记录
+                return False
+                
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
     
     # 注意：clear_history() 方法已废弃，使用 _on_clear_current_book_history() 代替
     

@@ -607,9 +607,9 @@ class ResponsePanel(QWidget):
                 all_histories = self.parent_dialog.response_handler.history_manager.get_related_histories(book_ids)
                 history_count = len(all_histories)
         
-        # 历史记录>=2条时启用按钮
-        self.export_all_btn.setEnabled(history_count >= 2)
-        logger.debug(f"面板 {self.panel_index} 历史记录数量: {history_count}, 导出历史按钮状态: {'启用' if history_count >= 2 else '禁用'}")
+        # 历史记录>=1条时启用按钮
+        self.export_all_btn.setEnabled(history_count >= 1)
+        logger.debug(f"面板 {self.panel_index} 历史记录数量: {history_count}, 导出历史按钮状态: {'启用' if history_count >= 1 else '禁用'}")
     
     def export_all_history_to_pdf(self):
         """导出当前书籍的所有历史记录为单个PDF文件"""
@@ -633,12 +633,12 @@ class ResponsePanel(QWidget):
         book_ids = [book.id for book in self.parent_dialog.books_info]
         all_histories = self.parent_dialog.response_handler.history_manager.get_related_histories(book_ids)
         
-        if len(all_histories) < 2:
+        if len(all_histories) < 1:
             logger.warning(f"历史记录数量不足: {len(all_histories)}")
             QMessageBox.information(
                 self,
                 self.i18n.get('info', 'Information'),
-                self.i18n.get('export_history_insufficient', 'Need at least 2 history records to export.')
+                self.i18n.get('export_history_insufficient', 'Need at least 1 history record to export.')
             )
             return
         
@@ -846,11 +846,14 @@ class ResponsePanel(QWidget):
         # 复制回答按钮：只要有回答就启用
         self.copy_btn.setEnabled(has_response)
         
-        # 复制问答按钮：有问题和回答时启用
-        self.copy_qa_btn.setEnabled(has_question and has_response)
+        # 复制问答按钮：只要有回答就启用（问题可以为空）
+        self.copy_qa_btn.setEnabled(has_response)
         
-        # 导出当前问答按钮：有问题和回答时启用
-        self.export_btn.setEnabled(has_question and has_response)
+        # 导出当前问答按钮：只要有回答就启用（问题可以为空）
+        self.export_btn.setEnabled(has_response)
+        
+        # 导出历史按钮：独立判断，基于历史记录数量
+        self.update_export_all_button_state()
         
         logger.debug(f"面板 {self.panel_index} 按钮状态更新: 有回答={has_response}, 有问题={has_question}")
     
