@@ -32,7 +32,7 @@ class ResponsePanel(QWidget):
     request_started = pyqtSignal(int)  # panel_index
     request_finished = pyqtSignal(int)  # panel_index
     
-    def __init__(self, panel_index, parent, api, i18n):
+    def __init__(self, panel_index, parent, api, i18n, show_ai_switcher=True):
         """初始化响应面板
         
         Args:
@@ -40,6 +40,7 @@ class ResponsePanel(QWidget):
             parent: 父窗口
             api: API客户端实例
             i18n: 国际化字典
+            show_ai_switcher: 是否在面板内显示 AI 切换器（默认 True）
         """
         super().__init__(parent)
         self.panel_index = panel_index
@@ -47,6 +48,7 @@ class ResponsePanel(QWidget):
         self.api = api
         self.i18n = i18n
         self.response_handler = None  # 将在setup后初始化
+        self.show_ai_switcher = show_ai_switcher
         
         # 标志：是否正在初始化（用于避免初始化时弹出确认对话框）
         self._is_initializing = True
@@ -65,17 +67,44 @@ class ResponsePanel(QWidget):
         main_layout.setSpacing(SPACING_MEDIUM)
         
         # === Header 区域（横向） ===
-        header_layout = QHBoxLayout()
-        header_layout.setSpacing(SPACING_SMALL)
+        # 只有当 show_ai_switcher 为 True 时才显示 header
+        if self.show_ai_switcher:
+            header_layout = QHBoxLayout()
+            header_layout.setSpacing(SPACING_SMALL)
+            
+            # AI切换器（直接显示模型名称，不需要"AI 1:"标签）
+            from .ui_constants import BUTTON_HEIGHT
+            self.ai_switcher = NoScrollComboBox()
+            self.ai_switcher.setMinimumWidth(200)
+            self.ai_switcher.setFixedHeight(BUTTON_HEIGHT)  # 与按钮保持相同高度
+            # 设置样式：文字左对齐
+            self.ai_switcher.setStyleSheet("""
+                QComboBox {
+                    text-align: left;
+                    padding-left: 8px;
+                }
+            """)
+            self.ai_switcher.currentIndexChanged.connect(self.on_ai_switched)
+            header_layout.addWidget(self.ai_switcher)
+            header_layout.addStretch()
+            
+            main_layout.addLayout(header_layout)
+        else:
+            # 不显示 header，但仍然创建 ai_switcher（将被添加到外部布局）
+            from .ui_constants import BUTTON_HEIGHT
+            self.ai_switcher = NoScrollComboBox()
+            self.ai_switcher.setMinimumWidth(200)
+            self.ai_switcher.setFixedHeight(BUTTON_HEIGHT)
+            self.ai_switcher.setStyleSheet("""
+                QComboBox {
+                    text-align: left;
+                    padding-left: 8px;
+                }
+            """)
+            self.ai_switcher.currentIndexChanged.connect(self.on_ai_switched)
         
-        # AI切换器（直接显示模型名称，不需要"AI 1:"标签）
-        self.ai_switcher = NoScrollComboBox()
-        self.ai_switcher.setMinimumWidth(200)
-        self.ai_switcher.currentIndexChanged.connect(self.on_ai_switched)
-        header_layout.addWidget(self.ai_switcher)
-        header_layout.addStretch()
-        
-        main_layout.addLayout(header_layout)
+        # === 历史记录信息栏（可选显示） ===
+        self.history_info_bar = None  # 初始为None，加载历史时才创建
         
         # === Response Area（占据主要空间） ===
         self.response_area = QTextBrowser()
@@ -836,11 +865,18 @@ class ResponsePanel(QWidget):
     def clear_response(self):
         """清空响应区域"""
         self.response_area.clear()
+        # 同时隐藏历史信息栏（如果存在）
+        self.hide_history_info()
     
     def update_button_states(self):
         """根据当前内容更新按钮状态"""
         # 获取当前的问题和回答
-        has_response = bool(self.response_area.toPlainText().strip())
+        # 检查纯文本内容或 HTML 内容（因为 setHtml 后 toPlainText 可能需要时间更新）
+        plain_text = self.response_area.toPlainText().strip()
+        html_text = self.response_area.toHtml().strip()
+        
+        # 只要有纯文本或 HTML 内容就认为有回答
+        has_response = bool(plain_text) or (bool(html_text) and len(html_text) > 100)  # HTML 长度 > 100 避免空标签
         has_question = bool(self.current_question.strip()) if hasattr(self, 'current_question') and self.current_question else False
         
         # 复制回答按钮：只要有回答就启用
@@ -855,9 +891,98 @@ class ResponsePanel(QWidget):
         # 导出历史按钮：独立判断，基于历史记录数量
         self.update_export_all_button_state()
         
-        logger.debug(f"面板 {self.panel_index} 按钮状态更新: 有回答={has_response}, 有问题={has_question}")
+        logger.debug(f"面板 {self.panel_index} 按钮状态更新: 有回答={has_response} (纯文本={len(plain_text)}, HTML={len(html_text)}), 有问题={has_question}")
     
     def set_current_question(self, question):
         """设置当前问题（用于按钮状态判断）"""
         self.current_question = question
         self.update_button_states()
+    
+    def show_history_info(self, ai_id, timestamp, ai_available=True):
+        """显示历史记录信息栏
+        
+        Args:
+            ai_id: 历史记录使用的AI ID
+            timestamp: 历史记录时间戳
+            ai_available: 该AI是否仍然可用
+        """
+        from PyQt5.QtWidgets import QLabel
+        from .config import get_prefs
+        from .ui_constants import SPACING_TINY
+        from .api import APIClient
+        from .models.base import DEFAULT_MODELS
+        
+        # 如果已存在信息栏，先移除
+        if self.history_info_bar:
+            self.hide_history_info()
+        
+        # 创建信息栏（使用简单的QLabel）
+        self.history_info_bar = QLabel()
+        
+        # 获取AI的完整显示名称（包含模型信息）
+        prefs = get_prefs()
+        ai_configs = prefs.get('ai_configs', {})
+        
+        # 先尝试从配置中获取
+        if ai_id in ai_configs:
+            config = ai_configs[ai_id]
+            display_name = config.get('display_name', ai_id)
+            model_name = config.get('model', '')
+            if model_name:
+                ai_full_display = f"{display_name} - {model_name}"
+            else:
+                ai_full_display = display_name
+        else:
+            # AI 配置不存在，尝试从 DEFAULT_MODELS 获取显示名称
+            ai_provider = APIClient._MODEL_TO_PROVIDER.get(ai_id)
+            if ai_provider and ai_provider in DEFAULT_MODELS:
+                display_name = DEFAULT_MODELS[ai_provider].display_name
+                # 尝试获取模型名称
+                model_name = ai_id if ai_id != 'default' else ''
+                if model_name:
+                    ai_full_display = f"{display_name} - {model_name}"
+                else:
+                    ai_full_display = display_name
+            else:
+                # 完全找不到，使用 ai_id
+                ai_full_display = ai_id
+        
+        # 构建提示文本
+        if ai_available:
+            info_text = f"{ai_full_display} | 生成于: {timestamp}"
+        else:
+            info_text = f"{ai_full_display} (已移除) | 生成于: {timestamp}"
+        
+        self.history_info_bar.setText(info_text)
+        self.history_info_bar.setStyleSheet(f"""
+            QLabel {{
+                color: palette(dark);
+                font-size: 11px;
+                padding: 0px;
+                margin-top: {SPACING_TINY}px;
+                margin-bottom: 0px;
+            }}
+        """)
+        
+        # 将信息栏插入到响应区域和按钮栏之间
+        main_layout = self.layout()
+        # 找到response_area的位置
+        response_area_index = -1
+        for i in range(main_layout.count()):
+            item = main_layout.itemAt(i)
+            if item.widget() == self.response_area:
+                response_area_index = i
+                break
+        
+        # 插入到响应区域的下一个位置（即按钮栏之前）
+        if response_area_index >= 0:
+            main_layout.insertWidget(response_area_index + 1, self.history_info_bar)
+            logger.debug(f"面板 {self.panel_index} 显示历史信息栏: AI={ai_full_display}, 时间={timestamp}, 可用={ai_available}")
+    
+    def hide_history_info(self):
+        """隐藏并移除历史记录信息栏"""
+        if self.history_info_bar:
+            self.history_info_bar.setParent(None)
+            self.history_info_bar.deleteLater()
+            self.history_info_bar = None
+            logger.debug(f"面板 {self.panel_index} 隐藏历史信息栏")

@@ -969,10 +969,59 @@ class AskDialog(QDialog):
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         book_ids = sorted([str(book.id) for book in self.books_info])
         book_ids_str = ','.join(book_ids)
-        hash_suffix = hashlib.md5(book_ids_str.encode()).hexdigest()[:12]
-        
-        return f"{timestamp}_{hash_suffix}"
+        unique_string = f"{timestamp}_{book_ids_str}"
+        uid_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
+        return f"{timestamp}_{uid_hash}"
     
+    def _update_history_info_label(self, ai_id, timestamp):
+        """更新历史信息标签
+        
+        Args:
+            ai_id: AI ID
+            timestamp: 时间戳
+        """
+        from .config import get_prefs
+        from .api import APIClient
+        from .models.base import DEFAULT_MODELS
+        
+        # 获取 AI 显示名称
+        prefs = get_prefs()
+        ai_configs = prefs.get('ai_configs', {})
+        
+        if ai_id in ai_configs:
+            config = ai_configs[ai_id]
+            display_name = config.get('display_name', ai_id)
+            model_name = config.get('model', '')
+            if model_name:
+                ai_display = f"{display_name} - {model_name}"
+            else:
+                ai_display = display_name
+        else:
+            ai_provider = APIClient._MODEL_TO_PROVIDER.get(ai_id)
+            if ai_provider and ai_provider in DEFAULT_MODELS:
+                display_name = DEFAULT_MODELS[ai_provider].display_name
+                model_name = ai_id if ai_id != 'default' else ''
+                if model_name:
+                    ai_display = f"{display_name} - {model_name}"
+                else:
+                    ai_display = display_name
+            else:
+                ai_display = ai_id
+        
+        # 格式化时间戳（缩略显示）
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+            # 只显示日期和时间，不显示秒
+            time_display = dt.strftime('%m-%d %H:%M')
+        except:
+            time_display = timestamp
+        
+        # 更新标签文本
+        info_text = f"AI: {ai_display} | {time_display}"
+        self.history_info_label.setText(info_text)
+        self.history_info_label.setVisible(True)
+
     def _extract_metadata(self, book_info):
         """提取单本书的元数据"""
         pubdate = book_info.get('pubdate', '')
@@ -1018,8 +1067,8 @@ class AskDialog(QDialog):
         
         self.metadata_tree = QTreeWidget()
         self.metadata_tree.setHeaderHidden(True)
-        # 减小最大高度，给 response area 更多空间
-        self.metadata_tree.setMaximumHeight(120)  # 从 300 减小到 120
+        # 设置为3行文字的高度（每行约20px，加上一些边距）
+        self.metadata_tree.setMaximumHeight(70)  # 3行 x 20px + 边距 ≈ 70px
         # 确保在内容超出时显示垂直滚动条
         self.metadata_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # 禁用水平滚动条，避免横向滚动
@@ -1116,10 +1165,11 @@ class AskDialog(QDialog):
     def _create_history_switcher(self):
         """创建历史记录切换按钮和菜单"""
         from PyQt5.QtWidgets import QToolButton, QMenu, QActionGroup
+        from .ui_constants import BUTTON_HEIGHT
         
         self.history_button = QToolButton()
         self.history_button.setText(self.i18n.get('history', '历史记录'))
-        self.history_button.setPopupMode(QToolButton.InstantPopup)
+        self.history_button.setPopupMode(QToolButton.InstantPopup)  # 点击整个按钮弹出菜单
         
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
@@ -1128,8 +1178,13 @@ class AskDialog(QDialog):
         self.history_action_group = QActionGroup(self)
         self.history_action_group.setExclusive(True)
         
-        # 不设置自定义样式，使用 Qt 默认样式（包括 hover 效果）
-        # 宽度限制将在 _load_related_histories 中通过 setMaximumWidth 设置
+        # 设置与 AI 切换器一致的样式和大小
+        self.history_button.setMinimumWidth(200)  # 与 AI 切换器相同
+        self.history_button.setFixedHeight(BUTTON_HEIGHT)  # 与 AI 切换器相同高度
+        
+        # 应用标准的 ToolButton 菜单样式
+        from .ui_constants import get_toolbutton_menu_style
+        self.history_button.setStyleSheet(get_toolbutton_menu_style())
         
         self._load_related_histories()
         
@@ -1153,13 +1208,21 @@ class AskDialog(QDialog):
         
         logger.debug(f"历史记录菜单最大宽度设置为: {max_menu_width}px (窗口宽度: {window_width}px)")
         
-        # 清空菜单
+        # 清空菜单和动作组
         self.history_menu.clear()
+        # 清空动作组中的所有动作
+        for action in self.history_action_group.actions():
+            self.history_action_group.removeAction(action)
         
         # 获取当前书籍的所有历史记录
         book_ids = [book.id for book in self.books_info]
         all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
         logger.info(f"[历史记录菜单] 加载历史记录: 书籍ID={book_ids}, 找到 {len(all_histories)} 条记录")
+        
+        # 输出所有历史记录的 UID，帮助调试
+        if all_histories:
+            history_uids = [h['uid'] for h in all_histories[:5]]  # 只显示前5个
+            logger.debug(f"[历史记录菜单] 前5条历史记录UID: {history_uids}")
         
         if not all_histories:
             # 如果没有历史记录，只显示提示，不显示其他选项
@@ -1183,14 +1246,19 @@ class AskDialog(QDialog):
         
         # 标记是否找到匹配的历史记录
         found_match = False
+        logger.debug(f"[历史记录菜单] 当前 UID: {self.current_uid}")
         
         for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
             # 显示问题的前 N 个字符（根据菜单宽度动态调整）
-            question_text = history.get('question', '')
-            question_preview = question_text[:max_question_chars]
-            if len(question_text) > max_question_chars:
-                question_preview += '...'
+            question_text = history.get('question', '').strip()
+            if not question_text:
+                # 使用占位符文本显示空问题
+                question_preview = self.i18n.get('empty_question_placeholder', '(No question)')
+            else:
+                question_preview = question_text[:max_question_chars]
+                if len(question_text) > max_question_chars:
+                    question_preview += '...'
             display_text = f"{question_preview} - {history['timestamp']}"
             
             logger.debug(f"[历史记录菜单] 添加记录 {idx+1}: UID={history['uid']}, 问题={question_preview}, 时间={history['timestamp']}")
@@ -1201,7 +1269,9 @@ class AskDialog(QDialog):
             if history['uid'] == self.current_uid:
                 action.setChecked(True)
                 found_match = True
-                logger.debug(f"[历史记录菜单] 当前记录已选中: UID={history['uid']}")
+                logger.info(f"[历史记录菜单] ✓ 匹配成功！当前记录已选中: UID={history['uid']}, 问题={question_preview}")
+            else:
+                logger.debug(f"[历史记录菜单] ✗ 不匹配: 历史UID={history['uid']}, 当前UID={self.current_uid}")
             action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
             # 添加到动作组，实现单选效果
             self.history_action_group.addAction(action)
@@ -1313,17 +1383,37 @@ class AskDialog(QDialog):
                     answer_data = history['answers'][ai_id]
                     answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
                     
-                    # 如果历史记录中的AI不是'default'，设置面板的AI选择器
+                    # 智能AI切换：检查历史AI是否仍然可用
                     if ai_id != 'default':
                         # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
                         panel.ai_switcher.blockSignals(True)
-                        # 尝试在AI切换器中选中对应的AI
+                        
+                        # 检查历史AI是否在当前可用的AI列表中
+                        ai_found = False
                         for i in range(panel.ai_switcher.count()):
                             if panel.ai_switcher.itemData(i) == ai_id:
                                 panel.ai_switcher.setCurrentIndex(i)
-                                logger.info(f"面板 {idx} 切换到AI: {ai_id}")
+                                logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
+                                ai_found = True
                                 break
+                        
+                        # 如果历史AI不可用，使用默认AI
+                        if not ai_found:
+                            prefs = get_prefs()
+                            default_ai = prefs.get('selected_model', 'grok')
+                            logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                            
+                            # 尝试切换到默认AI
+                            for i in range(panel.ai_switcher.count()):
+                                if panel.ai_switcher.itemData(i) == default_ai:
+                                    panel.ai_switcher.setCurrentIndex(i)
+                                    logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                    break
+                        
                         panel.ai_switcher.blockSignals(False)
+                    
+                    # 先设置当前问题
+                    panel.set_current_question(history['question'])
                     
                     # 加载历史响应
                     panel.response_handler._update_ui_from_signal(
@@ -1332,8 +1422,14 @@ class AskDialog(QDialog):
                         is_history=True
                     )
                     logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
-                    # 设置当前问题并更新按钮状态
-                    panel.set_current_question(history['question'])
+                    
+                    # 更新历史信息标签（只在第一个面板时更新）
+                    if idx == 0:
+                        timestamp = history.get('timestamp', '未知时间')
+                        self._update_history_info_label(ai_id, timestamp)
+                    
+                    # 再次更新按钮状态（确保在响应加载后更新）
+                    panel.update_button_states()
                 
                 # 清空未使用的面板
                 for idx in range(len(history_ai_ids), len(self.response_panels)):
@@ -1548,7 +1644,7 @@ class AskDialog(QDialog):
                 logger.info("没有找到相关历史记录，显示新对话")
                 return False
             
-            # 查找最佳匹配的历史记录
+            # 查找最佳匹配的历史记录（始终加载最新的，不过滤空问题）
             matched_history = None
             
             # 优先级1: 完全匹配（UID相同的书籍组合）
@@ -1556,9 +1652,13 @@ class AskDialog(QDialog):
                 history_book_ids = set([book['id'] for book in history['books']])
                 if history_book_ids == current_book_ids:
                     matched_history = history
-                    logger.info(f"找到完全匹配的历史记录: UID={history['uid']}, 书籍数={len(history['books'])}")
+                    question = history.get('question', '').strip()
+                    question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
+                    logger.info(f"找到完全匹配的历史记录: UID={history['uid']}, 书籍数={len(history['books'])}, 问题={question_preview}")
                     # 使用现有 UID，不创建新的
+                    old_uid = self.current_uid
                     self.current_uid = history['uid']
+                    logger.info(f"[UID更新] {old_uid} -> {self.current_uid}")
                     break
             
             # 优先级2: 当前选择被包含在某个历史记录中
@@ -1567,7 +1667,9 @@ class AskDialog(QDialog):
                     history_book_ids = set([book['id'] for book in history['books']])
                     if current_book_ids.issubset(history_book_ids):
                         matched_history = history
-                        logger.info(f"找到包含关系的历史记录: UID={history['uid']}, 历史书籍数={len(history['books'])}, 当前书籍数={len(current_book_ids)}")
+                        question = history.get('question', '').strip()
+                        question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
+                        logger.info(f"找到包含关系的历史记录: UID={history['uid']}, 历史书籍数={len(history['books'])}, 当前书籍数={len(current_book_ids)}, 问题={question_preview}")
                         # 保持当前 UID，只有发起新对话时才会创建新 UID
                         break
             
@@ -1600,17 +1702,37 @@ class AskDialog(QDialog):
                             answer_data = matched_history['answers'][ai_id]
                             answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
                             
-                            # 如果历史记录中的AI不是'default'，设置面板的AI选择器
+                            # 智能AI切换：检查历史AI是否仍然可用
                             if ai_id != 'default':
                                 # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
                                 panel.ai_switcher.blockSignals(True)
-                                # 尝试在AI切换器中选中对应的AI
+                                
+                                # 检查历史AI是否在当前可用的AI列表中
+                                ai_found = False
                                 for i in range(panel.ai_switcher.count()):
                                     if panel.ai_switcher.itemData(i) == ai_id:
                                         panel.ai_switcher.setCurrentIndex(i)
-                                        logger.info(f"面板 {idx} 切换到AI: {ai_id}")
+                                        logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
+                                        ai_found = True
                                         break
+                                
+                                # 如果历史AI不可用，使用默认AI
+                                if not ai_found:
+                                    prefs = get_prefs()
+                                    default_ai = prefs.get('selected_model', 'grok')
+                                    logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                                    
+                                    # 尝试切换到默认AI
+                                    for i in range(panel.ai_switcher.count()):
+                                        if panel.ai_switcher.itemData(i) == default_ai:
+                                            panel.ai_switcher.setCurrentIndex(i)
+                                            logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                            break
+                                
                                 panel.ai_switcher.blockSignals(False)
+                            
+                            # 先设置当前问题
+                            panel.set_current_question(matched_history['question'])
                             
                             # 加载历史响应
                             panel.response_handler._update_ui_from_signal(
@@ -1619,8 +1741,14 @@ class AskDialog(QDialog):
                                 is_history=True
                             )
                             logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
-                            # 设置当前问题并更新按钮状态
-                            panel.set_current_question(matched_history['question'])
+                            
+                            # 更新历史信息标签（只在第一个面板时更新）
+                            if idx == 0:
+                                timestamp = matched_history.get('timestamp', '未知时间')
+                                self._update_history_info_label(ai_id, timestamp)
+                            
+                            # 再次更新按钮状态（确保在响应加载后更新）
+                            panel.update_button_states()
                         
                         # 清空未使用的面板
                         for idx in range(len(history_ai_ids), len(self.response_panels)):
@@ -1664,6 +1792,9 @@ class AskDialog(QDialog):
                     for panel in self.response_panels:
                         if hasattr(panel, 'update_export_all_button_state'):
                             panel.update_export_all_button_state()
+                
+                # 刷新历史记录菜单，更新选中状态
+                self._load_related_histories()
                 
                 # 成功加载了历史记录
                 return True
@@ -1803,11 +1934,12 @@ class AskDialog(QDialog):
         lang_code = lang_code.lower().strip()
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
     
-    def _create_response_container(self, count: int):
+    def _create_response_container(self, count: int, action_layout=None):
         """根据并行AI数量创建响应容器
         
         Args:
             count: 并行AI数量 (目前仅支持1-2)
+            action_layout: 操作区域的布局，用于添加 AI 切换器
         
         Returns:
             包含响应面板的容器组件
@@ -1840,7 +1972,9 @@ class AskDialog(QDialog):
         
         # 简化逻辑：只处理1-2个面板
         for i in range(count):
-            panel = ResponsePanel(i, self, self.api, self.i18n)
+            # 第一个面板的 AI 切换器放在 action_layout，其他面板保留在自己的 header
+            show_ai_switcher_in_panel = (i > 0 or action_layout is None)
+            panel = ResponsePanel(i, self, self.api, self.i18n, show_ai_switcher=show_ai_switcher_in_panel)
             panel.ai_changed.connect(self._on_panel_ai_changed)
             self._setup_panel_handler(panel)
             self.response_panels.append(panel)
@@ -1849,6 +1983,13 @@ class AskDialog(QDialog):
         # 初始化所有面板的AI切换器，并设置默认选择
         self._update_all_panel_ai_switchers()
         self._set_default_ai_selections()
+        
+        # 如果有 action_layout，将第一个面板的 AI 切换器添加到操作区域
+        if action_layout and self.response_panels:
+            first_panel = self.response_panels[0]
+            if hasattr(first_panel, 'ai_switcher'):
+                # 在 action_layout 的最左侧插入 AI 切换器
+                action_layout.insertWidget(0, first_panel.ai_switcher)
         
         return container
     
@@ -2212,7 +2353,7 @@ class AskDialog(QDialog):
             book_count = len(self.books_info)
             books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
             self.books_info_label = QLabel(books_info_text)
-            self.books_info_label.setStyleSheet("color: #888; font-size: 12px; margin-left: 8px;")
+            self.books_info_label.setStyleSheet("color: palette(dark); font-size: 12px; margin-left: 8px;")
             top_bar.addWidget(self.books_info_label)
         
         top_bar.addStretch()
@@ -2246,9 +2387,8 @@ class AskDialog(QDialog):
         action_layout = QHBoxLayout()
         action_layout.setSpacing(SPACING_SMALL)
         
-        # 左侧：历史记录按钮
-        history_button = self._create_history_switcher()
-        action_layout.addWidget(history_button)
+        # 左侧：AI 切换器（从 response_panel 移到这里）
+        # 注意：AI 切换器将在 _create_response_container 中创建并添加到这里
         
         # 添加弹性空间，将右侧按钮推到右边
         action_layout.addStretch()
@@ -2295,8 +2435,33 @@ class AskDialog(QDialog):
         
         layout.addLayout(action_layout)
         
+        # 创建历史记录信息栏（在响应面板之前）
+        history_info_layout = QHBoxLayout()
+        history_info_layout.setSpacing(SPACING_SMALL)
+        history_info_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 左侧：历史记录按钮
+        history_button = self._create_history_switcher()
+        history_info_layout.addWidget(history_button)
+        
+        # 右侧：历史信息标签（初始隐藏）
+        self.history_info_label = QLabel()
+        self.history_info_label.setStyleSheet("""
+            QLabel {
+                color: palette(dark);
+                font-size: 12px;
+                padding: 5px;
+            }
+        """)
+        self.history_info_label.setVisible(False)
+        history_info_layout.addWidget(self.history_info_label)
+        history_info_layout.addStretch()
+        
+        layout.addLayout(history_info_layout)
+        
         # 创建响应面板容器（支持多AI并行）
-        response_container = self._create_response_container(self.parallel_ai_count)
+        # 传递 action_layout 以便将 AI 切换器添加到操作区域
+        response_container = self._create_response_container(self.parallel_ai_count, action_layout)
         layout.addWidget(response_container)
         
         # 为向后兼容，保留 response_area 和 response_handler 引用（指向第一个面板）

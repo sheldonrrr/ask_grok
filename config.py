@@ -255,9 +255,9 @@ class ModelConfigWidget(QWidget):
         model_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
         main_layout.addLayout(model_layout)
         
-        # 计算基础宽度
+        # 计算基础宽度（减少字符数，避免超出窗口宽度）
         font_metrics = QFontMetrics(self.font())
-        base_width = font_metrics.width('X' * 40)  # 基于40个字符的宽度
+        base_width = font_metrics.width('X' * 35)  # 基于35个字符的宽度，避免水平滚动条
         
         # 获取模型配置
         model_config = None
@@ -318,7 +318,7 @@ class ModelConfigWidget(QWidget):
             separator = QFrame()
             separator.setFrameShape(QFrame.HLine)
             separator.setFrameShadow(QFrame.Plain)
-            separator.setStyleSheet("border-top: 1px dashed #aaaaaa; margin-top: 15px; margin-bottom: 15px; background: none;")
+            separator.setStyleSheet("border-top: 1px dashed palette(mid); margin-top: 15px; margin-bottom: 15px; background: none;")
             separator.setMinimumHeight(10)
             main_layout.addWidget(separator)
             
@@ -1420,7 +1420,7 @@ class ConfigDialog(QWidget):
         
     def setup_ui(self):
         # 设置窗口属性
-        self.setMinimumWidth(600)
+        self.setMinimumWidth(700)  # 增加最小宽度，避免水平滚动条
         self.setMinimumHeight(500)
         
         # 创建主布局
@@ -1605,10 +1605,11 @@ class ConfigDialog(QWidget):
         self._update_panel_ai_selectors()
         
         # 添加并行AI提示信息
+        from .ui_constants import TEXT_COLOR_SECONDARY
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
             'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
         parallel_notice.setWordWrap(True)
-        parallel_notice.setStyleSheet("color: palette(mid); padding: 5px 0;")
+        parallel_notice.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: 5px 0; font-style: italic;")
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
@@ -1725,7 +1726,7 @@ class ConfigDialog(QWidget):
         
         # 添加占位符说明
         placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
-        placeholder_hint.setStyleSheet("color: palette(mid); font-style: italic; padding: 5px 0;")
+        placeholder_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-style: italic; padding: 5px 0;")
         placeholder_hint.setWordWrap(True)
         multi_book_template_layout.addWidget(placeholder_hint)
         

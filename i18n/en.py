@@ -168,6 +168,8 @@ class EnglishTranslation(BaseTranslation):
             'deleted': 'Deleted',
             'history': 'History',
             'no_history': 'No history records',
+            'empty_question_placeholder': '(No question)',
+            'history_ai_unavailable': 'This AI has been removed from configuration',
             'clear_current_book_history': 'Clear Current Book History',
             'confirm_clear_book_history': 'Are you sure you want to clear all history for:\n{book_titles}?',
             'confirm': 'Confirm',

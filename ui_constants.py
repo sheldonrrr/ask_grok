@@ -56,8 +56,8 @@ SEPARATOR_COLOR = "#d0d0d0"
 
 # 文字颜色
 TEXT_COLOR_PRIMARY = "palette(text)"
-TEXT_COLOR_SECONDARY = "#666666"
-TEXT_COLOR_DISABLED = "#999999"
+TEXT_COLOR_SECONDARY = "palette(dark)"  # 使用 Qt 调色板，支持明暗模式
+TEXT_COLOR_DISABLED = "palette(mid)"  # 使用 Qt 调色板，支持明暗模式
 
 # 背景颜色
 BG_COLOR_BASE = "palette(base)"
@@ -84,6 +84,8 @@ def get_groupbox_style(border_style="dashed"):
             padding: {PADDING_LARGE}px;
             margin-top: {SPACING_SMALL}px;
             margin-bottom: {SPACING_MEDIUM}px;
+            margin-left: {SPACING_SMALL}px;
+            margin-right: {SPACING_SMALL}px;
         }}
         QGroupBox::title {{
             font-weight: bold;
@@ -130,6 +132,37 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             padding: {STANDARD_BUTTON_PADDING};
             text-align: center;
             min-width: {min_width}px;
+        }}
+    """
+
+
+def get_toolbutton_menu_style():
+    """
+    获取带下拉菜单的 QToolButton 样式
+    
+    Returns:
+        str: QToolButton 的 CSS 样式字符串
+    """
+    # 解析标准 padding
+    padding_parts = STANDARD_BUTTON_PADDING.split()
+    vertical_padding = padding_parts[0] if len(padding_parts) > 0 else "5px"
+    horizontal_padding = padding_parts[1] if len(padding_parts) > 1 else "12px"
+    
+    return f"""
+        QToolButton {{
+            padding-top: {vertical_padding};
+            padding-bottom: {vertical_padding};
+            padding-left: {horizontal_padding};
+            padding-right: 30px;
+            text-align: left;
+            font-size: 13px;
+        }}
+        QToolButton::menu-indicator {{
+            subcontrol-origin: padding;
+            subcontrol-position: center right;
+            right: 8px;
+            width: 12px;
+            height: 12px;
         }}
     """
 
