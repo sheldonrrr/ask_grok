@@ -2,7 +2,7 @@
 
 ## 🚀 更新版本号到 X.Y.Z
 
-### 第一步：更新版本号（4 个位置）
+### 第一步：更新版本号（5 个位置）
 
 ```bash
 # 1️⃣ version.py Line 11
@@ -14,7 +14,10 @@ VERSION = (X, Y, Z) # 版本号推送触发
 # 3️⃣ __init__.py Line 84
 version = (X, Y, Z)
 
-# 4️⃣ ui.py - 自动计算（无需手动更新）
+# 4️⃣ setup.py Line 15
+version='X.Y.Z'
+
+# 5️⃣ ui.py - 自动计算（无需手动更新）
 # VERSION_DISPLAY 从 version.py 自动导入
 ```
 
@@ -28,11 +31,13 @@ cd /home/she/ask_grok
 # 检查所有版本号
 grep -n "VERSION = (" version.py __init__.py
 grep -n "version.*= (" __init__.py
+grep -n "version=" setup.py
 
 # 应该看到：
 # version.py:11:VERSION = (X, Y, Z)
 # __init__.py:22:VERSION = (X, Y, Z) # 版本号推送触发
 # __init__.py:84:    version             = (X, Y, Z)
+# setup.py:15:    version='X.Y.Z',
 ```
 
 ---
@@ -71,6 +76,7 @@ calibre-debug -g
 - [ ] version.py 已更新
 - [ ] __init__.py Line 22 已更新（🔴 最重要）
 - [ ] __init__.py Line 84 已更新
+- [ ] setup.py Line 15 已更新
 - [ ] 版本号验证通过
 - [ ] 插件构建成功
 - [ ] calibre 加载正常
@@ -97,6 +103,9 @@ calibre-debug -g
 
 ### ❌ 忘记更新 __init__.py Line 84
 **后果：** 插件管理器显示旧版本号
+
+### ❌ 忘记更新 setup.py Line 15
+**后果：** setuptools 安装时显示旧版本号
 
 ---
 

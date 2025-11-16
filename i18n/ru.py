@@ -152,6 +152,8 @@ class RussianTranslation(BaseTranslation):
             'deleted': 'Удалено',
             'history': 'История',
             'no_history': 'Нет записей истории',
+            'empty_question_placeholder': '(Нет вопроса)',
+            'history_ai_unavailable': 'Этот ИИ был удален из конфигурации',
             'clear_current_book_history': 'Очистить историю текущей книги',
             'confirm_clear_book_history': 'Вы уверены, что хотите очистить всю историю для:\n{book_titles}?',
             'confirm': 'Подтвердить',

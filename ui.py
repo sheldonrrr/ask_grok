@@ -1246,7 +1246,7 @@ class AskDialog(QDialog):
         
         # 标记是否找到匹配的历史记录
         found_match = False
-        logger.debug(f"[历史记录菜单] 当前 UID: {self.current_uid}")
+        logger.info(f"[历史记录菜单] 开始匹配 - 当前 UID: {self.current_uid}")
         
         for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
@@ -1279,7 +1279,9 @@ class AskDialog(QDialog):
         # 如果没有找到匹配的历史记录，选中"新对话"
         if not found_match:
             new_conversation_action.setChecked(True)
-            logger.debug("[历史记录菜单] 当前为新对话，已选中'新对话'选项")
+            logger.info(f"[历史记录菜单] 未找到匹配记录，已选中'新对话'选项 (当前UID: {self.current_uid})")
+        else:
+            logger.info(f"[历史记录菜单] 匹配完成 - 已选中历史记录 (UID: {self.current_uid})")
         
         # 在底部添加分隔线和清空选项
         self.history_menu.addSeparator()
@@ -2332,7 +2334,7 @@ class AskDialog(QDialog):
         # 创建滚动内容容器
         scroll_content = QWidget()
         layout = QVBoxLayout()
-        layout.setSpacing(SPACING_MEDIUM)  # 使用统一的中等间距
+        layout.setSpacing(0)  # 手动控制每个元素的间距
         layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
         scroll_content.setLayout(layout)
         
@@ -2360,9 +2362,16 @@ class AskDialog(QDialog):
         
         layout.addLayout(top_bar)
         
+        # 区域1：输入区域（使用紧凑间距）
+        from .ui_constants import SPACING_ASK_COMPACT, SPACING_ASK_SECTION
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
+        
         # 创建可折叠的书籍元数据树形组件
         metadata_widget = self._create_metadata_widget()
         layout.addWidget(metadata_widget)
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
         
         # 创建输入区域
         self.input_area = QTextEdit()
@@ -2382,6 +2391,8 @@ class AskDialog(QDialog):
             }
         """)
         layout.addWidget(self.input_area)
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
         
         # 创建操作区域
         action_layout = QHBoxLayout()
@@ -2435,6 +2446,11 @@ class AskDialog(QDialog):
         
         layout.addLayout(action_layout)
         
+        # 区域1和区域2之间使用较大间距
+        layout.addSpacing(SPACING_ASK_SECTION)
+        
+        # 区域2：响应区域（使用紧凑间距）
+        
         # 创建历史记录信息栏（在响应面板之前）
         history_info_layout = QHBoxLayout()
         history_info_layout.setSpacing(SPACING_SMALL)
@@ -2458,6 +2474,8 @@ class AskDialog(QDialog):
         history_info_layout.addStretch()
         
         layout.addLayout(history_info_layout)
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
         
         # 创建响应面板容器（支持多AI并行）
         # 传递 action_layout 以便将 AI 切换器添加到操作区域

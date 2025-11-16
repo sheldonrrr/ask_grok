@@ -156,6 +156,8 @@ class GermanTranslation(BaseTranslation):
             'deleted': 'Gelöscht',
             'history': 'Verlauf',
             'no_history': 'Keine Verlaufseinträge',
+            'empty_question_placeholder': '(Keine Frage)',
+            'history_ai_unavailable': 'Diese KI wurde aus der Konfiguration entfernt',
             'clear_current_book_history': 'Verlauf des aktuellen Buches löschen',
             'confirm_clear_book_history': 'Möchten Sie wirklich den gesamten Verlauf für folgende Bücher löschen?\n{book_titles}',
             'confirm': 'Bestätigen',

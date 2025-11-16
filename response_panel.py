@@ -62,9 +62,10 @@ class ResponsePanel(QWidget):
         """设置UI布局"""
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
-        # 去掉左右间距，只保留上下间距，让响应区域与上方的提问框、元数据框左右对齐
-        main_layout.setContentsMargins(0, PADDING_MEDIUM, 0, PADDING_MEDIUM)
-        main_layout.setSpacing(SPACING_MEDIUM)
+        # 使用紧凑间距，让AI回复区域更大
+        from .ui_constants import SPACING_ASK_COMPACT
+        main_layout.setContentsMargins(0, 0, 0, SPACING_ASK_COMPACT)  # 上边距0，下边距4px
+        main_layout.setSpacing(SPACING_ASK_COMPACT)  # 内部元素间距4px
         
         # === Header 区域（横向） ===
         # 只有当 show_ai_switcher 为 True 时才显示 header

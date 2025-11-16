@@ -153,6 +153,8 @@ class DutchTranslation(BaseTranslation):
             'deleted': 'Verwijderd',
             'history': 'Geschiedenis',
             'no_history': 'Geen geschiedenisrecords',
+            'empty_question_placeholder': '(Geen vraag)',
+            'history_ai_unavailable': 'Deze AI is verwijderd uit de configuratie',
             'clear_current_book_history': 'Wis geschiedenis van huidig boek',
             'confirm_clear_book_history': 'Weet u zeker dat u alle geschiedenis wilt wissen voor:\n{book_titles}?',
             'confirm': 'Bevestigen',

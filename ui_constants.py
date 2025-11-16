@@ -17,6 +17,10 @@ SPACING_MEDIUM = SPACING_UNIT * 2     # 16px - 中等间距
 SPACING_LARGE = SPACING_UNIT * 3      # 24px - 大间距
 SPACING_XLARGE = SPACING_UNIT * 4     # 32px - 超大间距
 
+# Ask 弹窗专用间距（更紧凑的布局）
+SPACING_ASK_COMPACT = SPACING_UNIT // 2    # 4px - 区域内部元素间距（原间距的1/3，从12px减到4px）
+SPACING_ASK_SECTION = SPACING_MEDIUM       # 16px - 区域之间的间距（保持不变）
+
 # 边距（Margins）
 MARGIN_SMALL = 8
 MARGIN_MEDIUM = 16

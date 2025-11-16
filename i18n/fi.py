@@ -153,6 +153,8 @@ class FinnishTranslation(BaseTranslation):
             'deleted': 'Poistettu',
             'history': 'Historia',
             'no_history': 'Ei historiatietueita',
+            'empty_question_placeholder': '(Ei kysymystä)',
+            'history_ai_unavailable': 'Tämä tekoäly on poistettu asetuksista',
             'clear_current_book_history': 'Tyhjennä nykyisen kirjan historia',
             'confirm_clear_book_history': 'Haluatko varmasti tyhjentää koko historian:\n{book_titles}?',
             'confirm': 'Vahvista',

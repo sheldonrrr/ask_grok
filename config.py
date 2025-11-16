@@ -1425,6 +1425,7 @@ class ConfigDialog(QWidget):
         
         # 创建主布局
         main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)  # 去除主布局的边距
         self.setLayout(main_layout)
         
         # 设置通用设置（包含所有配置）
@@ -1439,13 +1440,47 @@ class ConfigDialog(QWidget):
         main_scroll = QScrollArea()
         main_scroll.setWidgetResizable(True)
         main_scroll.setFrameShape(QScrollArea.NoFrame)
+        main_scroll.setObjectName("config_scroll")
+        # 去除滚动区域的内边距和边框，让内容填满整个区域
+        # 使用 ID 选择器确保只影响这个特定的 QScrollArea
+        style = """
+            QScrollArea#config_scroll {
+                padding: 0px;
+                margin: 0px;
+                border: none;
+            }
+            QScrollArea#config_scroll > QWidget {
+                background: transparent;
+            }
+            QScrollArea#config_scroll QWidget#qt_scrollarea_viewport {
+                background: transparent;
+                border: none;
+                margin: 0px;
+                padding: 0px;
+            }
+        """
+        main_scroll.setStyleSheet(style)
+        # 直接设置 viewport 的边距
+        if main_scroll.viewport():
+            main_scroll.viewport().setContentsMargins(0, 0, 0, 0)
+            logger.debug(f"[Config] viewport margins: {main_scroll.viewport().contentsMargins()}")
+        logger.debug(f"[Config] 设置 main_scroll 样式: {style}")
+        logger.debug(f"[Config] main_scroll frameShape: {main_scroll.frameShape()}")
+        logger.debug(f"[Config] main_scroll frameWidth: {main_scroll.frameWidth()}")
         
         # 创建内容容器
         content_widget = QWidget()
+        # 只为这个特定的 widget 设置样式，不影响子控件
+        content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
+        content_widget.setObjectName("content_container")
+        logger.debug(f"[Config] 设置 content_widget 样式为透明无边框")
         content_layout = QVBoxLayout()
-        content_layout.setSpacing(SPACING_LARGE)  # GroupBox之间使用大间距
+        # 使用紧凑间距，因为GroupBox已经有虚线框区分了
+        from .ui_constants import SPACING_ASK_COMPACT
+        content_layout.setSpacing(SPACING_ASK_COMPACT)  # 区域之间使用紧凑间距（4px）
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_widget.setLayout(content_layout)
+        logger.debug(f"[Config] content_layout margins: {content_layout.contentsMargins()}")
         
         # 1. 顶部：语言选择
         lang_group = QGroupBox(self.i18n.get('display', 'Display'))
@@ -1775,6 +1810,7 @@ class ConfigDialog(QWidget):
         reset_group.setLayout(reset_layout)
         
         # 添加所有组件到内容布局
+        content_layout.addSpacing(SPACING_ASK_COMPACT)  # 顶部添加小间距
         content_layout.addWidget(lang_group)
         content_layout.addWidget(model_group)
         content_layout.addWidget(template_group)

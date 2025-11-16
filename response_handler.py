@@ -247,6 +247,12 @@ class ResponseHandler(QObject):
         if self.send_button.isEnabled():
             self.send_button.setText(self.i18n.get('send', 'Send'))
     
+    def _refresh_history_menu_with_logging(self, parent_dialog):
+        """刷新历史记录菜单并记录详细日志"""
+        logger.info(f"[历史记录] 开始刷新菜单 - 当前UID: {parent_dialog.current_uid}")
+        parent_dialog._load_related_histories()
+        logger.info(f"[历史记录] 菜单刷新完成")
+    
     def cancel_request(self):
         """取消当前请求"""
         import logging
@@ -1013,10 +1019,21 @@ class ResponseHandler(QObject):
                         )
                         logger.info(f"[历史记录] ✓ 保存成功: UID={parent_dialog.current_uid}, AI={ai_id}")
                         
-                        # 刷新历史记录菜单
+                        # 刷新历史记录菜单（使用延迟调用，避免多个面板同时刷新）
                         if hasattr(parent_dialog, '_load_related_histories'):
-                            parent_dialog._load_related_histories()
-                            logger.info(f"[历史记录] 已刷新历史记录菜单")
+                            # 取消之前的延迟调用（如果有）
+                            if hasattr(parent_dialog, '_history_refresh_timer'):
+                                parent_dialog._history_refresh_timer.stop()
+                            
+                            # 创建新的延迟调用（100ms后执行）
+                            from PyQt5.QtCore import QTimer
+                            parent_dialog._history_refresh_timer = QTimer()
+                            parent_dialog._history_refresh_timer.setSingleShot(True)
+                            parent_dialog._history_refresh_timer.timeout.connect(
+                                lambda: self._refresh_history_menu_with_logging(parent_dialog)
+                            )
+                            parent_dialog._history_refresh_timer.start(100)
+                            logger.debug(f"[历史记录] 已安排刷新历史记录菜单（100ms后）")
                         
                         # 更新导出全部历史记录按钮状态
                         if hasattr(parent_dialog, 'response_panels') and parent_dialog.response_panels:
