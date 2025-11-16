@@ -52,8 +52,6 @@ class NvidiaModel(BaseAIModel):
         
         api_key = self.config.get('api_key', '')
         logger.info(f"[Nvidia get_token] 从 self.config 获取 API Key: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
-        logger.debug(f"[Nvidia get_token] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
-        logger.debug(f"[Nvidia get_token] self.config 的所有键: {list(self.config.keys())}")
         
         return api_key
     
@@ -88,7 +86,6 @@ class NvidiaModel(BaseAIModel):
         
         token = self.get_token()
         logger.info(f"[Nvidia prepare_headers] get_token() 返回的 token: {'存在' if token else '为空'}, 长度: {len(token) if token else 0}")
-        logger.debug(f"[Nvidia prepare_headers] Token 前10个字符: {token[:10] if token else 'N/A'}")
         
         # Ensure token has Bearer prefix
         if not token.startswith('Bearer '):
@@ -98,7 +95,7 @@ class NvidiaModel(BaseAIModel):
             "Content-Type": "application/json",
             "Authorization": token
         }
-        logger.info(f"[Nvidia prepare_headers] 返回的请求头 Authorization: {headers['Authorization'][:20]}...")
+        logger.info(f"[Nvidia prepare_headers] 请求头已准备完成，包含 Authorization")
         return headers
     
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:

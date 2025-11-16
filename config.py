@@ -483,7 +483,6 @@ class ModelConfigWidget(QWidget):
                 api_key_value = self.api_key_edit.toPlainText().strip()
                 config['api_key'] = api_key_value
                 logger.info(f"[Nvidia get_config] 从输入框获取 API Key: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
-                logger.debug(f"[Nvidia get_config] API Key 前10个字符: {api_key_value[:10] if api_key_value else 'N/A'}")
             else:
                 config['api_key'] = ''
                 logger.warning(f"[Nvidia get_config] api_key_edit 控件不存在！")
@@ -750,7 +749,6 @@ class ModelConfigWidget(QWidget):
         api_key_value = config.get('api_key') or config.get('auth_token')
         logger.info(f"[{self.model_id}] 使用当前输入框的配置加载模型")
         logger.info(f"[{self.model_id}] API Key 状态: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
-        logger.debug(f"[{self.model_id}] API Key 前10个字符: {api_key_value[:10] if api_key_value else 'N/A'}")
         logger.info(f"[{self.model_id}] API Base URL: {config.get('api_base_url', 'N/A')}")
         
         # 4. 创建 API 客户端并获取模型列表
@@ -1079,22 +1077,18 @@ class ModelConfigWidget(QWidget):
         # 更新复选框文本
         if hasattr(self, 'enable_streaming_checkbox'):
             self.enable_streaming_checkbox.setText(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
-            logger.debug("更新了流式传输复选框文本")
         
         # 更新"使用自定义模型名称"复选框
         if hasattr(self, 'use_custom_model_checkbox'):
             self.use_custom_model_checkbox.setText(self.i18n.get('use_custom_model', 'Use custom model name'))
-            logger.debug("更新了使用自定义模型名称复选框文本")
         
         # 更新"加载模型"按钮
         if hasattr(self, 'load_models_button'):
             self.load_models_button.setText(self.i18n.get('load_models', 'Load Models'))
-            logger.debug("更新了加载模型按钮文本")
         
         # 更新自定义模型输入框的placeholder
         if hasattr(self, 'custom_model_input'):
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
-            logger.debug("更新了自定义模型输入框placeholder")
             
         for label in self.findChildren(QLabel):
             # 先检查objectName
@@ -1103,7 +1097,6 @@ class ModelConfigWidget(QWidget):
                 for key, value in known_labels.items():
                     if key in obj_name:
                         label.setText(value)
-                        logger.debug(f"基于objectName更新了{key}标签为: {value}")
                         break
             
             # 如果没有匹配到objectName，则尝试匹配当前文本
@@ -1115,13 +1108,10 @@ class ModelConfigWidget(QWidget):
             current_text_lower = current_text.lower()
             if ('api' in current_text_lower and ('key' in current_text_lower or 'token' in current_text_lower)) or '密钥' in current_text_lower or 'clé' in current_text_lower:
                 label.setText(known_labels['api_key'])
-                logger.debug(f"基于关键字更新了API Key标签为: {known_labels['api_key']}")
             elif ('base' in current_text_lower and 'url' in current_text_lower) or '基础' in current_text_lower or 'base' in current_text_lower:
                 label.setText(known_labels['base_url'])
-                logger.debug(f"基于关键字更新了Base URL标签为: {known_labels['base_url']}")
             elif 'model' in current_text_lower or '模型' in current_text_lower or 'modèle' in current_text_lower:
                 label.setText(known_labels['model'])
-                logger.debug(f"基于关键字更新了Model标签为: {known_labels['model']}")
         
         reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
         reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
@@ -1130,19 +1120,15 @@ class ModelConfigWidget(QWidget):
             if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于objectName更新了Reset按钮文本为: {reset_text}")
             elif button.property('isResetButton'):
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于属性更新了Reset按钮文本为: {reset_text}")
             elif hasattr(button, 'toolTip') and ('reset' in button.toolTip().lower() or 'default' in button.toolTip().lower()):
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于工具提示更新了Reset按钮文本为: {reset_text}")
             elif button.text() in ['Reset to Default', 'Reset Current AI to Default', '重置', '重置当前AI为默认值', 'Réinitialiser', 'リセット']:
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于当前文本更新了Reset按钮文本为: {reset_text}")
         
         if hasattr(self, 'api_base_edit'):
             model_config = None
@@ -1179,7 +1165,6 @@ class ModelConfigWidget(QWidget):
                 self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
                     default_api_base_url=default_api_base_url
                 ))
-                logger.debug("更新了API Base URL占位符")
     
     def _get_ai_display_name(self):
         """获取AI的显示名称（翻译后的）"""
@@ -1463,24 +1448,18 @@ class ConfigDialog(QWidget):
         # 直接设置 viewport 的边距
         if main_scroll.viewport():
             main_scroll.viewport().setContentsMargins(0, 0, 0, 0)
-            logger.debug(f"[Config] viewport margins: {main_scroll.viewport().contentsMargins()}")
-        logger.debug(f"[Config] 设置 main_scroll 样式: {style}")
-        logger.debug(f"[Config] main_scroll frameShape: {main_scroll.frameShape()}")
-        logger.debug(f"[Config] main_scroll frameWidth: {main_scroll.frameWidth()}")
         
         # 创建内容容器
         content_widget = QWidget()
         # 只为这个特定的 widget 设置样式，不影响子控件
         content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
         content_widget.setObjectName("content_container")
-        logger.debug(f"[Config] 设置 content_widget 样式为透明无边框")
         content_layout = QVBoxLayout()
         # 使用紧凑间距，因为GroupBox已经有虚线框区分了
         from .ui_constants import SPACING_ASK_COMPACT
         content_layout.setSpacing(SPACING_ASK_COMPACT)  # 区域之间使用紧凑间距（4px）
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_widget.setLayout(content_layout)
-        logger.debug(f"[Config] content_layout margins: {content_layout.contentsMargins()}")
         
         # 1. 顶部：语言选择
         lang_group = QGroupBox(self.i18n.get('display', 'Display'))
@@ -1856,7 +1835,6 @@ class ConfigDialog(QWidget):
         
         # 获取当前选中的模型
         model_id = self.model_combo.currentData()
-        logger.debug(f"当前选中的模型: {model_id}")
         
         # 获取模型配置的优先级：
         # 1. 当前会话中用户修改过的配置（存储在current_configs中）
@@ -1867,7 +1845,6 @@ class ConfigDialog(QWidget):
         # 1. 首先检查当前会话中用户修改过的配置
         if model_id in current_configs:
             model_config = current_configs[model_id]
-            logger.debug(f"使用当前会话配置: {model_id}")
         # 2. 如果没有，从已保存的配置中获取
         elif get_prefs().get('models', {}).get(model_id):
             model_config = get_prefs().get('models', {}).get(model_id, {})
@@ -2041,20 +2018,12 @@ class ConfigDialog(QWidget):
         # 设置随机问题提示词
         random_questions = self.initial_values['random_questions']
         
-        # 调试信息
-        print(f"DEBUG: initial_values['random_questions'] = {random_questions}")
-        print(f"DEBUG: current_lang = {current_lang}")
-        print(f"DEBUG: random_questions.get(current_lang) = {random_questions.get(current_lang)}")
-        print(f"DEBUG: get_suggestion_template(current_lang) = {repr(get_suggestion_template(current_lang)[:100])}...")
-        
         # 获取随机问题提示词，如果不存在或为空则使用默认模板
         saved_questions = random_questions.get(current_lang)
         if saved_questions and saved_questions.strip():
             default_value = saved_questions
         else:
             default_value = get_suggestion_template(current_lang)
-        
-        print(f"DEBUG: default_value = {repr(default_value)[:100]}...")
         
         self.random_questions_edit.setPlainText(default_value)
         # 保存原始文本用于变更检测
@@ -2123,22 +2092,18 @@ class ConfigDialog(QWidget):
                         if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
                             button.setText(reset_text)
                             button.setToolTip(reset_tooltip)
-                            logger.debug(f"基于objectName更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
                         # 检查按钮的isResetButton属性
                         elif button.property('isResetButton'):
                             button.setText(reset_text)
                             button.setToolTip(reset_tooltip)
-                            logger.debug(f"基于属性更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
                         # 检查按钮的工具提示
                         elif hasattr(button, 'toolTip') and ('reset' in button.toolTip().lower() or 'default' in button.toolTip().lower()):
                             button.setText(reset_text)
                             button.setToolTip(reset_tooltip)
-                            logger.debug(f"基于工具提示更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
                         # 检查按钮的当前文本
                         elif button.text() in ['Reset to Default', 'Reset', '重置', 'Réinitialiser', 'リセット', 'Nollaa', 'Tilbakestill', 'Nulstil', 'Återställ']:
                             button.setText(reset_text)
                             button.setToolTip(reset_tooltip)
-                            logger.debug(f"基于当前文本更新了模型 {model_id} 的Reset按钮文本为: {reset_text}")
         
         # 更新模板内容
         self.template_edit.setPlainText(get_default_template(lang_code))
@@ -2201,7 +2166,6 @@ class ConfigDialog(QWidget):
                 for key, value in known_labels.items():
                     if key in obj_name:
                         label.setText(value)
-                        logger.debug(f"基于objectName更新了{key}标签为: {value}")
                         break
             
             # 如果没有匹配到objectName，则尝试匹配当前文本
@@ -2215,35 +2179,27 @@ class ConfigDialog(QWidget):
                 # 关键字匹配逻辑
                 if key == 'language' and ('language' in current_text_lower or '语言' in current_text_lower or '言語' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'current_ai' and ('current' in current_text_lower or 'ai' in current_text_lower or '当前' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'api_key' and ('api' in current_text_lower or 'key' in current_text_lower or '密钥' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'base_url' and ('url' in current_text_lower or 'base' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'model' and ('model' in current_text_lower or '模型' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'ask_prompts' and (('ask' in current_text_lower and 'prompt' in current_text_lower) or '提问提示' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'random_questions' and (('random' in current_text_lower and 'question' in current_text_lower) or '随机问题' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     break
                 elif key == 'prompt_template' and (('prompt' in current_text_lower and 'template' in current_text_lower) or '提示模板' in current_text_lower or '提示词模板' in current_text_lower):
                     label.setText(value)
-                    logger.debug(f"基于关键字更新了{key}标签为: {value}")
                     
         # 更新initial_values中的语言，避免重复触发语言变更检测
         self.initial_values['language'] = lang_code
@@ -2320,22 +2276,18 @@ class ConfigDialog(QWidget):
             if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于objectName更新了Reset按钮文本为: {reset_text}")
             # 通过属性识别
             elif button.property('isResetButton'):
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于属性更新了Reset按钮文本为: {reset_text}")
             # 通过工具提示识别
             elif hasattr(button, 'toolTip') and ('reset' in button.toolTip().lower() or 'default' in button.toolTip().lower()):
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于工具提示更新了Reset按钮文本为: {reset_text}")
             # 通过当前文本识别
             elif button.text() in ['Reset to Default', 'Reset Current AI to Default', '重置', '重置当前AI为默认值', 'Réinitialiser', 'リセット']:
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-                logger.debug(f"基于当前文本更新了Reset按钮文本为: {reset_text}")
             # 更新Save按钮
             #elif button.text() in ['Save', '保存', 'Sauvegarder', '保存する']:
             #    button.setText(save_text)

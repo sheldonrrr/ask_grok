@@ -598,7 +598,6 @@ class APIClient:
             if model_name != 'ollama':
                 api_key = config.get(api_key_field, '').strip()
                 logger.info(f"[{model_name}] API 客户端接收到的 API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
-                logger.debug(f"[{model_name}] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
                 if not api_key:
                     error_msg = self.i18n.get('api_key_required', 'API Key is required')
                     logger.warning(f"fetch_available_models: {error_msg}")

@@ -57,21 +57,15 @@ class ShortcutsWidget(QWidget):
         # 直接设置 viewport 的边距
         if scroll_area.viewport():
             scroll_area.viewport().setContentsMargins(0, 0, 0, 0)
-            print(f"[Shortcuts] viewport margins: {scroll_area.viewport().contentsMargins()}")
-        print(f"[Shortcuts] 设置 scroll_area 样式: {style}")
-        print(f"[Shortcuts] scroll_area frameShape: {scroll_area.frameShape()}")
-        print(f"[Shortcuts] scroll_area frameWidth: {scroll_area.frameWidth()}")
         
         # 创建内容容器
         content_widget = QWidget()
         # 只为这个特定的 widget 设置样式，不影响子控件
         content_widget.setStyleSheet("QWidget#shortcuts_container { background: transparent; border: none; }")
         content_widget.setObjectName("shortcuts_container")
-        print(f"[Shortcuts] 设置 content_widget 样式为透明无边框")
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(15)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        print(f"[Shortcuts] content_layout margins: {content_layout.contentsMargins()}")
         
         # 创建单个快捷键组 - 使用虚线边框而不是内阴影
         shortcuts_group = QGroupBox()

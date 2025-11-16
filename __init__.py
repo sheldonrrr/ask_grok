@@ -69,10 +69,9 @@ if not handlers_exist:
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
     
-    print(f'已配置Ask AI Plugin日志系统，日志文件位置: {log_file}')
-
-logger = logging.getLogger(__name__)
-logger.info(f'Ask AI Plugin 插件启动，日志文件位置: {log_file}')
+    # 只在首次配置时输出一次日志信息
+    logger = logging.getLogger(__name__)
+    logger.info(f'Ask AI Plugin 日志系统已配置，日志文件: {log_file}')
 
 PLUGIN_ICON = 'images/icon.png'
 

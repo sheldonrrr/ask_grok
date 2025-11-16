@@ -497,7 +497,6 @@ class BaseAIModel(ABC):
             api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
             api_key = self.config.get('api_key', '')
             logger.info(f"[{self.get_provider_name()}] fetch_available_models - API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
-            logger.debug(f"[{self.get_provider_name()}] API Key 前10个字符: {api_key[:10] if api_key else 'N/A'}")
             
             # 准备请求
             endpoint = self.get_models_endpoint()

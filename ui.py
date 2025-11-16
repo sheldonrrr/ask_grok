@@ -1206,7 +1206,6 @@ class AskDialog(QDialog):
         # 使用 setMaximumWidth 而不是 setStyleSheet，这样可以保留 Qt 默认的 hover 效果
         self.history_menu.setMaximumWidth(max_menu_width)
         
-        logger.debug(f"历史记录菜单最大宽度设置为: {max_menu_width}px (窗口宽度: {window_width}px)")
         
         # 清空菜单和动作组
         self.history_menu.clear()
@@ -1217,12 +1216,6 @@ class AskDialog(QDialog):
         # 获取当前书籍的所有历史记录
         book_ids = [book.id for book in self.books_info]
         all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
-        logger.info(f"[历史记录菜单] 加载历史记录: 书籍ID={book_ids}, 找到 {len(all_histories)} 条记录")
-        
-        # 输出所有历史记录的 UID，帮助调试
-        if all_histories:
-            history_uids = [h['uid'] for h in all_histories[:5]]  # 只显示前5个
-            logger.debug(f"[历史记录菜单] 前5条历史记录UID: {history_uids}")
         
         if not all_histories:
             # 如果没有历史记录，只显示提示，不显示其他选项
@@ -1246,7 +1239,6 @@ class AskDialog(QDialog):
         
         # 标记是否找到匹配的历史记录
         found_match = False
-        logger.info(f"[历史记录菜单] 开始匹配 - 当前 UID: {self.current_uid}")
         
         for idx, history in enumerate(all_histories):
             book_count = len(history['books'])
@@ -1261,7 +1253,6 @@ class AskDialog(QDialog):
                     question_preview += '...'
             display_text = f"{question_preview} - {history['timestamp']}"
             
-            logger.debug(f"[历史记录菜单] 添加记录 {idx+1}: UID={history['uid']}, 问题={question_preview}, 时间={history['timestamp']}")
             
             action = self.history_menu.addAction(display_text)
             action.setCheckable(True)
@@ -1269,9 +1260,8 @@ class AskDialog(QDialog):
             if history['uid'] == self.current_uid:
                 action.setChecked(True)
                 found_match = True
-                logger.info(f"[历史记录菜单] ✓ 匹配成功！当前记录已选中: UID={history['uid']}, 问题={question_preview}")
             else:
-                logger.debug(f"[历史记录菜单] ✗ 不匹配: 历史UID={history['uid']}, 当前UID={self.current_uid}")
+                pass
             action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
             # 添加到动作组，实现单选效果
             self.history_action_group.addAction(action)
@@ -1279,9 +1269,8 @@ class AskDialog(QDialog):
         # 如果没有找到匹配的历史记录，选中"新对话"
         if not found_match:
             new_conversation_action.setChecked(True)
-            logger.info(f"[历史记录菜单] 未找到匹配记录，已选中'新对话'选项 (当前UID: {self.current_uid})")
         else:
-            logger.info(f"[历史记录菜单] 匹配完成 - 已选中历史记录 (UID: {self.current_uid})")
+            pass
         
         # 在底部添加分隔线和清空选项
         self.history_menu.addSeparator()
@@ -1324,7 +1313,6 @@ class AskDialog(QDialog):
             logger.warning(f"未找到历史记录: {uid}")
             return
         
-        logger.info(f"切换到历史记录: {uid}, 模式: {history['mode']}, 书籍数: {len(history['books'])}")
         
         # 重建书籍列表
         books_info = []
@@ -1464,7 +1452,6 @@ class AskDialog(QDialog):
                 is_history=True
             )
         
-        logger.info("历史记录切换完成")
         
         # 刷新历史记录菜单，更新选中状态
         self._load_related_histories()
@@ -1508,7 +1495,6 @@ class AskDialog(QDialog):
             if self.response_handler.history_manager.delete_history(uid):
                 deleted_count += 1
         
-        logger.info(f"已清空当前书籍的 {deleted_count} 条历史记录")
         
         # 清空当前界面
         self.input_area.clear()
@@ -1643,7 +1629,6 @@ class AskDialog(QDialog):
             all_histories = self.response_handler.history_manager.get_related_histories(list(current_book_ids))
             
             if not all_histories:
-                logger.info("没有找到相关历史记录，显示新对话")
                 return False
             
             # 查找最佳匹配的历史记录（始终加载最新的，不过滤空问题）
@@ -1656,7 +1641,6 @@ class AskDialog(QDialog):
                     matched_history = history
                     question = history.get('question', '').strip()
                     question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
-                    logger.info(f"找到完全匹配的历史记录: UID={history['uid']}, 书籍数={len(history['books'])}, 问题={question_preview}")
                     # 使用现有 UID，不创建新的
                     old_uid = self.current_uid
                     self.current_uid = history['uid']
@@ -1671,7 +1655,6 @@ class AskDialog(QDialog):
                         matched_history = history
                         question = history.get('question', '').strip()
                         question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
-                        logger.info(f"找到包含关系的历史记录: UID={history['uid']}, 历史书籍数={len(history['books'])}, 当前书籍数={len(current_book_ids)}, 问题={question_preview}")
                         # 保持当前 UID，只有发起新对话时才会创建新 UID
                         break
             
@@ -1682,7 +1665,6 @@ class AskDialog(QDialog):
                 # 检查是否有多面板模式
                 if hasattr(self, 'response_panels') and self.response_panels:
                     # 多面板模式：为每个面板加载对应AI的历史响应
-                    logger.info(f"多面板模式，加载历史记录到 {len(self.response_panels)} 个面板")
                     
                     if 'answers' in matched_history and matched_history['answers']:
                         # 获取历史记录中所有AI的ID（排除'default'）
@@ -1692,7 +1674,6 @@ class AskDialog(QDialog):
                         if not history_ai_ids and 'default' in matched_history['answers']:
                             history_ai_ids = ['default']
                         
-                        logger.info(f"历史记录中包含 {len(history_ai_ids)} 个AI响应: {history_ai_ids}")
                         
                         # 为每个历史AI响应分配一个面板
                         for idx, ai_id in enumerate(history_ai_ids):
@@ -1771,7 +1752,6 @@ class AskDialog(QDialog):
                         first_ai_id = list(matched_history['answers'].keys())[0]
                         answer_data = matched_history['answers'][first_ai_id]
                         answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
-                        logger.info(f"加载新格式历史记录，AI: {first_ai_id}")
                     elif 'answer' in matched_history:
                         # 旧格式：直接使用answer字段
                         answer_text = matched_history['answer']

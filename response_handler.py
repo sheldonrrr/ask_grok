@@ -32,8 +32,6 @@ log_file = os.path.join(log_dir, 'ask_ai_plugin_response.log')
 # 只创建当前模块的日志记录器
 
 logger = logging.getLogger(__name__)
-logger.info('=' * 80)
-logger.info('Response Handler 初始化完成')
 
 class MarkdownWorker(QThread):
     result = pyqtSignal(str)
@@ -200,7 +198,6 @@ class ResponseHandler(QObject):
             self._last_think_count = 0
         
         if think_blocks and len(think_blocks) != self._last_think_count:
-            logger.info(f"[Process Think Tags] 提取 {len(think_blocks)} 个 think 块，总长度: {sum(len(b) for b in think_blocks)} 字符")
             self._last_think_count = len(think_blocks)
         
         # 处理未完成的 <think> 标签（流式传输中可能出现）
@@ -248,16 +245,13 @@ class ResponseHandler(QObject):
             self.send_button.setText(self.i18n.get('send', 'Send'))
     
     def _refresh_history_menu_with_logging(self, parent_dialog):
-        """刷新历史记录菜单并记录详细日志"""
-        logger.info(f"[历史记录] 开始刷新菜单 - 当前UID: {parent_dialog.current_uid}")
+        """刷新历史记录菜单"""
         parent_dialog._load_related_histories()
-        logger.info(f"[历史记录] 菜单刷新完成")
     
     def cancel_request(self):
         """取消当前请求"""
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("[Cancel Request] 用户请求取消当前请求")
         
         # 设置取消标志
         self._request_cancelled = True
@@ -267,13 +261,10 @@ class ResponseHandler(QObject):
         
         # 如果有正在运行的请求线程，等待它结束
         if hasattr(self, '_request_thread') and self._request_thread and self._request_thread.is_alive():
-            logger.info("[Cancel Request] 等待请求线程结束...")
-            # 不要调用 join()，让线程自然结束
+            pass  # 不要调用 join()，让线程自然结束
         
         # 清理资源
         self._cleanup_request()
-        
-        logger.info("[Cancel Request] 请求已取消")
 
     def start_request(self, prompt):
         """开始一个新的请求，使用非流式 API"""
@@ -319,12 +310,9 @@ class ResponseHandler(QObject):
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
         """
         self._request_start_time = time.time()
-        logger.info(f"[Request Start] 开始处理请求, 时间: {time.strftime('%H:%M:%S')}, model_id: {model_id}")
         
         # 清理之前的请求状态
-        start_cleanup = time.time()
         self.cleanup()
-        logger.info(f"[Cleanup] 清理完成, 耗时: {(time.time() - start_cleanup)*1000:.2f}ms")
         
         # 创建新的信号对象，避免信号重复连接
         self._current_signals = ResponseSignals()
@@ -336,7 +324,6 @@ class ResponseHandler(QObject):
         self._current_signals.request_finished.connect(self._cleanup_request)
         # 连接流式响应信号
         self._current_signals.stream_update.connect(self._handle_stream_update)
-        logger.info(f"[Signal Connect] 信号连接完成, 耗时: {(time.time() - connect_start)*1000:.2f}ms")
         
         # 初始化流式响应相关变量
         self._init_stream_variables()
@@ -346,18 +333,15 @@ class ResponseHandler(QObject):
                 # 记录当前使用的 AI 模型
                 try:
                     model_name = self.api.model_display_name
-                    logger.info(f"[API Model] 当前使用的 AI 模型: {model_name}")
                 except Exception as e:
                     logger.warning(f"[API Model] 获取模型信息失败: {str(e)}")
                 
-                logger.info(f"[API Request] 开始API请求, 时间: {time.strftime('%H:%M:%S')}")
                 api_start = time.time()
                 
                 # 如果指定了model_id，需要临时切换模型来检测流式支持
                 original_model = None
                 original_model_name = None
                 if model_id and model_id != self.api._model_name:
-                    logger.info(f"[流式检测] 临时切换模型以检测流式支持: {self.api._model_name} -> {model_id}")
                     original_model = self.api._ai_model
                     original_model_name = self.api._model_name
                     self.api._switch_to_model(model_id)
@@ -370,17 +354,14 @@ class ResponseHandler(QObject):
                 model_supports_streaming = hasattr(self.api._ai_model, 'supports_streaming') and self.api._ai_model.supports_streaming()
                 streaming_enabled = self.api._ai_model.config.get('enable_streaming', True)  # 默认启用
                 
-                logger.info(f"[模型检测] 当前模型: {self.api.model_name}, 支持流式传输: {model_supports_streaming}, 启用流式传输: {streaming_enabled}")
                 
                 # 恢复原始模型（如果切换了的话）
                 if original_model is not None:
-                    logger.info(f"[流式检测] 恢复原始模型: {model_id} -> {original_model_name}")
                     self.api._ai_model = original_model
                     self.api._model_name = original_model_name
                 
                 if model_supports_streaming and streaming_enabled:
                     # 使用流式请求
-                    logger.info(f"[流式请求] 开始使用流式请求处理 {self.api.model_name} 模型")
                     
                     # 初始化流式日志计数器
                     if not hasattr(self, '_stream_log_counter'):
@@ -392,27 +373,20 @@ class ResponseHandler(QObject):
                             # 只在每1000个字符时记录一次日志
                             self._stream_log_total_chars += len(chunk)
                             self._stream_log_counter += 1
-                            if self._stream_log_total_chars % 1000 < len(chunk):
-                                logger.info(f"[流式回调] 已接收 {self._stream_log_counter} 个片段，累计 {self._stream_log_total_chars} 字符")
                             self._current_signals.stream_update.emit(chunk)
                     
                     # 调用API时传入回调函数和model_id
                     response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id)
-                    logger.info(f"[流式请求完成] 收到完整响应, 长度: {len(response)} 字符")
                     
                     # 在流式请求完成后，发送完整响应
                     if not self._request_cancelled:
-                        logger.info(f"[流式请求完成] 发送最终累积响应到UI, 长度: {len(self._stream_response)} 字符")
                         self._current_signals.update_ui.emit(self._stream_response, True)
                 else:
                     # 使用普通请求
-                    logger.info(f"[普通请求] 使用普通请求处理 {self.api.model_name} 模型")
                     response = self.api.ask(prompt, stream=False, model_id=model_id)  # 明确指定不使用流式，并传递model_id
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(response, True)
                 
-                api_time = (time.time() - api_start) * 1000
-                logger.info(f"[API Response] 收到API响应, 耗时: {api_time:.2f}ms")
                 
             except Exception as e:
                 error_time = time.strftime('%H:%M:%S')
@@ -424,7 +398,6 @@ class ResponseHandler(QObject):
             finally:
                 if not self._request_cancelled:
                     self._current_signals.request_finished.emit()
-                logger.info(f"[Request Finished] 请求处理完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
         
         # 启动请求线程
         thread_start = time.time()
@@ -432,7 +405,6 @@ class ResponseHandler(QObject):
         self._request_thread.daemon = True
         self._request_cancelled = False
         self._request_thread.start()
-        logger.info(f"[Thread Start] 启动请求线程, 耗时: {(time.time() - thread_start)*1000:.2f}ms")
         
         # 设置加载动画
         self._setup_loading_animation()
