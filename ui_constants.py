@@ -159,7 +159,6 @@ def get_toolbutton_menu_style():
             padding-left: {horizontal_padding};
             padding-right: 30px;
             text-align: left;
-            font-size: 13px;
         }}
         QToolButton::menu-indicator {{
             subcontrol-origin: padding;

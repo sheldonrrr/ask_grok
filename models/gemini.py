@@ -201,7 +201,6 @@ class GeminiModel(BaseAIModel):
             url = f"{api_base_url}/models/{model_name}:generateContent"
             params = {}
         
-        logger.debug(f"请求URL: {url}, 参数: {params}")
         
         # 重试设置
         max_retries = 3
@@ -215,7 +214,6 @@ class GeminiModel(BaseAIModel):
                     chunk_count = 0
                     last_chunk_time = time.time()
                     
-                    logger.debug("开始流式请求")
                     # 增加超时时间到 300 秒，避免长回复时请求超时
                     with requests.post(
                         url,
@@ -226,13 +224,11 @@ class GeminiModel(BaseAIModel):
                         stream=True
                     ) as response:
                         response.raise_for_status()
-                        logger.debug(f"流式响应状态码: {response.status_code}")
                         
                         try:
                             for line in response.iter_lines():
                                 if line:
                                     line = line.decode('utf-8')
-                                    logger.debug(f"收到流式响应行: {line[:50]}...")
                                     
                                     # 处理 SSE 格式，必须以 'data: ' 开头
                                     if line.startswith('data: '):
@@ -240,12 +236,10 @@ class GeminiModel(BaseAIModel):
                                         
                                         # 特殊情况处理：如果是 [DONE] 标记
                                         if line.strip() == "[DONE]":
-                                            logger.debug("收到流式响应结束标记 [DONE]")
                                             break
                                         
                                         try:
                                             chunk_data = json.loads(line)
-                                            logger.debug(f"解析JSON数据: {json.dumps(chunk_data, ensure_ascii=False)[:100]}...")
                                             
                                             # 解析 Gemini 流式响应格式
                                             if 'candidates' in chunk_data and chunk_data['candidates']:
@@ -282,7 +276,6 @@ class GeminiModel(BaseAIModel):
                             
                             # 如果已经有内容，尝试恢复连接
                             if full_content:
-                                logger.info("尝试恢复连接以获取完整响应...")
                                 try:
                                     # 保存当前已接收的内容
                                     current_content = full_content
@@ -311,7 +304,6 @@ class GeminiModel(BaseAIModel):
                                     # 设置更长的超时时间
                                     recovery_timeout = kwargs.get('timeout', 300) + 60
                                     
-                                    logger.info(f"发起恢复请求，超时时间: {recovery_timeout}秒")
                                     
                                     # 发起恢复请求
                                     with requests.post(
@@ -323,7 +315,6 @@ class GeminiModel(BaseAIModel):
                                         stream=True
                                     ) as recovery_response:
                                         recovery_response.raise_for_status()
-                                        logger.info(f"恢复连接成功，状态码: {recovery_response.status_code}")
                                         
                                         # 处理恢复响应
                                         for line in recovery_response.iter_lines():
@@ -334,7 +325,6 @@ class GeminiModel(BaseAIModel):
                                                     line = line[6:]
                                                     
                                                     if line.strip() == "[DONE]":
-                                                        logger.info("恢复请求收到结束标记 [DONE]")
                                                         break
                                                     
                                                     try:
@@ -356,23 +346,17 @@ class GeminiModel(BaseAIModel):
                                                         logger.error(f"恢复请求JSON解析错误: {str(je)}")
                                                         continue
                                         
-                                        logger.info(f"恢复请求完成，新增内容长度: {len(full_content) - len(current_content)}")
                                 except Exception as recovery_e:
                                     logger.error(f"恢复连接失败: {str(recovery_e)}")
                                     logger.warning(f"将返回已接收的 {len(full_content)} 字符内容")
                             else:
                                 raise  # 如果没有内容，抛出异常
                     
-                    logger.debug(f"流式请求完成, 总内容长度: {len(full_content)}字符")
                     
                     return full_content
                 else:
                     # 普通请求处理
-                    logger.debug("开始普通请求，禁用流式传输")
                     try:
-                        logger.debug(f"请求URL: {url}")
-                        logger.debug(f"请求头: {json.dumps({k: '***' if k.lower() in ['authorization', 'x-goog-api-key'] else v for k, v in headers.items()}, ensure_ascii=False)}")
-                        logger.debug(f"请求数据: {json.dumps(data, ensure_ascii=False)[:500]}...")
                         
                         response = requests.post(
                             url,
@@ -383,9 +367,7 @@ class GeminiModel(BaseAIModel):
                         )
                         response.raise_for_status()
                         
-                        logger.debug(f"响应状态码: {response.status_code}")
                         result = response.json()
-                        logger.debug(f"普通响应: {json.dumps(result, ensure_ascii=False)[:200]}...")
                         
                         # 解析 Gemini API 响应
                         if 'candidates' in result and result['candidates']:
@@ -393,7 +375,6 @@ class GeminiModel(BaseAIModel):
                             if 'content' in candidate and 'parts' in candidate['content']:
                                 text_parts = [part['text'] for part in candidate['content']['parts'] if 'text' in part]
                                 content = ''.join(text_parts)
-                                logger.debug(f"成功解析响应内容，长度: {len(content)}")
                                 return content
                         
                         # 如果无法获取响应内容，返回错误信息
@@ -402,7 +383,6 @@ class GeminiModel(BaseAIModel):
                         if 'error' in result:
                             error_msg = f"{error_msg}: {result['error'].get('message', translations.get('unknown_error', 'Unknown error'))}"
                         logger.error(f"Gemini API 响应解析失败: {error_msg}")
-                        logger.debug(f"完整响应: {json.dumps(result, ensure_ascii=False)}")
                         raise Exception(error_msg)
                     except requests.exceptions.RequestException as req_e:
                         logger.error(f"Gemini API 请求异常: {str(req_e)}")
@@ -420,7 +400,6 @@ class GeminiModel(BaseAIModel):
                 if attempt < max_retries - 1:
                     # 如果不是最后一次尝试，则等待后重试
                     retry_wait = retry_delay * (2 ** attempt)  # 指数退避
-                    logger.info(f"第 {attempt+1} 次请求失败，{retry_wait} 秒后重试")
                     time.sleep(retry_wait)
                     continue
                 
@@ -566,7 +545,6 @@ class GeminiModel(BaseAIModel):
             
             headers = {"Content-Type": "application/json"}
             
-            logger.info(f"[{provider_name}] 发送测试请求验证 API Key")
             
             # 在线模型超时时间（15秒）
             timeout_seconds = 15

@@ -414,7 +414,6 @@ class ResponseHandler(QObject):
         self._timeout_timer.setSingleShot(True)
         self._timeout_timer.timeout.connect(self._check_request_timeout)
         self._timeout_timer.start(360000)  # 增加超时时间到60秒
-        logger.info(f"[Request Setup] 请求设置完成, 总耗时: {(time.time() - self._request_start_time)*1000:.2f}ms")
     
     # 初始化流式响应相关变量
     def _init_stream_variables(self):
@@ -660,7 +659,6 @@ class ResponseHandler(QObject):
                     <div style="
                         text-align: left;
                         color: palette(text);
-                        font-size: {FONT_SIZE_MEDIUM}pt;
                         font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                     ">
                         {base_text}{self._animation_dots[self._animation_dot_index]}
@@ -706,7 +704,6 @@ class ResponseHandler(QObject):
         # 基础样式
         base_style = f"""
             color: palette(text);
-            font-size: {FONT_SIZE_MEDIUM}pt;
             margin: 15px 0;
             padding: 10px;
             font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -737,7 +734,7 @@ class ResponseHandler(QObject):
             auth_tip = self.i18n.get('invalid_token', 'Please check your API token validable in the plugin settings.') \
                      if hasattr(self.i18n, 'get') else 'Please check your API token validable in the plugin settings.'
             error_html += f"""
-                <div style="margin-top: 15px; color: #666; font-size: 12px;">
+                <div style="margin-top: 15px; color: #666; font-size: 0.9em;">
                     {auth_tip}
                 </div>
             """

@@ -351,7 +351,6 @@ class ModelConfigWidget(QWidget):
             prefs = get_prefs()
             cached_models = prefs.get('cached_models', {})
             if self.model_id in cached_models and cached_models[self.model_id]:
-                logger.info(f"从缓存加载 {len(cached_models[self.model_id])} 个模型")
                 self.model_combo.addItems(cached_models[self.model_id])
             else:
                 # 没有缓存时，添加提示项
@@ -398,7 +397,6 @@ class ModelConfigWidget(QWidget):
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
             self.custom_model_input.textChanged.connect(self.on_config_changed)
             self.custom_model_input.setEnabled(False)  # 初始禁用（灰色）
-            logger.info(f"[setup_ui] 自定义输入框初始化完成 - isEnabled()={self.custom_model_input.isEnabled()}")
             # 保存这一行的索引
             self.custom_model_row = model_layout.rowCount()
             model_layout.addRow("", self.custom_model_input)
@@ -482,7 +480,6 @@ class ModelConfigWidget(QWidget):
             if hasattr(self, 'api_key_edit'):
                 api_key_value = self.api_key_edit.toPlainText().strip()
                 config['api_key'] = api_key_value
-                logger.info(f"[Nvidia get_config] 从输入框获取 API Key: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
             else:
                 config['api_key'] = ''
                 logger.warning(f"[Nvidia get_config] api_key_edit 控件不存在！")
@@ -565,7 +562,6 @@ class ModelConfigWidget(QWidget):
         if self.model_id in cached_models:
             del cached_models[self.model_id]
             prefs['cached_models'] = cached_models
-            logger.info(f"API Key 变化，已清除 {self.model_id} 的模型缓存")
         
         # 更新 Load Models 按钮状态
         self.update_load_models_button_state()
@@ -669,21 +665,17 @@ class ModelConfigWidget(QWidget):
             default_model_name = model_config.default_model_name if model_config else None
         
         if not default_model_name:
-            logger.info(f"未找到 {self.model_id} 的默认模型配置，使用第一个模型")
             return 1  # 返回第一个实际模型
         
-        logger.info(f"尝试匹配默认模型: {default_model_name}")
         
         # 1. 精确匹配
         for i, model in enumerate(models):
             if model == default_model_name:
-                logger.info(f"找到精确匹配的模型: {model} at index {i+1}")
                 return i + 1  # +1 因为索引0是占位符
         
         # 2. 部分匹配（包含关系）
         for i, model in enumerate(models):
             if default_model_name in model or model in default_model_name:
-                logger.info(f"找到部分匹配的模型: {model} at index {i+1}")
                 return i + 1
         
         # 3. 模糊匹配（最长公共子串）
@@ -704,11 +696,9 @@ class ModelConfigWidget(QWidget):
                 best_match_index = i + 1
         
         if best_match_score > 0.3:  # 至少30%的相似度
-            logger.info(f"找到模糊匹配的模型: {models[best_match_index-1]} (score={best_match_score:.2f}) at index {best_match_index}")
             return best_match_index
         
         # 4. 没有找到匹配，返回第一个模型
-        logger.info(f"未找到匹配的模型，使用第一个模型: {models[0]}")
         return 1
     
     def on_load_models_clicked(self):
@@ -739,7 +729,6 @@ class ModelConfigWidget(QWidget):
         if self.model_id in cached_models:
             del cached_models[self.model_id]
             prefs['cached_models'] = cached_models
-            logger.info(f"清除 {self.model_id} 的模型缓存，强制重新加载")
         
         # 3. 启动加载动画
         self.load_models_animation.start()
@@ -747,9 +736,6 @@ class ModelConfigWidget(QWidget):
         # 4. 获取当前配置（从输入框实时获取）
         config = self.get_config()
         api_key_value = config.get('api_key') or config.get('auth_token')
-        logger.info(f"[{self.model_id}] 使用当前输入框的配置加载模型")
-        logger.info(f"[{self.model_id}] API Key 状态: {'存在' if api_key_value else '为空'}, 长度: {len(api_key_value) if api_key_value else 0}")
-        logger.info(f"[{self.model_id}] API Base URL: {config.get('api_base_url', 'N/A')}")
         
         # 4. 创建 API 客户端并获取模型列表
         from .api import APIClient
@@ -766,7 +752,6 @@ class ModelConfigWidget(QWidget):
             if success:
                 # 成功：填充下拉框
                 models = result
-                logger.info(f"Successfully loaded {len(models)} models")
                 
                 self.model_combo.clear()
                 # 先添加占位符
@@ -780,7 +765,6 @@ class ModelConfigWidget(QWidget):
                 cached_models = prefs.get('cached_models', {})
                 cached_models[self.model_id] = models
                 prefs['cached_models'] = cached_models
-                logger.info(f"已缓存 {len(models)} 个模型到 {self.model_id}")
                 
                 # 如果有保存的模型名称，尝试选中
                 saved_model = config.get('model', '').strip()
@@ -791,24 +775,19 @@ class ModelConfigWidget(QWidget):
                     index = self.model_combo.findText(saved_model)
                     if index >= 0 and index > 0:  # 确保不是占位符
                         selected_index = index
-                        logger.info(f"找到保存的模型，选中索引: {index}, 模型: {saved_model}")
                     else:
                         # 模型不在列表中，尝试智能匹配默认模型
                         selected_index = self._find_best_default_model(models)
-                        logger.info(f"保存的模型不在列表中，智能选择模型索引: {selected_index}")
                 else:
                     # 没有保存的模型或保存的是占位符，尝试智能匹配默认模型
                     selected_index = self._find_best_default_model(models)
-                    logger.info(f"没有有效的保存模型，智能选择模型索引: {selected_index}")
                 
                 # 设置选中的索引
                 self.model_combo.setCurrentIndex(selected_index)
-                logger.info(f"已设置模型下拉框索引为: {selected_index}, 当前显示: {self.model_combo.currentText()}")
                 
                 # 确保取消勾选"使用自定义模型名称"，使用下拉框中的模型
                 if hasattr(self, 'use_custom_model_checkbox'):
                     self.use_custom_model_checkbox.setChecked(False)
-                    logger.info(f"已取消勾选使用自定义模型名称，使用下拉框中的模型")
                 
                 # 标记模型已加载，更新按钮状态
                 self._models_loaded = True
@@ -888,7 +867,6 @@ class ModelConfigWidget(QWidget):
         config = self.get_config()
         config['model'] = selected_model
         
-        logger.info(f"[{self.model_id}] 测试当前模型: {selected_model}")
         
         # 启动加载动画
         self.load_models_animation.start()
@@ -907,7 +885,6 @@ class ModelConfigWidget(QWidget):
             
             if success:
                 # 测试成功，保存配置
-                logger.info(f"[{self.model_id}] 模型测试成功")
                 self._save_config_after_load()
                 QMessageBox.information(
                     self,
@@ -943,9 +920,7 @@ class ModelConfigWidget(QWidget):
             parent = parent.parent()
         
         if config_dialog:
-            logger.info(f"[{self.model_id}] 加载模型成功后自动保存配置")
             config_dialog.save_settings()
-            logger.info(f"[{self.model_id}] 配置已自动保存")
     
     def on_model_combo_changed(self, text):
         """模型下拉框变化时自动保存"""
@@ -954,7 +929,6 @@ class ModelConfigWidget(QWidget):
         
         # 过滤掉占位符文本，避免保存无效选择
         if self._is_placeholder_text(text):
-            logger.info(f"模型下拉框变化为占位符，不触发保存: {text}")
             return
         
         logger.info(f"模型下拉框变化: {text}，触发自动保存")
@@ -1848,18 +1822,14 @@ class ConfigDialog(QWidget):
         # 2. 如果没有，从已保存的配置中获取
         elif get_prefs().get('models', {}).get(model_id):
             model_config = get_prefs().get('models', {}).get(model_id, {})
-            logger.debug(f"使用已保存配置: {model_id}")
         # 3. 如果还是没有，检查初始值
         elif hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
             model_config = self.initial_values['models'].get(model_id, {})
-            logger.debug(f"使用初始值配置: {model_id}")
         # 4. 如果都没有，使用空字典
         else:
             model_config = {}
-            logger.debug(f"使用空配置: {model_id}")
         
         # 创建模型配置控件
-        logger.debug(f"创建 {model_id} 配置控件，配置内容: api_base_url={model_config.get('api_base_url', 'N/A')}, model={model_config.get('model', 'N/A')}")
         widget = ModelConfigWidget(model_id, model_config, self.i18n)
         widget.config_changed.connect(self.on_config_changed)
         # 不设置最小高度，让控件根据内容自动调整大小
@@ -1891,7 +1861,6 @@ class ConfigDialog(QWidget):
         
         # 获取当前选中的模型
         model_id = self.model_combo.currentData()
-        logger.debug(f"切换到模型: {model_id}")
         
         # 设置模型组件 - 这里会保存当前模型的配置并加载新选中模型的配置
         self.setup_model_widgets()
@@ -1907,7 +1876,6 @@ class ConfigDialog(QWidget):
             if hasattr(widget, '_models_loaded'):
                 widget._models_loaded = False
                 widget.update_load_models_button_state()
-                logger.debug(f"重置模型 {model_id} 的加载状态")
         
         # 切换模型不会自动触发保存按钮的启用，需要用户实际修改配置
         # 调用on_config_changed检查是否有变更
@@ -1921,7 +1889,6 @@ class ConfigDialog(QWidget):
         """更新模型下拉框中的模型名称显示，使用当前语言的翻译"""
         import logging
         logger = logging.getLogger(__name__)
-        logger.debug("更新模型名称显示")
         
         # 保存当前选中的模型ID
         current_model_id = self.model_combo.currentData()
@@ -1962,7 +1929,6 @@ class ConfigDialog(QWidget):
                 if model_config.get('is_configured', False):
                     translated_name = f"✓ {translated_name}"
                 
-                logger.debug(f"模型 {model_id} 的翻译名称: {translated_name}")
                 self.model_combo.addItem(translated_name, model_id)
         
         # 恢复之前选中的模型
@@ -2043,7 +2009,6 @@ class ConfigDialog(QWidget):
         # 记录日志
         import logging
         logger = logging.getLogger(__name__)
-        logger.debug(f"语言切换为: {lang_code}, 开始更新界面")
         
         # 立即保存语言设置到全局配置
         prefs['language'] = lang_code
@@ -2064,14 +2029,12 @@ class ConfigDialog(QWidget):
             # 检查按钮的objectName或其他属性来识别Reset按钮
             if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
                 button.setText(self.i18n.get('reset_button', 'Reset to Default'))
-                logger.debug(f"更新了Reset按钮文本为: {button.text()}")
             # 如果按钮没有objectName，则尝试使用其他方式识别
             elif button.property('isResetButton') or (
                   hasattr(button, 'toolTip') and 
                   ('reset' in button.toolTip().lower() or 
                    'default' in button.toolTip().lower())):
                 button.setText(self.i18n.get('reset_button', 'Reset to Default'))
-                logger.debug(f"更新了Reset按钮文本为: {button.text()}")
         
         # 更新模型配置控件中的文本和Reset按钮
         if hasattr(self, 'model_widgets'):
@@ -2081,7 +2044,6 @@ class ConfigDialog(QWidget):
                     # 调用模型配置控件的retranslate_ui方法更新所有文本
                     if hasattr(widget, 'retranslate_ui') and callable(widget.retranslate_ui):
                         widget.retranslate_ui()
-                        logger.debug(f"调用了模型 {model_id} 的retranslate_ui方法更新文本")
                     
                     # 对所有按钮进行额外检查，确保重置按钮文本被正确更新
                     reset_text = self.i18n.get('reset_button', 'Reset to Default')
@@ -2108,12 +2070,10 @@ class ConfigDialog(QWidget):
         # 更新模板内容
         self.template_edit.setPlainText(get_default_template(lang_code))
         self.template_edit.setPlaceholderText(self.i18n.get('template_placeholder', 'Enter your prompt template here...'))
-        logger.debug(f"更新了模板内容为语言 {lang_code} 的默认模板")
         
         # 更新多书模板内容
         self.multi_book_template_edit.setPlainText(get_multi_book_template(lang_code))
         self.multi_book_template_edit.setPlaceholderText(self.i18n.get('multi_book_template_placeholder', 'Enter your multi-book prompt template here...'))
-        logger.debug(f"更新了多书模板内容为语言 {lang_code} 的默认模板")
         
         # 更新随机问题提示词
         random_questions = get_prefs().get('random_questions', {})
@@ -2124,7 +2084,6 @@ class ConfigDialog(QWidget):
             default_value = get_suggestion_template(lang_code)
         self.random_questions_edit.setPlainText(default_value)
         self.random_questions_edit.setPlaceholderText(self.i18n.get('random_questions_placeholder', 'Enter your random questions prompts here...'))
-        logger.debug(f"更新了随机问题提示词为语言 {lang_code} 的默认值")
         
         # 确保所有标签都被更新，使用更全面的方法
         # 首先更新所有标签页和标签文本
@@ -2132,19 +2091,15 @@ class ConfigDialog(QWidget):
         if hasattr(self, 'tab_widget'):
             self.tab_widget.setTabText(0, self.i18n.get('general_tab', 'General'))
             self.tab_widget.setTabText(1, self.i18n.get('ai_models', 'AI'))
-            logger.debug(f"更新了标签页文本")
         
         # 更新GroupBox标题
         for group_box in self.findChildren(QGroupBox):
             if 'display' in group_box.title().lower():
                 group_box.setTitle(self.i18n.get('display', 'Display'))
-                logger.debug(f"更新了Display GroupBox标题")
             elif 'ai' in group_box.title().lower():
                 group_box.setTitle(self.i18n.get('ai_models', 'AI'))
-                logger.debug(f"更新了AI GroupBox标题")
             elif 'prompt' in group_box.title().lower():
                 group_box.setTitle(self.i18n.get('prompt_template', 'Prompts'))
-                logger.debug(f"更新了Prompts GroupBox标题")
         
         # 更新所有标签
         known_labels = {
@@ -2205,7 +2160,6 @@ class ConfigDialog(QWidget):
         self.initial_values['language'] = lang_code
         
         # 发出语言改变信号，通知其他组件更新界面
-        logger.debug(f"发送语言变更信号: {lang_code}")
         self.language_changed.emit(lang_code)
         
         # 语言切换后自动保存配置
@@ -2217,7 +2171,6 @@ class ConfigDialog(QWidget):
         """更新界面文字"""
         import logging
         logger = logging.getLogger(__name__)
-        logger.debug("开始更新界面文字")
         
         # 更新标题和按钮文本
         self.setWindowTitle(self.i18n.get('config_title', 'Ask AI Plugin Configuration'))
@@ -2246,7 +2199,6 @@ class ConfigDialog(QWidget):
                 new_title = self.i18n.get(i18n_key, fallback)
                 old_title = group_box.title()
                 group_box.setTitle(new_title)
-                logger.debug(f"更新了GroupBox标题 [{obj_name}]: {old_title} -> {new_title}")
         
         # 更新所有标签文本（使用ObjectName，语言无关）
         label_map = {

@@ -305,7 +305,6 @@ class ResponsePanel(QWidget):
         
         # 如果正在初始化，跳过提示（避免在恢复上次选择时弹出确认框）
         if self._is_initializing:
-            logger.debug("面板正在初始化，跳过默认AI提示")
             return True
         
         # 只在单面板模式下提示
@@ -314,7 +313,6 @@ class ResponsePanel(QWidget):
         
         panel_count = len(self.parent_dialog.response_panels)
         if panel_count != 1:
-            logger.debug(f"多面板模式（{panel_count}个面板），跳过默认AI提示")
             return True
         
         # 获取config中当前的默认AI
@@ -322,7 +320,6 @@ class ResponsePanel(QWidget):
         
         # 如果选择的AI与默认AI相同，不提示
         if selected_ai_id == current_default_ai:
-            logger.debug(f"选择的AI ({selected_ai_id}) 与默认AI相同，跳过提示")
             return True
         
         # 获取AI的显示名称
@@ -365,7 +362,6 @@ class ResponsePanel(QWidget):
             return True
         else:
             # 用户选择No，恢复到之前的AI选择
-            logger.debug(f"用户取消将 {selected_ai_id} 设为默认AI，恢复之前的选择")
             
             # 阻止信号，避免递归调用
             self.ai_switcher.blockSignals(True)
@@ -481,7 +477,6 @@ class ResponsePanel(QWidget):
         )
         
         if not file_path:
-            logger.debug(f"面板 {self.panel_index} 用户取消了PDF导出")
             return
         
         try:
@@ -534,7 +529,6 @@ class ResponsePanel(QWidget):
             model_info_lines = []
             try:
                 if hasattr(self, 'api') and self.api:
-                    logger.debug(f"面板 {self.panel_index} API对象存在: {self.api}")
                     
                     model_info_lines.append("")
                     model_info_lines.append(separator)
@@ -639,7 +633,6 @@ class ResponsePanel(QWidget):
         
         # 历史记录>=1条时启用按钮
         self.export_all_btn.setEnabled(history_count >= 1)
-        logger.debug(f"面板 {self.panel_index} 历史记录数量: {history_count}, 导出历史按钮状态: {'启用' if history_count >= 1 else '禁用'}")
     
     def export_all_history_to_pdf(self):
         """导出当前书籍的所有历史记录为单个PDF文件"""
@@ -688,7 +681,6 @@ class ResponsePanel(QWidget):
         )
         
         if not file_path:
-            logger.debug("用户取消了全部历史记录PDF导出")
             return
         
         try:
@@ -892,7 +884,6 @@ class ResponsePanel(QWidget):
         # 导出历史按钮：独立判断，基于历史记录数量
         self.update_export_all_button_state()
         
-        logger.debug(f"面板 {self.panel_index} 按钮状态更新: 有回答={has_response} (纯文本={len(plain_text)}, HTML={len(html_text)}), 有问题={has_question}")
     
     def set_current_question(self, question):
         """设置当前问题（用于按钮状态判断）"""
@@ -958,7 +949,7 @@ class ResponsePanel(QWidget):
         self.history_info_bar.setStyleSheet(f"""
             QLabel {{
                 color: palette(dark);
-                font-size: 11px;
+                font-size: 0.85em;
                 padding: 0px;
                 margin-top: {SPACING_TINY}px;
                 margin-bottom: 0px;
@@ -978,7 +969,6 @@ class ResponsePanel(QWidget):
         # 插入到响应区域的下一个位置（即按钮栏之前）
         if response_area_index >= 0:
             main_layout.insertWidget(response_area_index + 1, self.history_info_bar)
-            logger.debug(f"面板 {self.panel_index} 显示历史信息栏: AI={ai_full_display}, 时间={timestamp}, 可用={ai_available}")
     
     def hide_history_info(self):
         """隐藏并移除历史记录信息栏"""
@@ -986,4 +976,3 @@ class ResponsePanel(QWidget):
             self.history_info_bar.setParent(None)
             self.history_info_bar.deleteLater()
             self.history_info_bar = None
-            logger.debug(f"面板 {self.panel_index} 隐藏历史信息栏")

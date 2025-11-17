@@ -267,9 +267,7 @@ class AskAIPluginUI(InterfaceAction):
                 logger.info(f"多书模式: 共 {len(books_info)} 本书")
             
             # 显示对话框
-            logger.info("准备创建 AskDialog 实例")
             d = AskDialog(self.gui, books_info, self.api)
-            logger.info("AskDialog 实例创建成功")
             
             # 保存对话框实例的引用
             self.ask_dialog = d
@@ -277,9 +275,7 @@ class AskAIPluginUI(InterfaceAction):
             # 对话框关闭时清除引用
             d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
             
-            logger.info("准备显示对话框 (exec_)")
             d.exec_()
-            logger.info("对话框已关闭")
             
         except Exception as e:
             logger.error(f"show_dialog() 发生异常: {str(e)}", exc_info=True)
@@ -839,7 +835,6 @@ class AskDialog(QDialog):
         """
         import logging
         logger = logging.getLogger(__name__)
-        logger.info("AskDialog.__init__() 开始")
         
         try:
             super().__init__(gui)
@@ -1602,7 +1597,6 @@ class AskDialog(QDialog):
             
             if str(book_ids) in pending_questions:
                 pending_data = pending_questions[str(book_ids)]
-                logger.info(f"发现待发送的随机问题: uid={pending_data['uid']}, 时间={pending_data['timestamp']}")
                 
                 # 恢复待发送的随机问题状态
                 self.current_uid = pending_data['uid']
@@ -1644,7 +1638,6 @@ class AskDialog(QDialog):
                     # 使用现有 UID，不创建新的
                     old_uid = self.current_uid
                     self.current_uid = history['uid']
-                    logger.info(f"[UID更新] {old_uid} -> {self.current_uid}")
                     break
             
             # 优先级2: 当前选择被包含在某个历史记录中
@@ -2335,7 +2328,7 @@ class AskDialog(QDialog):
             book_count = len(self.books_info)
             books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
             self.books_info_label = QLabel(books_info_text)
-            self.books_info_label.setStyleSheet("color: palette(dark); font-size: 12px; margin-left: 8px;")
+            self.books_info_label.setStyleSheet("color: palette(dark); font-size: 0.9em; margin-left: 8px;")
             top_bar.addWidget(self.books_info_label)
         
         top_bar.addStretch()
@@ -2445,7 +2438,7 @@ class AskDialog(QDialog):
         self.history_info_label.setStyleSheet("""
             QLabel {
                 color: palette(dark);
-                font-size: 12px;
+                font-size: 0.9em;
                 padding: 5px;
             }
         """)
@@ -2608,7 +2601,6 @@ class AskDialog(QDialog):
         import logging
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         logger = logging.getLogger(__name__)
-        logger.info("=== 开始处理用户问题 ===")
         
         # 检查是否是随机问题请求
         is_random_question = hasattr(self, '_is_generating_random_question') and self._is_generating_random_question
@@ -2691,7 +2683,6 @@ class AskDialog(QDialog):
                     series = self.i18n.get('unknown', 'Unknown')
                 
                 # 准备模板变量
-                logger.info("准备模板变量...")
                 template_vars = {
                     'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
                     'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
@@ -2701,7 +2692,6 @@ class AskDialog(QDialog):
                     'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
                     'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
                 }
-                logger.info(f"模板变量准备完成: {template_vars}")
                 
                 # 获取配置的模板
                 prefs = get_prefs()
@@ -2720,9 +2710,7 @@ class AskDialog(QDialog):
                 
                 # 格式化提示词
                 try:
-                    logger.info("正在格式化提示词...")
                     prompt = template.format(**template_vars)
-                    logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
                 except KeyError as e:
                     self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
                     return
@@ -2744,7 +2732,6 @@ class AskDialog(QDialog):
         self.stop_button.setVisible(True)
         
         # 开始异步请求 - 并行发送到所有面板
-        logger.info("开始并行异步请求...")
         parallel_start_time = time.time()
         try:
             if hasattr(self, 'response_panels') and self.response_panels:
@@ -2757,7 +2744,6 @@ class AskDialog(QDialog):
                     if selected_ai:
                         request_time = time.time()
                         elapsed_ms = (request_time - parallel_start_time) * 1000
-                        logger.info(f"[+{elapsed_ms:.2f}ms] 向面板 {panel.panel_index} (AI: {selected_ai}) 发送请求")
                         panel.send_request(prompt, model_id=selected_ai)
                     else:
                         logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")

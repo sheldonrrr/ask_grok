@@ -488,56 +488,34 @@ class BaseAIModel(ABC):
         # 获取 i18n 翻译（在 try 块之前，确保异常处理中可用）
         from ..i18n import get_translation
         language = self.config.get('language', 'en')
-        logger.debug(f"Fetching models with language: {language}")
         translations = get_translation(language)
-        logger.debug(f"Translation for error_401: {translations.get('error_401', 'NOT FOUND')[:50]}...")
         
         try:
             # 获取配置
             api_base_url = self.config.get('api_base_url', getattr(self, 'DEFAULT_API_BASE_URL', ''))
             api_key = self.config.get('api_key', '')
-            logger.info(f"[{self.get_provider_name()}] fetch_available_models - API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
             
             # 准备请求
             endpoint = self.get_models_endpoint()
             url = self.prepare_models_request_url(api_base_url, endpoint)
-            logger.info(f"[{self.get_provider_name()}] 准备请求头...")
             headers = self.prepare_models_request_headers()
-            logger.info(f"[{self.get_provider_name()}] 请求头准备完成，Authorization: {'存在' if 'Authorization' in headers else '不存在'}")
             
             # 发送请求
-            logger.info(translations.get('fetching_models_from', 'Fetching models from {url}').format(url=url))
-            logger.debug(f"[{self.get_provider_name()}] 请求头: {headers}")
             response = requests.get(url, headers=headers, timeout=15, verify=False)
-            logger.info(f"[{self.get_provider_name()}] 响应状态码: {response.status_code}")
-            logger.debug(f"[{self.get_provider_name()}] 响应头: {dict(response.headers)}")
             response.raise_for_status()
             
             # 解析响应
             data = response.json()
-            logger.debug(f"[{self.get_provider_name()}] 响应数据前200个字符: {str(data)[:200]}")
             models = self.parse_models_response(data)
-            
-            # 记录成功
-            provider_name = self.get_provider_name()
-            logger.info(translations.get('successfully_fetched_models', 
-                                        'Successfully fetched {count} {provider} models').format(
-                                            count=len(models), 
-                                            provider=provider_name))
             
             # 验证 API Key 是否有效（某些提供商的 /models 端点是公开的）
             # 可以通过 skip_verification 参数跳过验证，稍后手动验证
             if not skip_verification:
-                logger.info(f"[{provider_name}] ========== 开始验证 API Key/服务有效性 ==========")
                 try:
                     self.verify_api_key_with_test_request()
-                    logger.info(f"[{provider_name}] ========== API Key/服务验证通过 ==========")
                 except Exception as verify_error:
-                    logger.error(f"[{provider_name}] ========== API Key/服务验证失败 ==========")
-                    logger.error(f"[{provider_name}] 验证错误: {str(verify_error)}")
+                    logger.error(f"[{self.get_provider_name()}] API Key 验证失败: {str(verify_error)}")
                     raise
-            else:
-                logger.info(f"[{provider_name}] 跳过自动验证，稍后手动验证")
             
             return sorted(models)
             
