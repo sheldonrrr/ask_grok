@@ -4,7 +4,7 @@ A simple calibre plugin that allows users to ask questions about books using var
 
 ## Preview
 
-<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask_ai_plugin_gif_preview.gif" width="400">
+![Ask AI Plugin Preview](ask_ai_plugin_gif_preview.gif)
 
 ## Features
 
