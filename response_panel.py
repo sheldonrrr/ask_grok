@@ -8,7 +8,7 @@
 
 import logging
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                            QTextBrowser, QPushButton, QSizePolicy)
+                            QTextBrowser, QPushButton, QSizePolicy, QToolButton, QMenu)
 from PyQt5.QtCore import Qt, pyqtSignal
 from calibre_plugins.ask_ai_plugin.widgets import NoScrollComboBox, apply_button_style
 from calibre_plugins.ask_ai_plugin.ui_constants import (
@@ -163,32 +163,86 @@ class ResponsePanel(QWidget):
         button_layout = QHBoxLayout()
         button_layout.setSpacing(SPACING_SMALL)
         
-        # 使用更紧凑的按钮宽度
-        self.copy_btn = QPushButton(self.i18n.get('copy_response', 'Copy'))
-        apply_button_style(self.copy_btn, min_width=70)
-        self.copy_btn.clicked.connect(self.copy_response)
+        # 从config读取用户上次的选择和parallel_ai_count
+        from ..config import get_prefs
+        prefs = get_prefs()
+        self.copy_mode = prefs.get('copy_mode', 'response')  # 'response' or 'qa'
+        self.export_mode = prefs.get('export_mode', 'current')  # 'current' or 'history'
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 创建复制按钮（QToolButton with menu）
+        self.copy_btn = QToolButton()
+        self.copy_btn.setPopupMode(QToolButton.MenuButtonPopup)  # 分离式下拉按钮
+        self._update_copy_button_text()
+        apply_button_style(self.copy_btn, min_width=100)
+        self.copy_btn.clicked.connect(self._on_copy_clicked)
         self.copy_btn.setEnabled(False)  # 默认禁用，收到回复后启用
         
-        self.copy_qa_btn = QPushButton(self.i18n.get('copy_question_response', 'Copy Q&A'))
-        apply_button_style(self.copy_qa_btn, min_width=90)
-        self.copy_qa_btn.clicked.connect(self.copy_question_response)
-        self.copy_qa_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
+        # 创建复制按钮的菜单
+        copy_menu = QMenu(self)
+        self.copy_response_action = copy_menu.addAction(self.i18n.get('copy_mode_response', '回答'))
+        self.copy_response_action.triggered.connect(lambda: self._switch_copy_mode('response'))
+        self.copy_qa_action = copy_menu.addAction(self.i18n.get('copy_mode_qa', '问答'))
+        self.copy_qa_action.triggered.connect(lambda: self._switch_copy_mode('qa'))
+        self.copy_btn.setMenu(copy_menu)
+        self._update_copy_menu_checkmarks()
         
-        self.export_btn = QPushButton(self.i18n.get('export_current_qa', 'Export Q&A'))
-        apply_button_style(self.export_btn, min_width=100)
-        self.export_btn.clicked.connect(self.export_to_pdf)
-        self.export_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
-        
-        self.export_all_btn = QPushButton(self.i18n.get('export_history', 'Export All'))
-        apply_button_style(self.export_all_btn, min_width=90)
-        self.export_all_btn.clicked.connect(self.export_all_history_to_pdf)
-        self.export_all_btn.setEnabled(False)  # 默认禁用，当历史记录>=2时启用
-        
-        button_layout.addWidget(self.copy_btn)
-        button_layout.addWidget(self.copy_qa_btn)
-        button_layout.addWidget(self.export_btn)
-        button_layout.addWidget(self.export_all_btn)
-        button_layout.addStretch()
+        # 根据parallel_ai_count决定按钮布局
+        if parallel_ai_count == 1:
+            # 单AI模式：显示复制和导出两个按钮
+            # 创建导出按钮（QToolButton with menu）
+            self.export_btn = QToolButton()
+            self.export_btn.setPopupMode(QToolButton.MenuButtonPopup)  # 分离式下拉按钮
+            self._update_export_button_text()
+            apply_button_style(self.export_btn, min_width=150)
+            self.export_btn.clicked.connect(self._on_export_clicked)
+            self.export_btn.setEnabled(False)  # 默认禁用，有问题和回答后启用
+            
+            # 创建导出按钮的菜单
+            export_menu = QMenu(self)
+            self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', '当前问答'))
+            self.export_current_action.triggered.connect(lambda: self._switch_export_mode('current'))
+            self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', '历史记录'))
+            self.export_history_action.triggered.connect(lambda: self._switch_export_mode('history'))
+            self.export_btn.setMenu(export_menu)
+            self._update_export_menu_checkmarks()
+            
+            button_layout.addWidget(self.copy_btn)
+            button_layout.addWidget(self.export_btn)
+            button_layout.addStretch()
+        else:
+            # 多AI模式（2个面板）
+            # 所有面板都显示复制按钮（左对齐）
+            button_layout.addWidget(self.copy_btn)
+            button_layout.addStretch()
+            
+            # 只有最后一个面板（右侧）显示导出按钮（右对齐）
+            # 获取总面板数（从父对话框）
+            total_panels = parallel_ai_count
+            is_last_panel = (self.panel_index == total_panels - 1)
+            
+            if is_last_panel:
+                # 创建导出按钮（QToolButton with menu）
+                self.export_btn = QToolButton()
+                self.export_btn.setPopupMode(QToolButton.MenuButtonPopup)
+                self._update_export_button_text()
+                apply_button_style(self.export_btn, min_width=150)
+                self.export_btn.clicked.connect(self._on_export_clicked_multi_ai)
+                self.export_btn.setEnabled(False)
+                
+                # 创建导出按钮的菜单
+                export_menu = QMenu(self)
+                self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', '当前问答'))
+                self.export_current_action.triggered.connect(lambda: self._switch_export_mode('current'))
+                self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', '历史记录'))
+                self.export_history_action.triggered.connect(lambda: self._switch_export_mode('history'))
+                self.export_btn.setMenu(export_menu)
+                self._update_export_menu_checkmarks()
+                
+                button_layout.addWidget(self.export_btn)
+            else:
+                # 非最后一个面板，不创建导出按钮
+                self.export_btn = None
         
         main_layout.addLayout(button_layout)
         
@@ -440,7 +494,221 @@ class ResponsePanel(QWidget):
         # 组合问题和答案
         text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
         clipboard.setText(text)
-        self._show_copy_tooltip(self.copy_qa_btn, self.i18n.get('copied', 'Copied!'))
+        self._show_copy_tooltip(self.copy_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _update_copy_button_text(self):
+        """更新复制按钮文字"""
+        if self.copy_mode == 'response':
+            self.copy_btn.setText(self.i18n.get('copy_response_btn', '复制回答'))
+        else:  # 'qa'
+            self.copy_btn.setText(self.i18n.get('copy_qa_btn', '复制问答'))
+    
+    def _update_export_button_text(self):
+        """更新导出按钮文字"""
+        if not hasattr(self, 'export_btn') or self.export_btn is None:
+            return
+        
+        if self.export_mode == 'current':
+            self.export_btn.setText(self.i18n.get('export_current_btn', '导出问答为PDF'))
+        else:  # 'history'
+            self.export_btn.setText(self.i18n.get('export_history_btn', '导出历史记录为PDF'))
+    
+    def _update_copy_menu_checkmarks(self):
+        """更新复制菜单的勾选标记"""
+        self.copy_response_action.setText(
+            ('✓ ' if self.copy_mode == 'response' else '') + 
+            self.i18n.get('copy_mode_response', '回答')
+        )
+        self.copy_qa_action.setText(
+            ('✓ ' if self.copy_mode == 'qa' else '') + 
+            self.i18n.get('copy_mode_qa', '问答')
+        )
+    
+    def _update_export_menu_checkmarks(self):
+        """更新导出菜单的勾选标记"""
+        if not hasattr(self, 'export_btn') or self.export_btn is None:
+            return
+        
+        self.export_current_action.setText(
+            ('✓ ' if self.export_mode == 'current' else '') + 
+            self.i18n.get('export_mode_current', '当前问答')
+        )
+        self.export_history_action.setText(
+            ('✓ ' if self.export_mode == 'history' else '') + 
+            self.i18n.get('export_mode_history', '历史记录')
+        )
+    
+    def _on_copy_clicked(self):
+        """复制按钮点击事件"""
+        if self.copy_mode == 'response':
+            self.copy_response()
+        else:  # 'qa'
+            self.copy_question_response()
+    
+    def _on_export_clicked(self):
+        """导出按钮点击事件（单AI模式）"""
+        if self.export_mode == 'current':
+            self.export_to_pdf()
+        else:  # 'history'
+            self.export_all_history_to_pdf()
+    
+    def _on_export_clicked_multi_ai(self):
+        """导出按钮点击事件（多AI模式）"""
+        if self.export_mode == 'current':
+            self.export_multi_ai_to_pdf()
+        else:  # 'history'
+            self.export_all_history_to_pdf()
+    
+    def _switch_copy_mode(self, mode):
+        """切换复制模式"""
+        self.copy_mode = mode
+        self._update_copy_button_text()
+        self._update_copy_menu_checkmarks()
+        
+        # 保存到config
+        from ..config import get_prefs
+        prefs = get_prefs()
+        prefs['copy_mode'] = mode
+    
+    def _switch_export_mode(self, mode):
+        """切换导出模式"""
+        self.export_mode = mode
+        self._update_export_button_text()
+        self._update_export_menu_checkmarks()
+        
+        # 保存到config
+        from ..config import get_prefs
+        prefs = get_prefs()
+        prefs['export_mode'] = mode
+    
+    def export_multi_ai_to_pdf(self):
+        """导出所有AI面板的问答为单个PDF文件（多AI模式）"""
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from PyQt5.QtPrintSupport import QPrinter
+        from PyQt5.QtGui import QTextDocument
+        from datetime import datetime
+        
+        logger.info("开始导出多AI问答PDF")
+        
+        # 从父对话框获取所有面板
+        if not hasattr(self.parent_dialog, 'response_panels'):
+            logger.warning("无法获取响应面板列表")
+            return
+        
+        panels = self.parent_dialog.response_panels
+        
+        # 从父对话框获取问题
+        question = ""
+        if hasattr(self.parent_dialog, 'input_area') and self.parent_dialog.input_area:
+            question = self.parent_dialog.input_area.toPlainText().strip()
+        
+        # 检查是否有内容
+        has_content = False
+        for panel in panels:
+            if panel.response_area.toPlainText().strip():
+                has_content = True
+                break
+        
+        if not has_content:
+            logger.warning("所有面板都没有内容可导出")
+            return
+        
+        # 生成默认文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"ask_ai_multi_qa_{timestamp}.pdf"
+        
+        # 检查是否启用默认导出文件夹
+        from ..config import get_prefs
+        prefs = get_prefs()
+        enable_default_folder = prefs.get('enable_default_export_folder', False)
+        default_folder = prefs.get('default_export_folder', '')
+        
+        # 决定文件路径
+        if enable_default_folder and default_folder:
+            import os
+            file_path = os.path.join(default_folder, default_filename)
+        else:
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
+                default_filename,
+                "PDF Files (*.pdf)"
+            )
+            
+            if not file_path:
+                return
+        
+        try:
+            printer = QPrinter()
+            printer.setOutputFileName(file_path)
+            
+            # 构建内容
+            separator = "=" * 40
+            content_parts = []
+            
+            # 1. 书籍元数据
+            if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
+                book_metadata = self.parent_dialog.book_metadata
+                content_parts.append(separator)
+                content_parts.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                content_parts.append(separator)
+                
+                if book_metadata.get('title'):
+                    content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
+                if book_metadata.get('authors'):
+                    authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
+                    content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
+                
+                content_parts.append("")
+            
+            # 2. 问题
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
+            content_parts.append(separator)
+            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
+            content_parts.append("")
+            
+            # 3. 所有AI的回答
+            for i, panel in enumerate(panels):
+                response = panel.response_area.toPlainText().strip()
+                if not response:
+                    continue
+                
+                # AI信息
+                ai_id = panel.get_selected_ai() or "unknown"
+                ai_display = f"AI {i + 1}: {ai_id}"
+                
+                content_parts.append(separator)
+                content_parts.append(f"{self.i18n.get('pdf_answer', 'ANSWER')} - {ai_display}")
+                content_parts.append(separator)
+                content_parts.append(response)
+                content_parts.append("")
+            
+            # 4. 生成信息
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
+            content_parts.append(separator)
+            content_parts.append(f"{self.i18n.get('pdf_plugin', 'Plugin')}: Ask AI Plugin")
+            content_parts.append(f"{self.i18n.get('pdf_generated_time', 'Generated Time')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(separator)
+            
+            content = '\n'.join(content_parts)
+            
+            # 打印到PDF
+            doc = QTextDocument()
+            doc.setPlainText(content)
+            doc.print(printer)
+            
+            logger.info(f"多AI问答PDF导出成功: {file_path}")
+            self._show_copy_tooltip(self.export_btn, self.i18n.get('pdf_exported', 'PDF Exported!'))
+            
+        except Exception as e:
+            logger.error(f"导出多AI问答PDF失败: {str(e)}", exc_info=True)
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
+            )
     
     def export_to_pdf(self):
         """导出当前面板的问答为PDF文件"""
@@ -468,16 +736,28 @@ class ResponsePanel(QWidget):
         ai_name = self.get_selected_ai() or "unknown"
         default_filename = f"ask_ai_qa_{ai_name}_panel{self.panel_index + 1}_{timestamp}.pdf"
         
-        # 打开文件保存对话框
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
-            default_filename,
-            "PDF Files (*.pdf)"
-        )
+        # 检查是否启用默认导出文件夹
+        from ..config import get_prefs
+        prefs = get_prefs()
+        enable_default_folder = prefs.get('enable_default_export_folder', False)
+        default_folder = prefs.get('default_export_folder', '')
         
-        if not file_path:
-            return
+        # 决定文件路径
+        if enable_default_folder and default_folder:
+            # 直接导出到默认文件夹
+            import os
+            file_path = os.path.join(default_folder, default_filename)
+        else:
+            # 打开文件保存对话框
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
+                default_filename,
+                "PDF Files (*.pdf)"
+            )
+            
+            if not file_path:
+                return
         
         try:
             # 创建打印机对象
@@ -619,8 +899,12 @@ class ResponsePanel(QWidget):
             )
     
     def update_export_all_button_state(self):
-        """更新导出历史记录按钮的状态"""
-        if not hasattr(self, 'export_all_btn'):
+        """更新导出历史记录按钮的状态（仅当export_mode为'history'时调用）"""
+        if not hasattr(self, 'export_btn'):
+            return
+        
+        # 只有在导出模式为'history'时才更新按钮状态
+        if self.export_mode != 'history':
             return
         
         # 获取当前书籍的历史记录数量
@@ -632,7 +916,7 @@ class ResponsePanel(QWidget):
                 history_count = len(all_histories)
         
         # 历史记录>=1条时启用按钮
-        self.export_all_btn.setEnabled(history_count >= 1)
+        self.export_btn.setEnabled(history_count >= 1)
     
     def export_all_history_to_pdf(self):
         """导出当前书籍的所有历史记录为单个PDF文件"""
@@ -672,16 +956,28 @@ class ResponsePanel(QWidget):
         safe_title = "".join(c for c in book_title if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
         default_filename = f"ask_ai_all_history_{safe_title}_{timestamp}.pdf"
         
-        # 打开文件保存对话框
-        file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            self.i18n.get('export_all_history_dialog_title', 'Export All History to PDF'),
-            default_filename,
-            "PDF Files (*.pdf)"
-        )
+        # 检查是否启用默认导出文件夹
+        from ..config import get_prefs
+        prefs = get_prefs()
+        enable_default_folder = prefs.get('enable_default_export_folder', False)
+        default_folder = prefs.get('default_export_folder', '')
         
-        if not file_path:
-            return
+        # 决定文件路径
+        if enable_default_folder and default_folder:
+            # 直接导出到默认文件夹
+            import os
+            file_path = os.path.join(default_folder, default_filename)
+        else:
+            # 打开文件保存对话框
+            file_path, _ = QFileDialog.getSaveFileName(
+                self,
+                self.i18n.get('export_all_history_dialog_title', 'Export All History to PDF'),
+                default_filename,
+                "PDF Files (*.pdf)"
+            )
+            
+            if not file_path:
+                return
         
         try:
             # 创建打印机对象
@@ -872,17 +1168,17 @@ class ResponsePanel(QWidget):
         has_response = bool(plain_text) or (bool(html_text) and len(html_text) > 100)  # HTML 长度 > 100 避免空标签
         has_question = bool(self.current_question.strip()) if hasattr(self, 'current_question') and self.current_question else False
         
-        # 复制回答按钮：只要有回答就启用
+        # 复制按钮：只要有回答就启用（支持两种模式）
         self.copy_btn.setEnabled(has_response)
         
-        # 复制问答按钮：只要有回答就启用（问题可以为空）
-        self.copy_qa_btn.setEnabled(has_response)
-        
-        # 导出当前问答按钮：只要有回答就启用（问题可以为空）
-        self.export_btn.setEnabled(has_response)
-        
-        # 导出历史按钮：独立判断，基于历史记录数量
-        self.update_export_all_button_state()
+        # 导出按钮：只要有回答就启用（支持两种模式）
+        # 注意：多AI模式下，非最后一个面板没有导出按钮
+        if hasattr(self, 'export_btn') and self.export_btn is not None:
+            if self.export_mode == 'current':
+                self.export_btn.setEnabled(has_response)
+            else:  # 'history'
+                # 历史模式下，基于历史记录数量判断
+                self.update_export_all_button_state()
         
     
     def set_current_question(self, question):

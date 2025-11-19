@@ -114,6 +114,21 @@ class EnglishTranslation(BaseTranslation):
             'ask_prompts': 'Ask Prompts',
             'random_questions_prompts': 'Random Questions Prompts',
             'display': 'Display',
+            'export_settings': 'Export Settings',
+            'enable_default_export_folder': 'Export to default folder',
+            'no_folder_selected': 'No folder selected',
+            'browse': 'Browse...',
+            'select_export_folder': 'Select Export Folder',
+            
+            # Button text and menu items
+            'copy_response_btn': 'Copy Answer',
+            'copy_qa_btn': 'Copy Q&A',
+            'export_current_btn': 'Export Q&A as PDF',
+            'export_history_btn': 'Export History as PDF',
+            'copy_mode_response': 'Answer',
+            'copy_mode_qa': 'Q&A',
+            'export_mode_current': 'Current Q&A',
+            'export_mode_history': 'History',
             
             # UI - Dialog elements
             'input_placeholder': 'Type your question...',

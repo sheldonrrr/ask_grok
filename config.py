@@ -152,6 +152,12 @@ prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 
+# Export settings
+prefs.defaults['enable_default_export_folder'] = False  # Whether to export to default folder
+prefs.defaults['default_export_folder'] = ''  # Default export folder path
+prefs.defaults['copy_mode'] = 'response'  # Copy mode: 'response' or 'qa'
+prefs.defaults['export_mode'] = 'current'  # Export mode: 'current' or 'history'
+
 def get_prefs(force_reload=False):
     """获取配置
     
@@ -1724,7 +1730,60 @@ class ConfigDialog(QWidget):
         # 将布局设置应用到模板组
         template_group.setLayout(template_layout)
         
-        # 4. 危险区域：重置所有数据
+        # 4. Export Settings
+        export_group = QGroupBox(self.i18n.get('export_settings', 'Export Settings'))
+        export_group.setObjectName('groupbox_export_settings')
+        export_group.setStyleSheet(get_groupbox_style())
+        export_layout = QVBoxLayout()
+        export_layout.setSpacing(SPACING_SMALL)
+        
+        # 复选框：导出到默认文件夹
+        self.enable_default_folder_checkbox = QCheckBox(
+            self.i18n.get('enable_default_export_folder', 'Export to default folder')
+        )
+        self.enable_default_folder_checkbox.setObjectName('checkbox_enable_default_folder')
+        self.enable_default_folder_checkbox.setChecked(
+            self.initial_values.get('enable_default_export_folder', False)
+        )
+        self.enable_default_folder_checkbox.stateChanged.connect(self._on_export_config_changed)
+        export_layout.addWidget(self.enable_default_folder_checkbox)
+        
+        # 文件夹选择区域
+        folder_layout = QHBoxLayout()
+        folder_layout.setSpacing(SPACING_SMALL)
+        
+        # 文件夹路径标签（显示当前选择的路径）
+        self.export_folder_label = QLabel(
+            self.initial_values.get('default_export_folder', '') or 
+            self.i18n.get('no_folder_selected', 'No folder selected')
+        )
+        self.export_folder_label.setObjectName('label_export_folder')
+        self.export_folder_label.setStyleSheet("""
+            QLabel {
+                padding: 5px;
+                border: 1px solid palette(mid);
+                border-radius: 4px;
+                background: palette(base);
+            }
+        """)
+        self.export_folder_label.setWordWrap(True)
+        folder_layout.addWidget(self.export_folder_label, 1)
+        
+        # 浏览按钮
+        self.browse_folder_button = QPushButton(self.i18n.get('browse', 'Browse...'))
+        self.browse_folder_button.setObjectName('button_browse_folder')
+        apply_button_style(self.browse_folder_button, min_width=100)
+        self.browse_folder_button.clicked.connect(self._on_browse_export_folder)
+        self.browse_folder_button.setEnabled(
+            self.initial_values.get('enable_default_export_folder', False)
+        )
+        folder_layout.addWidget(self.browse_folder_button)
+        
+        export_layout.addLayout(folder_layout)
+        
+        export_group.setLayout(export_layout)
+        
+        # 5. 危险区域：重置所有数据
         reset_group = QGroupBox(self.i18n.get('reset_all_data', 'Reset All Data'))
         reset_group.setObjectName('groupbox_reset_data')
         reset_group.setStyleSheet(get_groupbox_style() + "QGroupBox { border-color: #dc3545; }")  # 红色边框表示危险操作
@@ -1767,6 +1826,7 @@ class ConfigDialog(QWidget):
         content_layout.addWidget(lang_group)
         content_layout.addWidget(model_group)
         content_layout.addWidget(template_group)
+        content_layout.addWidget(export_group)
         content_layout.addWidget(reset_group)
         content_layout.addStretch()
         
@@ -1953,7 +2013,9 @@ class ConfigDialog(QWidget):
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
             'request_timeout': prefs.get('request_timeout', 60),
-            'parallel_ai_count': prefs.get('parallel_ai_count', 1)
+            'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
+            'default_export_folder': prefs.get('default_export_folder', '')
         }
         
         # 调试日志
@@ -2500,6 +2562,16 @@ class ConfigDialog(QWidget):
         if hasattr(self, 'parallel_ai_combo'):
             prefs['parallel_ai_count'] = self.parallel_ai_combo.currentData()
         
+        # 保存Export配置
+        if hasattr(self, 'enable_default_folder_checkbox'):
+            prefs['enable_default_export_folder'] = self.enable_default_folder_checkbox.isChecked()
+        if hasattr(self, 'export_folder_label'):
+            folder_text = self.export_folder_label.text()
+            if folder_text != self.i18n.get('no_folder_selected', 'No folder selected'):
+                prefs['default_export_folder'] = folder_text
+            else:
+                prefs['default_export_folder'] = ''
+        
         # 保存选中的模型
         prefs['selected_model'] = self.model_combo.currentData()
         
@@ -2558,7 +2630,9 @@ class ConfigDialog(QWidget):
             'models': copy.deepcopy(prefs.get('models', {})),
             'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
             'request_timeout': prefs.get('request_timeout', 60),
-            'parallel_ai_count': prefs.get('parallel_ai_count', 1)
+            'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
+            'default_export_folder': prefs.get('default_export_folder', '')
         }
         
         # 更新原始文本值（用于变更检测）
@@ -2743,6 +2817,40 @@ class ConfigDialog(QWidget):
         #self.save_button.setEnabled(False)
         #self.save_success_label.setText('')
         #self.save_success_label.hide()
+    
+    def _on_export_config_changed(self):
+        """Export配置改变时的回调"""
+        # 启用/禁用浏览按钮
+        is_enabled = self.enable_default_folder_checkbox.isChecked()
+        self.browse_folder_button.setEnabled(is_enabled)
+        
+        # 标记配置已修改
+        self.on_config_changed()
+    
+    def _on_browse_export_folder(self):
+        """浏览并选择导出文件夹"""
+        from PyQt5.QtWidgets import QFileDialog
+        import os
+        
+        # 获取当前路径（如果有）
+        current_folder = self.export_folder_label.text()
+        if current_folder == self.i18n.get('no_folder_selected', 'No folder selected'):
+            current_folder = os.path.expanduser('~')  # 默认用户主目录
+        
+        # 打开文件夹选择对话框
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            self.i18n.get('select_export_folder', 'Select Export Folder'),
+            current_folder,
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+        )
+        
+        if folder:
+            # 更新标签显示
+            self.export_folder_label.setText(folder)
+            
+            # 标记配置已修改
+            self.on_config_changed()
     
     def on_reset_all_data(self):
         """重置所有插件数据"""

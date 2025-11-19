@@ -1947,8 +1947,16 @@ class AskDialog(QDialog):
         
         # 简化逻辑：只处理1-2个面板
         for i in range(count):
-            # 第一个面板的 AI 切换器放在 action_layout，其他面板保留在自己的 header
-            show_ai_switcher_in_panel = (i > 0 or action_layout is None)
+            # 根据是否传入 action_layout 决定 AI 切换器的位置
+            # action_layout 不为 None：单AI模式，第一个面板的 AI 切换器放在 action_layout
+            # action_layout 为 None：多AI模式，所有面板的 AI 切换器都在自己的 header
+            if action_layout is not None:
+                # 单AI模式：第一个面板不显示header，AI切换器将添加到action_layout
+                show_ai_switcher_in_panel = (i > 0)
+            else:
+                # 多AI模式：所有面板都显示header中的AI切换器
+                show_ai_switcher_in_panel = True
+            
             panel = ResponsePanel(i, self, self.api, self.i18n, show_ai_switcher=show_ai_switcher_in_panel)
             panel.ai_changed.connect(self._on_panel_ai_changed)
             self._setup_panel_handler(panel)
@@ -1959,7 +1967,7 @@ class AskDialog(QDialog):
         self._update_all_panel_ai_switchers()
         self._set_default_ai_selections()
         
-        # 如果有 action_layout，将第一个面板的 AI 切换器添加到操作区域
+        # 如果有 action_layout（单AI模式），将第一个面板的 AI 切换器添加到操作区域
         if action_layout and self.response_panels:
             first_panel = self.response_panels[0]
             if hasattr(first_panel, 'ai_switcher'):
@@ -2371,8 +2379,8 @@ class AskDialog(QDialog):
         action_layout = QHBoxLayout()
         action_layout.setSpacing(SPACING_SMALL)
         
-        # 左侧：AI 切换器（从 response_panel 移到这里）
-        # 注意：AI 切换器将在 _create_response_container 中创建并添加到这里
+        # 左侧：AI 切换器（单AI模式）或历史记录按钮（多AI模式）
+        # 注意：具体内容将在后续根据 parallel_ai_count 添加
         
         # 添加弹性空间，将右侧按钮推到右边
         action_layout.addStretch()
@@ -2417,42 +2425,71 @@ class AskDialog(QDialog):
 
         action_layout.addWidget(self.send_button)
         
-        layout.addLayout(action_layout)
-        
-        # 区域1和区域2之间使用较大间距
-        layout.addSpacing(SPACING_ASK_SECTION)
-        
-        # 区域2：响应区域（使用紧凑间距）
-        
-        # 创建历史记录信息栏（在响应面板之前）
-        history_info_layout = QHBoxLayout()
-        history_info_layout.setSpacing(SPACING_SMALL)
-        history_info_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # 左侧：历史记录按钮
-        history_button = self._create_history_switcher()
-        history_info_layout.addWidget(history_button)
-        
-        # 右侧：历史信息标签（初始隐藏）
-        self.history_info_label = QLabel()
-        self.history_info_label.setStyleSheet("""
-            QLabel {
-                color: palette(dark);
-                font-size: 0.9em;
-                padding: 5px;
-            }
-        """)
-        self.history_info_label.setVisible(False)
-        history_info_layout.addWidget(self.history_info_label)
-        history_info_layout.addStretch()
-        
-        layout.addLayout(history_info_layout)
-        
-        layout.addSpacing(SPACING_ASK_COMPACT)
-        
-        # 创建响应面板容器（支持多AI并行）
-        # 传递 action_layout 以便将 AI 切换器添加到操作区域
-        response_container = self._create_response_container(self.parallel_ai_count, action_layout)
+        # 根据并行AI数量决定布局
+        if self.parallel_ai_count == 1:
+            # 单AI模式：历史记录按钮在响应区域上方，AI切换器在action_layout
+            layout.addLayout(action_layout)
+            
+            # 区域1和区域2之间使用较大间距
+            layout.addSpacing(SPACING_ASK_SECTION)
+            
+            # 区域2：响应区域（使用紧凑间距）
+            
+            # 创建历史记录信息栏（在响应面板之前）
+            history_info_layout = QHBoxLayout()
+            history_info_layout.setSpacing(SPACING_SMALL)
+            history_info_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # 左侧：历史记录按钮
+            history_button = self._create_history_switcher()
+            history_info_layout.addWidget(history_button)
+            
+            # 右侧：历史信息标签（初始隐藏）
+            self.history_info_label = QLabel()
+            self.history_info_label.setStyleSheet("""
+                QLabel {
+                    color: palette(dark);
+                    font-size: 0.9em;
+                    padding: 5px;
+                }
+            """)
+            self.history_info_label.setVisible(False)
+            history_info_layout.addWidget(self.history_info_label)
+            history_info_layout.addStretch()
+            
+            layout.addLayout(history_info_layout)
+            
+            layout.addSpacing(SPACING_ASK_COMPACT)
+            
+            # 创建响应面板容器（AI切换器在action_layout）
+            response_container = self._create_response_container(self.parallel_ai_count, action_layout)
+        else:
+            # 多AI模式：历史记录按钮在action_layout，AI切换器在各自面板header
+            # 在action_layout左侧添加历史记录按钮
+            history_button = self._create_history_switcher()
+            action_layout.insertWidget(0, history_button)
+            
+            layout.addLayout(action_layout)
+            
+            # 区域1和区域2之间使用较大间距
+            layout.addSpacing(SPACING_ASK_SECTION)
+            
+            # 创建历史信息标签（放在响应面板上方，但不创建单独的layout）
+            self.history_info_label = QLabel()
+            self.history_info_label.setStyleSheet("""
+                QLabel {
+                    color: palette(dark);
+                    font-size: 0.9em;
+                    padding: 5px;
+                }
+            """)
+            self.history_info_label.setVisible(False)
+            layout.addWidget(self.history_info_label)
+            
+            layout.addSpacing(SPACING_ASK_COMPACT)
+            
+            # 创建响应面板容器（AI切换器在各自面板header）
+            response_container = self._create_response_container(self.parallel_ai_count, None)
         layout.addWidget(response_container)
         
         # 为向后兼容，保留 response_area 和 response_handler 引用（指向第一个面板）

@@ -115,6 +115,21 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ask_prompts': '提问提示词',
             'random_questions_prompts': '随机问题提示词',
             'display': '显示',
+            'export_settings': '导出设置',
+            'enable_default_export_folder': '导出到默认文件夹',
+            'no_folder_selected': '未选择文件夹',
+            'browse': '浏览...',
+            'select_export_folder': '选择导出文件夹',
+            
+            # 按钮文字和菜单项
+            'copy_response_btn': '复制回答',
+            'copy_qa_btn': '复制问答',
+            'export_current_btn': '导出问答为PDF',
+            'export_history_btn': '导出历史记录为PDF',
+            'copy_mode_response': '回答',
+            'copy_mode_qa': '问答',
+            'export_mode_current': '当前问答',
+            'export_mode_history': '历史记录',
             
             # UI - 对话框元素
             'input_placeholder': '输入你的问题...',
