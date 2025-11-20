@@ -304,6 +304,7 @@ class ModelConfigWidget(QWidget):
             if self.model_id == 'nvidia':
                 info_label = QLabel(self.i18n.get('nvidia_free_info', 
                     'New users get 6 months free API access - No credit card required'))
+                info_label.setObjectName('label_nvidia_free_info')
                 info_label.setStyleSheet("color: palette(mid); padding: 5px 0;")
                 info_label.setWordWrap(True)
                 main_layout.addWidget(info_label)
@@ -315,7 +316,10 @@ class ModelConfigWidget(QWidget):
                 self.api_key_edit.textChanged.connect(self.on_api_key_changed)
                 self.api_key_edit.setMaximumHeight(62)
                 self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
-                model_layout.addRow(self.i18n.get('api_key_label', 'API Key:'), self.api_key_edit)
+                # 手动创建标签以设置 objectName
+                api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
+                api_key_label.setObjectName(f'label_api_key_{self.model_id}')
+                model_layout.addRow(api_key_label, self.api_key_edit)
             else:
                 # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
                 self.api_key_edit = None
@@ -337,7 +341,10 @@ class ModelConfigWidget(QWidget):
             ))
             self.api_base_edit.setMinimumHeight(25)  # 设置最小高度
             self.api_base_edit.setMinimumWidth(base_width)  # 设置最小宽度
-            model_layout.addRow(self.i18n.get('base_url_label', 'Base URL:'), self.api_base_edit)
+            # 手动创建标签以设置 objectName
+            base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+            base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+            model_layout.addRow(base_url_label, self.api_base_edit)
             
             # 模型选择区域：下拉框 + 加载按钮
             model_select_layout = QHBoxLayout()
@@ -373,6 +380,7 @@ class ModelConfigWidget(QWidget):
             
             # 加载模型按钮
             self.load_models_button = QPushButton(self.i18n.get('load_models_list', 'Load Model List'), self)
+            self.load_models_button.setObjectName(f'button_load_models_{self.model_id}')
             self.load_models_button.clicked.connect(self.on_load_models_clicked)
             # 增加按钮宽度以适应不同字体大小（16px、14px等）
             apply_button_style(self.load_models_button, min_width=200)
@@ -389,10 +397,14 @@ class ModelConfigWidget(QWidget):
             # 初始化按钮状态
             self.update_load_models_button_state()
             
-            model_layout.addRow(self.i18n.get('model_label', 'Model:'), model_select_layout)
+            # 手动创建标签以设置 objectName
+            model_label = QLabel(self.i18n.get('model_label', 'Model'))
+            model_label.setObjectName(f'label_model_{self.model_id}')
+            model_layout.addRow(model_label, model_select_layout)
             
             # 使用自定义模型名称选项
             self.use_custom_model_checkbox = QCheckBox(self.i18n.get('use_custom_model', 'Use custom model name'))
+            self.use_custom_model_checkbox.setObjectName(f'checkbox_use_custom_model_{self.model_id}')
             self.use_custom_model_checkbox.stateChanged.connect(self.on_custom_model_toggled)
             model_layout.addRow("", self.use_custom_model_checkbox)
             
@@ -412,6 +424,7 @@ class ModelConfigWidget(QWidget):
 
             # 流式传输选项
             self.enable_streaming_checkbox = QCheckBox(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
+            self.enable_streaming_checkbox.setObjectName(f'checkbox_enable_streaming_{self.model_id}')
             self.enable_streaming_checkbox.setChecked(self.config.get('enable_streaming', True))
             self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
             model_layout.addRow("", self.enable_streaming_checkbox)
@@ -1045,53 +1058,47 @@ class ModelConfigWidget(QWidget):
         """更新模型配置控件的文本"""
         import logging
         logger = logging.getLogger(__name__)
-        # 更新模型配置控件文本
-
-        # 定义已知标签的翻译
-        known_labels = {
-            'api_key': self.i18n.get('api_key_label', 'API Key:'),
-            'base_url': self.i18n.get('base_url_label', 'Base URL:'),
-            'model': self.i18n.get('model_label', 'Model:')
+        
+        # 使用 objectName 映射更新 CheckBox
+        checkbox_map = {
+            f'checkbox_enable_streaming_{self.model_id}': ('model_enable_streaming', 'Enable Streaming'),
+            f'checkbox_use_custom_model_{self.model_id}': ('use_custom_model', 'Use custom model name'),
         }
         
-        # 更新复选框文本
-        if hasattr(self, 'enable_streaming_checkbox'):
-            self.enable_streaming_checkbox.setText(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
+        for checkbox in self.findChildren(QCheckBox):
+            obj_name = checkbox.objectName()
+            if obj_name in checkbox_map:
+                i18n_key, fallback = checkbox_map[obj_name]
+                checkbox.setText(self.i18n.get(i18n_key, fallback))
         
-        # 更新"使用自定义模型名称"复选框
-        if hasattr(self, 'use_custom_model_checkbox'):
-            self.use_custom_model_checkbox.setText(self.i18n.get('use_custom_model', 'Use custom model name'))
+        # 使用 objectName 映射更新 Button
+        button_map = {
+            f'button_load_models_{self.model_id}': ('load_models_list', 'Load Model List'),
+        }
         
-        # 更新"加载模型"按钮
-        if hasattr(self, 'load_models_button'):
-            self.load_models_button.setText(self.i18n.get('load_models', 'Load Models'))
+        for button in self.findChildren(QPushButton):
+            obj_name = button.objectName()
+            if obj_name in button_map:
+                i18n_key, fallback = button_map[obj_name]
+                button.setText(self.i18n.get(i18n_key, fallback))
         
         # 更新自定义模型输入框的placeholder
         if hasattr(self, 'custom_model_input'):
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
-            
+        
+        # 使用 objectName 映射更新 Label（完全移除硬编码文本检测）
+        label_map = {
+            'label_nvidia_free_info': ('nvidia_free_info', 'New users get 6 months free API access - No credit card required'),
+            f'label_api_key_{self.model_id}': ('api_key_label', 'API Key'),
+            f'label_base_url_{self.model_id}': ('base_url_label', 'Base URL'),
+            f'label_model_{self.model_id}': ('model_label', 'Model'),
+        }
+        
         for label in self.findChildren(QLabel):
-            # 先检查objectName
-            if hasattr(label, 'objectName') and label.objectName():
-                obj_name = label.objectName().lower()
-                for key, value in known_labels.items():
-                    if key in obj_name:
-                        label.setText(value)
-                        break
-            
-            # 如果没有匹配到objectName，则尝试匹配当前文本
-            current_text = label.text()
-            if current_text in known_labels.values():
-                continue  # 已经是最新的翻译，无需更新
-            
-            # 检查关键字匹配
-            current_text_lower = current_text.lower()
-            if ('api' in current_text_lower and ('key' in current_text_lower or 'token' in current_text_lower)) or '密钥' in current_text_lower or 'clé' in current_text_lower:
-                label.setText(known_labels['api_key'])
-            elif ('base' in current_text_lower and 'url' in current_text_lower) or '基础' in current_text_lower or 'base' in current_text_lower:
-                label.setText(known_labels['base_url'])
-            elif 'model' in current_text_lower or '模型' in current_text_lower or 'modèle' in current_text_lower:
-                label.setText(known_labels['model'])
+            obj_name = label.objectName()
+            if obj_name in label_map:
+                i18n_key, fallback = label_map[obj_name]
+                label.setText(self.i18n.get(i18n_key, fallback))
         
         reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
         reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
@@ -1454,7 +1461,7 @@ class ConfigDialog(QWidget):
         current_index = self.lang_combo.findData(get_prefs()['language'])
         self.lang_combo.setCurrentIndex(current_index)
         self.lang_combo.currentIndexChanged.connect(self.on_language_changed)
-        language_label = QLabel(self.i18n.get('language_label', 'Language:'))
+        language_label = QLabel(self.i18n.get('language_label', 'Language'))
         language_label.setObjectName('label_language')
         lang_layout.addWidget(language_label)
         lang_layout.addWidget(self.lang_combo)
@@ -1470,7 +1477,7 @@ class ConfigDialog(QWidget):
         # 添加模型选择下拉框
         model_select_layout = QHBoxLayout()
         model_select_layout.setSpacing(SPACING_SMALL)
-        current_ai_label = QLabel(self.i18n.get('current_ai', 'Current AI:'))
+        current_ai_label = QLabel(self.i18n.get('current_ai', 'Current AI'))
         current_ai_label.setObjectName('label_current_ai')
         model_select_layout.addWidget(current_ai_label)
 
@@ -1531,7 +1538,7 @@ class ConfigDialog(QWidget):
         # 添加请求超时时间设置
         timeout_layout = QHBoxLayout()
         timeout_layout.setSpacing(SPACING_SMALL)
-        timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout:'))
+        timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout'))
         timeout_label.setObjectName('label_request_timeout')
         timeout_layout.addWidget(timeout_label)
         
@@ -1546,6 +1553,7 @@ class ConfigDialog(QWidget):
         timeout_layout.addWidget(self.timeout_input)
         
         timeout_unit_label = QLabel(self.i18n.get('seconds', 'seconds'))
+        timeout_unit_label.setObjectName('label_timeout_unit')
         timeout_layout.addWidget(timeout_unit_label)
         timeout_layout.addStretch()
         
@@ -1554,7 +1562,7 @@ class ConfigDialog(QWidget):
         # 添加并行AI数量设置
         parallel_layout = QHBoxLayout()
         parallel_layout.setSpacing(SPACING_SMALL)
-        parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count:'))
+        parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count'))
         parallel_label.setObjectName('label_parallel_ai_count')
         parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
             'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
@@ -1602,6 +1610,7 @@ class ConfigDialog(QWidget):
         from .ui_constants import TEXT_COLOR_SECONDARY
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
             'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
+        parallel_notice.setObjectName('label_parallel_ai_notice')
         parallel_notice.setWordWrap(True)
         parallel_notice.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: 5px 0; font-style: italic;")
         model_layout.addWidget(parallel_notice)
@@ -1618,7 +1627,9 @@ class ConfigDialog(QWidget):
         # 主提示词模板
         main_template_layout = QVBoxLayout()
         main_template_layout.setSpacing(SPACING_SMALL)
-        main_template_layout.addWidget(QLabel(self.i18n.get('ask_prompts', 'Ask Prompts:')))
+        ask_prompts_label = QLabel(self.i18n.get('ask_prompts', 'Ask Prompts'))
+        ask_prompts_label.setObjectName('label_ask_prompts')
+        main_template_layout.addWidget(ask_prompts_label)
         
         self.template_edit = QPlainTextEdit(self)
         self.template_edit.setPlainText(get_prefs()['template'])
@@ -1649,7 +1660,9 @@ class ConfigDialog(QWidget):
         # 随机问题提示词
         random_questions_layout = QVBoxLayout()
         random_questions_layout.setSpacing(SPACING_SMALL)
-        random_questions_layout.addWidget(QLabel(self.i18n.get('random_questions_prompts', 'Random Questions Prompts:')))
+        random_questions_label = QLabel(self.i18n.get('random_questions_prompts', 'Random Questions Prompts'))
+        random_questions_label.setObjectName('label_random_questions_prompts')
+        random_questions_layout.addWidget(random_questions_label)
         
         self.random_questions_edit = QPlainTextEdit(self)
         
@@ -1693,7 +1706,9 @@ class ConfigDialog(QWidget):
         # 多书提示词模板
         multi_book_template_layout = QVBoxLayout()
         multi_book_template_layout.setSpacing(SPACING_SMALL)
-        multi_book_template_layout.addWidget(QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template:')))
+        multi_book_label = QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template'))
+        multi_book_label.setObjectName('label_multi_book_template')
+        multi_book_template_layout.addWidget(multi_book_label)
         
         self.multi_book_template_edit = QPlainTextEdit(self)
         self.multi_book_template_edit.setPlainText(get_prefs().get('multi_book_template', ''))
@@ -1720,6 +1735,7 @@ class ConfigDialog(QWidget):
         
         # 添加占位符说明
         placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
+        placeholder_hint.setObjectName('label_multi_book_placeholder_hint')
         placeholder_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-style: italic; padding: 5px 0;")
         placeholder_hint.setWordWrap(True)
         multi_book_template_layout.addWidget(placeholder_hint)
@@ -1758,6 +1774,8 @@ class ConfigDialog(QWidget):
             saved_folder if saved_folder else self.i18n.get('no_folder_selected', 'No folder selected')
         )
         self.export_folder_label.setObjectName('label_export_folder')
+        # 设置自定义属性标记是否显示的是占位符文本
+        self.export_folder_label.setProperty('is_placeholder', not bool(saved_folder))
         self.export_folder_label.setStyleSheet("""
             QLabel {
                 padding: 5px;
@@ -1793,6 +1811,7 @@ class ConfigDialog(QWidget):
         # 警告文字
         warning_label = QLabel(self.i18n.get('reset_all_data_warning', 
             'This will delete all API Keys, prompt templates, and local history records. Please proceed with caution.'))
+        warning_label.setObjectName('label_reset_warning')
         warning_label.setWordWrap(True)
         warning_label.setStyleSheet("color: #dc3545; font-weight: bold; padding: 5px 0;")
         reset_layout.addWidget(warning_label)
@@ -2238,6 +2257,17 @@ class ConfigDialog(QWidget):
                     break
                 elif key == 'prompt_template' and (('prompt' in current_text_lower and 'template' in current_text_lower) or '提示模板' in current_text_lower or '提示词模板' in current_text_lower):
                     label.setText(value)
+        
+        # 更新 Export 配置区域的占位符文字（特殊处理）
+        # 注意：checkbox 和 button 已在 retranslate_ui() 中通过 objectName 映射更新
+        if hasattr(self, 'export_folder_label'):
+            # 使用自定义属性检测是否显示的是占位符文本
+            is_placeholder = self.export_folder_label.property('is_placeholder')
+            if is_placeholder:
+                # 如果是占位符，更新为新语言的占位符文本
+                self.export_folder_label.setText(
+                    self.i18n.get('no_folder_selected', 'No folder selected')
+                )
                     
         # 更新initial_values中的语言，避免重复触发语言变更检测
         self.initial_values['language'] = lang_code
@@ -2272,7 +2302,9 @@ class ConfigDialog(QWidget):
         groupbox_map = {
             'groupbox_display': ('display', 'Display'),
             'groupbox_ai_models': ('ai_models', 'AI'),
-            'groupbox_prompt_template': ('prompt_template', 'Prompts')
+            'groupbox_prompt_template': ('prompt_template', 'Prompts'),
+            'groupbox_export_settings': ('export_settings', 'Export Settings'),
+            'groupbox_reset_data': ('reset_all_data', 'Reset All Data')
         }
         
         for group_box in self.findChildren(QGroupBox):
@@ -2285,10 +2317,18 @@ class ConfigDialog(QWidget):
         
         # 更新所有标签文本（使用ObjectName，语言无关）
         label_map = {
-            'label_language': ('language_label', 'Language:'),
-            'label_current_ai': ('current_ai', 'Current AI:'),
-            'label_request_timeout': ('request_timeout_label', 'Request Timeout:'),
-            'label_parallel_ai_count': ('parallel_ai_count_label', 'Parallel AI Count:'),
+            'label_language': ('language_label', 'Language'),
+            'label_current_ai': ('current_ai', 'Current AI'),
+            'label_request_timeout': ('request_timeout_label', 'Request Timeout'),
+            'label_timeout_unit': ('seconds', 'seconds'),
+            'label_parallel_ai_count': ('parallel_ai_count_label', 'Parallel AI Count'),
+            'label_parallel_ai_notice': ('parallel_ai_notice', 'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'),
+            'label_ask_prompts': ('ask_prompts', 'Ask Prompts'),
+            'label_random_questions_prompts': ('random_questions_prompts', 'Random Questions Prompts'),
+            'label_multi_book_template': ('multi_book_template_label', 'Multi-Book Prompt Template'),
+            'label_multi_book_placeholder_hint': ('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'),
+            'label_reset_warning': ('reset_all_data_warning', 'This will delete all API Keys, prompt templates, and local history records. Please proceed with caution.'),
+            'label_nvidia_free_info': ('nvidia_free_info', 'New users get 6 months free API access - No credit card required'),
         }
         
         # 对每个标签进行处理
@@ -2301,32 +2341,44 @@ class ConfigDialog(QWidget):
                 label.setText(new_text)
                 logger.debug(f"更新了标签 [{obj_name}]: {old_text} -> {new_text}")
         
-        # 更新所有按钮文本
-        reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
-        reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
-        #save_text = self.i18n.get('save_button', 'Save')
+        # 更新 CheckBox 文本（使用 ObjectName 映射）
+        checkbox_map = {
+            'checkbox_enable_default_folder': ('enable_default_export_folder', 'Export to default folder'),
+        }
+        
+        for checkbox in self.findChildren(QCheckBox):
+            obj_name = checkbox.objectName()
+            if obj_name in checkbox_map:
+                i18n_key, fallback = checkbox_map[obj_name]
+                checkbox.setText(self.i18n.get(i18n_key, fallback))
+                logger.debug(f"更新了复选框 [{obj_name}]: {checkbox.text()}")
+        
+        # 更新所有按钮文本（使用ObjectName映射，避免硬编码文本检测）
+        button_map = {
+            'button_browse_folder': ('browse_folder', 'Browse...'),
+            'button_reset_all_data': ('reset_all_data', 'Reset All Data'),
+        }
         
         for button in self.findChildren(QPushButton):
-            # 通过objectName或属性识别Reset按钮
-            if hasattr(button, 'objectName') and 'reset' in button.objectName().lower():
+            obj_name = button.objectName()
+            
+            # 优先使用 objectName 映射
+            if obj_name in button_map:
+                i18n_key, fallback = button_map[obj_name]
+                button.setText(self.i18n.get(i18n_key, fallback))
+                logger.debug(f"更新了按钮 [{obj_name}]: {button.text()}")
+            # Reset AI 按钮的特殊处理
+            elif obj_name and 'reset' in obj_name.lower() and 'all' not in obj_name.lower():
+                reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
+                reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-            # 通过属性识别
+            # 通过属性识别 Reset 按钮
             elif button.property('isResetButton'):
+                reset_text = self.i18n.get('reset_current_ai', 'Reset Current AI to Default')
+                reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
-            # 通过工具提示识别
-            elif hasattr(button, 'toolTip') and ('reset' in button.toolTip().lower() or 'default' in button.toolTip().lower()):
-                button.setText(reset_text)
-                button.setToolTip(reset_tooltip)
-            # 通过当前文本识别
-            elif button.text() in ['Reset to Default', 'Reset Current AI to Default', '重置', '重置当前AI为默认值', 'Réinitialiser', 'リセット']:
-                button.setText(reset_text)
-                button.setToolTip(reset_tooltip)
-            # 更新Save按钮
-            #elif button.text() in ['Save', '保存', 'Sauvegarder', '保存する']:
-            #    button.setText(save_text)
-            #    logger.debug(f"更新了Save按钮文本为: {save_text}")
         
         # 更新模型配置控件
         if hasattr(self, 'model_widgets'):
@@ -2855,8 +2907,10 @@ class ConfigDialog(QWidget):
         
         # 获取当前路径（如果有）
         current_folder = self.export_folder_label.text()
-        if current_folder == self.i18n.get('no_folder_selected', 'No folder selected'):
-            current_folder = os.path.expanduser('~')  # 默认用户主目录
+        # 使用自定义属性检测是否为占位符
+        is_placeholder = self.export_folder_label.property('is_placeholder')
+        if is_placeholder:
+            current_folder = ''  # 空路径，让对话框使用默认行为
         
         # 打开文件夹选择对话框
         folder = QFileDialog.getExistingDirectory(
@@ -2869,6 +2923,8 @@ class ConfigDialog(QWidget):
         if folder:
             # 更新标签显示
             self.export_folder_label.setText(folder)
+            # 标记为非占位符（显示的是实际路径）
+            self.export_folder_label.setProperty('is_placeholder', False)
             
             # 自动保存配置
             self.save_settings()
