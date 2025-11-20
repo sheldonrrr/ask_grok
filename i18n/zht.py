@@ -57,9 +57,34 @@ class TraditionalChineseTranslation(BaseTranslation):
         'copy_question_response': '複製問答',
         'export_pdf': '匯出PDF',
         'export_current_qa': '匯出當前問答',
-        'export_history': '匯出歷史',
-        'export_all_history_dialog_title': '匯出全部歷史記錄為PDF',
-        'export_all_history_title': '全部問答歷史記錄',
+        'export_history': '匯出歷史記錄',
+        
+        # 匯出設定
+        'export_settings': '匯出設定',
+        'enable_default_export_folder': '匯出到預設資料夾',
+        'no_folder_selected': '未選擇資料夾',
+        'browse': '瀏覽...',
+        'select_export_folder': '選擇匯出資料夾',
+        
+        # 按鈕文字和選單項目
+        'copy_response_btn': '複製回答',
+        'copy_qa_btn': '複製問答',
+        'export_current_btn': '匯出問答為PDF',
+        'export_history_btn': '匯出歷史記錄為PDF',
+        'copy_mode_response': '回答',
+        'copy_mode_qa': '問答',
+        'export_mode_current': '當前問答',
+        'export_mode_history': '歷史記錄',
+        
+        # PDF匯出相關
+        'model_provider': '提供商',
+        'model_name': '模型',
+        'model_api_url': 'API基礎URL',
+        'pdf_model_info': 'AI模型資訊',
+        'pdf_software': '軟體',
+        
+        'export_all_history_dialog_title': '匯出所有歷史記錄為PDF',
+        'export_all_history_title': '所有問答歷史記錄',
         'export_history_insufficient': '需要至少2條歷史記錄才能匯出。',
         'history_record': '記錄',
         'question_label': '問題',

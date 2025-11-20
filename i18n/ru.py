@@ -55,10 +55,35 @@ class RussianTranslation(BaseTranslation):
             'suggest_button': 'Случайный вопрос',
             'copy_response': 'Копировать ответ',
             'copy_question_response': 'Копировать В&&О',
-            'export_pdf': 'Экспортировать PDF',
-            'export_current_qa': 'Экспортировать текущий В&О',
-            'export_history': 'Экспортировать историю',
-            'export_all_history_dialog_title': 'Экспортировать всю историю в PDF',
+            'export_pdf': 'Экспорт в PDF',
+            'export_current_qa': 'Экспорт текущего Q&A',
+            'export_history': 'Экспорт истории',
+            
+            # Настройки экспорта
+            'export_settings': 'Настройки Экспорта',
+            'enable_default_export_folder': 'Экспорт в папку по умолчанию',
+            'no_folder_selected': 'Папка не выбрана',
+            'browse': 'Обзор...',
+            'select_export_folder': 'Выбрать Папку для Экспорта',
+            
+            # Текст кнопок и пункты меню
+            'copy_response_btn': 'Копировать Ответ',
+            'copy_qa_btn': 'Копировать Q&A',
+            'export_current_btn': 'Экспорт Q&A в PDF',
+            'export_history_btn': 'Экспорт Истории в PDF',
+            'copy_mode_response': 'Ответ',
+            'copy_mode_qa': 'Q&A',
+            'export_mode_current': 'Текущий Q&A',
+            'export_mode_history': 'История',
+            
+            # Связанные с экспортом PDF
+            'model_provider': 'Провайдер',
+            'model_name': 'Модель',
+            'model_api_url': 'Базовый URL API',
+            'pdf_model_info': 'Информация о Модели ИИ',
+            'pdf_software': 'Программное Обеспечение',
+            
+            'export_all_history_dialog_title': 'Экспорт всей истории в PDF',
             'export_all_history_title': 'ВСЯ ИСТОРИЯ В&О',
             'export_history_insufficient': 'Для экспорта требуется минимум 2 записи истории.',
             'history_record': 'Запись',

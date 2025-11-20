@@ -1753,9 +1753,9 @@ class ConfigDialog(QWidget):
         folder_layout.setSpacing(SPACING_SMALL)
         
         # 文件夹路径标签（显示当前选择的路径）
+        saved_folder = self.initial_values.get('default_export_folder', '').strip()
         self.export_folder_label = QLabel(
-            self.initial_values.get('default_export_folder', '') or 
-            self.i18n.get('no_folder_selected', 'No folder selected')
+            saved_folder if saved_folder else self.i18n.get('no_folder_selected', 'No folder selected')
         )
         self.export_folder_label.setObjectName('label_export_folder')
         self.export_folder_label.setStyleSheet("""
@@ -2021,7 +2021,7 @@ class ConfigDialog(QWidget):
         # 调试日志
         import logging
         logger = logging.getLogger(__name__)
-        # 初始值已加载
+        logger.info(f"[Export Config] 加载导出配置 - enable_default_export_folder: {self.initial_values.get('enable_default_export_folder')}, default_export_folder: {self.initial_values.get('default_export_folder')}")
         
         
         # 设置当前语言
@@ -2063,6 +2063,27 @@ class ConfigDialog(QWidget):
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
+        
+        # 设置导出配置
+        if hasattr(self, 'enable_default_folder_checkbox'):
+            enable_export = self.initial_values.get('enable_default_export_folder', False)
+            self.enable_default_folder_checkbox.setChecked(enable_export)
+            logger.info(f"[Export Config] 设置checkbox状态: {enable_export}")
+        
+        if hasattr(self, 'export_folder_label'):
+            saved_folder = self.initial_values.get('default_export_folder', '').strip()
+            if saved_folder:
+                self.export_folder_label.setText(saved_folder)
+                logger.info(f"[Export Config] 设置文件夹路径: {saved_folder}")
+            else:
+                no_folder_text = self.i18n.get('no_folder_selected', 'No folder selected')
+                self.export_folder_label.setText(no_folder_text)
+                logger.info(f"[Export Config] 未设置文件夹，显示: {no_folder_text}")
+        
+        if hasattr(self, 'browse_folder_button'):
+            button_enabled = self.initial_values.get('enable_default_export_folder', False)
+            self.browse_folder_button.setEnabled(button_enabled)
+            logger.info(f"[Export Config] 设置浏览按钮状态: {button_enabled}")
             
     def on_language_changed(self, index):
         """语言改变时的处理函数"""
@@ -2842,15 +2863,15 @@ class ConfigDialog(QWidget):
             self,
             self.i18n.get('select_export_folder', 'Select Export Folder'),
             current_folder,
-            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks
+            QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks
         )
         
         if folder:
             # 更新标签显示
             self.export_folder_label.setText(folder)
             
-            # 标记配置已修改
-            self.on_config_changed()
+            # 自动保存配置
+            self.save_settings()
     
     def on_reset_all_data(self):
         """重置所有插件数据"""

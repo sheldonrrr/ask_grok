@@ -58,6 +58,30 @@ class GermanTranslation(BaseTranslation):
             'export_pdf': 'PDF exportieren',
             'export_current_qa': 'Aktuelles Q&A exportieren',
             'export_history': 'Verlauf exportieren',
+            
+            # Export-Einstellungen
+            'export_settings': 'Export-Einstellungen',
+            'enable_default_export_folder': 'In Standardordner exportieren',
+            'no_folder_selected': 'Kein Ordner ausgewählt',
+            'browse': 'Durchsuchen...',
+            'select_export_folder': 'Export-Ordner auswählen',
+            
+            # Schaltflächentext und Menüelemente
+            'copy_response_btn': 'Antwort kopieren',
+            'copy_qa_btn': 'F&A kopieren',
+            'export_current_btn': 'F&A als PDF exportieren',
+            'export_history_btn': 'Verlauf als PDF exportieren',
+            'copy_mode_response': 'Antwort',
+            'copy_mode_qa': 'F&A',
+            'export_mode_current': 'Aktuelles F&A',
+            'export_mode_history': 'Verlauf',
+            
+            # PDF-Export bezogen
+            'model_provider': 'Anbieter',
+            'model_name': 'Modell',
+            'model_api_url': 'API-Basis-URL',
+            'pdf_model_info': 'KI-Modell-Informationen',
+            'pdf_software': 'Software',
             'export_all_history_dialog_title': 'Gesamten Verlauf als PDF exportieren',
             'export_all_history_title': 'GESAMTER Q&A-VERLAUF',
             'export_history_insufficient': 'Mindestens 2 Verlaufseinträge erforderlich zum Exportieren.',

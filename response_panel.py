@@ -63,7 +63,7 @@ class ResponsePanel(QWidget):
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
         # 使用紧凑间距，让AI回复区域更大
-        from .ui_constants import SPACING_ASK_COMPACT
+        from calibre_plugins.ask_ai_plugin.ui_constants import SPACING_ASK_COMPACT
         main_layout.setContentsMargins(0, 0, 0, SPACING_ASK_COMPACT)  # 上边距0，下边距4px
         main_layout.setSpacing(SPACING_ASK_COMPACT)  # 内部元素间距4px
         
@@ -74,7 +74,7 @@ class ResponsePanel(QWidget):
             header_layout.setSpacing(SPACING_SMALL)
             
             # AI切换器（直接显示模型名称，不需要"AI 1:"标签）
-            from .ui_constants import BUTTON_HEIGHT
+            from calibre_plugins.ask_ai_plugin.ui_constants import BUTTON_HEIGHT
             self.ai_switcher = NoScrollComboBox()
             self.ai_switcher.setMinimumWidth(200)
             self.ai_switcher.setFixedHeight(BUTTON_HEIGHT)  # 与按钮保持相同高度
@@ -92,7 +92,7 @@ class ResponsePanel(QWidget):
             main_layout.addLayout(header_layout)
         else:
             # 不显示 header，但仍然创建 ai_switcher（将被添加到外部布局）
-            from .ui_constants import BUTTON_HEIGHT
+            from calibre_plugins.ask_ai_plugin.ui_constants import BUTTON_HEIGHT
             self.ai_switcher = NoScrollComboBox()
             self.ai_switcher.setMinimumWidth(200)
             self.ai_switcher.setFixedHeight(BUTTON_HEIGHT)
@@ -164,7 +164,7 @@ class ResponsePanel(QWidget):
         button_layout.setSpacing(SPACING_SMALL)
         
         # 从config读取用户上次的选择和parallel_ai_count
-        from ..config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         self.copy_mode = prefs.get('copy_mode', 'response')  # 'response' or 'qa'
         self.export_mode = prefs.get('export_mode', 'current')  # 'current' or 'history'
@@ -477,8 +477,9 @@ class ResponsePanel(QWidget):
             self._show_copy_tooltip(self.copy_btn, self.i18n.get('copied', 'Copied!'))
     
     def copy_question_response(self):
-        """复制问题和响应内容到剪贴板"""
+        """复制问题和响应内容到剪贴板（包含完整元数据和模型信息）"""
         from PyQt5.QtWidgets import QApplication
+        from datetime import datetime
         clipboard = QApplication.clipboard()
         
         # 从父对话框获取问题
@@ -491,10 +492,116 @@ class ResponsePanel(QWidget):
         if not question and not response:
             return
         
-        # 组合问题和答案
-        text = f"{question}\n\n----\n\n{response}" if question and response else (question or response)
+        # 使用统一的格式化函数
+        text = self._format_qa_content(question, response, include_metadata=True, include_model_info=True)
         clipboard.setText(text)
         self._show_copy_tooltip(self.copy_btn, self.i18n.get('copied', 'Copied!'))
+    
+    def _get_ai_display_name(self, ai_name):
+        """获取AI的友好显示名称（正确大小写）
+        
+        Args:
+            ai_name: AI的内部名称（如 'openai', 'grok'）
+            
+        Returns:
+            str: 友好的显示名称（如 'OpenAI', 'Grok'）
+        """
+        display_names = {
+            'openai': 'OpenAI',
+            'grok': 'Grok',
+            'gemini': 'Gemini',
+            'deepseek': 'DeepSeek',
+            'anthropic': 'Claude',
+            'nvidia': 'Nvidia',
+            'openrouter': 'OpenRouter',
+            'ollama': 'Ollama',
+            'custom': 'Custom'
+        }
+        return display_names.get(ai_name.lower(), ai_name.capitalize())
+    
+    def _format_qa_content(self, question, response, include_metadata=True, include_model_info=True):
+        """统一格式化问答内容
+        
+        Args:
+            question: 问题文本
+            response: 回答文本
+            include_metadata: 是否包含书籍元数据
+            include_model_info: 是否包含AI模型信息
+            
+        Returns:
+            格式化后的文本
+        """
+        from datetime import datetime
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        
+        separator = "────"
+        content_parts = []
+        
+        # 1. 书籍元数据
+        if include_metadata and hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
+            book_metadata = self.parent_dialog.book_metadata
+            content_parts.append(self.i18n.get('pdf_book_metadata', '书籍元数据'))
+            content_parts.append(separator)
+            
+            if book_metadata.get('title'):
+                content_parts.append(f"{self.i18n.get('metadata_title', '标题')}: {book_metadata['title']}")
+            if book_metadata.get('authors'):
+                authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
+                content_parts.append(f"{self.i18n.get('metadata_authors', '作者')}: {authors}")
+            if book_metadata.get('publisher'):
+                content_parts.append(f"{self.i18n.get('metadata_publisher', '出版社')}: {book_metadata['publisher']}")
+            if book_metadata.get('pubdate'):
+                content_parts.append(f"{self.i18n.get('metadata_pubdate', '出版日期')}: {book_metadata['pubdate']}")
+            if book_metadata.get('languages'):
+                langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
+                content_parts.append(f"{self.i18n.get('metadata_language', '语言')}: {langs}")
+            
+            content_parts.append("")
+            content_parts.append("")
+        
+        # 2. 问题
+        content_parts.append(self.i18n.get('pdf_question', '问题'))
+        content_parts.append(separator)
+        content_parts.append(question if question else self.i18n.get('no_question', '无问题'))
+        content_parts.append("")
+        content_parts.append("")
+        
+        # 3. 回答
+        content_parts.append(self.i18n.get('pdf_answer', '回答'))
+        content_parts.append(separator)
+        content_parts.append(response if response else self.i18n.get('no_response', '无回答'))
+        content_parts.append("")
+        content_parts.append("")
+        
+        # 4. AI模型信息
+        if include_model_info:
+            prefs = get_prefs()
+            ai_id = self.get_selected_ai() or "unknown"
+            models_config = prefs.get('models', {})
+            model_config = models_config.get(ai_id, {})
+            
+            content_parts.append(self.i18n.get('pdf_model_info', 'AI模型信息'))
+            content_parts.append(separator)
+            
+            if model_config.get('display_name'):
+                content_parts.append(f"{self.i18n.get('model_provider', '提供商')}: {model_config['display_name']}")
+            if model_config.get('model'):
+                content_parts.append(f"{self.i18n.get('model_name', '模型')}: {model_config['model']}")
+            if model_config.get('api_base_url'):
+                content_parts.append(f"{self.i18n.get('model_api_url', 'API基础URL')}: {model_config['api_base_url']}")
+            
+            content_parts.append("")
+            content_parts.append("")
+        
+        # 5. 生成信息
+        content_parts.append(self.i18n.get('pdf_generated_by', '生成信息'))
+        content_parts.append(separator)
+        content_parts.append(f"{self.i18n.get('pdf_plugin', '插件')}: Ask AI Plugin (calibre Plugin)")
+        content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
+        content_parts.append(f"{self.i18n.get('pdf_software', '软件')}: calibre E-book Manager (https://calibre-ebook.com)")
+        content_parts.append(f"{self.i18n.get('pdf_generated_time', '生成时间')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        return '\n'.join(content_parts)
     
     def _update_copy_button_text(self):
         """更新复制按钮文字"""
@@ -566,7 +673,7 @@ class ResponsePanel(QWidget):
         self._update_copy_menu_checkmarks()
         
         # 保存到config
-        from ..config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         prefs['copy_mode'] = mode
     
@@ -577,7 +684,7 @@ class ResponsePanel(QWidget):
         self._update_export_menu_checkmarks()
         
         # 保存到config
-        from ..config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         prefs['export_mode'] = mode
     
@@ -614,14 +721,18 @@ class ResponsePanel(QWidget):
             return
         
         # 生成默认文件名
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        default_filename = f"ask_ai_multi_qa_{timestamp}.pdf"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        default_filename = f"Multi-AI_QA_{timestamp}.pdf"
         
-        # 检查是否启用默认导出文件夹
-        from ..config import get_prefs
+        # 检查是否启用默认导出文件夹（强制重新加载最新配置）
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
+        # 强制刷新配置以获取最新值
+        if hasattr(prefs, 'refresh'):
+            prefs.refresh()
         enable_default_folder = prefs.get('enable_default_export_folder', False)
         default_folder = prefs.get('default_export_folder', '')
+        logger.info(f"[Multi-AI Export] 读取导出配置 - enable: {enable_default_folder}, folder: {default_folder}")
         
         # 决定文件路径
         if enable_default_folder and default_folder:
@@ -642,33 +753,44 @@ class ResponsePanel(QWidget):
             printer = QPrinter()
             printer.setOutputFileName(file_path)
             
-            # 构建内容
-            separator = "=" * 40
+            # 构建内容（多AI模式）
+            from calibre_plugins.ask_ai_plugin.config import get_prefs
+            separator = "────"
             content_parts = []
             
             # 1. 书籍元数据
             if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
                 book_metadata = self.parent_dialog.book_metadata
-                content_parts.append(separator)
-                content_parts.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                content_parts.append(self.i18n.get('pdf_book_metadata', '书籍元数据'))
                 content_parts.append(separator)
                 
                 if book_metadata.get('title'):
-                    content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
+                    content_parts.append(f"{self.i18n.get('metadata_title', '标题')}: {book_metadata['title']}")
                 if book_metadata.get('authors'):
                     authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
-                    content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
+                    content_parts.append(f"{self.i18n.get('metadata_authors', '作者')}: {authors}")
+                if book_metadata.get('publisher'):
+                    content_parts.append(f"{self.i18n.get('metadata_publisher', '出版社')}: {book_metadata['publisher']}")
+                if book_metadata.get('pubdate'):
+                    content_parts.append(f"{self.i18n.get('metadata_pubdate', '出版日期')}: {book_metadata['pubdate']}")
+                if book_metadata.get('languages'):
+                    langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
+                    content_parts.append(f"{self.i18n.get('metadata_language', '语言')}: {langs}")
                 
+                content_parts.append("")
                 content_parts.append("")
             
             # 2. 问题
+            content_parts.append(self.i18n.get('pdf_question', '问题'))
             content_parts.append(separator)
-            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
-            content_parts.append(separator)
-            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
+            content_parts.append(question if question else self.i18n.get('no_question', '无问题'))
+            content_parts.append("")
             content_parts.append("")
             
-            # 3. 所有AI的回答
+            # 3. 所有AI的回答（包含模型信息）
+            prefs = get_prefs()
+            models_config = prefs.get('models', {})
+            
             for i, panel in enumerate(panels):
                 response = panel.response_area.toPlainText().strip()
                 if not response:
@@ -676,21 +798,34 @@ class ResponsePanel(QWidget):
                 
                 # AI信息
                 ai_id = panel.get_selected_ai() or "unknown"
-                ai_display = f"AI {i + 1}: {ai_id}"
+                model_config = models_config.get(ai_id, {})
+                ai_display_name = model_config.get('display_name', ai_id)
                 
-                content_parts.append(separator)
-                content_parts.append(f"{self.i18n.get('pdf_answer', 'ANSWER')} - {ai_display}")
+                content_parts.append(f"{self.i18n.get('pdf_answer', '回答')} {i + 1} ({ai_display_name})")
                 content_parts.append(separator)
                 content_parts.append(response)
                 content_parts.append("")
+                content_parts.append("")
+                
+                # 添加该AI的模型信息
+                content_parts.append(f"{self.i18n.get('pdf_model_info', 'AI模型信息')} {i + 1}")
+                content_parts.append(separator)
+                if model_config.get('display_name'):
+                    content_parts.append(f"{self.i18n.get('model_provider', '提供商')}: {model_config['display_name']}")
+                if model_config.get('model'):
+                    content_parts.append(f"{self.i18n.get('model_name', '模型')}: {model_config['model']}")
+                if model_config.get('api_base_url'):
+                    content_parts.append(f"{self.i18n.get('model_api_url', 'API基础URL')}: {model_config['api_base_url']}")
+                content_parts.append("")
+                content_parts.append("")
             
             # 4. 生成信息
+            content_parts.append(self.i18n.get('pdf_generated_by', '生成信息'))
             content_parts.append(separator)
-            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
-            content_parts.append(separator)
-            content_parts.append(f"{self.i18n.get('pdf_plugin', 'Plugin')}: Ask AI Plugin")
-            content_parts.append(f"{self.i18n.get('pdf_generated_time', 'Generated Time')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            content_parts.append(separator)
+            content_parts.append(f"{self.i18n.get('pdf_plugin', '插件')}: Ask AI Plugin (calibre Plugin)")
+            content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"{self.i18n.get('pdf_software', '软件')}: calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{self.i18n.get('pdf_generated_time', '生成时间')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             
             content = '\n'.join(content_parts)
             
@@ -731,16 +866,29 @@ class ResponsePanel(QWidget):
             logger.warning(f"面板 {self.panel_index} 没有内容可导出")
             return
         
-        # 生成默认文件名（使用时间戳和面板索引）
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        ai_name = self.get_selected_ai() or "unknown"
-        default_filename = f"ask_ai_qa_{ai_name}_panel{self.panel_index + 1}_{timestamp}.pdf"
+        # 生成默认文件名
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        ai_name = self.get_selected_ai() or "Unknown"
+        # 获取AI显示名称（带正确大小写）
+        ai_display_name = self._get_ai_display_name(ai_name)
+        # 获取书名
+        book_title = ""
+        if hasattr(self.parent_dialog, 'books_info') and self.parent_dialog.books_info:
+            book_title = self.parent_dialog.books_info[0].title
+            # 清理文件名中的非法字符
+            book_title = "".join(c for c in book_title if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
+            book_title = f"_{book_title}" if book_title else ""
+        default_filename = f"{ai_display_name}_QA{book_title}_{timestamp}.pdf"
         
-        # 检查是否启用默认导出文件夹
-        from ..config import get_prefs
+        # 检查是否启用默认导出文件夹（强制重新加载最新配置）
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
+        # 强制刷新配置以获取最新值
+        if hasattr(prefs, 'refresh'):
+            prefs.refresh()
         enable_default_folder = prefs.get('enable_default_export_folder', False)
         default_folder = prefs.get('default_export_folder', '')
+        logger.info(f"[Panel {self.panel_index} Export] 读取导出配置 - enable: {enable_default_folder}, folder: {default_folder}")
         
         # 决定文件路径
         if enable_default_folder and default_folder:
@@ -764,119 +912,8 @@ class ResponsePanel(QWidget):
             printer = QPrinter()
             printer.setOutputFileName(file_path)
             
-            # 构建书籍元数据信息
-            separator = "=" * 40
-            metadata_lines = []
-            
-            # 从父对话框获取书籍元数据
-            if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
-                book_metadata = self.parent_dialog.book_metadata
-                metadata_lines.append(separator)
-                metadata_lines.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
-                metadata_lines.append(separator)
-                
-                if book_metadata.get('title'):
-                    title_label = self.i18n.get('metadata_title', 'Title')
-                    metadata_lines.append(f"{title_label}: {book_metadata['title']}")
-                
-                if book_metadata.get('authors'):
-                    authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
-                    authors_label = self.i18n.get('metadata_authors', 'Authors')
-                    metadata_lines.append(f"{authors_label}: {authors}")
-                
-                if book_metadata.get('publisher'):
-                    publisher_label = self.i18n.get('metadata_publisher', 'Publisher')
-                    metadata_lines.append(f"{publisher_label}: {book_metadata['publisher']}")
-                
-                if book_metadata.get('pubdate'):
-                    pubdate = str(book_metadata['pubdate'])
-                    # 只保留年月，去掉详细时间
-                    if 'T' in pubdate:
-                        pubdate = pubdate.split('T')[0]
-                    if len(pubdate) > 7:
-                        pubdate = pubdate[:7]
-                    pubdate_label = self.i18n.get('metadata_pubyear', 'Publication Date')
-                    metadata_lines.append(f"{pubdate_label}: {pubdate}")
-                
-                if book_metadata.get('languages'):
-                    languages = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
-                    languages_label = self.i18n.get('metadata_language', 'Languages')
-                    metadata_lines.append(f"{languages_label}: {languages}")
-                
-                metadata_lines.append("")
-            
-            # 获取当前使用的AI模型信息
-            model_info_lines = []
-            try:
-                if hasattr(self, 'api') and self.api:
-                    
-                    model_info_lines.append("")
-                    model_info_lines.append(separator)
-                    model_info_lines.append(self.i18n.get('pdf_ai_model_info', 'AI MODEL INFORMATION'))
-                    model_info_lines.append(separator)
-                    
-                    # 使用provider_name属性获取提供商名称
-                    provider = getattr(self.api, 'provider_name', 'Unknown')
-                    model_name = getattr(self.api, 'model', 'Unknown')
-                    api_url = getattr(self.api, 'api_base', '')
-                    
-                    provider_label = self.i18n.get('pdf_provider', 'Provider')
-                    model_label = self.i18n.get('pdf_model', 'Model')
-                    api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
-                    
-                    model_info_lines.append(f"{provider_label}: {provider}")
-                    model_info_lines.append(f"{model_label}: {model_name}")
-                    if api_url:
-                        model_info_lines.append(f"{api_url_label}: {api_url}")
-                else:
-                    logger.warning(f"面板 {self.panel_index} 没有API对象")
-                    info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
-                    model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
-            except Exception as e:
-                logger.error(f"面板 {self.panel_index} 获取模型信息失败: {str(e)}", exc_info=True)
-                info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
-                model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
-            
-            # 组合所有内容
-            content_parts = []
-            
-            # 1. 书籍元数据（最开头）
-            if metadata_lines:
-                content_parts.append('\n'.join(metadata_lines))
-            
-            # 2. 问题
-            content_parts.append(separator)
-            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
-            content_parts.append(separator)
-            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
-            content_parts.append("")
-            
-            # 3. 回答
-            content_parts.append(separator)
-            content_parts.append(self.i18n.get('pdf_answer', 'ANSWER'))
-            content_parts.append(separator)
-            content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
-            
-            # 4. AI模型信息（最后）
-            if model_info_lines:
-                content_parts.extend(model_info_lines)
-            
-            # 5. 生成信息
-            content_parts.append("")
-            content_parts.append(separator)
-            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
-            content_parts.append(separator)
-            plugin_label = self.i18n.get('pdf_plugin', 'Plugin')
-            github_label = self.i18n.get('pdf_github', 'GitHub')
-            software_label = self.i18n.get('pdf_software', 'Software')
-            time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
-            content_parts.append(f"{plugin_label}: Ask AI Plugin (calibre Plugin)")
-            content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
-            content_parts.append(f"{software_label}: calibre E-book Manager (https://calibre-ebook.com)")
-            content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            content_parts.append(separator)
-            
-            content = '\n'.join(content_parts)
+            # 使用统一的格式化函数
+            content = self._format_qa_content(question, response, include_metadata=True, include_model_info=True)
             
             # 使用QTextDocument打印
             doc = QTextDocument()
@@ -950,17 +987,21 @@ class ResponsePanel(QWidget):
             return
         
         # 生成默认文件名
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        book_title = self.parent_dialog.books_info[0].title if self.parent_dialog.books_info else "unknown"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        book_title = self.parent_dialog.books_info[0].title if self.parent_dialog.books_info else "Unknown"
         # 清理文件名中的非法字符
         safe_title = "".join(c for c in book_title if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
-        default_filename = f"ask_ai_all_history_{safe_title}_{timestamp}.pdf"
+        default_filename = f"History_{safe_title}_{timestamp}.pdf"
         
-        # 检查是否启用默认导出文件夹
-        from ..config import get_prefs
+        # 检查是否启用默认导出文件夹（强制重新加载最新配置）
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
+        # 强制刷新配置以获取最新值
+        if hasattr(prefs, 'refresh'):
+            prefs.refresh()
         enable_default_folder = prefs.get('enable_default_export_folder', False)
         default_folder = prefs.get('default_export_folder', '')
+        logger.info(f"[History Export] 读取导出配置 - enable: {enable_default_folder}, folder: {default_folder}")
         
         # 决定文件路径
         if enable_default_folder and default_folder:
@@ -986,7 +1027,7 @@ class ResponsePanel(QWidget):
             
             # 构建完整内容
             content_parts = []
-            separator = "=" * 60
+            separator = "────"
             
             # 1. 添加标题
             content_parts.append(separator)
@@ -1135,7 +1176,7 @@ class ResponsePanel(QWidget):
             
             # 显示成功提示
             success_msg = self.i18n.get('pdf_exported', 'PDF Exported!')
-            self._show_copy_tooltip(self.export_all_btn, success_msg)
+            self._show_copy_tooltip(self.export_btn, success_msg)
             
         except Exception as e:
             logger.error(f"导出全部历史记录PDF失败: {str(e)}", exc_info=True)
@@ -1195,10 +1236,10 @@ class ResponsePanel(QWidget):
             ai_available: 该AI是否仍然可用
         """
         from PyQt5.QtWidgets import QLabel
-        from .config import get_prefs
-        from .ui_constants import SPACING_TINY
-        from .api import APIClient
-        from .models.base import DEFAULT_MODELS
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.ui_constants import SPACING_TINY
+        from calibre_plugins.ask_ai_plugin.api import APIClient
+        from calibre_plugins.ask_ai_plugin.models.base import DEFAULT_MODELS
         
         # 如果已存在信息栏，先移除
         if self.history_info_bar:

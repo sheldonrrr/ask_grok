@@ -57,8 +57,33 @@ class DanishTranslation(BaseTranslation):
             'copy_question_response': 'Kopiér S&&S',
             'export_pdf': 'Eksportér PDF',
             'export_current_qa': 'Eksportér Nuværende S&S',
-            'export_history': 'Eksportér Historik',
-            'export_all_history_dialog_title': 'Eksportér Hele Historikken til PDF',
+            'export_history': 'Eksporter Historik',
+            
+            # Eksportindstillinger
+            'export_settings': 'Eksportindstillinger',
+            'enable_default_export_folder': 'Eksporter til standardmappe',
+            'no_folder_selected': 'Ingen mappe valgt',
+            'browse': 'Gennemse...',
+            'select_export_folder': 'Vælg Eksportmappe',
+            
+            # Knaptekst og menupunkter
+            'copy_response_btn': 'Kopier Svar',
+            'copy_qa_btn': 'Kopier S&S',
+            'export_current_btn': 'Eksporter S&S som PDF',
+            'export_history_btn': 'Eksporter Historik som PDF',
+            'copy_mode_response': 'Svar',
+            'copy_mode_qa': 'S&S',
+            'export_mode_current': 'Nuværende S&S',
+            'export_mode_history': 'Historik',
+            
+            # PDF-eksport relateret
+            'model_provider': 'Udbyder',
+            'model_name': 'Model',
+            'model_api_url': 'API Basis-URL',
+            'pdf_model_info': 'AI-Modelinformation',
+            'pdf_software': 'Software',
+            
+            'export_all_history_dialog_title': 'Eksporter Hele Historikken til PDF',
             'export_all_history_title': 'HELE S&S HISTORIK',
             'export_history_insufficient': 'Mindst 2 historikposter kræves for at eksportere.',
             'history_record': 'Post',

@@ -58,6 +58,31 @@ class PortugueseTranslation(BaseTranslation):
             'export_pdf': 'Exportar PDF',
             'export_current_qa': 'Exportar P&R Atual',
             'export_history': 'Exportar Histórico',
+            
+            # Configurações de exportação
+            'export_settings': 'Configurações de Exportação',
+            'enable_default_export_folder': 'Exportar para pasta padrão',
+            'no_folder_selected': 'Nenhuma pasta selecionada',
+            'browse': 'Procurar...',
+            'select_export_folder': 'Selecionar Pasta de Exportação',
+            
+            # Texto dos botões e itens de menu
+            'copy_response_btn': 'Copiar Resposta',
+            'copy_qa_btn': 'Copiar P&R',
+            'export_current_btn': 'Exportar P&R como PDF',
+            'export_history_btn': 'Exportar Histórico como PDF',
+            'copy_mode_response': 'Resposta',
+            'copy_mode_qa': 'P&R',
+            'export_mode_current': 'P&R Atual',
+            'export_mode_history': 'Histórico',
+            
+            # Relacionado à exportação de PDF
+            'model_provider': 'Provedor',
+            'model_name': 'Modelo',
+            'model_api_url': 'URL Base da API',
+            'pdf_model_info': 'Informações do Modelo de IA',
+            'pdf_software': 'Software',
+            
             'export_all_history_dialog_title': 'Exportar Todo o Histórico para PDF',
             'export_all_history_title': 'TODO O HISTÓRICO DE P&R',
             'export_history_insufficient': 'São necessários pelo menos 2 registros de histórico para exportar.',

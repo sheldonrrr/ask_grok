@@ -58,6 +58,31 @@ class FinnishTranslation(BaseTranslation):
             'export_pdf': 'Vie PDF',
             'export_current_qa': 'Vie Nykyinen K&V',
             'export_history': 'Vie Historia',
+            
+            # Vientiasetukset
+            'export_settings': 'Vientiasetukset',
+            'enable_default_export_folder': 'Vie oletuskansioon',
+            'no_folder_selected': 'Ei kansiota valittuna',
+            'browse': 'Selaa...',
+            'select_export_folder': 'Valitse Vientikansio',
+            
+            # Painikkeiden teksti ja valikkokohteet
+            'copy_response_btn': 'Kopioi Vastaus',
+            'copy_qa_btn': 'Kopioi K&V',
+            'export_current_btn': 'Vie K&V PDF:ksi',
+            'export_history_btn': 'Vie Historia PDF:ksi',
+            'copy_mode_response': 'Vastaus',
+            'copy_mode_qa': 'K&V',
+            'export_mode_current': 'Nykyinen K&V',
+            'export_mode_history': 'Historia',
+            
+            # PDF-vienti liittyvä
+            'model_provider': 'Palveluntarjoaja',
+            'model_name': 'Malli',
+            'model_api_url': 'API Perus-URL',
+            'pdf_model_info': 'AI-Mallitiedot',
+            'pdf_software': 'Ohjelmisto',
+            
             'export_all_history_dialog_title': 'Vie Koko Historia PDF:ksi',
             'export_all_history_title': 'KOKO K&V HISTORIA',
             'export_history_insufficient': 'Viennissä tarvitaan vähintään 2 historiatietuetta.',

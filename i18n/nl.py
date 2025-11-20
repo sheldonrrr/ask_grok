@@ -55,10 +55,35 @@ class DutchTranslation(BaseTranslation):
             'suggest_button': 'Willekeurige vraag',
             'copy_response': 'Antwoord kopiëren',
             'copy_question_response': 'V&&A kopiëren',
-            'export_pdf': 'Exporteren naar PDF',
+            'export_pdf': 'PDF Exporteren',
             'export_current_qa': 'Huidige V&A Exporteren',
             'export_history': 'Geschiedenis Exporteren',
-            'export_all_history_dialog_title': 'Hele Geschiedenis naar PDF Exporteren',
+            
+            # Exportinstellingen
+            'export_settings': 'Exportinstellingen',
+            'enable_default_export_folder': 'Exporteren naar standaardmap',
+            'no_folder_selected': 'Geen map geselecteerd',
+            'browse': 'Bladeren...',
+            'select_export_folder': 'Selecteer Exportmap',
+            
+            # Knoptekst en menu-items
+            'copy_response_btn': 'Antwoord Kopiëren',
+            'copy_qa_btn': 'V&A Kopiëren',
+            'export_current_btn': 'V&A als PDF Exporteren',
+            'export_history_btn': 'Geschiedenis als PDF Exporteren',
+            'copy_mode_response': 'Antwoord',
+            'copy_mode_qa': 'V&A',
+            'export_mode_current': 'Huidige V&A',
+            'export_mode_history': 'Geschiedenis',
+            
+            # PDF-export gerelateerd
+            'model_provider': 'Provider',
+            'model_name': 'Model',
+            'model_api_url': 'API Basis-URL',
+            'pdf_model_info': 'AI-Modelinformatie',
+            'pdf_software': 'Software',
+            
+            'export_all_history_dialog_title': 'Volledige Geschiedenis naar PDF Exporteren',
             'export_all_history_title': 'VOLLEDIGE V&A GESCHIEDENIS',
             'export_history_insufficient': 'Minimaal 2 geschiedenisrecords vereist om te exporteren.',
             'history_record': 'Record',

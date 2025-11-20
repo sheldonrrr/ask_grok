@@ -58,6 +58,31 @@ class NorwegianTranslation(BaseTranslation):
             'export_pdf': 'Eksporter PDF',
             'export_current_qa': 'Eksporter Nåværende S&S',
             'export_history': 'Eksporter Historikk',
+            
+            # Eksportinnstillinger
+            'export_settings': 'Eksportinnstillinger',
+            'enable_default_export_folder': 'Eksporter til standardmappe',
+            'no_folder_selected': 'Ingen mappe valgt',
+            'browse': 'Bla gjennom...',
+            'select_export_folder': 'Velg Eksportmappe',
+            
+            # Knappetekst og menyelementer
+            'copy_response_btn': 'Kopier Svar',
+            'copy_qa_btn': 'Kopier S&S',
+            'export_current_btn': 'Eksporter S&S som PDF',
+            'export_history_btn': 'Eksporter Historikk som PDF',
+            'copy_mode_response': 'Svar',
+            'copy_mode_qa': 'S&S',
+            'export_mode_current': 'Gjeldende S&S',
+            'export_mode_history': 'Historikk',
+            
+            # PDF-eksport relatert
+            'model_provider': 'Leverandør',
+            'model_name': 'Modell',
+            'model_api_url': 'API Basis-URL',
+            'pdf_model_info': 'AI-Modellinformasjon',
+            'pdf_software': 'Programvare',
+            
             'export_all_history_dialog_title': 'Eksporter Hele Historikken til PDF',
             'export_all_history_title': 'HELE S&S HISTORIKK',
             'export_history_insufficient': 'Minst 2 historikkoppføringer kreves for å eksportere.',

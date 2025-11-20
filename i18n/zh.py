@@ -131,6 +131,13 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'export_mode_current': '当前问答',
             'export_mode_history': '历史记录',
             
+            # PDF导出相关
+            'model_provider': '提供商',
+            'model_name': '模型',
+            'model_api_url': 'API基础URL',
+            'pdf_model_info': 'AI模型信息',
+            'pdf_software': '软件',
+            
             # UI - 对话框元素
             'input_placeholder': '输入你的问题...',
             'response_placeholder': '回答即将到来...',

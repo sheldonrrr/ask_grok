@@ -58,6 +58,31 @@ class FrenchTranslation(BaseTranslation):
             'export_pdf': 'Exporter PDF',
             'export_current_qa': 'Exporter Q&R Actuel',
             'export_history': 'Exporter l\'Historique',
+            
+            # Paramètres d'exportation
+            'export_settings': 'Paramètres d\'Exportation',
+            'enable_default_export_folder': 'Exporter vers le dossier par défaut',
+            'no_folder_selected': 'Aucun dossier sélectionné',
+            'browse': 'Parcourir...',
+            'select_export_folder': 'Sélectionner le Dossier d\'Exportation',
+            
+            # Texte des boutons et éléments de menu
+            'copy_response_btn': 'Copier la Réponse',
+            'copy_qa_btn': 'Copier Q&R',
+            'export_current_btn': 'Exporter Q&R en PDF',
+            'export_history_btn': 'Exporter l\'Historique en PDF',
+            'copy_mode_response': 'Réponse',
+            'copy_mode_qa': 'Q&R',
+            'export_mode_current': 'Q&R Actuel',
+            'export_mode_history': 'Historique',
+            
+            # Lié à l'exportation PDF
+            'model_provider': 'Fournisseur',
+            'model_name': 'Modèle',
+            'model_api_url': 'URL de Base API',
+            'pdf_model_info': 'Informations sur le Modèle IA',
+            'pdf_software': 'Logiciel',
+            
             'export_all_history_dialog_title': 'Exporter Tout l\'Historique en PDF',
             'export_all_history_title': 'TOUT L\'HISTORIQUE Q&R',
             'export_history_insufficient': 'Au moins 2 enregistrements d\'historique requis pour exporter.',

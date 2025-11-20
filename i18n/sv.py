@@ -58,6 +58,31 @@ class SwedishTranslation(BaseTranslation):
             'export_pdf': 'Exportera PDF',
             'export_current_qa': 'Exportera Nuvarande F&S',
             'export_history': 'Exportera Historik',
+            
+            # Exportinställningar
+            'export_settings': 'Exportinställningar',
+            'enable_default_export_folder': 'Exportera till standardmapp',
+            'no_folder_selected': 'Ingen mapp vald',
+            'browse': 'Bläddra...',
+            'select_export_folder': 'Välj Exportmapp',
+            
+            # Knapptext och menyalternativ
+            'copy_response_btn': 'Kopiera Svar',
+            'copy_qa_btn': 'Kopiera F&S',
+            'export_current_btn': 'Exportera F&S som PDF',
+            'export_history_btn': 'Exportera Historik som PDF',
+            'copy_mode_response': 'Svar',
+            'copy_mode_qa': 'F&S',
+            'export_mode_current': 'Aktuell F&S',
+            'export_mode_history': 'Historik',
+            
+            # PDF-export relaterat
+            'model_provider': 'Leverantör',
+            'model_name': 'Modell',
+            'model_api_url': 'API Bas-URL',
+            'pdf_model_info': 'AI-Modellinformation',
+            'pdf_software': 'Programvara',
+            
             'export_all_history_dialog_title': 'Exportera Hela Historiken till PDF',
             'export_all_history_title': 'HELA F&S HISTORIK',
             'export_history_insufficient': 'Minst 2 historikposter krävs för att exportera.',

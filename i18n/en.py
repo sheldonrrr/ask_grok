@@ -130,6 +130,13 @@ class EnglishTranslation(BaseTranslation):
             'export_mode_current': 'Current Q&A',
             'export_mode_history': 'History',
             
+            # PDF Export related
+            'model_provider': 'Provider',
+            'model_name': 'Model',
+            'model_api_url': 'API Base URL',
+            'pdf_model_info': 'AI Model Information',
+            'pdf_software': 'Software',
+            
             # UI - Dialog elements
             'input_placeholder': 'Type your question...',
             'response_placeholder': 'Response soon...',  # 用于所有模型的占位符

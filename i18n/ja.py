@@ -56,8 +56,33 @@ class JapaneseTranslation(BaseTranslation):
             'copy_response': '回答をコピー',
             'copy_question_response': '問答をコピー',
             'export_pdf': 'PDFをエクスポート',
-            'export_current_qa': '現在の問答をエクスポート',
+            'export_current_qa': '現在のQ&Aをエクスポート',
             'export_history': '履歴をエクスポート',
+            
+            # エクスポート設定
+            'export_settings': 'エクスポート設定',
+            'enable_default_export_folder': 'デフォルトフォルダにエクスポート',
+            'no_folder_selected': 'フォルダが選択されていません',
+            'browse': '参照...',
+            'select_export_folder': 'エクスポートフォルダを選択',
+            
+            # ボタンテキストとメニュー項目
+            'copy_response_btn': '回答をコピー',
+            'copy_qa_btn': 'Q&Aをコピー',
+            'export_current_btn': 'Q&AをPDFにエクスポート',
+            'export_history_btn': '履歴をPDFにエクスポート',
+            'copy_mode_response': '回答',
+            'copy_mode_qa': 'Q&A',
+            'export_mode_current': '現在のQ&A',
+            'export_mode_history': '履歴',
+            
+            # PDFエクスポート関連
+            'model_provider': 'プロバイダ',
+            'model_name': 'モデル',
+            'model_api_url': 'APIベースURL',
+            'pdf_model_info': 'AIモデル情報',
+            'pdf_software': 'ソフトウェア',
+            
             'export_all_history_dialog_title': 'すべての履歴をPDFにエクスポート',
             'export_all_history_title': 'すべての問答履歴',
             'export_history_insufficient': 'エクスポートには少なくとも2件の履歴記録が必要です。',
