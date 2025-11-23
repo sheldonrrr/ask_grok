@@ -960,7 +960,6 @@ class ResponseHandler(QObject):
                         
                         # 使用新的保存方法，传递AI标识符和模型信息
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
-                        logger.debug(f"[模型信息] 当前ResponseHandler的ai_id: {ai_id}")
                         
                         # 获取模型信息 - 优先从面板的API对象获取（面板切换AI时会更新）
                         model_info = None
@@ -972,17 +971,11 @@ class ResponseHandler(QObject):
                             for idx, panel in enumerate(parent_dialog.response_panels):
                                 if hasattr(panel, 'response_handler') and panel.response_handler == self:
                                     api_obj = panel.api
-                                    logger.debug(f"[模型信息] 从面板 {idx} 获取API对象")
-                                    if api_obj:
-                                        logger.debug(f"[模型信息] 面板API - provider: {getattr(api_obj, 'provider_name', 'N/A')}, model: {getattr(api_obj, 'model', 'N/A')}")
                                     break
                         
                         # 如果没有找到面板的API，回退到使用ResponseHandler的API
                         if not api_obj and hasattr(self, 'api'):
                             api_obj = self.api
-                            logger.debug(f"[模型信息] 使用ResponseHandler的API对象")
-                            if api_obj:
-                                logger.debug(f"[模型信息] Handler API - provider: {getattr(api_obj, 'provider_name', 'N/A')}, model: {getattr(api_obj, 'model', 'N/A')}")
                         
                         # 从API对象提取模型信息
                         if api_obj:
@@ -991,9 +984,8 @@ class ResponseHandler(QObject):
                                 'model': getattr(api_obj, 'model', 'Unknown'),
                                 'api_base': getattr(api_obj, 'api_base', '')
                             }
-                            logger.info(f"[模型信息] 最终使用 - AI: {ai_id}, Provider: {model_info['provider_name']}, Model: {model_info['model']}")
+                            logger.info(f"[保存历史] AI={ai_id}, Provider={model_info['provider_name']}, Model={model_info['model']}")
                         
-                        logger.info(f"[历史记录] 准备保存: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}, 响应长度={len(text)}")
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
                             mode,
@@ -1003,14 +995,12 @@ class ResponseHandler(QObject):
                             ai_id=ai_id,
                             model_info=model_info
                         )
-                        logger.info(f"[历史记录] ✓ 保存成功: UID={parent_dialog.current_uid}, AI={ai_id}")
                         
                         # 更新历史信息标签（显示新的时间戳）
                         if hasattr(parent_dialog, '_update_history_info_label'):
                             from datetime import datetime
                             current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             parent_dialog._update_history_info_label(ai_id, current_timestamp, model_info)
-                            logger.debug(f"[历史记录] 已更新历史信息标签")
                         
                         # 刷新历史记录菜单（使用延迟调用，避免多个面板同时刷新）
                         if hasattr(parent_dialog, '_load_related_histories'):
@@ -1023,10 +1013,9 @@ class ResponseHandler(QObject):
                             parent_dialog._history_refresh_timer = QTimer()
                             parent_dialog._history_refresh_timer.setSingleShot(True)
                             parent_dialog._history_refresh_timer.timeout.connect(
-                                lambda: self._refresh_history_menu_with_logging(parent_dialog)
+                                lambda: parent_dialog._load_related_histories()
                             )
                             parent_dialog._history_refresh_timer.start(100)
-                            logger.debug(f"[历史记录] 已安排刷新历史记录菜单（100ms后）")
                         
                         # 更新导出全部历史记录按钮状态
                         if hasattr(parent_dialog, 'response_panels') and parent_dialog.response_panels:

@@ -88,14 +88,9 @@ class AskAIPluginUI(InterfaceAction):
         
         # 注意：快捷键已经在action_spec中定义，不要在这里重复设置
         # 重复设置会导致"Ambiguous shortcut overload"错误
-        # 菜单会自动显示action_spec中定义的快捷键
+        # 菜单会自动显示action_spec中定义的快捷键（F3在所有平台都可用）
         
-        # 添加调试日志
-        def on_ask_triggered():
-            logger.info("[快捷键] F3 Ask对话框快捷键被触发")
-            self.show_dialog()
-        
-        self.ask_action.triggered.connect(on_ask_triggered)
+        self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
         # 添加分隔符
@@ -114,13 +109,7 @@ class AskAIPluginUI(InterfaceAction):
         
         self.config_action.setShortcut(shortcut)
         self.config_action.setShortcutContext(Qt.ApplicationShortcut)
-        
-        # 添加调试日志
-        def on_config_triggered():
-            logger.info("[快捷键] F2 配置快捷键被触发")
-            self.show_configuration()
-        
-        self.config_action.triggered.connect(on_config_triggered)
+        self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
         #添加分隔符
@@ -1147,8 +1136,11 @@ class AskDialog(QDialog):
         
         # 更新标签文本（去掉 AI: 前缀）
         info_text = f"{ai_display} | {time_display}"
+        logger.info(f"[历史信息标签] 更新标签文本: {info_text}")
+        logger.info(f"[历史信息标签] AI ID: {ai_id}, Provider: {model_info.get('provider_name') if model_info else 'N/A'}, Model: {model_info.get('model') if model_info else 'N/A'}")
         self.history_info_label.setText(info_text)
         self.history_info_label.setVisible(True)
+        logger.info(f"[历史信息标签] 标签已设置为可见")
 
     def _extract_metadata(self, book_info):
         """提取单本书的元数据"""
@@ -2163,20 +2155,16 @@ class AskDialog(QDialog):
         
         # 获取已配置的AI列表
         configured_ais = self._get_configured_ais()
-        logger.info(f"[AI Switcher] 已配置的AI数量: {len(configured_ais)}")
         
         # 获取当前并行AI数量
         prefs = get_prefs()
         parallel_ai_count = prefs.get('parallel_ai_count', 1)
-        logger.info(f"[AI Switcher] 并行AI数量: {parallel_ai_count}")
         
         # 如果是单面板模式，不应用互斥逻辑
         if parallel_ai_count == 1:
             # 单面板模式：所有AI都可用
-            logger.info(f"[AI Switcher] 单面板模式，所有AI都可用")
             for i, panel in enumerate(self.response_panels):
                 if i < parallel_ai_count:
-                    logger.info(f"[AI Switcher] 更新面板 {i}，可用AI: {[ai_id for ai_id, _ in configured_ais]}")
                     panel.populate_ai_switcher(configured_ais, set())
             return
         
@@ -2447,14 +2435,12 @@ class AskDialog(QDialog):
             panel_index: 面板索引
             new_ai_id: 新选中的AI ID
         """
-        logger.info(f"面板 {panel_index} 切换到 AI: {new_ai_id}")
-        
         # 更新对应面板的API对象（修复模型信息显示错误）
         if panel_index < len(self.response_panels) and new_ai_id:
             panel = self.response_panels[panel_index]
             # 切换面板的API到选中的AI
             panel.api._switch_to_model(new_ai_id)
-            logger.info(f"[面板API更新] 面板 {panel_index} 的API对象已切换到: {new_ai_id}")
+            logger.info(f"[面板AI切换] 面板{panel_index}: {new_ai_id}")
         
         # 如果是第一个面板切换 AI，同步更新 API 使用的模型
         # 这样随机问题和发送请求都会使用面板选中的 AI
@@ -2954,6 +2940,8 @@ class AskDialog(QDialog):
         
         # 隐藏历史信息标签（发送新问题时）
         if hasattr(self, 'history_info_label'):
+            old_text = self.history_info_label.text()
+            logger.info(f"[历史信息标签] 发送新问题，隐藏标签。旧内容: {old_text}")
             self.history_info_label.setVisible(False)
         
         # 禁用发送按钮并显示加载状态，显示停止按钮
