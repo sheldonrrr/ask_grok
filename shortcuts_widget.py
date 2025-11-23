@@ -5,7 +5,7 @@ from calibre_plugins.ask_ai_plugin.config import get_prefs
 import sys
 
 # Shortcut for ask: F3 (all platforms)
-# Shortcut for config: F2(macOS), Ctrl + K(other)
+# Shortcut for config: F2 (all platforms)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
 
@@ -107,22 +107,12 @@ class ShortcutsWidget(QWidget):
         self.shortcuts_group.setTitle("")
         
         # 定义所有快捷键（部分快捷键在不同平台有所不同）
-        if is_mac:
-            # macOS使用功能键避免Qt键盘映射冲突
-            shortcuts = [
-                (self.i18n.get('menu_ask', 'Ask'), 'F3'),
-                (self.i18n.get('config_title', 'Configuration'), 'F2'),
-                (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
-                (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
-            ]
-        else:
-            # Ubuntu/Linux：F3和Ctrl+K
-            shortcuts = [
-                (self.i18n.get('menu_ask', 'Ask'), 'F3'),
-                (self.i18n.get('config_title', 'Configuration'), f'{modifier_display}+K'),
-                (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
-                (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
-            ]
+        shortcuts = [
+            (self.i18n.get('menu_ask', 'Ask'), 'F3'),
+            (self.i18n.get('config_title', 'Configuration'), 'F2'),
+            (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
+            (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
+        ]
         
         # 创建快捷键标签样式
         label_style = """

@@ -99,13 +99,8 @@ class AskAIPluginUI(InterfaceAction):
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
 
-        # 根据操作系统设置快捷键
-        # 注意：macOS上由于Qt键盘映射问题，字母键快捷键在ApplicationShortcut上下文中无法生效
-        # 使用功能键可以绕开这个问题
-        if sys.platform == 'darwin':  # macOS
-            shortcut = QKeySequence("F2")
-        else:
-            shortcut = QKeySequence("Ctrl+K")
+        # 所有平台统一使用 F2 作为配置快捷键
+        shortcut = QKeySequence("F2")
         
         self.config_action.setShortcut(shortcut)
         self.config_action.setShortcutContext(Qt.ApplicationShortcut)
@@ -1536,7 +1531,19 @@ class AskDialog(QDialog):
                     # 更新历史信息标签（只在第一个面板时更新）
                     if idx == 0:
                         timestamp = history.get('timestamp', '未知时间')
-                        model_info = history.get('model_info', None)
+                        # 从answer_data中获取model_info（正确的位置）
+                        model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
+                        logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
+                        
+                        # 如果历史记录中没有model_info（旧版本），从面板API获取
+                        if not model_info and hasattr(panel, 'api'):
+                            api_obj = panel.api
+                            model_info = {
+                                'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                'model': getattr(api_obj, 'model', 'Unknown'),
+                                'api_base': getattr(api_obj, 'api_base', '')
+                            }
+                        
                         self._update_history_info_label(ai_id, timestamp, model_info)
                     
                     # 再次更新按钮状态（确保在响应加载后更新）
@@ -1847,7 +1854,19 @@ class AskDialog(QDialog):
                             # 更新历史信息标签（只在第一个面板时更新）
                             if idx == 0:
                                 timestamp = matched_history.get('timestamp', '未知时间')
-                                model_info = matched_history.get('model_info', None)
+                                # 从answer_data中获取model_info（正确的位置）
+                                model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
+                                logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
+                                
+                                # 如果历史记录中没有model_info（旧版本），从面板API获取
+                                if not model_info and hasattr(panel, 'api'):
+                                    api_obj = panel.api
+                                    model_info = {
+                                        'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                        'model': getattr(api_obj, 'model', 'Unknown'),
+                                        'api_base': getattr(api_obj, 'api_base', '')
+                                    }
+                                
                                 self._update_history_info_label(ai_id, timestamp, model_info)
                             
                             # 再次更新按钮状态（确保在响应加载后更新）
