@@ -86,9 +86,8 @@ class AskAIPluginUI(InterfaceAction):
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
         
-        # 注意：快捷键已经在action_spec中定义，不要在这里重复设置
-        # 重复设置会导致"Ambiguous shortcut overload"错误
-        # 菜单会自动显示action_spec中定义的快捷键（F3在所有平台都可用）
+        # 设置快捷键以在菜单中显示（与action_spec保持一致）
+        self.ask_action.setShortcut(QKeySequence("F3"))
         
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
