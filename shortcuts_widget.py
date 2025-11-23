@@ -4,11 +4,11 @@ from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.config import get_prefs
 import sys
 
-# Shortcut for ask: F3 (all platforms)
+# Shortcut for ask: F3 (macOS only, not working on Ubuntu/Linux)
 # Shortcut for config: F2(macOS), Ctrl + K(other)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
-# Note: F3 is used on all platforms to avoid Qt keyboard mapping conflicts
+# Note: F3 shortcut only works on macOS due to Qt keyboard mapping issues on Linux
 
 class ShortcutsWidget(QWidget):
     """快捷键展示组件"""
@@ -117,9 +117,9 @@ class ShortcutsWidget(QWidget):
                 (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
             ]
         else:
-            # 其他系统：Ask使用F3（统一），Config使用Ctrl+K
+            # Ubuntu/Linux：Ask快捷键不工作所以不显示，Config使用Ctrl+K
             shortcuts = [
-                (self.i18n.get('menu_ask', 'Ask {model}').format(model='Grok'), 'F3'),
+                # Ask快捷键在Ubuntu上不工作，所以不显示
                 (self.i18n.get('config_title', 'Configuration'), f'{modifier_display}+K'),
                 (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
                 (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),

@@ -86,12 +86,16 @@ class AskAIPluginUI(InterfaceAction):
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
         
-        # 设置Ask弹窗的快捷键（在菜单中显示）
-        # 快捷键功能已经在action_spec中定义，这里只是为了在菜单中显示提示
-        # 所有平台统一使用F3，避免Qt键盘映射冲突
-        self.ask_action.setShortcut(QKeySequence("F3"))
+        # 注意：快捷键已经在action_spec中定义，不要在这里重复设置
+        # 重复设置会导致"Ambiguous shortcut overload"错误
+        # 菜单会自动显示action_spec中定义的快捷键
         
-        self.ask_action.triggered.connect(self.show_dialog)
+        # 添加调试日志
+        def on_ask_triggered():
+            logger.info("[快捷键] F3 Ask对话框快捷键被触发")
+            self.show_dialog()
+        
+        self.ask_action.triggered.connect(on_ask_triggered)
         self.menu.addAction(self.ask_action)
         
         # 添加分隔符
@@ -110,7 +114,13 @@ class AskAIPluginUI(InterfaceAction):
         
         self.config_action.setShortcut(shortcut)
         self.config_action.setShortcutContext(Qt.ApplicationShortcut)
-        self.config_action.triggered.connect(self.show_configuration)
+        
+        # 添加调试日志
+        def on_config_triggered():
+            logger.info("[快捷键] F2 配置快捷键被触发")
+            self.show_configuration()
+        
+        self.config_action.triggered.connect(on_config_triggered)
         self.menu.addAction(self.config_action)
         
         #添加分隔符
@@ -2438,6 +2448,13 @@ class AskDialog(QDialog):
             new_ai_id: 新选中的AI ID
         """
         logger.info(f"面板 {panel_index} 切换到 AI: {new_ai_id}")
+        
+        # 更新对应面板的API对象（修复模型信息显示错误）
+        if panel_index < len(self.response_panels) and new_ai_id:
+            panel = self.response_panels[panel_index]
+            # 切换面板的API到选中的AI
+            panel.api._switch_to_model(new_ai_id)
+            logger.info(f"[面板API更新] 面板 {panel_index} 的API对象已切换到: {new_ai_id}")
         
         # 如果是第一个面板切换 AI，同步更新 API 使用的模型
         # 这样随机问题和发送请求都会使用面板选中的 AI
