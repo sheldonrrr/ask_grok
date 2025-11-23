@@ -47,10 +47,8 @@ def get_suggestion_template_from_ui(lang_code):
 
 class AskAIPluginUI(InterfaceAction):
     name = 'Ask AI Plugin'
-    # 根据操作系统设置不同的快捷键
-    # macOS使用F3，其他系统使用Ctrl+L
-    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 
-                  'F3' if sys.platform == 'darwin' else 'Ctrl+L')
+    # 所有平台统一使用F3，避免Qt键盘映射冲突
+    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'F3')
     action_shortcut_name = 'Ask AI Plugin'
     action_type = 'global'
     
@@ -90,10 +88,8 @@ class AskAIPluginUI(InterfaceAction):
         
         # 设置Ask弹窗的快捷键（在菜单中显示）
         # 快捷键功能已经在action_spec中定义，这里只是为了在菜单中显示提示
-        if sys.platform == 'darwin':  # macOS
-            self.ask_action.setShortcut(QKeySequence("F3"))
-        else:
-            self.ask_action.setShortcut(QKeySequence("Ctrl+L"))
+        # 所有平台统一使用F3，避免Qt键盘映射冲突
+        self.ask_action.setShortcut(QKeySequence("F3"))
         
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)

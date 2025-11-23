@@ -4,11 +4,11 @@ from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.config import get_prefs
 import sys
 
-# Shortcut for ask: F3(macOS), Ctrl + L(other)
+# Shortcut for ask: F3 (all platforms)
 # Shortcut for config: F2(macOS), Ctrl + K(other)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
-# Note: macOS uses function keys (F2, F3) to avoid Qt keyboard mapping conflicts
+# Note: F3 is used on all platforms to avoid Qt keyboard mapping conflicts
 
 class ShortcutsWidget(QWidget):
     """快捷键展示组件"""
@@ -107,7 +107,7 @@ class ShortcutsWidget(QWidget):
         # 不设置组标题，保持空白
         self.shortcuts_group.setTitle("")
         
-        # 定义所有快捷键（macOS和其他平台有所不同）
+        # 定义所有快捷键（部分快捷键在不同平台有所不同）
         if is_mac:
             # macOS使用功能键避免Qt键盘映射冲突
             shortcuts = [
@@ -117,9 +117,9 @@ class ShortcutsWidget(QWidget):
                 (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
             ]
         else:
-            # 其他系统使用标准组合键
+            # 其他系统：Ask使用F3（统一），Config使用Ctrl+K
             shortcuts = [
-                (self.i18n.get('menu_ask', 'Ask {model}').format(model='Grok'), f'{modifier_display}+L'),
+                (self.i18n.get('menu_ask', 'Ask {model}').format(model='Grok'), 'F3'),
                 (self.i18n.get('config_title', 'Configuration'), f'{modifier_display}+K'),
                 (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
                 (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),

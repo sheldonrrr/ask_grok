@@ -960,6 +960,7 @@ class ResponseHandler(QObject):
                         
                         # 使用新的保存方法，传递AI标识符和模型信息
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
+                        logger.debug(f"[模型信息] 当前ResponseHandler的ai_id: {ai_id}")
                         
                         # 获取模型信息 - 优先从面板的API对象获取（面板切换AI时会更新）
                         model_info = None
@@ -968,14 +969,20 @@ class ResponseHandler(QObject):
                         # 尝试从父对话框的面板获取API对象
                         if hasattr(parent_dialog, 'response_panels') and parent_dialog.response_panels:
                             # 找到当前ResponseHandler对应的面板
-                            for panel in parent_dialog.response_panels:
+                            for idx, panel in enumerate(parent_dialog.response_panels):
                                 if hasattr(panel, 'response_handler') and panel.response_handler == self:
                                     api_obj = panel.api
+                                    logger.debug(f"[模型信息] 从面板 {idx} 获取API对象")
+                                    if api_obj:
+                                        logger.debug(f"[模型信息] 面板API - provider: {getattr(api_obj, 'provider_name', 'N/A')}, model: {getattr(api_obj, 'model', 'N/A')}")
                                     break
                         
                         # 如果没有找到面板的API，回退到使用ResponseHandler的API
                         if not api_obj and hasattr(self, 'api'):
                             api_obj = self.api
+                            logger.debug(f"[模型信息] 使用ResponseHandler的API对象")
+                            if api_obj:
+                                logger.debug(f"[模型信息] Handler API - provider: {getattr(api_obj, 'provider_name', 'N/A')}, model: {getattr(api_obj, 'model', 'N/A')}")
                         
                         # 从API对象提取模型信息
                         if api_obj:
@@ -984,6 +991,7 @@ class ResponseHandler(QObject):
                                 'model': getattr(api_obj, 'model', 'Unknown'),
                                 'api_base': getattr(api_obj, 'api_base', '')
                             }
+                            logger.info(f"[模型信息] 最终使用 - AI: {ai_id}, Provider: {model_info['provider_name']}, Model: {model_info['model']}")
                         
                         logger.info(f"[历史记录] 准备保存: UID={parent_dialog.current_uid}, AI={ai_id}, 模式={mode}, 响应长度={len(text)}")
                         self.history_manager.save_history(
