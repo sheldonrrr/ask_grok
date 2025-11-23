@@ -288,10 +288,13 @@ class ResponsePanel(QWidget):
         if used_ais is None:
             used_ais = set()
         
+        logger.info(f"[Panel {self.panel_index}] populate_ai_switcher - configured_ais数量: {len(configured_ais)}, used_ais: {used_ais}")
+        
         # 阻止信号触发
         self.ai_switcher.blockSignals(True)
         
         current_ai = self.ai_switcher.currentData()
+        logger.info(f"[Panel {self.panel_index}] 当前选中的AI: {current_ai}")
         self.ai_switcher.clear()
         
         # 添加一个空选项（用于留空）
@@ -302,6 +305,7 @@ class ResponsePanel(QWidget):
         
         # 检查是否有可用的AI
         available_ais = [(ai_id, name) for ai_id, name in configured_ais if ai_id not in used_ais or ai_id == current_ai]
+        logger.info(f"[Panel {self.panel_index}] 过滤后可用的AI数量: {len(available_ais)}, AI列表: {[ai_id for ai_id, _ in available_ais]}")
         
         if not available_ais:
             # 没有可用的AI，只显示提示
@@ -671,6 +675,9 @@ class ResponsePanel(QWidget):
         self.copy_mode = mode
         self._update_copy_button_text()
         self._update_copy_menu_checkmarks()
+        
+        # 切换模式后更新按钮状态
+        self.update_button_states()
         
         # 保存到config
         from calibre_plugins.ask_ai_plugin.config import get_prefs
@@ -1200,26 +1207,53 @@ class ResponsePanel(QWidget):
     
     def update_button_states(self):
         """根据当前内容更新按钮状态"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # 获取当前的问题和回答
         # 检查纯文本内容或 HTML 内容（因为 setHtml 后 toPlainText 可能需要时间更新）
         plain_text = self.response_area.toPlainText().strip()
         html_text = self.response_area.toHtml().strip()
         
-        # 只要有纯文本或 HTML 内容就认为有回答
-        has_response = bool(plain_text) or (bool(html_text) and len(html_text) > 100)  # HTML 长度 > 100 避免空标签
+        # 只要有纯文本内容就认为有回答
+        # 不依赖 HTML 长度判断，因为空的 QTextEdit 也可能有很长的 HTML（包含样式等）
+        has_response = bool(plain_text)
         has_question = bool(self.current_question.strip()) if hasattr(self, 'current_question') and self.current_question else False
         
-        # 复制按钮：只要有回答就启用（支持两种模式）
-        self.copy_btn.setEnabled(has_response)
+        logger.debug(f"[Panel {self.panel_index}] update_button_states - plain_text长度: {len(plain_text)}, html_text长度: {len(html_text)}, has_response: {has_response}, has_question: {has_question}, copy_mode: {self.copy_mode}")
         
-        # 导出按钮：只要有回答就启用（支持两种模式）
+        # 复制按钮：根据复制模式决定是否启用
+        if self.copy_mode == 'response':
+            # 复制回答模式：只有有回答时才启用
+            should_enable = has_response
+            logger.debug(f"[Panel {self.panel_index}] 复制回答模式 - 按钮状态: {'启用' if should_enable else '禁用'}")
+        else:  # 'qa'
+            # 复制问答模式：只要有问题就启用（即使没有回答）
+            should_enable = has_question
+            logger.debug(f"[Panel {self.panel_index}] 复制问答模式 - 按钮状态: {'启用' if should_enable else '禁用'}")
+        
+        self.copy_btn.setEnabled(should_enable)
+        
+        # 导出按钮：支持两种模式
         # 注意：多AI模式下，非最后一个面板没有导出按钮
         if hasattr(self, 'export_btn') and self.export_btn is not None:
-            if self.export_mode == 'current':
-                self.export_btn.setEnabled(has_response)
-            else:  # 'history'
-                # 历史模式下，基于历史记录数量判断
-                self.update_export_all_button_state()
+            from calibre_plugins.ask_ai_plugin.config import get_prefs
+            prefs = get_prefs()
+            parallel_ai_count = prefs.get('parallel_ai_count', 1)
+            
+            # 导出按钮始终启用（简化逻辑，无论单AI还是多AI模式）
+            # 导出时如果内容为空，会有相应的提示或处理
+            self.export_btn.setEnabled(True)
+            # 菜单项也始终启用
+            if hasattr(self, 'export_current_action'):
+                self.export_current_action.setEnabled(True)
+            if hasattr(self, 'export_history_action'):
+                self.export_history_action.setEnabled(True)
+            
+            if parallel_ai_count > 1:
+                logger.debug(f"[Panel {self.panel_index}] 多AI模式 - 导出按钮始终启用")
+            else:
+                logger.debug(f"[Panel {self.panel_index}] 单AI模式 - 导出按钮始终启用")
         
     
     def set_current_question(self, question):

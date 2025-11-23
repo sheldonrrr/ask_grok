@@ -350,7 +350,9 @@ class TraditionalChineseTranslation(BaseTranslation):
             'test_model_prompt': '模型載入成功！您要測試已選模型 "{model}" 嗎？',
             'unsaved_changes_message': '您有未儲存的變更。您要怎麼做？',
             'unsaved_changes_title': '未儲存的變更',
-
-
-        'pdf_info_not_available': '資訊不可用',
+            'invalid_default_ai_title': '預設AI配置無效',
+            'invalid_default_ai_message': '預設AI "{default_ai}" 未正確配置。\n\n是否切換到 "{first_ai}"？',
+            'switch_to_ai': '切換到 {ai}',
+            'keep_current': '保持目前設定',
+            'pdf_info_not_available': '資訊不可用',
     }

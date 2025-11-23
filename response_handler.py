@@ -902,6 +902,15 @@ class ResponseHandler(QObject):
             # 重新连接滚动条信号
             scrollbar.valueChanged.connect(self._on_scroll_value_changed)
             
+            # HTML设置完成后，更新按钮状态
+            # 这确保了在异步Markdown处理完成后，按钮状态能正确反映内容
+            parent_dialog = self.parent()
+            if parent_dialog and hasattr(parent_dialog, 'response_panels'):
+                for panel in parent_dialog.response_panels:
+                    if hasattr(panel, 'response_handler') and panel.response_handler == self:
+                        panel.update_button_states()
+                        break
+            
         except Exception as e:
             logger.error(f"[Set HTML] 更新UI时出错: {str(e)}")
             # 确保信号重新连接
@@ -987,6 +996,13 @@ class ResponseHandler(QObject):
                             model_info=model_info
                         )
                         logger.info(f"[历史记录] ✓ 保存成功: UID={parent_dialog.current_uid}, AI={ai_id}")
+                        
+                        # 更新历史信息标签（显示新的时间戳）
+                        if hasattr(parent_dialog, '_update_history_info_label'):
+                            from datetime import datetime
+                            current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            parent_dialog._update_history_info_label(ai_id, current_timestamp, model_info)
+                            logger.debug(f"[历史记录] 已更新历史信息标签")
                         
                         # 刷新历史记录菜单（使用延迟调用，避免多个面板同时刷新）
                         if hasattr(parent_dialog, '_load_related_histories'):

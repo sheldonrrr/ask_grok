@@ -946,11 +946,13 @@ class ModelConfigWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 过滤掉占位符文本，避免保存无效选择
-        if self._is_placeholder_text(text):
-            return
+        # 检查是否是占位符
+        is_placeholder = self._is_placeholder_text(text)
         
-        logger.info(f"模型下拉框变化: {text}，触发自动保存")
+        if is_placeholder:
+            logger.info(f"用户选择了占位符 '{text}'，清空模型选择并触发自动保存")
+        else:
+            logger.info(f"模型下拉框变化: {text}，触发自动保存")
         
         # 查找父对话框并自动保存（不标记为输入框变化）
         parent = self.parent()
@@ -1941,6 +1943,13 @@ class ConfigDialog(QWidget):
         # 获取当前选中的模型
         model_id = self.model_combo.currentData()
         
+        # 如果选择了占位符（model_id 为 None），立即保存配置
+        # 这样可以清空模型选择，触发关闭时的有效性检查
+        if model_id is None:
+            logger.info("用户选择了占位符，清空模型选择并立即保存")
+            self.save_settings()
+            return
+        
         # 设置模型组件 - 这里会保存当前模型的配置并加载新选中模型的配置
         self.setup_model_widgets()
         
@@ -2093,10 +2102,14 @@ class ConfigDialog(QWidget):
             saved_folder = self.initial_values.get('default_export_folder', '').strip()
             if saved_folder:
                 self.export_folder_label.setText(saved_folder)
+                # 设置为非占位符
+                self.export_folder_label.setProperty('is_placeholder', False)
                 logger.info(f"[Export Config] 设置文件夹路径: {saved_folder}")
             else:
                 no_folder_text = self.i18n.get('no_folder_selected', 'No folder selected')
                 self.export_folder_label.setText(no_folder_text)
+                # 设置为占位符
+                self.export_folder_label.setProperty('is_placeholder', True)
                 logger.info(f"[Export Config] 未设置文件夹，显示: {no_folder_text}")
         
         if hasattr(self, 'browse_folder_button'):
@@ -2584,6 +2597,13 @@ class ConfigDialog(QWidget):
     
     def _on_panel_ai_selector_changed(self, panel_index):
         """面板AI选择器变更处理"""
+        # 如果正在初始化，不处理
+        if self._is_initializing:
+            return
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # 保存选择
         prefs = get_prefs()
         selections = prefs.get('panel_ai_selections', {})
@@ -2596,10 +2616,14 @@ class ConfigDialog(QWidget):
                 ai_id = combo.currentData()
                 if ai_id:
                     selections[f'panel_{panel_index}'] = ai_id
-                    logger.info(f"配置页面：保存面板 {panel_index} 的AI选择: {ai_id}")
+                    logger.info(f"[Parallel AI] 面板 {panel_index} 切换AI为: {ai_id}")
         
         prefs['panel_ai_selections'] = selections
-        self.on_config_changed()
+        
+        # 立即保存配置
+        logger.info(f"[Parallel AI] 面板AI选择器变更，立即保存配置")
+        self.save_settings()
+        logger.info(f"[Parallel AI] 配置已自动保存")
     
     def save_settings(self):
         """保存设置"""
@@ -2638,12 +2662,21 @@ class ConfigDialog(QWidget):
         # 保存Export配置
         if hasattr(self, 'enable_default_folder_checkbox'):
             prefs['enable_default_export_folder'] = self.enable_default_folder_checkbox.isChecked()
+            logger.info(f"[Export Config Save] checkbox状态: {self.enable_default_folder_checkbox.isChecked()}")
         if hasattr(self, 'export_folder_label'):
+            # 使用 is_placeholder 属性判断，而不是比较文本
+            # 这样可以避免在切换语言时因为占位符文本变化导致的判断错误
+            is_placeholder = self.export_folder_label.property('is_placeholder')
             folder_text = self.export_folder_label.text()
-            if folder_text != self.i18n.get('no_folder_selected', 'No folder selected'):
+            logger.info(f"[Export Config Save] is_placeholder={is_placeholder}, folder_text={folder_text}")
+            if not is_placeholder:
+                # 不是占位符，保存实际路径
                 prefs['default_export_folder'] = folder_text
+                logger.info(f"[Export Config Save] 保存实际路径: {folder_text}")
             else:
+                # 是占位符，保存空字符串
                 prefs['default_export_folder'] = ''
+                logger.info(f"[Export Config Save] 保存空字符串（占位符）")
         
         # 保存选中的模型
         prefs['selected_model'] = self.model_combo.currentData()

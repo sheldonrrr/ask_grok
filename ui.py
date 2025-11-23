@@ -48,8 +48,9 @@ def get_suggestion_template_from_ui(lang_code):
 class AskAIPluginUI(InterfaceAction):
     name = 'Ask AI Plugin'
     # 根据操作系统设置不同的快捷键
+    # macOS使用F3，其他系统使用Ctrl+L
     action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 
-                  'Ctrl+L')
+                  'F3' if sys.platform == 'darwin' else 'Ctrl+L')
     action_shortcut_name = 'Ask AI Plugin'
     action_type = 'global'
     
@@ -87,7 +88,13 @@ class AskAIPluginUI(InterfaceAction):
         # 添加主要动作
         self.ask_action = QAction(self.i18n['menu_title'], self)
         
-        # 快捷键已经在action_spec中设置，这里不需要再设置
+        # 设置Ask弹窗的快捷键（在菜单中显示）
+        # 快捷键功能已经在action_spec中定义，这里只是为了在菜单中显示提示
+        if sys.platform == 'darwin':  # macOS
+            self.ask_action.setShortcut(QKeySequence("F3"))
+        else:
+            self.ask_action.setShortcut(QKeySequence("Ctrl+L"))
+        
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -98,13 +105,15 @@ class AskAIPluginUI(InterfaceAction):
         self.config_action = QAction(self.i18n['config_title'], self)
 
         # 根据操作系统设置快捷键
+        # 注意：macOS上由于Qt键盘映射问题，字母键快捷键在ApplicationShortcut上下文中无法生效
+        # 使用功能键可以绕开这个问题
         if sys.platform == 'darwin':  # macOS
-            shortcut = QKeySequence("Command+K")
+            shortcut = QKeySequence("F2")
         else:
             shortcut = QKeySequence("Ctrl+K")
-        self.config_action.setShortcut(shortcut)
-        self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
         
+        self.config_action.setShortcut(shortcut)
+        self.config_action.setShortcutContext(Qt.ApplicationShortcut)
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
@@ -754,10 +763,113 @@ class TabDialog(QDialog):
                     logger.info("用户取消关闭操作")
                     return
             else:
-                # 没有未保存的变化，直接关闭
+                # 没有未保存的变化，检查默认 AI 是否有效配置
+                if not self._check_default_ai_before_close():
+                    # 用户取消关闭或选择切换默认 AI
+                    return
                 super().reject()
         else:
             super().reject()
+    
+    def _check_default_ai_before_close(self):
+        """关闭前检查默认 AI 是否有效配置
+        
+        Returns:
+            bool: True 表示可以关闭，False 表示用户取消关闭
+        """
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        logger = logging.getLogger(__name__)
+        
+        prefs = get_prefs()
+        default_ai = prefs.get('selected_model', 'grok')
+        
+        # 获取已配置的 AI 列表（复用 AskDialog 的逻辑）
+        models_config = prefs.get('models', {})
+        configured_ai_ids = []
+        
+        for ai_id, config in models_config.items():
+            # 检查是否有模型名称
+            has_model = bool(config.get('model', '').strip())
+            if not has_model:
+                continue
+            
+            # 检查是否有有效配置
+            if ai_id == 'ollama':
+                has_valid_config = bool(config.get('api_base_url', '').strip())
+                if not has_valid_config:
+                    continue
+            else:
+                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                has_token = bool(config.get(token_field, '').strip())
+                if not has_token:
+                    continue
+            
+            configured_ai_ids.append(ai_id)
+        
+        # 检查默认 AI 是否在已配置列表中
+        if default_ai not in configured_ai_ids:
+            logger.warning(f"默认 AI ({default_ai}) 未有效配置")
+            
+            # 如果没有任何已配置的 AI，直接关闭
+            if not configured_ai_ids:
+                logger.warning("没有任何已配置的 AI")
+                return True
+            
+            # 获取第一个已配置的 AI 的显示名称
+            first_ai_id = configured_ai_ids[0]
+            first_ai_config = models_config.get(first_ai_id, {})
+            first_ai_name = first_ai_config.get('display_name', first_ai_id)
+            
+            # 获取默认 AI 的显示名称
+            default_ai_config = models_config.get(default_ai, {})
+            default_ai_name = default_ai_config.get('display_name', default_ai)
+            
+            # 弹窗询问用户
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle(self.i18n.get('invalid_default_ai_title', 'Invalid Default AI'))
+            msg_box.setText(self.i18n.get('invalid_default_ai_message', 
+                'The default AI "{default_ai}" is not properly configured.\n\n'
+                'Would you like to switch to "{first_ai}" instead?').format(
+                    default_ai=default_ai_name,
+                    first_ai=first_ai_name
+                ))
+            msg_box.setIcon(QMessageBox.Warning)
+            
+            switch_button = msg_box.addButton(
+                self.i18n.get('switch_to_ai', 'Switch to {ai}').format(ai=first_ai_name),
+                QMessageBox.AcceptRole
+            )
+            keep_button = msg_box.addButton(
+                self.i18n.get('keep_current', 'Keep Current'),
+                QMessageBox.RejectRole
+            )
+            
+            msg_box.setDefaultButton(switch_button)
+            msg_box.exec_()
+            
+            if msg_box.clickedButton() == switch_button:
+                # 切换到第一个已配置的 AI
+                logger.info(f"用户选择切换默认 AI 到: {first_ai_id}")
+                prefs['selected_model'] = first_ai_id
+                
+                # 更新 ConfigDialog 中的选择
+                if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+                    config_dialog = self.config_widget.config_dialog
+                    if hasattr(config_dialog, 'model_combo'):
+                        index = config_dialog.model_combo.findData(first_ai_id)
+                        if index >= 0:
+                            config_dialog.model_combo.setCurrentIndex(index)
+                            logger.info(f"已更新 ConfigDialog 中的默认 AI 选择")
+                
+                return True
+            else:
+                # 保持当前设置
+                logger.info("用户选择保持当前默认 AI 设置")
+                return True
+        
+        # 默认 AI 有效配置，可以关闭
+        return True
 
 
 from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
@@ -968,40 +1080,55 @@ class AskDialog(QDialog):
         uid_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
         return f"{timestamp}_{uid_hash}"
     
-    def _update_history_info_label(self, ai_id, timestamp):
+    def _update_history_info_label(self, ai_id, timestamp, model_info=None):
         """更新历史信息标签
         
         Args:
             ai_id: AI ID
             timestamp: 时间戳
+            model_info: 可选，模型信息字典 {'provider_name': str, 'model': str, 'api_base': str}
         """
         from .config import get_prefs
         from .api import APIClient
         from .models.base import DEFAULT_MODELS
         
-        # 获取 AI 显示名称
-        prefs = get_prefs()
-        ai_configs = prefs.get('ai_configs', {})
-        
-        if ai_id in ai_configs:
-            config = ai_configs[ai_id]
-            display_name = config.get('display_name', ai_id)
-            model_name = config.get('model', '')
-            if model_name:
-                ai_display = f"{display_name} - {model_name}"
+        # 优先使用 model_info（从历史记录中获取）
+        if model_info and isinstance(model_info, dict):
+            provider_name = model_info.get('provider_name', '')
+            model_name = model_info.get('model', '')
+            
+            if provider_name and model_name:
+                ai_display = f"{provider_name} - {model_name}"
+            elif provider_name:
+                ai_display = provider_name
+            elif model_name:
+                ai_display = model_name
             else:
-                ai_display = display_name
+                ai_display = ai_id
         else:
-            ai_provider = APIClient._MODEL_TO_PROVIDER.get(ai_id)
-            if ai_provider and ai_provider in DEFAULT_MODELS:
-                display_name = DEFAULT_MODELS[ai_provider].display_name
-                model_name = ai_id if ai_id != 'default' else ''
+            # 回退到从配置中获取
+            prefs = get_prefs()
+            ai_configs = prefs.get('ai_configs', {})
+            
+            if ai_id in ai_configs:
+                config = ai_configs[ai_id]
+                display_name = config.get('display_name', ai_id)
+                model_name = config.get('model', '')
                 if model_name:
                     ai_display = f"{display_name} - {model_name}"
                 else:
                     ai_display = display_name
             else:
-                ai_display = ai_id
+                ai_provider = APIClient._MODEL_TO_PROVIDER.get(ai_id)
+                if ai_provider and ai_provider in DEFAULT_MODELS:
+                    display_name = DEFAULT_MODELS[ai_provider].display_name
+                    model_name = ai_id if ai_id != 'default' else ''
+                    if model_name:
+                        ai_display = f"{display_name} - {model_name}"
+                    else:
+                        ai_display = display_name
+                else:
+                    ai_display = ai_id
         
         # 格式化时间戳（缩略显示）
         try:
@@ -1012,8 +1139,8 @@ class AskDialog(QDialog):
         except:
             time_display = timestamp
         
-        # 更新标签文本
-        info_text = f"AI: {ai_display} | {time_display}"
+        # 更新标签文本（去掉 AI: 前缀）
+        info_text = f"{ai_display} | {time_display}"
         self.history_info_label.setText(info_text)
         self.history_info_label.setVisible(True)
 
@@ -1411,7 +1538,8 @@ class AskDialog(QDialog):
                     # 更新历史信息标签（只在第一个面板时更新）
                     if idx == 0:
                         timestamp = history.get('timestamp', '未知时间')
-                        self._update_history_info_label(ai_id, timestamp)
+                        model_info = history.get('model_info', None)
+                        self._update_history_info_label(ai_id, timestamp, model_info)
                     
                     # 再次更新按钮状态（确保在响应加载后更新）
                     panel.update_button_states()
@@ -1721,15 +1849,22 @@ class AskDialog(QDialog):
                             # 更新历史信息标签（只在第一个面板时更新）
                             if idx == 0:
                                 timestamp = matched_history.get('timestamp', '未知时间')
-                                self._update_history_info_label(ai_id, timestamp)
+                                model_info = matched_history.get('model_info', None)
+                                self._update_history_info_label(ai_id, timestamp, model_info)
                             
                             # 再次更新按钮状态（确保在响应加载后更新）
                             panel.update_button_states()
                         
                         # 清空未使用的面板
+                        logger.info(f"准备清空未使用的面板，范围: {len(history_ai_ids)} 到 {len(self.response_panels)}")
                         for idx in range(len(history_ai_ids), len(self.response_panels)):
-                            self.response_panels[idx].response_area.clear()
-                            logger.debug(f"清空未使用的面板 {idx}")
+                            panel = self.response_panels[idx]
+                            logger.info(f"准备清空面板 {idx}，panel_index={panel.panel_index}")
+                            panel.response_area.clear()
+                            # 清空后更新按钮状态，禁用复制按钮
+                            logger.info(f"面板 {idx} 已清空，准备更新按钮状态")
+                            panel.update_button_states()
+                            logger.info(f"面板 {idx} 按钮状态已更新")
                         
                         # 统一更新所有面板的AI切换器（实现互斥逻辑）
                         self._update_all_panel_ai_switchers()
@@ -1980,29 +2115,33 @@ class AskDialog(QDialog):
         """获取已配置的AI列表
         
         Returns:
-            List[Tuple[str, str]]: [(ai_id, display_name), ...]
+            list: [(ai_id, display_name), ...]
         """
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         
         configured_ais = []
         for ai_id, config in models_config.items():
-            # 首先检查is_configured标志
-            if not config.get('is_configured', False):
+            # 实际检查配置是否有效，而不仅仅依赖 is_configured 标志
+            # 因为 is_configured 可能没有被正确更新
+            
+            # 检查是否有模型名称
+            has_model = bool(config.get('model', '').strip())
+            if not has_model:
                 continue
             
             # 检查是否有API Key（Ollama除外，它是本地服务）
-            token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
-            has_token = bool(config.get(token_field, '').strip())
-            
-            # Ollama特殊处理：需要有api_base_url和model
             if ai_id == 'ollama':
-                has_valid_config = bool(config.get('api_base_url', '').strip()) and bool(config.get('model', '').strip())
+                # Ollama特殊处理：需要有api_base_url和model
+                has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
-            elif not has_token:
+            else:
                 # 其他AI必须有token
-                continue
+                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                has_token = bool(config.get(token_field, '').strip())
+                if not has_token:
+                    continue
             
             display_name = config.get('display_name', ai_id)
             model_name = config.get('model', 'unknown')
@@ -2018,20 +2157,41 @@ class AskDialog(QDialog):
         
         # 获取已配置的AI列表
         configured_ais = self._get_configured_ais()
+        logger.info(f"[AI Switcher] 已配置的AI数量: {len(configured_ais)}")
         
-        # 收集已被使用的AI
+        # 获取当前并行AI数量
+        prefs = get_prefs()
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        logger.info(f"[AI Switcher] 并行AI数量: {parallel_ai_count}")
+        
+        # 如果是单面板模式，不应用互斥逻辑
+        if parallel_ai_count == 1:
+            # 单面板模式：所有AI都可用
+            logger.info(f"[AI Switcher] 单面板模式，所有AI都可用")
+            for i, panel in enumerate(self.response_panels):
+                if i < parallel_ai_count:
+                    logger.info(f"[AI Switcher] 更新面板 {i}，可用AI: {[ai_id for ai_id, _ in configured_ais]}")
+                    panel.populate_ai_switcher(configured_ais, set())
+            return
+        
+        # 多面板模式：应用互斥逻辑
+        # 收集已被使用的AI（只收集可见面板的）
         used_ais = set()
-        for panel in self.response_panels:
-            ai_id = panel.get_selected_ai()
-            if ai_id:
-                used_ais.add(ai_id)
+        for i, panel in enumerate(self.response_panels):
+            # 只收集可见面板（根据 parallel_ai_count）的 AI 使用情况
+            if i < parallel_ai_count:
+                ai_id = panel.get_selected_ai()
+                if ai_id:
+                    used_ais.add(ai_id)
         
         # 更新每个面板
-        for panel in self.response_panels:
-            current_ai = panel.get_selected_ai()
-            # 排除其他面板使用的AI（但保留当前面板自己选中的）
-            other_used_ais = used_ais - {current_ai} if current_ai else used_ais
-            panel.populate_ai_switcher(configured_ais, other_used_ais)
+        for i, panel in enumerate(self.response_panels):
+            # 只更新可见面板
+            if i < parallel_ai_count:
+                current_ai = panel.get_selected_ai()
+                # 排除其他面板使用的AI（但保留当前面板自己选中的）
+                other_used_ais = used_ais - {current_ai} if current_ai else used_ais
+                panel.populate_ai_switcher(configured_ais, other_used_ais)
     
     def _setup_panel_handler(self, panel):
         """为面板设置ResponseHandler
@@ -2135,11 +2295,23 @@ class AskDialog(QDialog):
         """检查配置中的默认 AI 是否与当前选中的 AI 一致
         
         如果不一致，弹窗询问用户是否切换到默认 AI
+        
+        注意：只在 Parallel AI Count 为 1 时才检查，为 2 时跳过
         """
         from PyQt5.QtWidgets import QMessageBox
         from PyQt5.QtCore import QTimer
         
         prefs = get_prefs()
+        
+        # 获取并行AI数量
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 如果是并行模式（2个AI），跳过检查
+        # 因为并行模式下，用户已经在配置中明确选择了要使用的AI
+        if parallel_ai_count == 2:
+            logger.debug("并行AI模式（2个AI），跳过默认AI检查")
+            return
+        
         default_ai = prefs.get('selected_model', 'grok')
         
         # 获取第一个面板当前选中的 AI
@@ -2189,8 +2361,22 @@ class AskDialog(QDialog):
                 # 切换到默认 AI
                 logger.info(f"用户选择切换到默认 AI: {default_ai}")
                 
+                # 先重新更新面板的AI切换器，确保所有AI都可用
+                logger.info(f"重新更新面板AI切换器，确保 {default_ai} 可用")
+                self._update_all_panel_ai_switchers()
+                
                 # 更新第一个面板的 AI 选择
                 index = first_panel.ai_switcher.findData(default_ai)
+                logger.info(f"在面板 0 的AI切换器中查找 {default_ai}，index={index}")
+                
+                # 调试：打印面板中所有可用的AI
+                available_ais = []
+                for i in range(first_panel.ai_switcher.count()):
+                    ai_id = first_panel.ai_switcher.itemData(i)
+                    ai_text = first_panel.ai_switcher.itemText(i)
+                    available_ais.append(f"{ai_text}({ai_id})")
+                logger.info(f"面板 0 当前可用的AI: {', '.join(available_ais)}")
+                
                 if index >= 0:
                     first_panel.ai_switcher.setCurrentIndex(index)
                     
@@ -2588,24 +2774,13 @@ class AskDialog(QDialog):
             'Please configure a valid AI service in Plugin Configuration.'))
         msg_box.setIcon(QMessageBox.Information)
         
-        # 添加两个按钮：打开配置（左侧）和确认（右侧）
-        open_config_btn = msg_box.addButton(
-            self.i18n.get('open_configuration', 'Open Configuration'),
-            QMessageBox.AcceptRole
-        )
-        ok_btn = msg_box.addButton(
+        # 只添加确认按钮（避免在Ask对话框打开时再打开配置对话框导致错误）
+        msg_box.addButton(
             self.i18n.get('confirm', 'OK'),
-            QMessageBox.RejectRole
+            QMessageBox.AcceptRole
         )
         
         msg_box.exec_()
-        
-        # 如果用户点击"打开配置"
-        if msg_box.clickedButton() == open_config_btn:
-            # 获取主UI实例并打开配置
-            from calibre_plugins.ask_ai_plugin import ask_ai_plugin
-            if hasattr(ask_ai_plugin, 'show_configuration'):
-                ask_ai_plugin.show_configuration()
     
     def _check_auth_token(self):
         """检查当前选择的模型是否设置了API Key"""
@@ -2763,6 +2938,10 @@ class AskDialog(QDialog):
         if len(prompt) > max_length:
             self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
             return
+        
+        # 隐藏历史信息标签（发送新问题时）
+        if hasattr(self, 'history_info_label'):
+            self.history_info_label.setVisible(False)
         
         # 禁用发送按钮并显示加载状态，显示停止按钮
         self.send_button.setVisible(False)
