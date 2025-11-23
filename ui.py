@@ -84,10 +84,9 @@ class AskAIPluginUI(InterfaceAction):
         """)
         
         # 添加主要动作
-        self.ask_action = QAction(self.i18n['menu_title'], self)
-        
-        # 设置快捷键以在菜单中显示（与action_spec保持一致）
-        self.ask_action.setShortcut(QKeySequence("F3"))
+        # 在菜单文本中直接显示快捷键，避免与action_spec冲突
+        menu_text_with_shortcut = f"{self.i18n['menu_title']}\tF3"
+        self.ask_action = QAction(menu_text_with_shortcut, self)
         
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
