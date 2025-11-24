@@ -108,6 +108,8 @@ class PortugueseTranslation(BaseTranslation):
             'no_response': 'Sem resposta',
             'saved': 'Salvo',
             'close_button': 'Fechar',
+            'open_local_tutorial': 'Abrir tutorial local',
+            'tutorial_open_failed': 'Falha ao abrir o tutorial',
             
             # UI - Campos de configuração
             'token_label': 'Chave API:',

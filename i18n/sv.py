@@ -107,6 +107,8 @@ class SwedishTranslation(BaseTranslation):
             'no_question': 'Ingen fråga',
             'saved': 'Sparad',
             'close_button': 'Stäng',
+            'open_local_tutorial': 'Öppna lokal handledning',
+            'tutorial_open_failed': 'Kunde inte öppna handledning',
             
             # UI - Konfigurationsfält
             'token_label': 'API-nyckel:',

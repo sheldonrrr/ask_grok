@@ -107,6 +107,8 @@ class JapaneseTranslation(BaseTranslation):
             'no_question': '質問なし',
             'saved': '保存しました',
             'close_button': '閉じる',
+            'open_local_tutorial': 'ローカルチュートリアルを開く',
+            'tutorial_open_failed': 'チュートリアルを開けませんでした',
             
             # UI - 設定フィールド
             'token_label': 'APIキー:',

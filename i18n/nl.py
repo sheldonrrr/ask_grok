@@ -108,6 +108,8 @@ class DutchTranslation(BaseTranslation):
             'no_response': 'Geen antwoord',
             'saved': 'Opgeslagen',
             'close_button': 'Sluiten',
+            'open_local_tutorial': 'Open lokale handleiding',
+            'tutorial_open_failed': 'Kan handleiding niet openen',
             
             # UI - Configuratievelden
             'token_label': 'API-sleutel:',

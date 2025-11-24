@@ -546,4 +546,4 @@ If you find this plugin helpful, please:
 - Share with fellow book lovers
 - Report bugs to help improve it
 
-Happy reading! 📚✨
+Happy reading! 

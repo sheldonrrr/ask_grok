@@ -107,6 +107,8 @@ class SpanishTranslation(BaseTranslation):
             'no_question': 'Sin pregunta',
             'saved': 'Guardado',
             'close_button': 'Cerrar',
+            'open_local_tutorial': 'Abrir tutorial local',
+            'tutorial_open_failed': 'Error al abrir el tutorial',
             
             # UI - Campos de configuración
             'token_label': 'Clave API:',

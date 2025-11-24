@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tutorial Viewer Module
-
-Converts markdown tutorial to HTML and displays it in a local web browser.
-Simple, lightweight, no external dependencies beyond PyQt5.
+Tutorial Viewer - Simple markdown to HTML converter
 """
 
 import os
@@ -16,202 +13,37 @@ from pathlib import Path
 
 
 class MarkdownToHTMLConverter:
-    """Simple markdown to HTML converter for tutorial display"""
+    """Simple markdown to HTML converter"""
     
     def __init__(self):
         self.html_template = """<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
             color: #333;
-            background: #f5f5f5;
-            padding: 20px;
         }}
-        
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }}
-        
-        h1 {{
-            color: #2c3e50;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            font-size: 2.5em;
-        }}
-        
-        h2 {{
-            color: #34495e;
-            margin-top: 40px;
-            margin-bottom: 15px;
-            font-size: 2em;
-            border-bottom: 2px solid #ecf0f1;
-            padding-bottom: 8px;
-        }}
-        
-        h3 {{
-            color: #555;
-            margin-top: 30px;
-            margin-bottom: 12px;
-            font-size: 1.5em;
-        }}
-        
-        h4 {{
-            color: #666;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }}
-        
-        p {{
-            margin-bottom: 15px;
-            text-align: justify;
-        }}
-        
-        ul, ol {{
-            margin-left: 30px;
-            margin-bottom: 15px;
-        }}
-        
-        li {{
-            margin-bottom: 8px;
-        }}
-        
-        code {{
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 0.9em;
-            color: #e74c3c;
-        }}
-        
-        pre {{
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-            margin-bottom: 15px;
-        }}
-        
-        pre code {{
-            background: none;
-            color: inherit;
-            padding: 0;
-        }}
-        
-        blockquote {{
-            border-left: 4px solid #3498db;
-            padding-left: 20px;
-            margin: 20px 0;
-            color: #555;
-            font-style: italic;
-        }}
-        
-        a {{
-            color: #3498db;
-            text-decoration: none;
-        }}
-        
-        a:hover {{
-            text-decoration: underline;
-        }}
-        
-        hr {{
-            border: none;
-            border-top: 2px solid #ecf0f1;
-            margin: 30px 0;
-        }}
-        
-        strong {{
-            color: #2c3e50;
-            font-weight: 600;
-        }}
-        
-        em {{
-            font-style: italic;
-            color: #555;
-        }}
-        
-        .toc {{
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }}
-        
-        .toc h2 {{
-            margin-top: 0;
-            font-size: 1.5em;
-            border: none;
-        }}
-        
-        .toc ul {{
-            list-style: none;
-            margin-left: 0;
-        }}
-        
-        .toc li {{
-            margin-bottom: 5px;
-        }}
-        
-        .back-to-top {{
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: #3498db;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            text-decoration: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: background 0.3s;
-        }}
-        
-        .back-to-top:hover {{
-            background: #2980b9;
-            text-decoration: none;
-        }}
-        
-        @media (max-width: 768px) {{
-            .container {{
-                padding: 20px;
-            }}
-            
-            h1 {{
-                font-size: 2em;
-            }}
-            
-            h2 {{
-                font-size: 1.5em;
-            }}
-        }}
+        h1 {{ margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }}
+        h2 {{ margin-top: 25px; border-bottom: 1px solid #666; padding-bottom: 8px; }}
+        h3 {{ margin-top: 20px; }}
+        code {{ background: #f4f4f4; padding: 2px 5px; font-family: monospace; }}
+        pre {{ background: #f4f4f4; padding: 10px; overflow-x: auto; }}
+        pre code {{ background: none; padding: 0; }}
+        ul, ol {{ margin-left: 25px; }}
+        li {{ margin-bottom: 5px; }}
+        blockquote {{ border-left: 3px solid #666; padding-left: 15px; margin: 15px 0; color: #666; }}
+        a {{ color: #333; }}
     </style>
 </head>
 <body>
-    <div class="container">
-        {content}
-    </div>
-    <a href="#" class="back-to-top">↑ Top</a>
+    {content}
 </body>
 </html>
 """
@@ -354,56 +186,28 @@ def open_tutorial_in_browser():
     logger = logging.getLogger(__name__)
     
     try:
-        # When running as a calibre plugin, files are in a zip
-        # We need to read the file content directly
-        tutorial_content = None
+        # Get plugin instance to use get_resources
+        from calibre.customize.ui import find_plugin
+        plugin = find_plugin('Ask AI Plugin')
         
-        # Try to get the tutorial content using calibre's get_resources
-        try:
-            from calibre.utils.zipfile import ZipFile
-            import sys
-            
-            # Find the plugin zip file
-            plugin_path = None
-            for path in sys.path:
-                if 'Ask AI Plugin.zip' in path or 'ask_grok' in path:
-                    if os.path.exists(path) and path.endswith('.zip'):
-                        plugin_path = path
-                        break
-            
-            if plugin_path:
-                logger.info(f"Found plugin zip: {plugin_path}")
-                with ZipFile(plugin_path, 'r') as zf:
-                    # Try to read the tutorial file from zip
-                    tutorial_name = 'tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md'
-                    if tutorial_name in zf.namelist():
-                        tutorial_content = zf.read(tutorial_name).decode('utf-8')
-                        logger.info(f"Read tutorial from zip: {len(tutorial_content)} bytes")
-                    else:
-                        logger.error(f"Tutorial not found in zip. Available files: {zf.namelist()[:10]}")
-        except Exception as e:
-            logger.warning(f"Could not read from zip: {e}")
+        if not plugin:
+            logger.error("Plugin not found")
+            return False
         
-        # Fallback: try direct file access (for development)
-        if not tutorial_content:
-            plugin_dir = Path(__file__).parent
-            tutorial_file = plugin_dir / 'tutorial' / 'tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md'
-            
-            if tutorial_file.exists():
-                with open(tutorial_file, 'r', encoding='utf-8') as f:
-                    tutorial_content = f.read()
-                logger.info(f"Read tutorial from file: {tutorial_file}")
-            else:
-                raise FileNotFoundError(f"Tutorial file not found: {tutorial_file}")
+        # Read tutorial using plugin's get_resources method
+        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
         
-        if not tutorial_content:
-            raise Exception("Could not load tutorial content")
+        if not tutorial_data:
+            logger.error("Failed to read tutorial")
+            return False
+        
+        tutorial_content = tutorial_data.decode('utf-8')
+        logger.info(f"Read tutorial: {len(tutorial_content)} bytes")
         
         # Convert to HTML
         converter = MarkdownToHTMLConverter()
         
-        # Extract title from first line
-        import re
+        # Extract title
         title_match = re.match(r'^# (.+)$', tutorial_content, re.MULTILINE)
         title = title_match.group(1) if title_match else "Ask AI Plugin Tutorial"
         
@@ -423,7 +227,7 @@ def open_tutorial_in_browser():
         with open(html_file_path, 'w', encoding='utf-8') as f:
             f.write(full_html)
         
-        logger.info(f"Created HTML file: {html_file_path}")
+        logger.info(f"Created HTML: {html_file_path}")
         
         # Open in browser
         webbrowser.open(f'file://{html_file_path}')
@@ -431,8 +235,7 @@ def open_tutorial_in_browser():
         return True
         
     except Exception as e:
-        logger.error(f"Error opening tutorial: {str(e)}")
-        print(f"Error opening tutorial: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         return False
 
 

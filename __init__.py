@@ -92,6 +92,75 @@ class AskAIPlugin(InterfaceActionBase):
     
     def is_customizable(self):
         return True
+    
+    def get_resources(self, name):
+        '''
+        Load resources files that are packaged with the plugin zip file.
+        '''
+        import os
+        import sys
+        from zipfile import ZipFile
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"[get_resources] 请求资源: {name}")
+        logger.info(f"[get_resources] PLUGIN_DIR: {PLUGIN_DIR}")
+        
+        # Method 1: Try direct file access (for development)
+        path = os.path.join(PLUGIN_DIR, name)
+        logger.info(f"[get_resources] 尝试直接访问: {path}")
+        
+        if os.path.exists(path) and os.path.isfile(path):
+            logger.info(f"[get_resources] 找到文件，直接读取")
+            with open(path, 'rb') as f:
+                data = f.read()
+            logger.info(f"[get_resources] 成功读取 {len(data)} 字节")
+            return data
+        
+        # Method 2: Try to read from zip file (when installed as plugin)
+        logger.info(f"[get_resources] 直接访问失败，尝试从zip读取")
+        
+        # PLUGIN_DIR itself might be the zip file
+        plugin_zip = None
+        
+        # First check if PLUGIN_DIR is the zip file
+        if PLUGIN_DIR.endswith('.zip') and os.path.isfile(PLUGIN_DIR):
+            plugin_zip = PLUGIN_DIR
+            logger.info(f"[get_resources] PLUGIN_DIR就是zip文件: {plugin_zip}")
+        else:
+            # Otherwise search in sys.path
+            for path in sys.path:
+                if 'Ask AI Plugin.zip' in path and os.path.exists(path):
+                    plugin_zip = path
+                    logger.info(f"[get_resources] 在sys.path找到插件zip: {plugin_zip}")
+                    break
+        
+        if plugin_zip and os.path.isfile(plugin_zip):
+            try:
+                with ZipFile(plugin_zip, 'r') as zf:
+                    logger.info(f"[get_resources] zip文件列表: {zf.namelist()[:20]}")
+                    
+                    # Try different path formats
+                    possible_names = [
+                        name,
+                        f'calibre_plugins/ask_ai_plugin/{name}',
+                        f'ask_ai_plugin/{name}'
+                    ]
+                    
+                    for possible_name in possible_names:
+                        if possible_name in zf.namelist():
+                            logger.info(f"[get_resources] 在zip中找到: {possible_name}")
+                            data = zf.read(possible_name)
+                            logger.info(f"[get_resources] 成功读取 {len(data)} 字节")
+                            return data
+                    
+                    logger.warning(f"[get_resources] 在zip中未找到资源: {name}")
+            except Exception as e:
+                logger.error(f"[get_resources] 从zip读取失败: {e}", exc_info=True)
+        else:
+            logger.warning(f"[get_resources] 未找到插件zip文件")
+        
+        logger.error(f"[get_resources] 所有方法都失败")
+        return None
 
     def load_actual_plugin(self, gui):
         '''

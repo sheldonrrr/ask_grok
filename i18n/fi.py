@@ -108,6 +108,8 @@ class FinnishTranslation(BaseTranslation):
             'no_response': 'Ei vastausta',
             'saved': 'Tallennettu',
             'close_button': 'Sulje',
+            'open_local_tutorial': 'Avaa paikallinen opas',
+            'tutorial_open_failed': 'Oppaan avaaminen epäonnistui',
             
             # UI - Asetuskentät
             'token_label': 'API-avain:',

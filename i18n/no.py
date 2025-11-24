@@ -108,6 +108,8 @@ class NorwegianTranslation(BaseTranslation):
             'no_response': 'Ingen svar',
             'saved': 'Lagret',
             'close_button': 'Lukk',
+            'open_local_tutorial': 'Åpne lokal veiledning',
+            'tutorial_open_failed': 'Kunne ikke åpne veiledning',
             
             # UI - Konfigurasjonsfelter
             'token_label': 'API-nøkkel:',

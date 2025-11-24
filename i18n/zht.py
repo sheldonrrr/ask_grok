@@ -107,6 +107,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'no_question': '無問題',
         'saved': '已儲存',
         'close_button': '關閉',
+        'open_local_tutorial': '打開本地教學',
+        'tutorial_open_failed': '打開教學失敗',
         
         # UI - 設定欄位
         'token_label': 'API金鑰:',

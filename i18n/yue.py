@@ -104,10 +104,12 @@ class CantoneseTranslation(BaseTranslation):
             'pdf_exported': 'PDF 已導出！',
             'export_pdf_dialog_title': '導出為 PDF',
             'export_pdf_error': 'PDF 導出錯誤：{0}',
-            'no_question': '冇問題',
-            'no_response': '冇回應',
+            'no_question': '冗問題',
+            'no_response': '冗回應',
             'saved': '已儲存',
             'close_button': '關閉',
+            'open_local_tutorial': '打開本地教程',
+            'tutorial_open_failed': '打開教程失敗',
             
             # UI - 設定欄位
             'token_label': 'API金鑰:',

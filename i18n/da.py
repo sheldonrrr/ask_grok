@@ -108,6 +108,8 @@ class DanishTranslation(BaseTranslation):
             'no_response': 'Intet svar',
             'saved': 'Gemt',
             'close_button': 'Luk',
+            'open_local_tutorial': 'Åbn lokal vejledning',
+            'tutorial_open_failed': 'Kunne ikke åbne vejledning',
             
             # UI - Configuration fields
             'token_label': 'API-nøgle:',

@@ -108,6 +108,8 @@ class FrenchTranslation(BaseTranslation):
             'no_response': 'Pas de réponse',
             'saved': 'Enregistré',
             'close_button': 'Fermer',
+            'open_local_tutorial': 'Ouvrir le tutoriel local',
+            'tutorial_open_failed': 'Échec de l\'ouverture du tutoriel',
             
             # UI - Champs de configuration
             'token_label': 'Clé API:',

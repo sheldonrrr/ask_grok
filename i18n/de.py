@@ -109,6 +109,8 @@ class GermanTranslation(BaseTranslation):
             'no_response': 'Keine Antwort',
             'saved': 'Gespeichert',
             'close_button': 'Schließen',
+            'open_local_tutorial': 'Lokales Tutorial öffnen',
+            'tutorial_open_failed': 'Tutorial konnte nicht geöffnet werden',
             
             # UI - Konfigurationsfelder
             'token_label': 'API-Schlüssel:',
