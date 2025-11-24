@@ -410,6 +410,17 @@ class AboutWidget(QWidget):
         self.about_label.setOpenExternalLinks(True)
         layout.addWidget(self.about_label)
         
+        # 添加本地教程按钮
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        
+        self.tutorial_button = QPushButton()
+        self.tutorial_button.clicked.connect(self.open_local_tutorial)
+        button_layout.addWidget(self.tutorial_button)
+        
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
         # 初始化内容
         self.update_content()
         
@@ -418,6 +429,10 @@ class AboutWidget(QWidget):
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
+        
+        # 更新教程按钮文本
+        self.tutorial_button.setText(self.i18n.get('open_local_tutorial', 'Open Local Tutorial'))
+        
         # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
         self.about_label.setText(f"""
         <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
@@ -456,6 +471,35 @@ class AboutWidget(QWidget):
             </div>
         </div>
         """)
+    
+    def open_local_tutorial(self):
+        """打开本地教程"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from calibre_plugins.ask_ai_plugin.tutorial_viewer import open_tutorial_in_browser
+            success = open_tutorial_in_browser()
+            
+            if success:
+                logger.info("本地教程已在浏览器中打开")
+            else:
+                logger.error("打开本地教程失败")
+                # 显示错误消息
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    self.i18n.get('error', 'Error'),
+                    self.i18n.get('tutorial_open_failed', 'Failed to open tutorial. Please check the log for details.')
+                )
+        except Exception as e:
+            logger.error(f"打开本地教程时出错: {str(e)}")
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                f"{self.i18n.get('tutorial_open_failed', 'Failed to open tutorial')}: {str(e)}"
+            )
 
 class TabDialog(QDialog):
     def __init__(self, parent=None):
