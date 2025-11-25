@@ -1,18 +1,25 @@
-# Ask AI Plugin User Manual
+# Ask AI Plugin User Manual v0.3
+Latest updated: November 25, 2025, Ask AI Plugin v1.3.4
 
-Plugin version: 1.3.3
-Tutorial version: 0.3
-Last updated: November 25, 2025
-
-This manual covers:
+ToC of this tutorial:
+- Explain: Why & What is API Keys
+- Free API Key Options
 - Installation
-- Free API key options
-- Basic usage
-- Common problems and solutions
+- First Time Setup an AI Service
+- How to Use
+- Random Questions
+- Other Features
+- Configuration
+- Troubleshooting
+- Privacy
+- Tips
+- Recent Updates
+- Getting Help
+- FAQ
 
 Note: This plugin was renamed from Ask Grok to Ask AI Plugin because it now supports multiple AI providers, not just Grok.
 
-## Important: About API Keys
+## Explain: Why & What is API Keys
 
 Many users are confused why their ChatGPT Plus or Gemini subscription doesn't work with this plugin.
 
@@ -91,9 +98,9 @@ Customize prompts in Configure -> Edit Random Question Prompts
 
 ## Other Features
 
-- **Parallel AI Comparison**: Set Parallel AI Panels to 2 in Configure, then compare responses from different AIs side-by-side
-- **History**: Auto-saved conversations, click History button to view past Q&A
-- **PDF Export**: Click Export PDF to save conversations, set default folder in Configure -> Export Settings
+- Parallel AI Comparison: Set Parallel AI Panels to 2 in Configure, then compare responses from different AIs side-by-side
+- History: Auto-saved conversations, click History button to view past Q&A
+- PDF Export: Click Export PDF to save conversations, set default folder in Configure -> Export Settings
 
 ## Configuration
 
@@ -113,14 +120,6 @@ Template Settings:
 
 Export Settings:
 - Set default PDF save location
-
-## Keyboard Shortcuts
-
-- Open Ask Dialog: F3
-- Open Config: F2
-- Send Question: Ctrl+Enter (Cmd+Enter on Mac)
-- Random Question: Ctrl+R (Cmd+R on Mac)
-- Close Dialog: Esc
 
 ## Troubleshooting
 
@@ -201,7 +200,6 @@ A: Only book metadata is sent. Your library and reading history stay private.
 Q: Why is Ollama slower?
 A: Runs on your computer. Cloud AIs use powerful servers. Trade-off: Ollama is free and private.
 
----
+-
 
-Help improve it:
-- Give me feedbacks on Reddit: https://www.reddit.com/r/AskGrokPlugin/
+Help improve it: https://www.reddit.com/r/AskGrokPlugin/

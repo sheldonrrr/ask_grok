@@ -110,6 +110,7 @@ class CantoneseTranslation(BaseTranslation):
             'close_button': '關閉',
             'open_local_tutorial': '打開本地教程',
             'tutorial_open_failed': '打開教程失敗',
+            'tutorial': '教程',
             
             # UI - 設定欄位
             'token_label': 'API金鑰:',

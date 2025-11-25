@@ -111,6 +111,7 @@ class GermanTranslation(BaseTranslation):
             'close_button': 'Schließen',
             'open_local_tutorial': 'Lokales Tutorial öffnen',
             'tutorial_open_failed': 'Tutorial konnte nicht geöffnet werden',
+            'tutorial': 'Tutorial',
             
             # UI - Konfigurationsfelder
             'token_label': 'API-Schlüssel:',

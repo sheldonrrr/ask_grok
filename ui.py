@@ -116,6 +116,14 @@ class AskAIPluginUI(InterfaceAction):
         # 添加分隔符
         self.menu.addSeparator()
         
+        # 添加教程菜单项
+        self.tutorial_action = QAction(self.i18n.get('tutorial', 'Tutorial'), self)
+        self.tutorial_action.triggered.connect(self.show_tutorial)
+        self.menu.addAction(self.tutorial_action)
+        
+        # 添加分隔符
+        self.menu.addSeparator()
+        
         # 添加关于菜单项
         self.about_action = QAction(self.i18n['about'], self)
         self.about_action.triggered.connect(self.show_about)
@@ -287,12 +295,18 @@ class AskAIPluginUI(InterfaceAction):
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(2)  # 默认显示关于标签页
+        dlg.tab_widget.setCurrentIndex(3)  # 默认显示关于标签页（现在是第4个）
         dlg.exec_()
     
     def show_shortcuts(self):
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
+        dlg.exec_()
+    
+    def show_tutorial(self):
+        """显示教程对话框"""
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(2)  # 默认显示教程标签页（现在是第3个）
         dlg.exec_()
     
     def config_widget(self):
@@ -328,6 +342,7 @@ class AskAIPluginUI(InterfaceAction):
                 'ask': self.ask_action.text(),
                 'config': self.config_action.text(),
                 'shortcuts': self.shortcuts_action.text(),
+                'tutorial': self.tutorial_action.text(),
                 'about': self.about_action.text()
             }
             
@@ -343,6 +358,7 @@ class AskAIPluginUI(InterfaceAction):
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts'])
+            self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
             self.about_action.setText(self.i18n['about'])
             
         except Exception as e:
@@ -351,6 +367,7 @@ class AskAIPluginUI(InterfaceAction):
             self.ask_action.setText(original_texts['ask'])
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
+            self.tutorial_action.setText(original_texts['tutorial'])
             self.about_action.setText(original_texts['about'])
 
 class AskGrokConfigWidget(QWidget):
@@ -392,7 +409,7 @@ class AskGrokConfigWidget(QWidget):
         self.language_changed.emit(lang_code)
 
 class AboutWidget(QWidget):
-    """关于页面组件"""
+    """关于页面组件 - 显示 about.md 内容"""
     def __init__(self, parent=None):
         super().__init__(parent)
         prefs = get_prefs()
@@ -403,60 +420,137 @@ class AboutWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建关于标签
-        self.about_label = QLabel()
-        self.about_label.setTextFormat(Qt.RichText)
-        self.about_label.setAlignment(Qt.AlignCenter)
-        self.about_label.setOpenExternalLinks(True)
-        layout.addWidget(self.about_label)
+        # 创建文本浏览器
+        from PyQt5.QtWidgets import QTextBrowser
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击链接
+        self.text_browser.setReadOnly(True)
+        layout.addWidget(self.text_browser)
         
-        # 初始化内容
-        self.update_content()
+        # 加载内容
+        self.load_content()
+        
+    def load_content(self):
+        """加载 about.md 内容"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 从插件资源读取 about.md
+            from calibre.customize.ui import find_plugin
+            plugin = find_plugin('Ask AI Plugin')
+            
+            if not plugin:
+                self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
+                return
+            
+            # 读取 about.md
+            about_data = plugin.get_resources('tutorial/about.md')
+            
+            if not about_data:
+                self.text_browser.setHtml("<h2>Error: About file not found</h2>")
+                return
+            
+            about_content = about_data.decode('utf-8')
+            
+            # 转换 markdown 到 HTML（复用 TutorialWidget 的方法）
+            html_content = self._markdown_to_html(about_content)
+            
+            # 设置 HTML 内容
+            self.text_browser.setHtml(html_content)
+            
+            logger.info(f"About content loaded: {len(about_content)} bytes")
+            
+        except Exception as e:
+            logger.error(f"Failed to load about content: {str(e)}")
+            self.text_browser.setHtml(f"<h2>Error loading about content</h2><p>{str(e)}</p>")
+    
+    def _markdown_to_html(self, markdown_text):
+        """简单的 markdown 转 HTML - 极简风格（复用 TutorialWidget 逻辑）"""
+        import re
+        
+        lines = markdown_text.split('\n')
+        result = []
+        in_paragraph = False
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Headers
+            if stripped.startswith('# '):
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[2:]
+                result.append(f'<h1>{content}</h1>')
+            # Empty line
+            elif not stripped:
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+            # Regular text
+            else:
+                if not in_paragraph:
+                    result.append('<p>')
+                    in_paragraph = True
+                else:
+                    result.append('<br>')
+                result.append(self._process_inline(stripped))
+        
+        # Close any open tags
+        if in_paragraph:
+            result.append('</p>')
+        
+        html = '\n'.join(result)
+        
+        # 添加样式 - 极简主义风格，支持明暗模式
+        styled_html = f"""
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                line-height: 1.65; 
+                padding: 20px;
+                color: palette(window-text);
+                background: palette(base);
+            }}
+            h1 {{ 
+                color: palette(window-text); 
+                border-bottom: 2px solid palette(mid); 
+                padding-bottom: 10px;
+                font-size: 1.5em;
+                margin-top: 0.5em;
+                margin-bottom: 0.8em;
+            }}
+            p {{
+                color: palette(window-text);
+                margin: 0.5em 0;
+            }}
+            strong {{
+                color: palette(window-text);
+                font-weight: bold;
+            }}
+            a {{
+                color: palette(link);
+                text-decoration: none;
+            }}
+        </style>
+        {html}
+        """
+        
+        return styled_html
+    
+    def _process_inline(self, text):
+        """处理行内元素：粗体、链接"""
+        import re
+        # Bold
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        # Links (keep clickable in About page)
+        text = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<a href="\2">\1</a>', text)
+        return text
         
     def update_content(self):
-        """更新关于页面内容"""
-        prefs = get_prefs()
-        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-        self.i18n = get_translation(language)
-        
-        # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
-        self.about_label.setText(f"""
-        <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-            <div style='font-weight: bold; color: palette(window-text); margin: 10px 0; font-size: 1.5em;'>Ask AI Plugin</div>
-            <div style='color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
-            <div style='color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
-            
-            <div style='display: flex; flex-direction: column; align-items: center; margin: 15px 0;'>
-                <div style='margin: 8px 0;'>
-                    <a href='http://simp.ly/publish/FwMSSr' 
-                       style='color: palette(link); text-decoration: none;'>
-                       {self.i18n.get('user_manual', 'User Manual')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='http://simp.ly/publish/xYW5Tr' 
-                       style='color: palette(link); text-decoration: none;'>
-                       {self.i18n.get('about_plugin', 'Why Ask AI Plugin?')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='https://youtu.be/QdeZgkT1fpw' 
-                       style='color: palette(link); text-decoration: none;'>
-                       {self.i18n.get('learn_how_to_use', 'How to Use')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='imessage://sheldonrrr@gmail.com' 
-                       style='color: palette(link); text-decoration: none;'>
-                       {self.i18n.get('email', 'iMessage')}: sheldonrrr@gmail.com
-                    </a>
-                </div>
-            </div>
-        </div>
-        """)
+        """更新内容（语言切换时调用）"""
+        self.load_content()
 
 
 class TutorialWidget(QWidget):
@@ -517,66 +611,135 @@ class TutorialWidget(QWidget):
             self.text_browser.setHtml(f"<h2>Error loading tutorial</h2><p>{str(e)}</p>")
     
     def markdown_to_html(self, markdown_text):
-        """简单的 markdown 转 HTML"""
+        """简单的 markdown 转 HTML - 极简风格"""
         import re
         
-        html = markdown_text
-        
-        # Headers
-        html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
-        html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-        html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
-        
-        # Horizontal rules
-        html = re.sub(r'^---$', r'<hr>', html, flags=re.MULTILINE)
-        
-        # Bold
-        html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
-        
-        # Inline code
-        html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
-        
-        # Links (keep text but remove link functionality)
-        html = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<span style="color: #0066cc;">\1</span>', html)
-        
-        # Lists
-        lines = html.split('\n')
+        lines = markdown_text.split('\n')
         result = []
         in_ul = False
+        in_ol = False
+        in_paragraph = False
         
         for line in lines:
-            if re.match(r'^- (.+)$', line):
-                if not in_ul:
-                    result.append('<ul>')
-                    in_ul = True
-                content = re.sub(r'^- (.+)$', r'\1', line)
-                result.append(f'<li>{content}</li>')
-            elif re.match(r'^\d+\. (.+)$', line):
+            stripped = line.strip()
+            
+            # Headers
+            if stripped.startswith('# '):
                 if in_ul:
                     result.append('</ul>')
                     in_ul = False
-                content = re.sub(r'^\d+\. (.+)$', r'\1', line)
-                result.append(f'<p>{content}</p>')
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[2:]
+                result.append(f'<h1>{content}</h1>')
+            elif stripped.startswith('## '):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[3:]
+                result.append(f'<h2>{content}</h2>')
+            elif stripped.startswith('### '):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[4:]
+                result.append(f'<h3>{content}</h3>')
+            # Horizontal rule
+            elif stripped == '---':
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                result.append('<hr>')
+            # Unordered list
+            elif stripped.startswith('- '):
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                if not in_ul:
+                    result.append('<ul>')
+                    in_ul = True
+                content = self._process_inline(stripped[2:])
+                result.append(f'<li>{content}</li>')
+            # Ordered list
+            elif re.match(r'^\d+\.\s+', stripped):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                if not in_ol:
+                    result.append('<ol>')
+                    in_ol = True
+                content = self._process_inline(re.sub(r'^\d+\.\s+', '', stripped))
+                result.append(f'<li>{content}</li>')
+            # Empty line
+            elif not stripped:
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+            # Regular text
             else:
                 if in_ul:
                     result.append('</ul>')
                     in_ul = False
-                if line.strip() and not line.strip().startswith('<'):
-                    result.append(f'<p>{line}</p>')
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if not in_paragraph:
+                    result.append('<p>')
+                    in_paragraph = True
                 else:
-                    result.append(line)
+                    result.append('<br>')
+                result.append(self._process_inline(stripped))
         
+        # Close any open tags
         if in_ul:
             result.append('</ul>')
+        if in_ol:
+            result.append('</ol>')
+        if in_paragraph:
+            result.append('</p>')
         
         html = '\n'.join(result)
         
-        # 添加样式 - 使用 palette 支持明暗模式，使用相对字体大小
+        # 添加样式 - 极简主义风格，支持明暗模式
         styled_html = f"""
         <style>
             body {{ 
                 font-family: Arial, sans-serif; 
-                line-height: 1.6; 
+                line-height: 1.65; 
                 padding: 20px;
                 color: palette(window-text);
                 background: palette(base);
@@ -587,19 +750,20 @@ class TutorialWidget(QWidget):
                 padding-bottom: 10px;
                 font-size: 1.5em;
                 margin-top: 0.5em;
+                margin-bottom: 0.8em;
             }}
             h2 {{ 
                 color: palette(window-text); 
-                border-bottom: 1px solid palette(mid); 
-                padding-bottom: 8px; 
+                font-weight: bold;
+                font-size: 1em;
                 margin-top: 1.5em;
-                font-size: 1.3em;
-                opacity: 0.9;
+                margin-bottom: 0.6em;
             }}
             h3 {{ 
                 color: palette(window-text); 
                 margin-top: 1.2em;
-                font-size: 1.1em;
+                margin-bottom: 0.5em;
+                font-size: 1em;
                 opacity: 0.85;
             }}
             code {{ 
@@ -610,21 +774,31 @@ class TutorialWidget(QWidget):
                 border-radius: 3px;
             }}
             ul {{ 
-                margin-left: 20px;
+                margin-left: 12px;
+                padding-left: 12px;
                 color: palette(window-text);
+                margin-top: 0.4em;
+                margin-bottom: 0.6em;
+            }}
+            ol {{ 
+                margin-left: 12px;
+                padding-left: 12px;
+                color: palette(window-text);
+                margin-top: 0.4em;
+                margin-bottom: 0.6em;
             }}
             li {{ 
-                margin-bottom: 5px;
+                margin-bottom: 0.3em;
             }}
             hr {{ 
                 border: none; 
                 border-top: 1px solid palette(mid); 
-                margin: 20px 0;
+                margin: 1.2em 0;
                 opacity: 0.5;
             }}
             p {{
                 color: palette(window-text);
-                margin: 0.8em 0;
+                margin: 0.5em 0;
             }}
             strong {{
                 color: palette(window-text);
@@ -635,6 +809,17 @@ class TutorialWidget(QWidget):
         """
         
         return styled_html
+    
+    def _process_inline(self, text):
+        """处理行内元素：粗体、代码、链接"""
+        import re
+        # Bold
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        # Inline code
+        text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+        # Links (keep text but remove link functionality)
+        text = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<span style="color: palette(link);">\1</span>', text)
+        return text
     
     def update_content(self):
         """更新内容（语言切换时调用）"""
@@ -670,13 +855,13 @@ class TabDialog(QDialog):
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
-        # 创建关于页面
-        self.about_widget = AboutWidget()
-        self.tab_widget.addTab(self.about_widget, self.i18n['about'])
-        
         # 创建教程页面
         self.tutorial_widget = TutorialWidget()
         self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
+        
+        # 创建关于页面
+        self.about_widget = AboutWidget()
+        self.tab_widget.addTab(self.about_widget, self.i18n['about'])
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -743,8 +928,8 @@ class TabDialog(QDialog):
         # 更新标签页标题
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
         self.tab_widget.setTabText(1, self.i18n['shortcuts'])
-        self.tab_widget.setTabText(2, self.i18n['about'])
-        self.tab_widget.setTabText(3, self.i18n.get('tutorial', 'Tutorial'))
+        self.tab_widget.setTabText(2, self.i18n.get('tutorial', 'Tutorial'))
+        self.tab_widget.setTabText(3, self.i18n['about'])
         logger.debug("已更新标签页标题")
         
         # 更新保存按钮文本

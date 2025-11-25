@@ -110,6 +110,7 @@ class DutchTranslation(BaseTranslation):
             'close_button': 'Sluiten',
             'open_local_tutorial': 'Open lokale handleiding',
             'tutorial_open_failed': 'Kan handleiding niet openen',
+            'tutorial': 'Handleiding',
             
             # UI - Configuratievelden
             'token_label': 'API-sleutel:',

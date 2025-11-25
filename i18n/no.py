@@ -110,6 +110,7 @@ class NorwegianTranslation(BaseTranslation):
             'close_button': 'Lukk',
             'open_local_tutorial': 'Åpne lokal veiledning',
             'tutorial_open_failed': 'Kunne ikke åpne veiledning',
+            'tutorial': 'Veiledning',
             
             # UI - Konfigurasjonsfelter
             'token_label': 'API-nøkkel:',

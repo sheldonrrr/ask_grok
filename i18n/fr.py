@@ -110,6 +110,7 @@ class FrenchTranslation(BaseTranslation):
             'close_button': 'Fermer',
             'open_local_tutorial': 'Ouvrir le tutoriel local',
             'tutorial_open_failed': 'Échec de l\'ouverture du tutoriel',
+            'tutorial': 'Tutoriel',
             
             # UI - Champs de configuration
             'token_label': 'Clé API:',

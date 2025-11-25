@@ -110,6 +110,7 @@ class DanishTranslation(BaseTranslation):
             'close_button': 'Luk',
             'open_local_tutorial': 'Åbn lokal vejledning',
             'tutorial_open_failed': 'Kunne ikke åbne vejledning',
+            'tutorial': 'Vejledning',
             
             # UI - Configuration fields
             'token_label': 'API-nøgle:',

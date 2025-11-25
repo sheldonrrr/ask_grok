@@ -109,6 +109,7 @@ class RussianTranslation(BaseTranslation):
             'close_button': 'Закрыть',
             'open_local_tutorial': 'Открыть локальное руководство',
             'tutorial_open_failed': 'Не удалось открыть руководство',
+            'tutorial': 'Руководство',
             
             # UI - Поля конфигурации
             'token_label': 'Ключ API:',
