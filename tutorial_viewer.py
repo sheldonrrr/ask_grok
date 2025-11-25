@@ -220,12 +220,13 @@ def open_tutorial_in_browser():
             content=html_content
         )
         
-        # Create temporary HTML file
-        temp_dir = tempfile.gettempdir()
-        html_file_path = os.path.join(temp_dir, 'ask_ai_plugin_tutorial.html')
+        # Create temporary HTML file using calibre's temp directory
+        from calibre.ptempfile import PersistentTemporaryFile
         
-        with open(html_file_path, 'w', encoding='utf-8') as f:
-            f.write(full_html)
+        # Create a persistent temp file that won't be deleted immediately
+        with PersistentTemporaryFile(suffix='.html', prefix='ask_ai_plugin_tutorial_') as f:
+            f.write(full_html.encode('utf-8'))
+            html_file_path = f.name
         
         logger.info(f"Created HTML: {html_file_path}")
         

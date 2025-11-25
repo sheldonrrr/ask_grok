@@ -87,6 +87,7 @@ class EnglishTranslation(BaseTranslation):
             'close_button': 'Close',
             'open_local_tutorial': 'Open Local Tutorial',
             'tutorial_open_failed': 'Failed to open tutorial',
+            'tutorial': 'Tutorial',
             
             # UI - Configuration fields
             'token_label': 'API Key:',

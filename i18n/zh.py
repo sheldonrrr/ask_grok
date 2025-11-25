@@ -87,6 +87,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'close_button': '关闭',
             'open_local_tutorial': '打开本地教程',
             'tutorial_open_failed': '打开教程失败',
+            'tutorial': '教程',
             
             # UI - 配置字段
             'token_label': 'API密钥:',

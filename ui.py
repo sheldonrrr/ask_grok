@@ -410,17 +410,6 @@ class AboutWidget(QWidget):
         self.about_label.setOpenExternalLinks(True)
         layout.addWidget(self.about_label)
         
-        # 添加本地教程按钮
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        
-        self.tutorial_button = QPushButton()
-        self.tutorial_button.clicked.connect(self.open_local_tutorial)
-        button_layout.addWidget(self.tutorial_button)
-        
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
-        
         # 初始化内容
         self.update_content()
         
@@ -429,9 +418,6 @@ class AboutWidget(QWidget):
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
-        
-        # 更新教程按钮文本
-        self.tutorial_button.setText(self.i18n.get('open_local_tutorial', 'Open Local Tutorial'))
         
         # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
         self.about_label.setText(f"""
@@ -471,35 +457,189 @@ class AboutWidget(QWidget):
             </div>
         </div>
         """)
-    
-    def open_local_tutorial(self):
-        """打开本地教程"""
+
+
+class TutorialWidget(QWidget):
+    """教程页面组件"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+        
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        
+        # 创建文本浏览器
+        from PyQt5.QtWidgets import QTextBrowser
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(False)  # 禁用链接点击
+        self.text_browser.setReadOnly(True)  # 只读
+        layout.addWidget(self.text_browser)
+        
+        # 加载教程内容
+        self.load_tutorial()
+        
+    def load_tutorial(self):
+        """加载教程内容"""
         import logging
         logger = logging.getLogger(__name__)
         
         try:
-            from calibre_plugins.ask_ai_plugin.tutorial_viewer import open_tutorial_in_browser
-            success = open_tutorial_in_browser()
+            # 从插件资源读取教程
+            from calibre.customize.ui import find_plugin
+            plugin = find_plugin('Ask AI Plugin')
             
-            if success:
-                logger.info("本地教程已在浏览器中打开")
-            else:
-                logger.error("打开本地教程失败")
-                # 显示错误消息
-                from PyQt5.QtWidgets import QMessageBox
-                QMessageBox.warning(
-                    self,
-                    self.i18n.get('error', 'Error'),
-                    self.i18n.get('tutorial_open_failed', 'Failed to open tutorial. Please check the log for details.')
-                )
+            if not plugin:
+                self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
+                return
+            
+            # 读取教程
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
+            
+            if not tutorial_data:
+                self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
+                return
+            
+            tutorial_content = tutorial_data.decode('utf-8')
+            
+            # 转换 markdown 到 HTML
+            html_content = self.markdown_to_html(tutorial_content)
+            
+            # 设置 HTML 内容
+            self.text_browser.setHtml(html_content)
+            
+            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes")
+            
         except Exception as e:
-            logger.error(f"打开本地教程时出错: {str(e)}")
-            from PyQt5.QtWidgets import QMessageBox
-            QMessageBox.warning(
-                self,
-                self.i18n.get('error', 'Error'),
-                f"{self.i18n.get('tutorial_open_failed', 'Failed to open tutorial')}: {str(e)}"
-            )
+            logger.error(f"Failed to load tutorial: {str(e)}")
+            self.text_browser.setHtml(f"<h2>Error loading tutorial</h2><p>{str(e)}</p>")
+    
+    def markdown_to_html(self, markdown_text):
+        """简单的 markdown 转 HTML"""
+        import re
+        
+        html = markdown_text
+        
+        # Headers
+        html = re.sub(r'^# (.+)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+        html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+        html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+        
+        # Horizontal rules
+        html = re.sub(r'^---$', r'<hr>', html, flags=re.MULTILINE)
+        
+        # Bold
+        html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
+        
+        # Inline code
+        html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
+        
+        # Links (keep text but remove link functionality)
+        html = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<span style="color: #0066cc;">\1</span>', html)
+        
+        # Lists
+        lines = html.split('\n')
+        result = []
+        in_ul = False
+        
+        for line in lines:
+            if re.match(r'^- (.+)$', line):
+                if not in_ul:
+                    result.append('<ul>')
+                    in_ul = True
+                content = re.sub(r'^- (.+)$', r'\1', line)
+                result.append(f'<li>{content}</li>')
+            elif re.match(r'^\d+\. (.+)$', line):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                content = re.sub(r'^\d+\. (.+)$', r'\1', line)
+                result.append(f'<p>{content}</p>')
+            else:
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if line.strip() and not line.strip().startswith('<'):
+                    result.append(f'<p>{line}</p>')
+                else:
+                    result.append(line)
+        
+        if in_ul:
+            result.append('</ul>')
+        
+        html = '\n'.join(result)
+        
+        # 添加样式 - 使用 palette 支持明暗模式，使用相对字体大小
+        styled_html = f"""
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                line-height: 1.6; 
+                padding: 20px;
+                color: palette(window-text);
+                background: palette(base);
+            }}
+            h1 {{ 
+                color: palette(window-text); 
+                border-bottom: 2px solid palette(mid); 
+                padding-bottom: 10px;
+                font-size: 1.5em;
+                margin-top: 0.5em;
+            }}
+            h2 {{ 
+                color: palette(window-text); 
+                border-bottom: 1px solid palette(mid); 
+                padding-bottom: 8px; 
+                margin-top: 1.5em;
+                font-size: 1.3em;
+                opacity: 0.9;
+            }}
+            h3 {{ 
+                color: palette(window-text); 
+                margin-top: 1.2em;
+                font-size: 1.1em;
+                opacity: 0.85;
+            }}
+            code {{ 
+                background: palette(alternate-base); 
+                padding: 2px 5px; 
+                font-family: monospace;
+                color: palette(text);
+                border-radius: 3px;
+            }}
+            ul {{ 
+                margin-left: 20px;
+                color: palette(window-text);
+            }}
+            li {{ 
+                margin-bottom: 5px;
+            }}
+            hr {{ 
+                border: none; 
+                border-top: 1px solid palette(mid); 
+                margin: 20px 0;
+                opacity: 0.5;
+            }}
+            p {{
+                color: palette(window-text);
+                margin: 0.8em 0;
+            }}
+            strong {{
+                color: palette(window-text);
+                font-weight: bold;
+            }}
+        </style>
+        {html}
+        """
+        
+        return styled_html
+    
+    def update_content(self):
+        """更新内容（语言切换时调用）"""
+        self.load_tutorial()
+
 
 class TabDialog(QDialog):
     def __init__(self, parent=None):
@@ -533,6 +673,10 @@ class TabDialog(QDialog):
         # 创建关于页面
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about'])
+        
+        # 创建教程页面
+        self.tutorial_widget = TutorialWidget()
+        self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -600,6 +744,7 @@ class TabDialog(QDialog):
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
         self.tab_widget.setTabText(1, self.i18n['shortcuts'])
         self.tab_widget.setTabText(2, self.i18n['about'])
+        self.tab_widget.setTabText(3, self.i18n.get('tutorial', 'Tutorial'))
         logger.debug("已更新标签页标题")
         
         # 更新保存按钮文本
