@@ -178,4 +178,19 @@ class EnglishTranslation(BaseTranslation):
             # Common system messages
             'default_system_message': 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.',
             'api_content_extraction_failed': 'Unable to extract content from API response',
+            
+            # Deprecation notice
+            'deprecation_notice_title': 'Important Notice: Plugin Renamed',
+            'deprecation_notice_message': '''The Ask Grok plugin has been renamed to "Ask AI".
+
+You can find both plugins by the same author "Sheldon" in calibre's online plugin list.
+
+Important changes:
+• The new Ask AI plugin supports more mainstream AI services including OpenAI, Anthropic, OpenRouter, Ollama, Gemini, and more
+• This plugin will be marked as deprecated in 1 month
+
+I recommend switching to the new Ask AI plugin for continued updates and support.''',
+            'deprecation_dont_show_again': "Don't show again",
+            'deprecation_got_it': 'Got it',
+            'new_version_button': 'New Version',
         }

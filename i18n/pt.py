@@ -175,4 +175,19 @@ class PortugueseTranslation(BaseTranslation):
             
             # Mensagens de sistema gerais
             'default_system_message': 'Você é um especialista em análise de livros. Sua tarefa é ajudar os usuários a entender melhor os livros fornecendo perguntas e análises perspicazes.',
+        
+        # Deprecation notice
+            'deprecation_notice_title': 'Aviso Importante: Plugin Renomeado',
+            'deprecation_notice_message': '''O plugin Ask Grok foi renomeado para "Ask AI".
+
+Você pode encontrar ambos os plugins do mesmo autor "Sheldon" na lista de plugins online do calibre.
+
+Mudanças importantes:
+• O novo plugin Ask AI suporta serviços de IA mais comuns, incluindo OpenAI, Anthropic, OpenRouter, Ollama, Gemini e mais
+• Este plugin será marcado como obsoleto em 1 mês
+
+Recomendo a mudança para o novo plugin Ask AI para atualizações e suporte contínuos.''',
+            'deprecation_dont_show_again': 'Não mostrar novamente',
+            'deprecation_got_it': 'Entendi',
+            'new_version_button': 'Nova Versão',
         }

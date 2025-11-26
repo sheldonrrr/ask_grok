@@ -175,4 +175,19 @@ class FinnishTranslation(BaseTranslation):
             
             # Yleiset järjestelmäviestit
             'default_system_message': 'Olet kirja-analyysin asiantuntija. Tehtäväsi on auttaa käyttäjiä ymmärtämään kirjoja paremmin tarjoamalla oivaltavia kysymyksiä ja analyysejä.',
+        
+            # Deprecation notice
+            'deprecation_notice_title': 'Tärkeä huomautus: Liitännäinen nimettiin uudelleen',
+            'deprecation_notice_message': '''Ask Grok -liitännäinen on nimetty uudelleen "Ask AI" -nimiseksi.
+
+Löydät molemmat liitännäiset samalta kirjoittajalta "Sheldon" calibren online-liitännäisluettelosta.
+
+Tärkeät muutokset:
+• Uusi Ask AI -liitännäinen tukee valtavirran tekoälypalveluita, kuten OpenAI, Anthropic, OpenRouter, Ollama, Gemini ja paljon muuta
+• Tämä liitännäinen merkitään vanhentuneeksi 1 kuukauden kuluttua
+
+Suosittelen siirtymään uuteen Ask AI -liitännäiseen jatkuvia päivityksiä ja tukea varten.''',
+            'deprecation_dont_show_again': 'Älä näytä uudelleen',
+            'deprecation_got_it': 'Selvä',
+            'new_version_button': 'Uusi versio',
         }

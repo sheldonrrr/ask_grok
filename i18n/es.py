@@ -175,4 +175,19 @@ class SpanishTranslation(BaseTranslation):
             
             # Mensajes del sistema comunes
             'default_system_message': 'Eres un experto en análisis de libros. Tu tarea es ayudar a los usuarios a entender mejor los libros proporcionando preguntas y análisis perspicaces.',
+        
+            # Deprecation notice
+            'deprecation_notice_title': 'Aviso importante: Complemento renombrado',
+            'deprecation_notice_message': '''El complemento Ask Grok ha sido renombrado a "Ask AI".
+
+Puede encontrar ambos complementos del mismo autor "Sheldon" en la lista de complementos en línea de calibre.
+
+Cambios importantes:
+• El nuevo complemento Ask AI es compatible con servicios de IA más comunes, incluidos OpenAI, Anthropic, OpenRouter, Ollama, Gemini y más
+• Este complemento se marcará como obsoleto en 1 mes
+
+Recomiendo cambiar al nuevo complemento Ask AI para recibir actualizaciones y soporte continuos.''',
+            'deprecation_dont_show_again': 'No volver a mostrar',
+            'deprecation_got_it': 'Entendido',
+            'new_version_button': 'Nueva versión',
         }

@@ -175,4 +175,19 @@ class DutchTranslation(BaseTranslation):
             
             # Algemene systeemberichten
             'default_system_message': 'U bent een expert in boekanalyse. Uw taak is om gebruikers te helpen boeken beter te begrijpen door inzichtelijke vragen en analyses te bieden.',
+        
+                        # Deprecation notice
+            'deprecation_notice_title': 'Belangrijke mededeling: Plugin hernoemd',
+            'deprecation_notice_message': '''De Ask Grok-plugin is hernoemd naar "Ask AI".
+
+U kunt beide plugins van dezelfde auteur "Sheldon" vinden in Calibre's online pluginlijst.
+
+Belangrijke wijzigingen:
+• De nieuwe Ask AI-plugin ondersteunt meer mainstream AI-diensten, waaronder OpenAI, Anthropic, OpenRouter, Ollama, Gemini en meer
+• Deze plugin wordt over 1 maand als verouderd gemarkeerd
+
+Ik raad aan om over te schakelen naar de nieuwe Ask AI-plugin voor voortdurende updates en ondersteuning.''',
+            'deprecation_dont_show_again': 'Niet meer weergeven',
+            'deprecation_got_it': 'Begrepen',
+            'new_version_button': 'Nieuwe versie',
         }

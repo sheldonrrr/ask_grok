@@ -178,6 +178,11 @@ class AskGrokPluginUI(InterfaceAction):
     def show_dialog(self):
         self.initialize_api()
         
+        # 检查是否需要显示弃用通知
+        prefs = get_prefs()
+        if prefs.get('show_deprecation_notice', True):
+            self._show_deprecation_notice()
+        
         # 获取选中的书籍
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) == 0:
@@ -198,6 +203,32 @@ class AskGrokPluginUI(InterfaceAction):
         d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
         
         d.exec_()
+    
+    def _show_deprecation_notice(self):
+        """显示弃用通知对话框"""
+        # 创建消息框
+        msg_box = QMessageBox(self.gui)
+        msg_box.setWindowTitle(self.i18n['deprecation_notice_title'])
+        msg_box.setText(self.i18n['deprecation_notice_message'])
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 添加按钮（按照添加顺序：左侧到右侧）
+        # ActionRole 按钮显示在左侧，RejectRole 按钮显示在右侧
+        dont_show_btn = msg_box.addButton(self.i18n['deprecation_dont_show_again'], QMessageBox.ActionRole)
+        got_it_btn = msg_box.addButton(self.i18n['deprecation_got_it'], QMessageBox.RejectRole)
+        msg_box.setDefaultButton(got_it_btn)
+        
+        # 显示对话框
+        msg_box.exec_()
+        
+        # 处理用户选择
+        clicked_button = msg_box.clickedButton()
+        prefs = get_prefs()
+        
+        if clicked_button == dont_show_btn:
+            # 用户选择"不再提醒"
+            prefs['show_deprecation_notice'] = False
+            logger.info("Deprecation notice disabled by user")
     
     def show_about(self):
         """显示关于对话框"""
@@ -419,10 +450,15 @@ class TabDialog(QDialog):
         # 添加弹性空间，使按钮分别位于左右两侧
         button_layout.addStretch()
         
+        # 添加New Version按钮（右侧，Close按钮左边）
+        self.new_version_button = QPushButton(self.i18n.get('new_version_button', 'New Version'))
+        self.new_version_button.clicked.connect(self.show_deprecation_notice)
+        button_layout.addWidget(self.new_version_button)
+        
         # 添加Close按钮（右侧）
-        close_button = QPushButton(self.i18n.get('close_button', 'Close'))
-        close_button.clicked.connect(self.reject)
-        button_layout.addWidget(close_button)
+        self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        self.close_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.close_button)
         
         # 添加右侧间距
         button_layout.addSpacing(10)
@@ -455,7 +491,16 @@ class TabDialog(QDialog):
         self.tab_widget.setTabText(2, self.i18n['about'])
         logger.debug("已更新标签页标题")
         
-        # 更新关闭按钮文本
+        # 更新按钮文本
+        if hasattr(self, 'save_button'):
+            self.save_button.setText(self.i18n.get('save_button', 'Save'))
+        if hasattr(self, 'new_version_button'):
+            self.new_version_button.setText(self.i18n.get('new_version_button', 'New Version'))
+        if hasattr(self, 'close_button'):
+            self.close_button.setText(self.i18n.get('close_button', 'Close'))
+        logger.debug("已更新按钮文本")
+        
+        # 更新关闭按钮文本（兼容旧代码）
         for button_box in self.findChildren(QDialogButtonBox):
             close_button = button_box.button(QDialogButtonBox.Close)
             if close_button:
@@ -493,6 +538,32 @@ class TabDialog(QDialog):
                 logger.debug("更新对话框组件的i18n对象")
                 ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
                 ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
+    
+    def show_deprecation_notice(self):
+        """显示弃用通知对话框"""
+        # 创建消息框
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n['deprecation_notice_title'])
+        msg_box.setText(self.i18n['deprecation_notice_message'])
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 添加按钮（按照添加顺序：左侧到右侧）
+        # ActionRole 按钮显示在左侧，RejectRole 按钮显示在右侧
+        dont_show_btn = msg_box.addButton(self.i18n['deprecation_dont_show_again'], QMessageBox.ActionRole)
+        got_it_btn = msg_box.addButton(self.i18n['deprecation_got_it'], QMessageBox.RejectRole)
+        msg_box.setDefaultButton(got_it_btn)
+        
+        # 显示对话框
+        msg_box.exec_()
+        
+        # 处理用户选择
+        clicked_button = msg_box.clickedButton()
+        prefs = get_prefs()
+        
+        if clicked_button == dont_show_btn:
+            # 用户选择"不再提醒"
+            prefs['show_deprecation_notice'] = False
+            logger.info("Deprecation notice disabled by user from config dialog")
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""

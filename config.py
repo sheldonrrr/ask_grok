@@ -82,6 +82,7 @@ prefs.defaults['language'] = 'en'
 prefs.defaults['ask_dialog_width'] = 600
 prefs.defaults['ask_dialog_height'] = 400
 prefs.defaults['random_questions'] = {}
+prefs.defaults['show_deprecation_notice'] = True  # 显示弃用通知
 
 def get_prefs(force_reload=False):
     """获取配置

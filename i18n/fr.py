@@ -175,4 +175,19 @@ class FrenchTranslation(BaseTranslation):
             
             # Messages système communs
             'default_system_message': 'Vous êtes un expert en analyse de livres. Votre tâche est d\'aider les utilisateurs à mieux comprendre les livres en fournissant des questions et des analyses perspicaces.',
+
+            # Deprecation notice
+            'deprecation_notice_title': 'Avis important : Extension renommée',
+            'deprecation_notice_message': '''L'extension Ask Grok a été renommée "Ask AI".
+
+Vous pouvez trouver les deux extensions du même auteur "Sheldon" dans la liste des extensions en ligne de calibre.
+
+Changements importants :
+• La nouvelle extension Ask AI prend en charge des services d'IA plus courants, notamment OpenAI, Anthropic, OpenRouter, Ollama, Gemini, et plus encore
+• Cette extension sera marquée comme obsolète dans 1 mois
+
+Je recommande de passer à la nouvelle extension Ask AI pour des mises à jour et un support continus.''',
+            'deprecation_dont_show_again': 'Ne plus afficher',
+            'deprecation_got_it': 'Compris',
+            'new_version_button': 'Nouvelle version',
         }

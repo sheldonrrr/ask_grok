@@ -175,4 +175,18 @@ class JapaneseTranslation(BaseTranslation):
             
             # 共通システムメッセージ
             'default_system_message': 'あなたは本の分析の専門家です。あなたの任務は、洞察力のある質問と分析を提供することで、ユーザーが本をより良く理解できるように支援することです。',
+            # Deprecation notice
+            'deprecation_notice_title': '重要なお知らせ：プラグイン名変更',
+            'deprecation_notice_message': '''Ask Grok プラグインは「Ask AI」に名称変更されました。
+
+両方のプラグインは、calibreのオンラインプラグインリストで同じ作者「Sheldon」によって見つけることができます。
+
+重要な変更点：
+• 新しいAsk AIプラグインは、OpenAI、Anthropic、OpenRouter、Ollama、Geminiなど、より主流のAIサービスをサポートしています
+• このプラグインは1ヶ月後に非推奨とマークされます
+
+継続的な更新とサポートのため、新しいAsk AIプラグインへの切り替えをお勧めします。''',
+            'deprecation_dont_show_again': '今後表示しない',
+            'deprecation_got_it': '了解しました',
+            'new_version_button': '新バージョン',
         }

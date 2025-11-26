@@ -175,4 +175,18 @@ class TraditionalChineseTranslation(BaseTranslation):
             
             # 一般系統訊息
             'default_system_message': '您是一位書籍分析專家。您的任務是透過提供有見地的問題和分析，幫助用戶更好地理解書籍。',
+        # Deprecation notice
+            'deprecation_notice_title': '重要通知：插件已重新命名',
+            'deprecation_notice_message': '''Ask Grok 插件已重新命名為「Ask AI」。
+
+您可以在 calibre 的線上插件列表中找到同一個作者「Sheldon」的兩個插件。
+
+重要變更：
+• 新的 Ask AI 插件支援更多主流 AI 服務，包括 OpenAI、Anthropic、OpenRouter、Ollama、Gemini 等
+• 此插件將於 1 個月後標記為棄用
+
+我建議切換到新的 Ask AI 插件以獲得持續的更新與支援。''',
+            'deprecation_dont_show_again': '不再顯示',
+            'deprecation_got_it': '了解',
+            'new_version_button': '新版本',
         }

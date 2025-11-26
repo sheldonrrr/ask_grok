@@ -175,4 +175,18 @@ class NorwegianTranslation(BaseTranslation):
             
             # Generelle systemmeldinger
             'default_system_message': 'Du er en ekspert på bokanalyse. Din oppgave er å hjelpe brukere med å forstå bøker bedre ved å gi innsiktsfulle spørsmål og analyser.',
+            # Deprecation notice
+            'deprecation_notice_title': 'Viktig merknad: Utvidelsen er omdøpt',
+            'deprecation_notice_message': '''Ask Grok-utvidelsen har blitt omdøpt til "Ask AI".
+
+Du kan finne begge utvidelsene fra samme forfatter "Sheldon" i Calibres online utvidelsesliste.
+
+Viktige endringer:
+• Den nye Ask AI-utvidelsen støtter mer mainstream AI-tjenester, inkludert OpenAI, Anthropic, OpenRouter, Ollama, Gemini og mer
+• Denne utvidelsen vil bli merket som utdatert om 1 måned
+
+Jeg anbefaler å bytte til den nye Ask AI-utvidelsen for fortsatte oppdateringer og støtte.''',
+            'deprecation_dont_show_again': 'Ikke vis igjen',
+            'deprecation_got_it': 'Forstått',
+            'new_version_button': 'Ny versjon',
         }

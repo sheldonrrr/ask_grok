@@ -177,4 +177,19 @@ class GermanTranslation(BaseTranslation):
             
             # Allgemeine Systemnachrichten
             'default_system_message': 'Sie sind ein Experte für Buchanalysen. Ihre Aufgabe ist es, Benutzern zu helfen, Bücher besser zu verstehen, indem Sie aufschlussreiche Fragen und Analysen bereitstellen.',
+
+            # Deprecation notice
+            'deprecation_notice_title': 'Wichtiger Hinweis: Plugin umbenannt',
+            'deprecation_notice_message': '''Das Ask Grok-Plugin wurde in „Ask AI“ umbenannt.
+
+Sie finden beide Plugins vom selben Autor „Sheldon“ in Calibres Online-Plugin-Liste.
+
+Wichtige Änderungen:
+• Das neue Ask AI-Plugin unterstützt gängigere KI-Dienste, darunter OpenAI, Anthropic, OpenRouter, Ollama, Gemini und mehr
+• Dieses Plugin wird in 1 Monat als veraltet gekennzeichnet
+
+Ich empfehle, auf das neue Ask AI-Plugin umzusteigen, um weiterhin Updates und Support zu erhalten.''',
+            'deprecation_dont_show_again': 'Nicht erneut anzeigen',
+            'deprecation_got_it': 'Verstanden',
+            'new_version_button': 'Neue Version',
         }
