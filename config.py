@@ -137,13 +137,7 @@ prefs.defaults['models'] = {
     }
 }
 prefs.defaults['template'] = get_default_template('en')
-prefs.defaults['multi_book_template'] = """以下是关于多本书籍的信息：
-
-{books_metadata}
-
-用户问题：{query}
-
-请基于以上书籍信息回答问题。"""
+prefs.defaults['multi_book_template'] = get_multi_book_template('en')
 prefs.defaults['language'] = 'en'
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
@@ -1394,8 +1388,8 @@ class ConfigDialog(QWidget):
         
     def setup_ui(self):
         # 设置窗口属性
-        self.setMinimumWidth(700)  # 增加最小宽度，避免水平滚动条
-        self.setMinimumHeight(500)
+        # 不设置最小宽度，让父窗口（TabDialog）控制整体尺寸
+        self.setMinimumHeight(400)
         
         # 创建主布局
         main_layout = QVBoxLayout()
@@ -1445,9 +1439,10 @@ class ConfigDialog(QWidget):
         content_widget.setObjectName("content_container")
         content_layout = QVBoxLayout()
         # 使用紧凑间距，因为GroupBox已经有虚线框区分了
-        from .ui_constants import SPACING_ASK_COMPACT
+        from .ui_constants import SPACING_ASK_COMPACT, SPACING_SMALL
         content_layout.setSpacing(SPACING_ASK_COMPACT)  # 区域之间使用紧凑间距（4px）
-        content_layout.setContentsMargins(0, 0, 0, 0)
+        # 添加左右边距，为 GroupBox 的 margin 留出空间，避免水平滚动条
+        content_layout.setContentsMargins(SPACING_SMALL, 0, SPACING_SMALL, 0)
         content_widget.setLayout(content_layout)
         
         # 1. 顶部：语言选择
@@ -1849,6 +1844,7 @@ class ConfigDialog(QWidget):
         content_layout.addWidget(template_group)
         content_layout.addWidget(export_group)
         content_layout.addWidget(reset_group)
+        content_layout.addSpacing(SPACING_MEDIUM)  # 底部添加固定间距，确保最后一个元素不会被遮挡
         content_layout.addStretch()
         
         # 将内容容器设置到主滚动区域

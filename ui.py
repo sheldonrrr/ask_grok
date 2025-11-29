@@ -836,8 +836,10 @@ class TabDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(500)
+        self.setMinimumWidth(550)
+        self.setMinimumHeight(650)
+        # 设置初始窗口大小，确保有足够空间显示所有内容
+        self.resize(700, 750)
         
         # 创建标签页
         self.tab_widget = QTabWidget()
@@ -1378,7 +1380,7 @@ class AskDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['menu_title'])
-        self.setMinimumWidth(600)  # 增加最小宽度
+        self.setMinimumWidth(500)  # 增加最小宽度
         self.setMinimumHeight(600)
         
         # 设置窗口标志，启用最大化和最小化按钮
