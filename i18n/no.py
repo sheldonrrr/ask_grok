@@ -138,7 +138,7 @@ class NorwegianTranslation(BaseTranslation):
             
             # UI - Menyvalg
             'menu_title': 'Spør',
-            'menu_ask': 'Spør {model}',
+            'menu_ask': 'Spør',
             
             # UI - Statusmeldinger
             'loading': 'Laster...',

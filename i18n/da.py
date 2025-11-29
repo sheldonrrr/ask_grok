@@ -138,7 +138,7 @@ class DanishTranslation(BaseTranslation):
             
             # UI - Menu items
             'menu_title': 'Spørg',
-            'menu_ask': 'Spørg {model}',
+            'menu_ask': 'Spørg',
             
             # UI - Status messages
             'loading': 'Indlæser...',

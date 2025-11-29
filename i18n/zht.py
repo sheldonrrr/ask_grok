@@ -138,7 +138,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         
         # UI - 選單項目
         'menu_title': '提問',
-        'menu_ask': '詢問 {model}',
+        'menu_ask': '詢問',
         
         # UI - 狀態消息
         'loading': '載入中',

@@ -138,7 +138,7 @@ class CantoneseTranslation(BaseTranslation):
             
             # UI - 選單項目
             'menu_title': '問問題',
-            'menu_ask': '問 {model}',
+            'menu_ask': '問',
             
             # UI - 狀態消息
             'loading': '載入緊',

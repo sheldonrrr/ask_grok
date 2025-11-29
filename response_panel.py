@@ -180,9 +180,9 @@ class ResponsePanel(QWidget):
         
         # 创建复制按钮的菜单
         copy_menu = QMenu(self)
-        self.copy_response_action = copy_menu.addAction(self.i18n.get('copy_mode_response', '回答'))
+        self.copy_response_action = copy_menu.addAction(self.i18n.get('copy_mode_response', 'Answer'))
         self.copy_response_action.triggered.connect(lambda: self._switch_copy_mode('response'))
-        self.copy_qa_action = copy_menu.addAction(self.i18n.get('copy_mode_qa', '问答'))
+        self.copy_qa_action = copy_menu.addAction(self.i18n.get('copy_mode_qa', 'Q&A'))
         self.copy_qa_action.triggered.connect(lambda: self._switch_copy_mode('qa'))
         self.copy_btn.setMenu(copy_menu)
         self._update_copy_menu_checkmarks()
@@ -200,9 +200,9 @@ class ResponsePanel(QWidget):
             
             # 创建导出按钮的菜单
             export_menu = QMenu(self)
-            self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', '当前问答'))
+            self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', 'Current Q&A'))
             self.export_current_action.triggered.connect(lambda: self._switch_export_mode('current'))
-            self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', '历史记录'))
+            self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', 'History'))
             self.export_history_action.triggered.connect(lambda: self._switch_export_mode('history'))
             self.export_btn.setMenu(export_menu)
             self._update_export_menu_checkmarks()
@@ -232,9 +232,9 @@ class ResponsePanel(QWidget):
                 
                 # 创建导出按钮的菜单
                 export_menu = QMenu(self)
-                self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', '当前问答'))
+                self.export_current_action = export_menu.addAction(self.i18n.get('export_mode_current', 'Current Q&A'))
                 self.export_current_action.triggered.connect(lambda: self._switch_export_mode('current'))
-                self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', '历史记录'))
+                self.export_history_action = export_menu.addAction(self.i18n.get('export_mode_history', 'History'))
                 self.export_history_action.triggered.connect(lambda: self._switch_export_mode('history'))
                 self.export_btn.setMenu(export_menu)
                 self._update_export_menu_checkmarks()
@@ -548,32 +548,32 @@ class ResponsePanel(QWidget):
             content_parts.append(separator)
             
             if book_metadata.get('title'):
-                content_parts.append(f"{self.i18n.get('metadata_title', '标题')}: {book_metadata['title']}")
+                content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
             if book_metadata.get('authors'):
                 authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
-                content_parts.append(f"{self.i18n.get('metadata_authors', '作者')}: {authors}")
+                content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
             if book_metadata.get('publisher'):
-                content_parts.append(f"{self.i18n.get('metadata_publisher', '出版社')}: {book_metadata['publisher']}")
+                content_parts.append(f"{self.i18n.get('metadata_publisher', 'Publisher')}: {book_metadata['publisher']}")
             if book_metadata.get('pubdate'):
-                content_parts.append(f"{self.i18n.get('metadata_pubdate', '出版日期')}: {book_metadata['pubdate']}")
+                content_parts.append(f"{self.i18n.get('metadata_pubdate', 'Publication Date')}: {book_metadata['pubdate']}")
             if book_metadata.get('languages'):
                 langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
-                content_parts.append(f"{self.i18n.get('metadata_language', '语言')}: {langs}")
+                content_parts.append(f"{self.i18n.get('metadata_language', 'Languages')}: {langs}")
             
             content_parts.append("")
             content_parts.append("")
         
         # 2. 问题
-        content_parts.append(self.i18n.get('pdf_question', '问题'))
+        content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
         content_parts.append(separator)
-        content_parts.append(question if question else self.i18n.get('no_question', '无问题'))
+        content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
         content_parts.append("")
         content_parts.append("")
         
         # 3. 回答
-        content_parts.append(self.i18n.get('pdf_answer', '回答'))
+        content_parts.append(self.i18n.get('pdf_answer', 'ANSWER'))
         content_parts.append(separator)
-        content_parts.append(response if response else self.i18n.get('no_response', '无回答'))
+        content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
         content_parts.append("")
         content_parts.append("")
         
@@ -584,35 +584,35 @@ class ResponsePanel(QWidget):
             models_config = prefs.get('models', {})
             model_config = models_config.get(ai_id, {})
             
-            content_parts.append(self.i18n.get('pdf_model_info', 'AI模型信息'))
+            content_parts.append(self.i18n.get('pdf_model_info', 'AI MODEL INFORMATION'))
             content_parts.append(separator)
             
             if model_config.get('display_name'):
-                content_parts.append(f"{self.i18n.get('model_provider', '提供商')}: {model_config['display_name']}")
+                content_parts.append(f"{self.i18n.get('model_provider', 'Provider')}: {model_config['display_name']}")
             if model_config.get('model'):
-                content_parts.append(f"{self.i18n.get('model_name', '模型')}: {model_config['model']}")
+                content_parts.append(f"{self.i18n.get('model_name', 'Model')}: {model_config['model']}")
             if model_config.get('api_base_url'):
-                content_parts.append(f"{self.i18n.get('model_api_url', 'API基础URL')}: {model_config['api_base_url']}")
+                content_parts.append(f"{self.i18n.get('model_api_url', 'API Base URL')}: {model_config['api_base_url']}")
             
             content_parts.append("")
             content_parts.append("")
         
         # 5. 生成信息
-        content_parts.append(self.i18n.get('pdf_generated_by', '生成信息'))
+        content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
         content_parts.append(separator)
-        content_parts.append(f"{self.i18n.get('pdf_plugin', '插件')}: Ask AI Plugin (calibre Plugin)")
+        content_parts.append(f"{self.i18n.get('pdf_plugin', 'Plugin')}: Ask AI Plugin (calibre Plugin)")
         content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
-        content_parts.append(f"{self.i18n.get('pdf_software', '软件')}: calibre E-book Manager (https://calibre-ebook.com)")
-        content_parts.append(f"{self.i18n.get('pdf_generated_time', '生成时间')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        content_parts.append(f"{self.i18n.get('pdf_software', 'Software')}: calibre E-book Manager (https://calibre-ebook.com)")
+        content_parts.append(f"{self.i18n.get('pdf_generated_time', 'Generated Time')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         return '\n'.join(content_parts)
     
     def _update_copy_button_text(self):
         """更新复制按钮文字"""
         if self.copy_mode == 'response':
-            self.copy_btn.setText(self.i18n.get('copy_response_btn', '复制回答'))
+            self.copy_btn.setText(self.i18n.get('copy_response_btn', 'Copy Answer'))
         else:  # 'qa'
-            self.copy_btn.setText(self.i18n.get('copy_qa_btn', '复制问答'))
+            self.copy_btn.setText(self.i18n.get('copy_qa_btn', 'Copy Q&A'))
     
     def _update_export_button_text(self):
         """更新导出按钮文字"""
@@ -620,19 +620,19 @@ class ResponsePanel(QWidget):
             return
         
         if self.export_mode == 'current':
-            self.export_btn.setText(self.i18n.get('export_current_btn', '导出问答为PDF'))
+            self.export_btn.setText(self.i18n.get('export_current_btn', 'Export Q&A as PDF'))
         else:  # 'history'
-            self.export_btn.setText(self.i18n.get('export_history_btn', '导出历史记录为PDF'))
+            self.export_btn.setText(self.i18n.get('export_history_btn', 'Export History as PDF'))
     
     def _update_copy_menu_checkmarks(self):
         """更新复制菜单的勾选标记"""
         self.copy_response_action.setText(
             ('✓ ' if self.copy_mode == 'response' else '') + 
-            self.i18n.get('copy_mode_response', '回答')
+            self.i18n.get('copy_mode_response', 'Answer')
         )
         self.copy_qa_action.setText(
             ('✓ ' if self.copy_mode == 'qa' else '') + 
-            self.i18n.get('copy_mode_qa', '问答')
+            self.i18n.get('copy_mode_qa', 'Q&A')
         )
     
     def _update_export_menu_checkmarks(self):
@@ -642,11 +642,11 @@ class ResponsePanel(QWidget):
         
         self.export_current_action.setText(
             ('✓ ' if self.export_mode == 'current' else '') + 
-            self.i18n.get('export_mode_current', '当前问答')
+            self.i18n.get('export_mode_current', 'Current Q&A')
         )
         self.export_history_action.setText(
             ('✓ ' if self.export_mode == 'history' else '') + 
-            self.i18n.get('export_mode_history', '历史记录')
+            self.i18n.get('export_mode_history', 'History')
         )
     
     def _on_copy_clicked(self):
@@ -768,29 +768,29 @@ class ResponsePanel(QWidget):
             # 1. 书籍元数据
             if hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
                 book_metadata = self.parent_dialog.book_metadata
-                content_parts.append(self.i18n.get('pdf_book_metadata', '书籍元数据'))
+                content_parts.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
                 content_parts.append(separator)
                 
                 if book_metadata.get('title'):
-                    content_parts.append(f"{self.i18n.get('metadata_title', '标题')}: {book_metadata['title']}")
+                    content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
                 if book_metadata.get('authors'):
                     authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
-                    content_parts.append(f"{self.i18n.get('metadata_authors', '作者')}: {authors}")
+                    content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
                 if book_metadata.get('publisher'):
-                    content_parts.append(f"{self.i18n.get('metadata_publisher', '出版社')}: {book_metadata['publisher']}")
+                    content_parts.append(f"{self.i18n.get('metadata_publisher', 'Publisher')}: {book_metadata['publisher']}")
                 if book_metadata.get('pubdate'):
-                    content_parts.append(f"{self.i18n.get('metadata_pubdate', '出版日期')}: {book_metadata['pubdate']}")
+                    content_parts.append(f"{self.i18n.get('metadata_pubdate', 'Publication Date')}: {book_metadata['pubdate']}")
                 if book_metadata.get('languages'):
                     langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
-                    content_parts.append(f"{self.i18n.get('metadata_language', '语言')}: {langs}")
+                    content_parts.append(f"{self.i18n.get('metadata_language', 'Languages')}: {langs}")
                 
                 content_parts.append("")
                 content_parts.append("")
             
             # 2. 问题
-            content_parts.append(self.i18n.get('pdf_question', '问题'))
+            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
             content_parts.append(separator)
-            content_parts.append(question if question else self.i18n.get('no_question', '无问题'))
+            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
             content_parts.append("")
             content_parts.append("")
             
@@ -808,31 +808,31 @@ class ResponsePanel(QWidget):
                 model_config = models_config.get(ai_id, {})
                 ai_display_name = model_config.get('display_name', ai_id)
                 
-                content_parts.append(f"{self.i18n.get('pdf_answer', '回答')} {i + 1} ({ai_display_name})")
+                content_parts.append(f"{self.i18n.get('pdf_answer', 'ANSWER')} {i + 1} ({ai_display_name})")
                 content_parts.append(separator)
                 content_parts.append(response)
                 content_parts.append("")
                 content_parts.append("")
                 
                 # 添加该AI的模型信息
-                content_parts.append(f"{self.i18n.get('pdf_model_info', 'AI模型信息')} {i + 1}")
+                content_parts.append(f"{self.i18n.get('pdf_model_info', 'AI MODEL INFORMATION')} {i + 1}")
                 content_parts.append(separator)
                 if model_config.get('display_name'):
-                    content_parts.append(f"{self.i18n.get('model_provider', '提供商')}: {model_config['display_name']}")
+                    content_parts.append(f"{self.i18n.get('model_provider', 'Provider')}: {model_config['display_name']}")
                 if model_config.get('model'):
-                    content_parts.append(f"{self.i18n.get('model_name', '模型')}: {model_config['model']}")
+                    content_parts.append(f"{self.i18n.get('model_name', 'Model')}: {model_config['model']}")
                 if model_config.get('api_base_url'):
-                    content_parts.append(f"{self.i18n.get('model_api_url', 'API基础URL')}: {model_config['api_base_url']}")
+                    content_parts.append(f"{self.i18n.get('model_api_url', 'API Base URL')}: {model_config['api_base_url']}")
                 content_parts.append("")
                 content_parts.append("")
             
             # 4. 生成信息
-            content_parts.append(self.i18n.get('pdf_generated_by', '生成信息'))
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
             content_parts.append(separator)
-            content_parts.append(f"{self.i18n.get('pdf_plugin', '插件')}: Ask AI Plugin (calibre Plugin)")
+            content_parts.append(f"{self.i18n.get('pdf_plugin', 'Plugin')}: Ask AI Plugin (calibre Plugin)")
             content_parts.append(f"GitHub: https://github.com/sheldonrrr/ask_grok")
-            content_parts.append(f"{self.i18n.get('pdf_software', '软件')}: calibre E-book Manager (https://calibre-ebook.com)")
-            content_parts.append(f"{self.i18n.get('pdf_generated_time', '生成时间')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(f"{self.i18n.get('pdf_software', 'Software')}: calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{self.i18n.get('pdf_generated_time', 'Generated Time')}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             
             content = '\n'.join(content_parts)
             

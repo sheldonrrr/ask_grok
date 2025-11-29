@@ -12,7 +12,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name=package_name,
-    version='1.3.4',
+    version='1.3.5',
     description='Ask AI about your books',
     author='Sheldon',
     author_email='sheldonrrr@gmail.com',

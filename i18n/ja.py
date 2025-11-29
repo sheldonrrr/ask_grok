@@ -137,7 +137,7 @@ class JapaneseTranslation(BaseTranslation):
             
             # UI - メニューアイテム
             'menu_title': '質問',
-            'menu_ask': '{model}に質問',
+            'menu_ask': '質問',
             
             # UI - ステータスメッセージ
             'loading': '読み込み中',

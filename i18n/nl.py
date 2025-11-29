@@ -138,7 +138,7 @@ class DutchTranslation(BaseTranslation):
             
             # UI - Menu-items
             'menu_title': 'Vraag',
-            'menu_ask': 'Vraag {model}',
+            'menu_ask': 'Vraag',
             
             # UI - Statusberichten
             'loading': 'Laden...',

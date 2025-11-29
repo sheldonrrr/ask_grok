@@ -138,7 +138,7 @@ class PortugueseTranslation(BaseTranslation):
             
             # UI - Itens de Menu
             'menu_title': 'Perguntar',
-            'menu_ask': 'Perguntar ao {model}',
+            'menu_ask': 'Perguntar',
             
             # UI - Mensagens de Status
             'loading': 'Carregando...',

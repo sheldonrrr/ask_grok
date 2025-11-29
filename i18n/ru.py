@@ -137,7 +137,7 @@ class RussianTranslation(BaseTranslation):
             
             # UI - Пункты меню
             'menu_title': 'Спросить',
-            'menu_ask': 'Спросить {model}',
+            'menu_ask': 'Спросить',
             
             # UI - Сообщения о состоянии
             'loading': 'Загрузка...',

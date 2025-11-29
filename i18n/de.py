@@ -140,7 +140,7 @@ class GermanTranslation(BaseTranslation):
             
             # UI - Menüpunkte
             'menu_title': 'Fragen',
-            'menu_ask': 'Frage {model}',
+            'menu_ask': 'Frage',
             
             # UI - Statusmeldungen
             'loading': 'Laden...',

@@ -137,7 +137,7 @@ class SwedishTranslation(BaseTranslation):
             
             # UI - Menyalternativ
             'menu_title': 'Fråga',
-            'menu_ask': 'Fråga {model}',
+            'menu_ask': 'Fråga',
             
             # UI - Statusmeddelanden
             'loading': 'Laddar',

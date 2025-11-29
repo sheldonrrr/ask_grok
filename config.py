@@ -3000,12 +3000,12 @@ class ConfigDialog(QWidget):
                 logger.info(f"保存当前语言设置: {current_language}")
                 
                 # 1. 删除配置文件
-                from calibre.utils.config import JSONConfig
+                from calibre.utils.config import JSONConfig, config_dir
                 import os
                 
-                # 获取配置文件路径
-                config_dir = os.path.join(os.path.expanduser('~'), '.config', 'calibre', 'plugins')
-                config_file = os.path.join(config_dir, 'ask_ai_plugin.json')
+                # 获取配置文件路径（使用Calibre的config_dir确保跨平台兼容）
+                plugins_dir = os.path.join(config_dir, 'plugins')
+                config_file = os.path.join(plugins_dir, 'ask_ai_plugin.json')
                 
                 if os.path.exists(config_file):
                     os.remove(config_file)
@@ -3013,19 +3013,19 @@ class ConfigDialog(QWidget):
                 
                 # 2. 删除历史记录文件
                 # 删除v2版本的历史记录JSON文件
-                history_v2_path = os.path.join(config_dir, 'ask_ai_plugin_history_v2.json')
+                history_v2_path = os.path.join(plugins_dir, 'ask_ai_plugin_history_v2.json')
                 if os.path.exists(history_v2_path):
                     os.remove(history_v2_path)
                     logger.info(f"已删除历史记录文件(v2): {history_v2_path}")
                 
                 # 删除旧版本的历史记录数据库（如果存在）
-                history_db_path = os.path.join(config_dir, 'ask_ai_plugin_history.db')
+                history_db_path = os.path.join(plugins_dir, 'ask_ai_plugin_history.db')
                 if os.path.exists(history_db_path):
                     os.remove(history_db_path)
                     logger.info(f"已删除历史记录数据库(旧版): {history_db_path}")
                 
                 # 3. 删除日志文件（可选）
-                log_dir = os.path.join(os.path.expanduser('~'), '.config', 'calibre', 'ask_grok_logs')
+                log_dir = os.path.join(plugins_dir, 'ask_ai_plugin_logs')
                 if os.path.exists(log_dir):
                     import shutil
                     shutil.rmtree(log_dir)

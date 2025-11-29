@@ -150,8 +150,8 @@ class EnglishTranslation(BaseTranslation):
             
             # UI - Menu items
             'menu_title': 'Ask',
-            'menu_ask': 'Ask {model}',  # 用于所有模型的菜单项
-            
+            'menu_ask': 'Ask',
+
             # UI - Status information
             'loading': 'Loading',
             'loading_text': 'Asking',
@@ -182,6 +182,7 @@ class EnglishTranslation(BaseTranslation):
             'metadata_title': 'Title',
             'metadata_authors': 'Author',
             'metadata_publisher': 'Publisher',
+            'metadata_pubdate': 'Publication Date',
             'metadata_pubyear': 'Publication Date',
             'metadata_language': 'Language',
             'metadata_series': 'Series',

@@ -138,7 +138,7 @@ class FrenchTranslation(BaseTranslation):
             
             # UI - Éléments de menu
             'menu_title': 'Demander',
-            'menu_ask': 'Demander à {model}',
+            'menu_ask': 'Demander',
             
             # UI - Messages d'état
             'loading': 'Chargement...',

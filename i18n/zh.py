@@ -151,7 +151,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # UI - 菜单项
             'menu_title': '提问',
-            'menu_ask': '询问 {model}',
+            'menu_ask': '询问',
             
             # UI - 状态信息
             'loading': '加载中',

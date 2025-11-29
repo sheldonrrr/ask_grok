@@ -137,7 +137,7 @@ class SpanishTranslation(BaseTranslation):
             
             # UI - Elementos de menú
             'menu_title': 'Preguntar',
-            'menu_ask': 'Preguntar a {model}',
+            'menu_ask': 'Preguntar',
             
             # UI - Mensajes de estado
             'loading': 'Cargando...',

@@ -138,7 +138,7 @@ class FinnishTranslation(BaseTranslation):
             
             # UI - Valikkovaihtoehdot
             'menu_title': 'Kysy',
-            'menu_ask': 'Kysy {model}',
+            'menu_ask':'Kysy',
             
             # UI - Tilaviestit
             'loading': 'Ladataan...',
