@@ -193,6 +193,7 @@ class SpanishTranslation(BaseTranslation):
             'network_error': 'Error de conexión',
             'request_timeout': 'Tiempo de espera agotado',
             'request_failed': 'Solicitud fallida',
+            'request_stopped': 'Solicitud detenida',
             'question_too_long': 'Pregunta demasiado larga',
             'auth_token_required_title': 'Clave API Requerida',
             'auth_token_required_message': 'Por favor, establezca una clave API válida en la Configuración del Plugin.',

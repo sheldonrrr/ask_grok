@@ -194,6 +194,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'network_error': '連線錯誤',
         'request_timeout': '請求超時',
         'request_failed': '請求失敗',
+        'request_stopped': '請求已停止',
         'question_too_long': '問題過長',
         'auth_token_required_title': '需要AI服務',
         'auth_token_required_message': '請在外掛程式配置中設定有效的AI服務。',

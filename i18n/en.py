@@ -212,6 +212,7 @@ class EnglishTranslation(BaseTranslation):
             'network_error': 'Connection error',
             'request_timeout': 'Request timeout',
             'request_failed': 'Request failed',
+            'request_stopped': 'Request stopped',
             'question_too_long': 'Question too long',
             'auth_token_required_title': 'AI Service Required',
             'auth_token_required_message': 'Please configure a valid AI service in Plugin Configuration.',

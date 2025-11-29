@@ -212,6 +212,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'network_error': '连接错误',
             'request_timeout': '请求超时',
             'request_failed': '请求失败',
+            'request_stopped': '请求已停止',
             'question_too_long': '问题过长',
             'auth_token_required_title': '需要AI服务',
             'auth_token_required_message': '请在插件配置中设置有效的AI服务。',

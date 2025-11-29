@@ -192,7 +192,8 @@ class JapaneseTranslation(BaseTranslation):
             # エラーメッセージ
             'network_error': 'ネットワークエラー',
             'request_timeout': 'リクエストがタイムアウトしました',
-            'request_failed': 'リクエストに失敗しました',
+            'request_failed': 'リクエスト失敗',
+            'request_stopped': 'リクエストが停止されました',
             'question_too_long': '質問が長すぎます',
             'auth_token_required_title': 'APIキーが必要です',
             'auth_token_required_message': 'プラグイン設定で有効なAPIキーを設定してください。',

@@ -196,6 +196,7 @@ class GermanTranslation(BaseTranslation):
             'network_error': 'Verbindungsfehler',
             'request_timeout': 'Anfrage-Timeout',
             'request_failed': 'Anfrage fehlgeschlagen',
+            'request_stopped': 'Anfrage gestoppt',
             'question_too_long': 'Frage zu lang',
             'auth_token_required_title': 'API-Schlüssel erforderlich',
             'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen.',

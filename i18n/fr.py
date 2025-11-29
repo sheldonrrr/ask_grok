@@ -146,6 +146,7 @@ class FrenchTranslation(BaseTranslation):
             'save_success': 'Paramètres enregistrés',
             'sending': 'Envoi en cours...',
             'requesting': 'Requête en cours',
+            'request_stopped': 'Requête arrêtée',
             'formatting': 'Requête réussie, formatage en cours',
             
             # UI - Fonction de liste de modèles

@@ -1404,7 +1404,7 @@ class AskDialog(QDialog):
             input_area=self.input_area,  # 添加输入区域
             stop_button=self.stop_button  # 添加停止按钮
         )
-        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
+        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n, self.stop_button)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
@@ -3381,10 +3381,18 @@ class AskDialog(QDialog):
             self.stop_button.setVisible(False)
     
     def stop_request(self):
-        """停止当前请求"""
+        """停止当前请求（包括发送请求和随机问题生成）"""
         import logging
         logger = logging.getLogger(__name__)
         logger.info("用户请求停止当前请求")
+        
+        # 检查是否是随机问题生成请求
+        if hasattr(self, 'suggestion_handler') and self.suggestion_handler:
+            # 检查是否有正在进行的随机问题生成
+            if hasattr(self.suggestion_handler, '_worker') and self.suggestion_handler._worker and not self.suggestion_handler._worker.is_finished():
+                logger.info("停止随机问题生成")
+                self.suggestion_handler.stop()
+                return
         
         # 停止所有面板的请求
         if hasattr(self, 'response_panels') and self.response_panels:

@@ -123,6 +123,7 @@ class SuggestionHandler(QObject):
         self.response_area = None
         self.input_area = None
         self.suggest_button = None
+        self.stop_button = None  # 添加停止按钮引用
         self.i18n = {} # 初始化为空字典
         self._worker = None
         self._button_animation = None  # 使用统一的按钮加载动画
@@ -131,12 +132,16 @@ class SuggestionHandler(QObject):
         self._response_text = ''
         self.api = None
         self._cleanup_timer = None
+        self._loading_timer = None  # 响应区域的加载动画定时器
+        self._animation_dots = ['', '.', '..', '...']
+        self._animation_dot_index = 0
 
-    def setup(self, response_area, input_area, suggest_button, api, i18n):
+    def setup(self, response_area, input_area, suggest_button, api, i18n, stop_button=None):
         """设置处理器需要的UI组件和国际化文本"""
         self.response_area = response_area
         self.input_area = input_area
         self.suggest_button = suggest_button
+        self.stop_button = stop_button  # 保存停止按钮引用
         self.api = api
 
         # 确保 i18n 是字典
@@ -173,18 +178,51 @@ class SuggestionHandler(QObject):
         if self._button_animation:
             self._button_animation.start()
         
-        # 更新响应区域显示加载文本
+        # 设置响应区域的动画定时器
         loading_text = self.i18n.get('loading_text', 'Loading')
-        if self.response_area:
-            self.response_area.setText(f"{loading_text}...")
+        
+        def update_loading():
+            if not self._request_cancelled and self.response_area:
+                self.response_area.setHtml(f"""
+                    <div style="
+                        text-align: left;
+                        color: palette(text);
+                        font-family: -apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+                    ">
+                        {loading_text}{self._animation_dots[self._animation_dot_index]}
+                    </div>
+                """)
+                self._animation_dot_index = (self._animation_dot_index + 1) % len(self._animation_dots)
+        
+        # 停止之前的定时器
+        self._stop_loading_timer()
+        
+        # 创建新的定时器
+        from PyQt5.QtCore import QTimer
+        self._loading_timer = QTimer(self)
+        self._loading_timer.timeout.connect(update_loading)
+        self._loading_timer.start(300)  # 每300毫秒更新一次
+        
+        # 立即更新一次
+        update_loading()
 
     def _stop_loading_animation(self):
         """停止加载动画"""
         try:
             if self._button_animation:
                 self._button_animation.stop()
+            self._stop_loading_timer()
         except Exception as e:
             logger.error(f"停止加载动画时出错: {str(e)}")
+    
+    def _stop_loading_timer(self):
+        """停止响应区域的加载动画定时器"""
+        if self._loading_timer:
+            if self._loading_timer.isActive():
+                self._loading_timer.stop()
+            self._loading_timer.deleteLater()
+            self._loading_timer = None
+            self._animation_dot_index = 0  # 重置动画索引
             
     def _stop_timeout_timer(self):
         """停止超时检查定时器"""
@@ -217,13 +255,10 @@ class SuggestionHandler(QObject):
             return
             
         try:
-            self.suggest_button.setEnabled(True)
-            # 使用 i18n 获取按钮文本
-            button_text = self.i18n.get('suggest_button', 'Random Question') if hasattr(self, 'i18n') else 'Random Question'
-            self.suggest_button.setText(button_text)
-            # 恢复按钮的原始样式（使用标准样式）
-            from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-            self.suggest_button.setStyleSheet(get_standard_button_style())
+            # 恢复按钮显示状态：显示随机问题按钮，隐藏停止按钮
+            self.suggest_button.setVisible(True)
+            if self.stop_button:
+                self.stop_button.setVisible(False)
             
             # 是否恢复原始输入
             if restore_input and self._original_input and self.input_area:
@@ -390,13 +425,10 @@ class SuggestionHandler(QObject):
         self._request_cancelled = False
         self._response_text = ''
         
-        # 更新UI状态
-        self.suggest_button.setEnabled(False)
-        self.suggest_button.setText(self.i18n.get('loading_text', 'Loading'))
-
-        # 设置固定宽度，避免加载时文字变化导致按钮忽大忽小
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-        self.suggest_button.setStyleSheet(get_standard_button_style())
+        # 更新UI状态：隐藏随机问题按钮，显示停止按钮
+        self.suggest_button.setVisible(False)
+        if self.stop_button:
+            self.stop_button.setVisible(True)
         
         # 确保UI更新
         QApplication.processEvents()
@@ -435,6 +467,30 @@ class SuggestionHandler(QObject):
         self._timeout_timer.timeout.connect(self._check_response_timeout)
         self._timeout_timer.start(timeout_ms)
 
+    def stop(self):
+        """停止当前的随机问题生成请求"""
+        logger.info("用户请求停止随机问题生成")
+        
+        # 标记请求已取消
+        self._request_cancelled = True
+        
+        # 停止加载动画和超时计时器
+        self._stop_loading_animation()
+        self._stop_timeout_timer()
+        
+        # 取消工作线程
+        if self._worker:
+            self._worker.cancel()
+            # 立即清理工作线程，确保下次点击时可以重新开始
+            self._cleanup_worker()
+        
+        # 显示已停止消息
+        if self.response_area:
+            self.response_area.setText(self.i18n.get('request_stopped', 'Request stopped'))
+        
+        # 恢复UI状态
+        self._restore_ui_state(restore_input=True)
+    
     def prepare_close(self):
         """准备关闭，清理资源但不影响线程运行"""
         self._stop_loading_animation()
