@@ -2708,6 +2708,11 @@ class AskDialog(QDialog):
         first_panel = self.response_panels[0]
         current_ai_id = first_panel.ai_switcher.currentData()
         
+        # 如果当前 AI 是 None（未选择），不需要提示，直接返回
+        if current_ai_id is None:
+            logger.debug("当前未选择 AI，跳过默认 AI 检查")
+            return
+        
         # 如果一致，也需要确保 API 使用的是面板选中的 AI（而不是配置中的默认 AI）
         # 因为用户可能之前选择了"否"，导致面板 AI 与配置不一致
         if current_ai_id == default_ai:
@@ -2724,7 +2729,11 @@ class AskDialog(QDialog):
         current_ai_provider = APIClient._MODEL_TO_PROVIDER.get(current_ai_id)
         
         default_ai_name = DEFAULT_MODELS.get(default_ai_provider).display_name if default_ai_provider else default_ai
-        current_ai_name = DEFAULT_MODELS.get(current_ai_provider).display_name if current_ai_provider else current_ai_id
+        # 处理 None 的情况，使用 i18n
+        if current_ai_id is None:
+            current_ai_name = self.i18n.get('select_ai', '-- Select AI --')
+        else:
+            current_ai_name = DEFAULT_MODELS.get(current_ai_provider).display_name if current_ai_provider else current_ai_id
         
         logger.info(f"检测到 AI 不一致 - 当前: {current_ai_name} ({current_ai_id}), 默认: {default_ai_name} ({default_ai})")
         

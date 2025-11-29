@@ -3061,6 +3061,15 @@ class ConfigDialog(QWidget):
                 if 'random_questions' not in prefs:
                     prefs['random_questions'] = {}
                 prefs['random_questions'][current_language] = get_suggestion_template(current_language)
+                
+                # 6. 清除 Ask 弹窗的 AI 选择记忆和窗口尺寸记忆
+                # 确保这些键被明确删除，而不是依赖配置文件删除
+                keys_to_clear = ['panel_ai_selections', 'ask_dialog_width', 'ask_dialog_height']
+                for key in keys_to_clear:
+                    if key in prefs:
+                        del prefs[key]
+                        logger.info(f"已清除配置键: {key}")
+                
                 prefs.commit()
                 logger.info(f"已恢复语言设置并加载对应语言的默认模板: {current_language}")
                 
