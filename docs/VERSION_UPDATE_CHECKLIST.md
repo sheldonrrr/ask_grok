@@ -69,7 +69,10 @@ calibre-debug -g
 # tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md Line 2
 # Latest updated: November 25, 2025, Ask AI Plugin vX.Y.Z
 
-# 2. 更新 VERSION_UPDATE_GUIDE.md
+# 2. 更新本文档（VERSION_UPDATE_CHECKLIST.md）
+# 将上面第 1 步中的日期和版本号同步更新
+
+# 3. 更新 VERSION_UPDATE_GUIDE.md
 # 在"版本号历史记录"中添加新版本记录
 ```
 
