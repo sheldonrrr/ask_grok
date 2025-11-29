@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Finnish language translations for Ask Grok plugin.
+Finnish language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -29,10 +29,14 @@ class FinnishTranslation(BaseTranslation):
         return """Olet kirja-arvostelun asiantuntija. Kirjalle "{title}" kirjailijana {author}, julkaisukieli on {language}, luo YKSI oivaltava kysymys, joka auttaa lukijoita ymmärtämään kirjaa paremmin. Säännöt: 1. Palauta VAIN kysymys, ilman johdantoa tai selitystä 2. Keskity kirjan sisältöön, älä pelkästään otsikkoon 3. Tee kysymyksestä käytännöllinen ja ajatuksia herättävä 4. Pidä se lyhyenä (30-200 sanaa) 5. Ole luova ja luo eri kysymys joka kerta, myös samalle kirjalle"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Tässä on tietoa useista kirjoista: {books_metadata} Käyttäjän kysymys: {query} Vastaa kysymykseen yllä olevan kirjatiedon perusteella."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin tiedot
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Kysy kirjasta tekoälyn avulla',
             
             # UI - Välilehdet ja osiot
@@ -47,17 +51,73 @@ class FinnishTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Tallenna',
             'send_button': 'Lähetä',
+            'stop_button': 'Pysäytä',
             'suggest_button': 'Satunnainen kysymys',
             'copy_response': 'Kopioi vastaus',
             'copy_question_response': 'Kopioi K&&V',
+            'export_pdf': 'Vie PDF',
+            'export_current_qa': 'Vie Nykyinen K&V',
+            'export_history': 'Vie Historia',
+            
+            # Vientiasetukset
+            'export_settings': 'Vientiasetukset',
+            'enable_default_export_folder': 'Vie oletuskansioon',
+            'no_folder_selected': 'Ei kansiota valittuna',
+            'browse': 'Selaa...',
+            'select_export_folder': 'Valitse Vientikansio',
+            
+            # Painikkeiden teksti ja valikkokohteet
+            'copy_response_btn': 'Kopioi Vastaus',
+            'copy_qa_btn': 'Kopioi K&V',
+            'export_current_btn': 'Vie K&V PDF:ksi',
+            'export_history_btn': 'Vie Historia PDF:ksi',
+            'copy_mode_response': 'Vastaus',
+            'copy_mode_qa': 'K&V',
+            'export_mode_current': 'Nykyinen K&V',
+            'export_mode_history': 'Historia',
+            
+            # PDF-vienti liittyvä
+            'model_provider': 'Palveluntarjoaja',
+            'model_name': 'Malli',
+            'model_api_url': 'API Perus-URL',
+            'pdf_model_info': 'AI-Mallitiedot',
+            'pdf_software': 'Ohjelmisto',
+            
+            'export_all_history_dialog_title': 'Vie Koko Historia PDF:ksi',
+            'export_all_history_title': 'KOKO K&V HISTORIA',
+            'export_history_insufficient': 'Viennissä tarvitaan vähintään 2 historiatietuetta.',
+            'history_record': 'Tietue',
+            'question_label': 'Kysymys',
+            'answer_label': 'Vastaus',
+            'default_ai': 'Oletus-AI',
+            'export_time': 'Viety',
+            'total_records': 'Tietueita Yhteensä',
+            'info': 'Tiedot',
+            'yes': 'Kyllä',
+            'no': 'Ei',
+            'no_book_selected_title': 'Kirjaa Ei Valittu',
+            'no_book_selected_message': 'Valitse kirja ennen kysymysten esittämistä.',
+            'set_default_ai_title': 'Aseta Oletus-AI',
+            'set_default_ai_message': 'Olet vaihtanut kohteeseen "{0}". Haluatko asettaa sen oletus-AI:ksi tulevia kyselyitä varten?',
+            'set_default_ai_success': 'Oletus-AI on asetettu kohteeseen "{0}".',
             'copied': 'Kopioitu!',
+            'pdf_exported': 'PDF viety!',
+            'export_pdf_dialog_title': 'Vie PDF-muotoon',
+            'export_pdf_error': 'PDF-viennin virhe: {0}',
+            'no_question': 'Ei kysymystä',
+            'no_response': 'Ei vastausta',
             'saved': 'Tallennettu',
             'close_button': 'Sulje',
+            'open_local_tutorial': 'Avaa paikallinen opas',
+            'tutorial_open_failed': 'Oppaan avaaminen epäonnistui',
+            'tutorial': 'Opas',
             
             # UI - Asetuskentät
             'token_label': 'API-avain:',
+            'api_key_label': 'API-avain:',
             'model_label': 'Malli:',
-            'language_label': 'Kieli',
+            'language_label': 'Kieli:',
+            'language_label_old': 'Kieli',
             'base_url_label': 'Perus-URL:',
             'base_url_placeholder': 'Oletus: {default_api_base_url}',
             'shortcut': 'Pikanäppäin',
@@ -65,7 +125,6 @@ class FinnishTranslation(BaseTranslation):
             'shortcut_enter': 'Ctrl + Enter',
             'shortcut_return': 'Command + Return',
             'using_model': 'Malli',
-            'current_ai': 'Nykyinen tekoäly:',
             'action': 'Toiminto',
             'reset_button': 'Nollaa',
             'prompt_template': 'Kehotepohja',
@@ -79,15 +138,29 @@ class FinnishTranslation(BaseTranslation):
             
             # UI - Valikkovaihtoehdot
             'menu_title': 'Kysy',
-            'menu_ask': 'Kysy {model}',
+            'menu_ask':'Kysy',
             
             # UI - Tilaviestit
-            'loading': 'Ladataan',
+            'loading': 'Ladataan...',
             'loading_text': 'Kysytään',
             'save_success': 'Asetukset tallennettu',
             'sending': 'Lähetetään...',
             'requesting': 'Pyytää',
             'formatting': 'Pyyntö onnistui, muotoillaan',
+            
+            # UI - Mallilistan toiminto
+            'load_models': 'Lataa mallit',
+            'use_custom_model': 'Käytä mukautettua mallin nimeä',
+            'custom_model_placeholder': 'Syötä mukautettu mallin nimi',
+            'model_placeholder': 'Lataa ensin mallit',
+            'models_loaded': '{count} mallia ladattu',
+            'load_models_failed': 'Mallien lataus epäonnistui: {error}',
+            'model_list_not_supported': 'Tämä palveluntarjoaja ei tue automaattista mallilistan hakua',
+            'api_key_required': 'Syötä ensin API-avain',
+            'invalid_params': 'Virheelliset parametrit',
+            'warning': 'Varoitus',
+            'success': 'Onnistui',
+            'error': 'Virhe',
             
             # Metatietokentät
             'metadata_title': 'Otsikko',
@@ -100,15 +173,37 @@ class FinnishTranslation(BaseTranslation):
             'no_series': 'Ei sarjaa',
             'unknown': 'Tuntematon',
             
+            # Multi-book feature
+            'books_unit': ' kirjaa',
+            'new_conversation': 'Uusi keskustelu',
+            'single_book': 'Yksittäinen kirja',
+            'multi_book': 'Monikirja',
+            'deleted': 'Poistettu',
+            'history': 'Historia',
+            'no_history': 'Ei historiatietueita',
+            'empty_question_placeholder': '(Ei kysymystä)',
+            'history_ai_unavailable': 'Tämä tekoäly on poistettu asetuksista',
+            'clear_current_book_history': 'Tyhjennä nykyisen kirjan historia',
+            'confirm_clear_book_history': 'Haluatko varmasti tyhjentää koko historian:\n{book_titles}?',
+            'confirm': 'Vahvista',
+            'history_cleared': '{deleted_count} historiatietuetta tyhjennetty.',
+            'multi_book_template_label': 'Monien kirjojen kehotteen malli:',
+            'multi_book_placeholder_hint': 'Käytä {books_metadata} kirjan tiedoille, {query} käyttäjän kysymykselle',
+            
             # Virheviestit
-            'error': 'Virhe: ',
             'network_error': 'Verkkovirhe',
             'request_timeout': 'Pyyntö aikakatkaistiin',
             'request_failed': 'Pyyntö epäonnistui',
             'question_too_long': 'Kysymys on liian pitkä',
-            'auth_token_required_title': 'API-avain vaaditaan',
-            'auth_token_required_message': 'Aseta API-avain Liitännäisen Asetuksissa',
-            'error_preparing_request': 'Virhe pyyntöä valmistellessa',
+            'auth_token_required_title': 'API-avain Vaaditaan',
+            'auth_token_required_message': 'Aseta kelvollinen API-avain Laajennuksen Asetuksissa.',
+            'open_configuration': 'Avaa Asetukset',
+            'cancel': 'Peruuta',
+            "invalid_default_ai_title": "Virheellinen Oletus-AI",
+            "invalid_default_ai_message": "Oletus-AI \"{default_ai}\" ei ole oikein määritetty.\n\nHaluatko vaihtaa sen sijaan \"{first_ai}\" -nimiseen tekoälyyn?",
+            "switch_to_ai": "Vaihda tekoälyyn {ai}",
+            "keep_current": "Pidä Nykyinen",
+            'error_preparing_request': 'Pyynnön valmistelu epäonnistui',
             'empty_suggestion': 'Tyhjä ehdotus',
             'process_suggestion_error': 'Virhe ehdotuksen käsittelyssä',
             'unknown_error': 'Tuntematon virhe',
@@ -123,10 +218,20 @@ class FinnishTranslation(BaseTranslation):
             'auth_error_403': 'Pääsy evätty',
             'rate_limit': 'Liian monta pyyntöä',
             'invalid_json': 'Virheellinen JSON',
-            'no_response': 'Ei vastausta',
             'template_error': 'Pohjavirhe',
-            'no_model_configured': 'Tekoälymallia ei ole määritetty. Määritä tekoälymalli asetuksissa.',
-            'random_question_error': 'Virhe satunnaisen kysymyksen luonnissa',
+            'no_model_configured': 'AI-mallia ei ole määritetty. Määritä AI-malli asetuksissa.',
+            'no_ai_configured_title': 'AI Ei Määritetty',
+            'no_ai_configured_message': 'Tervetuloa! Aloittaaksesi kysymysten esittämisen kirjoistasi, sinun on ensin määritettävä AI-palveluntarjoaja.\n\nSuositellaan aloittelijoille:\n• Nvidia AI - Hanki 6 kuukautta ILMAISTA API-käyttöä vain puhelinnumerollasi (luottokorttia ei tarvita)\n• Ollama - Suorita AI-malleja paikallisesti tietokoneellasi (täysin ilmainen ja yksityinen)\n\nHaluatko avata laajennuksen asetukset AI-palveluntarjoajan määrittämiseksi nyt?',
+            'open_settings': 'Laajennuksen Asetukset',
+            'ask_anyway': 'Kysy Silti',
+            'later': 'Myöhemmin',
+            'reset_all_data': 'Nollaa Kaikki Tiedot',
+            'reset_all_data_warning': 'Tämä poistaa kaikki API-avaimet, kehotusmallit ja paikalliset historiatietueet. Kieliasetuksesi säilytetään. Jatka varoen.',
+            'reset_all_data_confirm_title': 'Vahvista Nollaus',
+            'reset_all_data_confirm_message': 'Oletko varma, että haluat palauttaa laajennuksen alkuperäiseen tilaan?\n\nTämä poistaa pysyvästi:\n• Kaikki API-avaimet\n• Kaikki mukautetut kehotusmallit\n• Kaikki keskusteluhistorian\n• Kaikki laajennuksen asetukset (kieliasetus säilytetään)\n\nTätä toimintoa ei voi kumota!',
+            'reset_all_data_success': 'Kaikki laajennuksen tiedot on nollattu onnistuneesti. Käynnistä calibre uudelleen, jotta muutokset tulevat voimaan.',
+            'reset_all_data_failed': 'Laajennuksen tietojen nollaus epäonnistui: {error}',
+            'random_question_error': 'Virhe satunnaisen kysymyksen luomisessa',
             'clear_history_failed': 'Historian tyhjennys epäonnistui',
             'clear_history_not_supported': 'Yksittäisen kirjan historian tyhjennystä ei vielä tueta',
             'missing_required_config': 'Puuttuva pakollinen asetus: {key}. Tarkista asetuksesi.',
@@ -158,10 +263,15 @@ class FinnishTranslation(BaseTranslation):
             'model_name_required': 'Mallinimi vaaditaan',
             'api_key_empty': 'API-avain on tyhjä. Syötä kelvollinen API-avain.',
             
+            # Mallilistan haku
+            'fetching_models_from': 'Haetaan malleja osoitteesta {url}',
+            'successfully_fetched_models': '{count} {provider}-mallia haettu',
+            'failed_to_fetch_models': 'Mallien haku epäonnistui: {error}',
+            
             # Tietoja
             'author_name': 'Sheldon',
             'user_manual': 'Käyttöopas',
-            'about_plugin': 'Miksi Ask Grok?',
+            'about_plugin': 'Miksi Ask AI Plugin?',
             'learn_how_to_use': 'Käyttöohjeet',
             'email': 'iMessage',
             
@@ -171,23 +281,83 @@ class FinnishTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Mukautettu',
             'model_enable_streaming': 'Ota streaming käyttöön',
-            'model_disable_ssl_verify': 'Poista SSL-vahvistus käytöstä',
+            
+            # AI Switcher
+            'current_ai': 'Nykyinen tekoäly',
+            'no_configured_models': 'Tekoälyä ei määritetty - Määritä asetuksissa',
+            
+            # Provider specific info
+            'nvidia_free_info': '💡 Uudet käyttäjät saavat 6 kuukautta ilmaista API-käyttöä - Luottokorttia ei tarvita',
             
             # Yleiset järjestelmäviestit
             'default_system_message': 'Olet kirja-analyysin asiantuntija. Tehtäväsi on auttaa käyttäjiä ymmärtämään kirjoja paremmin tarjoamalla oivaltavia kysymyksiä ja analyysejä.',
-        
-            # Deprecation notice
-            'deprecation_notice_title': 'Tärkeä huomautus: Liitännäinen nimettiin uudelleen',
-            'deprecation_notice_message': '''Ask Grok -liitännäinen on nimetty uudelleen "Ask AI" -nimiseksi.
+            
+            # Request timeout settings
+            'request_timeout_label': 'Pyyntöjen aikakatkaisu:',
+            'seconds': 'sekuntia',
+            'request_timeout_error': 'Pyyntö aikakatkaistiin. Nykyinen aikakatkaisu: {timeout} sekuntia',
+            
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Rinnakkaisten tekoälyjen määrä:',
+            'parallel_ai_count_tooltip': 'Samanaikaisesti kyseltävien tekoälymallien määrä (1-2 saatavilla, 3-4 tulossa pian)',
+            'parallel_ai_notice': 'Huomaa: Tämä vaikuttaa vain kysymysten lähettämiseen. Satunnaiset kysymykset käyttävät aina yhtä tekoälyä.',
+            'suggest_maximize': 'Vinkki: Suurenna ikkunaa nähdäksesi paremmin 3 tekoälyllä',
+            'ai_panel_label': 'Tekoäly {index}:',
+            'no_ai_available': 'Ei tekoälyä käytettävissä tälle paneelille',
+            'add_more_ai_providers': 'Lisää tekoälyntarjoajia asetuksissa',
+            'select_ai': '-- Valitse tekoäly --',
+            'select_model': '-- Vaihda Malli --',
+            'request_model_list': 'Pyydä malliluettelo',
+            'coming_soon': 'Tulossa pian',
+            'advanced_feature_tooltip': 'Tämä ominaisuus on kehitysvaiheessa. Pysy kuulolla päivityksistä!',
+            
+            # PDF export section titles
+            'pdf_book_metadata': 'KIRJAN METATIEDOT',
+            'pdf_question': 'KYSYMYS',
+            'pdf_answer': 'VASTAUS',
+            'pdf_ai_model_info': 'TEKOÄLYMALLIN TIEDOT',
+            'pdf_generated_by': 'LUONUT',
+            'pdf_provider': 'Palveluntarjoaja',
+            'pdf_model': 'Malli',
+            'pdf_api_base_url': 'API-perus-URL',
+            'pdf_panel': 'Paneeli',
+            'pdf_plugin': 'Liitännäinen',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Ohjelmisto',
+            'pdf_generated_time': 'Luontiaika',
+            'default_ai_mismatch_title': 'Oletus-AI Muuttunut',
+            'default_ai_mismatch_message': 'Oletusarvoinen AI asetuksissa on muutettu arvoon "{default_ai}",\nmutta nykyinen dialogi käyttää "{current_ai}".\n\nHaluatko vaihtaa uuteen oletus-AI:hin?',
+            'discard_changes': 'Hylkää Muutokset',
+            'empty_response': 'Vastaanotettu tyhjä vastaus API:lta',
+            'empty_response_after_filter': 'Vastaus on tyhjä think-tagien suodatuksen jälkeen',
+            'error_401': 'API-avaimen todennus epäonnistui. Tarkista: API-avain on oikein, tilillä on riittävästi saldoa, API-avain ei ole vanhentunut.',
+            'error_403': 'Pääsy estetty. Tarkista: API-avaimella on riittävät käyttöoikeudet, ei alueellisia pääsyrajoituksia.',
+            'error_404': 'API-päätepistettä ei löytynyt. Tarkista, onko API Base URL -määritys oikein.',
+            'error_429': 'Liikaa pyyntöjä, nopeusraja saavutettu. Yritä myöhemmin uudelleen.',
+            'error_5xx': 'Palvelinvirhe. Yritä myöhemmin uudelleen tai tarkista palveluntarjoajan tila.',
+            'error_network': 'Verkkoyhteys epäonnistui. Tarkista verkkoyhteys, välityspalvelimen asetukset tai palomuurin määritykset.',
+            'error_unknown': 'Tuntematon virhe.',
+            'gemini_geo_restriction': 'Gemini API ei ole saatavilla alueellasi. Kokeile:\n1. Käytä VPN:ää yhdistääksesi tuetuista alueista\n2. Käytä muita AI-palveluntarjoajia (OpenAI, Anthropic, DeepSeek jne.)\n3. Tarkista Google AI Studio alueellinen saatavuus',
+            'load_models_list': 'Lataa Mallilista',
+            'loading_models_text': 'Ladataan malleja',
+            'model_test_success': 'Mallin testi onnistui! Asetukset tallennettu.',
+            'models_loaded_with_selection': 'Ladattiin {count} mallia onnistuneesti.\nValittu malli: {model}',
+            'ollama_model_not_available': 'Malli "{model}" ei ole saatavilla. Tarkista:\n1. Onko malli käynnistetty? Suorita: ollama run {model}\n2. Onko mallin nimi oikein?\n3. Onko malli ladattu? Suorita: ollama pull {model}',
+            'ollama_service_not_running': 'Ollama-palvelu ei ole käynnissä. Käynnistä Ollama-palvelu ensin.',
+            'ollama_service_timeout': 'Ollama-palvelun yhteyden aikakatkaisu. Tarkista, toimiiko palvelu oikein.',
+            'reset_ai_confirm_message': 'Ollaan palauttamassa {ai_name} oletustilaan.\n\nTämä tyhjentää:\n• API-avaimen\n• Mukautetun mallin nimen\n• Muut määritetyt parametrit\n\nJatketaanko?',
+            'reset_ai_confirm_title': 'Vahvista Palautus',
+            'reset_current_ai': 'Palauta Nykyinen AI Oletukseen',
+            'reset_tooltip': 'Palauta nykyinen AI oletusarvoihin',
+            'save_and_close': 'Tallenna ja Sulje',
+            'skip': 'Ohita',
+            'technical_details': 'Tekniset Tiedot',
+            'test_current_model': 'Testaa Nykyinen Malli',
+            'test_model_button': 'Testaa Malli',
+            'test_model_prompt': 'Mallit ladattu onnistuneesti! Haluatko testata valitun mallin "{model}"?',
+            'unsaved_changes_message': 'Sinulla on tallentamattomia muutoksia. Mitä haluat tehdä?',
+            'unsaved_changes_title': 'Tallentamattomat Muutokset',
 
-Löydät molemmat liitännäiset samalta kirjoittajalta "Sheldon" calibren online-liitännäisluettelosta.
 
-Tärkeät muutokset:
-• Uusi Ask AI -liitännäinen tukee valtavirran tekoälypalveluita, kuten OpenAI, Anthropic, OpenRouter, Ollama, Gemini ja paljon muuta
-• Tämä liitännäinen merkitään vanhentuneeksi 1 kuukauden kuluttua
-
-Suosittelen siirtymään uuteen Ask AI -liitännäiseen jatkuvia päivityksiä ja tukea varten.''',
-            'deprecation_dont_show_again': 'Älä näytä uudelleen',
-            'deprecation_got_it': 'Selvä',
-            'new_version_button': 'Uusi versio',
+            'pdf_info_not_available': 'Tietoja ei saatavilla',
         }

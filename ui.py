@@ -4,6 +4,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
+from datetime import datetime
 from enum import auto
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
@@ -15,27 +16,28 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton,
 from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
-from calibre_plugins.ask_grok.config import ConfigDialog, get_prefs
-from calibre_plugins.ask_grok.api import APIClient
+from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
+from calibre_plugins.ask_ai_plugin.api import APIClient
 from .i18n import get_translation, get_suggestion_template
-from calibre_plugins.ask_grok.shortcuts_widget import ShortcutsWidget
-from calibre_plugins.ask_grok.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
+from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
+from calibre_plugins.ask_ai_plugin.ui_constants import (
+    SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
+    MARGIN_MEDIUM, PADDING_MEDIUM,
+    FONT_SIZE_LARGE
+)
 from calibre.utils.resources import get_path as I
 import sys
 import os
+import time
 
-# 添加 lib 目录到 Python 路径
-lib_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lib')
-if lib_dir not in sys.path:
-    sys.path.insert(0, lib_dir)
-
-import markdown2
-import bleach
-
-# 导入插件实例
-import calibre_plugins.ask_grok.ui as ask_grok_plugin
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import bleach
 
 # 存储插件实例的全局变量
+# 注意：不要在这里导入自己，会导致循环导入
 plugin_instance = None
 
 def get_suggestion_template_from_ui(lang_code):
@@ -43,12 +45,11 @@ def get_suggestion_template_from_ui(lang_code):
     from .i18n import get_suggestion_template
     return get_suggestion_template(lang_code)
 
-class AskGrokPluginUI(InterfaceAction):
-    name = 'Ask Grok'
-    # 根据操作系统设置不同的快捷键
-    action_spec = ('Ask Grok', 'images/ask_grok.png', 'Ask Grok about this book', 
-                  'Ctrl+L')
-    action_shortcut_name = 'Ask Grok'
+class AskAIPluginUI(InterfaceAction):
+    name = 'Ask AI Plugin'
+    # 所有平台统一使用F3，避免Qt键盘映射冲突
+    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'F3')
+    action_shortcut_name = 'Ask AI Plugin'
     action_type = 'global'
     
     def __init__(self, parent, site_customization):
@@ -71,7 +72,7 @@ class AskGrokPluginUI(InterfaceAction):
         plugin_instance = self
         
     def genesis(self):
-        icon = get_icons('images/ask_grok.png')
+        icon = get_icons('images/ask_ai_plugin.png')
         self.qaction.setIcon(icon)
         
         # 创建菜单
@@ -83,9 +84,10 @@ class AskGrokPluginUI(InterfaceAction):
         """)
         
         # 添加主要动作
-        self.ask_action = QAction(self.i18n['menu_title'], self)
+        # 在菜单文本中直接显示快捷键，避免与action_spec冲突
+        menu_text_with_shortcut = f"{self.i18n['menu_title']}\tF3"
+        self.ask_action = QAction(menu_text_with_shortcut, self)
         
-        # 快捷键已经在action_spec中设置，这里不需要再设置
         self.ask_action.triggered.connect(self.show_dialog)
         self.menu.addAction(self.ask_action)
         
@@ -95,14 +97,11 @@ class AskGrokPluginUI(InterfaceAction):
         # 添加配置菜单项
         self.config_action = QAction(self.i18n['config_title'], self)
 
-        # 根据操作系统设置快捷键
-        if sys.platform == 'darwin':  # macOS
-            shortcut = QKeySequence("Command+K")
-        else:
-            shortcut = QKeySequence("Ctrl+K")
-        self.config_action.setShortcut(shortcut)
-        self.config_action.setShortcutContext(Qt.ApplicationShortcut) # 设置为应用程序级别的快捷键
+        # 所有平台统一使用 F2 作为配置快捷键
+        shortcut = QKeySequence("F2")
         
+        self.config_action.setShortcut(shortcut)
+        self.config_action.setShortcutContext(Qt.ApplicationShortcut)
         self.config_action.triggered.connect(self.show_configuration)
         self.menu.addAction(self.config_action)
         
@@ -114,6 +113,14 @@ class AskGrokPluginUI(InterfaceAction):
         self.shortcuts_action.triggered.connect(self.show_shortcuts)
         self.menu.addAction(self.shortcuts_action)      
 
+        # 添加分隔符
+        self.menu.addSeparator()
+        
+        # 添加教程菜单项
+        self.tutorial_action = QAction(self.i18n.get('tutorial', 'Tutorial'), self)
+        self.tutorial_action.triggered.connect(self.show_tutorial)
+        self.menu.addAction(self.tutorial_action)
+        
         # 添加分隔符
         self.menu.addSeparator()
         
@@ -176,33 +183,114 @@ class AskGrokPluginUI(InterfaceAction):
         dlg.exec_()
     
     def show_dialog(self):
-        self.initialize_api()
+        logger.info("=" * 50)
+        logger.info("show_dialog() 被调用")
         
-        # 检查是否需要显示弃用通知
-        prefs = get_prefs()
-        if prefs.get('show_deprecation_notice', True):
-            self._show_deprecation_notice()
-        
-        # 获取选中的书籍
-        rows = self.gui.library_view.selectionModel().selectedRows()
-        if not rows or len(rows) == 0:
-            return
-        
-        # 获取书籍信息
-        db = self.gui.current_db
-        book_id = self.gui.library_view.model().id(rows[0])
-        mi = db.get_metadata(book_id, index_is_id=True)
-        
-        # 显示对话框
-        d = AskDialog(self.gui, mi, self.api)
-        
-        # 保存对话框实例的引用
-        self.ask_dialog = d
-        
-        # 对话框关闭时清除引用
-        d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
-        
-        d.exec_()
+        try:
+            self.initialize_api()
+            logger.info("API 初始化完成")
+            
+            # 检查是否有配置的AI模型
+            if not self.api or not self.api._ai_model:
+                logger.warning("未配置AI模型，显示友好提示")
+                from PyQt5.QtWidgets import QMessageBox
+                
+                # 创建自定义消息框
+                msg_box = QMessageBox(self.gui)
+                msg_box.setWindowTitle(self.i18n.get('no_ai_configured_title', 'No AI Configured'))
+                msg_box.setText(self.i18n.get('no_ai_configured_message', 
+                    'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\n'
+                    'Recommended for Beginners:\n'
+                    '• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n'
+                    '• Ollama - Run AI models locally on your computer (completely free and private)\n\n'
+                    'Would you like to open the plugin configuration to set up an AI provider now?'))
+                msg_box.setIcon(QMessageBox.Information)
+                
+                # 添加自定义按钮（按从左到右的顺序）
+                open_settings_btn = msg_box.addButton(
+                    self.i18n.get('open_settings', 'Plugin Configuration'), 
+                    QMessageBox.AcceptRole
+                )
+                ask_anyway_btn = msg_box.addButton(
+                    self.i18n.get('ask_anyway', 'Ask Anyway'), 
+                    QMessageBox.ActionRole
+                )
+                later_btn = msg_box.addButton(
+                    self.i18n.get('later', 'Later'), 
+                    QMessageBox.RejectRole
+                )
+                
+                msg_box.exec_()
+                
+                clicked_btn = msg_box.clickedButton()
+                
+                # 如果用户点击"打开设置"
+                if clicked_btn == open_settings_btn:
+                    self.show_configuration()
+                    return
+                # 如果用户点击"仍要询问"，继续执行，打开询问弹窗
+                elif clicked_btn == ask_anyway_btn:
+                    logger.info("用户选择仍要询问，继续打开询问弹窗")
+                    # 不return，继续执行下面的代码
+                # 如果用户点击"稍后"，直接返回
+                else:
+                    return
+            
+            # 获取选中的书籍
+            rows = self.gui.library_view.selectionModel().selectedRows()
+            logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
+            
+            if not rows or len(rows) == 0:
+                logger.warning("没有选中的书籍，提示用户选择书籍")
+                # 提示用户选择书籍
+                from PyQt5.QtWidgets import QMessageBox
+                QMessageBox.information(
+                    self.gui,
+                    self.i18n.get('no_book_selected_title', 'No Book Selected'),
+                    self.i18n.get('no_book_selected_message', 'Please select a book before asking questions.')
+                )
+                return
+            
+            # 获取书籍信息
+            db = self.gui.current_db
+            logger.info("获取数据库实例成功")
+            
+            # 支持多书选择
+            if len(rows) == 1:
+                # 单书模式（向后兼容）
+                book_id = self.gui.library_view.model().id(rows[0])
+                mi = db.get_metadata(book_id, index_is_id=True)
+                books_info = mi
+                logger.info(f"单书模式: book_id={book_id}, title={mi.title}")
+            else:
+                # 多书模式
+                books_info = []
+                for row in rows:
+                    book_id = self.gui.library_view.model().id(row)
+                    mi = db.get_metadata(book_id, index_is_id=True)
+                    books_info.append(mi)
+                logger.info(f"多书模式: 共 {len(books_info)} 本书")
+            
+            # 显示对话框
+            d = AskDialog(self.gui, books_info, self.api)
+            
+            # 保存对话框实例的引用
+            self.ask_dialog = d
+            
+            # 对话框关闭时清除引用
+            d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
+            
+            d.exec_()
+            
+        except Exception as e:
+            logger.error(f"show_dialog() 发生异常: {str(e)}", exc_info=True)
+            # 显示错误消息给用户
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.critical(
+                self.gui,
+                "错误",
+                f"打开询问弹窗时发生错误:\n{str(e)}"
+            )
     
     def _show_deprecation_notice(self):
         """显示弃用通知对话框"""
@@ -233,13 +321,37 @@ class AskGrokPluginUI(InterfaceAction):
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(2)  # 默认显示关于标签页
+        dlg.tab_widget.setCurrentIndex(3)  # 默认显示关于标签页（现在是第4个）
         dlg.exec_()
     
     def show_shortcuts(self):
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
         dlg.exec_()
+    
+    def show_tutorial(self):
+        """显示教程对话框"""
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(2)  # 默认显示教程标签页（现在是第3个）
+        dlg.exec_()
+    
+    def config_widget(self):
+        """
+        返回配置对话框组件
+        这个方法被 calibre 的插件系统调用，用于显示插件配置界面
+        """
+        from calibre_plugins.ask_ai_plugin.config import ConfigDialog
+        return ConfigDialog(self.gui)
+    
+    def save_settings(self, config_widget):
+        """
+        保存配置对话框中的设置
+        
+        Args:
+            config_widget: 由 config_widget() 方法返回的配置组件
+        """
+        if hasattr(config_widget, 'save_settings'):
+            config_widget.save_settings()
 
     def update_menu_texts(self, language=None):
         """更新菜单项的文本
@@ -256,6 +368,7 @@ class AskGrokPluginUI(InterfaceAction):
                 'ask': self.ask_action.text(),
                 'config': self.config_action.text(),
                 'shortcuts': self.shortcuts_action.text(),
+                'tutorial': self.tutorial_action.text(),
                 'about': self.about_action.text()
             }
             
@@ -271,6 +384,7 @@ class AskGrokPluginUI(InterfaceAction):
             self.ask_action.setText(self.i18n['menu_title'])
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts'])
+            self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
             self.about_action.setText(self.i18n['about'])
             
         except Exception as e:
@@ -279,12 +393,14 @@ class AskGrokPluginUI(InterfaceAction):
             self.ask_action.setText(original_texts['ask'])
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
+            self.tutorial_action.setText(original_texts['tutorial'])
             self.about_action.setText(original_texts['about'])
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
-    # 定义一个与 ConfigDialog 相同的语言变更信号
+    # 定义与 ConfigDialog 相同的信号
     language_changed = pyqtSignal(str)
+    settings_saved = pyqtSignal()  # 添加设置保存信号
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -301,8 +417,9 @@ class AskGrokConfigWidget(QWidget):
         self.config_dialog = ConfigDialog(self.gui)
         layout.addWidget(self.config_dialog)
         
-        # 连接 ConfigDialog 的语言变更信号，并转发出去
+        # 连接 ConfigDialog 的信号，并转发出去
         self.config_dialog.language_changed.connect(self.on_language_changed)
+        self.config_dialog.settings_saved.connect(self.settings_saved.emit)  # 转发设置保存信号
     
     def on_language_changed(self, lang_code):
         """当语言改变时更新界面并转发信号"""
@@ -318,7 +435,7 @@ class AskGrokConfigWidget(QWidget):
         self.language_changed.emit(lang_code)
 
 class AboutWidget(QWidget):
-    """关于页面组件"""
+    """关于页面组件 - 显示 about.md 内容"""
     def __init__(self, parent=None):
         super().__init__(parent)
         prefs = get_prefs()
@@ -329,59 +446,411 @@ class AboutWidget(QWidget):
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # 创建关于标签
-        self.about_label = QLabel()
-        self.about_label.setTextFormat(Qt.RichText)
-        self.about_label.setAlignment(Qt.AlignCenter)
-        self.about_label.setOpenExternalLinks(True)
-        layout.addWidget(self.about_label)
+        # 创建文本浏览器
+        from PyQt5.QtWidgets import QTextBrowser
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击链接
+        self.text_browser.setReadOnly(True)
+        layout.addWidget(self.text_browser)
         
-        # 初始化内容
-        self.update_content()
+        # 加载内容
+        self.load_content()
+        
+    def load_content(self):
+        """加载 about.md 内容"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 从插件资源读取 about.md
+            from calibre.customize.ui import find_plugin
+            plugin = find_plugin('Ask AI Plugin')
+            
+            if not plugin:
+                self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
+                return
+            
+            # 读取 about.md
+            about_data = plugin.get_resources('tutorial/about.md')
+            
+            if not about_data:
+                self.text_browser.setHtml("<h2>Error: About file not found</h2>")
+                return
+            
+            about_content = about_data.decode('utf-8')
+            
+            # 转换 markdown 到 HTML（复用 TutorialWidget 的方法）
+            html_content = self._markdown_to_html(about_content)
+            
+            # 设置 HTML 内容
+            self.text_browser.setHtml(html_content)
+            
+            logger.info(f"About content loaded: {len(about_content)} bytes")
+            
+        except Exception as e:
+            logger.error(f"Failed to load about content: {str(e)}")
+            self.text_browser.setHtml(f"<h2>Error loading about content</h2><p>{str(e)}</p>")
+    
+    def _markdown_to_html(self, markdown_text):
+        """简单的 markdown 转 HTML - 极简风格（复用 TutorialWidget 逻辑）"""
+        import re
+        
+        lines = markdown_text.split('\n')
+        result = []
+        in_paragraph = False
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Headers
+            if stripped.startswith('# '):
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[2:]
+                result.append(f'<h1>{content}</h1>')
+            # Empty line
+            elif not stripped:
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+            # Regular text
+            else:
+                if not in_paragraph:
+                    result.append('<p>')
+                    in_paragraph = True
+                else:
+                    result.append('<br>')
+                result.append(self._process_inline(stripped))
+        
+        # Close any open tags
+        if in_paragraph:
+            result.append('</p>')
+        
+        html = '\n'.join(result)
+        
+        # 添加样式 - 极简主义风格，支持明暗模式
+        styled_html = f"""
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                line-height: 1.65; 
+                padding: 20px;
+                color: palette(window-text);
+                background: palette(base);
+            }}
+            h1 {{ 
+                color: palette(window-text); 
+                border-bottom: 2px solid palette(mid); 
+                padding-bottom: 10px;
+                font-size: 1.5em;
+                margin-top: 0.5em;
+                margin-bottom: 0.8em;
+            }}
+            p {{
+                color: palette(window-text);
+                margin: 0.5em 0;
+            }}
+            strong {{
+                color: palette(window-text);
+                font-weight: bold;
+            }}
+            a {{
+                color: palette(link);
+                text-decoration: none;
+            }}
+        </style>
+        {html}
+        """
+        
+        return styled_html
+    
+    def _process_inline(self, text):
+        """处理行内元素：粗体、链接"""
+        import re
+        # Bold
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        # Links (keep clickable in About page)
+        text = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<a href="\2">\1</a>', text)
+        return text
         
     def update_content(self):
-        """更新关于页面内容"""
+        """更新内容（语言切换时调用）"""
+        self.load_content()
+
+
+class TutorialWidget(QWidget):
+    """教程页面组件"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
-        # 使用系统颜色，确保在亮色和暗色主题下都能正常显示
-        self.about_label.setText(f"""
-        <div style='text-align: center; max-width: 500px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%;'>
-            <div style='font-size: 24px; font-weight: bold; color: palette(window-text); margin: 10px 0;'>Ask Grok</div>
-            <div style='font-size: 14px; color: palette(window-text); margin-bottom: 15px; line-height: 1.4; opacity: 0.9;'>{self.i18n['plugin_desc']}</div>
-            <div style='font-size: 13px; color: palette(window-text); margin-bottom: 25px; opacity: 0.7;'>{VERSION_DISPLAY}</div>
+        
+        # 创建主布局
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        
+        # 创建文本浏览器
+        from PyQt5.QtWidgets import QTextBrowser
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(False)  # 禁用链接点击
+        self.text_browser.setReadOnly(True)  # 只读
+        layout.addWidget(self.text_browser)
+        
+        # 加载教程内容
+        self.load_tutorial()
+        
+    def load_tutorial(self):
+        """加载教程内容"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 从插件资源读取教程
+            from calibre.customize.ui import find_plugin
+            plugin = find_plugin('Ask AI Plugin')
             
-            <div style='display: flex; flex-direction: column; align-items: center; margin: 15px 0;'>
-                <div style='margin: 8px 0;'>
-                    <a href='http://simp.ly/publish/FwMSSr' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
-                       {self.i18n.get('user_manual', 'User Manual')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='http://simp.ly/publish/xYW5Tr' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
-                       {self.i18n.get('about_plugin', 'Why Ask Grok?')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='https://youtu.be/QdeZgkT1fpw' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
-                       {self.i18n.get('learn_how_to_use', 'How to Use')} ↗
-                    </a>
-                </div>
-                
-                <div style='margin: 8px 0;'>
-                    <a href='imessage://sheldonrrr@gmail.com' 
-                       style='color: palette(link); text-decoration: none; font-size: 14px;'>
-                       {self.i18n.get('email', 'iMessage')}: sheldonrrr@gmail.com
-                    </a>
-                </div>
-            </div>
-        </div>
-        """)
+            if not plugin:
+                self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
+                return
+            
+            # 读取教程
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
+            
+            if not tutorial_data:
+                self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
+                return
+            
+            tutorial_content = tutorial_data.decode('utf-8')
+            
+            # 转换 markdown 到 HTML
+            html_content = self.markdown_to_html(tutorial_content)
+            
+            # 设置 HTML 内容
+            self.text_browser.setHtml(html_content)
+            
+            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes")
+            
+        except Exception as e:
+            logger.error(f"Failed to load tutorial: {str(e)}")
+            self.text_browser.setHtml(f"<h2>Error loading tutorial</h2><p>{str(e)}</p>")
+    
+    def markdown_to_html(self, markdown_text):
+        """简单的 markdown 转 HTML - 极简风格"""
+        import re
+        
+        lines = markdown_text.split('\n')
+        result = []
+        in_ul = False
+        in_ol = False
+        in_paragraph = False
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Headers
+            if stripped.startswith('# '):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[2:]
+                result.append(f'<h1>{content}</h1>')
+            elif stripped.startswith('## '):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[3:]
+                result.append(f'<h2>{content}</h2>')
+            elif stripped.startswith('### '):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                content = stripped[4:]
+                result.append(f'<h3>{content}</h3>')
+            # Horizontal rule
+            elif stripped == '---':
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                result.append('<hr>')
+            # Unordered list
+            elif stripped.startswith('- '):
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                if not in_ul:
+                    result.append('<ul>')
+                    in_ul = True
+                content = self._process_inline(stripped[2:])
+                result.append(f'<li>{content}</li>')
+            # Ordered list
+            elif re.match(r'^\d+\.\s+', stripped):
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+                if not in_ol:
+                    result.append('<ol>')
+                    in_ol = True
+                content = self._process_inline(re.sub(r'^\d+\.\s+', '', stripped))
+                result.append(f'<li>{content}</li>')
+            # Empty line
+            elif not stripped:
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if in_paragraph:
+                    result.append('</p>')
+                    in_paragraph = False
+            # Regular text
+            else:
+                if in_ul:
+                    result.append('</ul>')
+                    in_ul = False
+                if in_ol:
+                    result.append('</ol>')
+                    in_ol = False
+                if not in_paragraph:
+                    result.append('<p>')
+                    in_paragraph = True
+                else:
+                    result.append('<br>')
+                result.append(self._process_inline(stripped))
+        
+        # Close any open tags
+        if in_ul:
+            result.append('</ul>')
+        if in_ol:
+            result.append('</ol>')
+        if in_paragraph:
+            result.append('</p>')
+        
+        html = '\n'.join(result)
+        
+        # 添加样式 - 极简主义风格，支持明暗模式
+        styled_html = f"""
+        <style>
+            body {{ 
+                font-family: Arial, sans-serif; 
+                line-height: 1.65; 
+                padding: 20px;
+                color: palette(window-text);
+                background: palette(base);
+            }}
+            h1 {{ 
+                color: palette(window-text); 
+                border-bottom: 2px solid palette(mid); 
+                padding-bottom: 10px;
+                font-size: 1.5em;
+                margin-top: 0.5em;
+                margin-bottom: 0.8em;
+            }}
+            h2 {{ 
+                color: palette(window-text); 
+                font-weight: bold;
+                font-size: 1em;
+                margin-top: 1.5em;
+                margin-bottom: 0.6em;
+            }}
+            h3 {{ 
+                color: palette(window-text); 
+                margin-top: 1.2em;
+                margin-bottom: 0.5em;
+                font-size: 1em;
+                opacity: 0.85;
+            }}
+            code {{ 
+                background: palette(alternate-base); 
+                padding: 2px 5px; 
+                font-family: monospace;
+                color: palette(text);
+                border-radius: 3px;
+            }}
+            ul {{ 
+                margin-left: 12px;
+                padding-left: 12px;
+                color: palette(window-text);
+                margin-top: 0.4em;
+                margin-bottom: 0.6em;
+            }}
+            ol {{ 
+                margin-left: 12px;
+                padding-left: 12px;
+                color: palette(window-text);
+                margin-top: 0.4em;
+                margin-bottom: 0.6em;
+            }}
+            li {{ 
+                margin-bottom: 0.3em;
+            }}
+            hr {{ 
+                border: none; 
+                border-top: 1px solid palette(mid); 
+                margin: 1.2em 0;
+                opacity: 0.5;
+            }}
+            p {{
+                color: palette(window-text);
+                margin: 0.5em 0;
+            }}
+            strong {{
+                color: palette(window-text);
+                font-weight: bold;
+            }}
+        </style>
+        {html}
+        """
+        
+        return styled_html
+    
+    def _process_inline(self, text):
+        """处理行内元素：粗体、代码、链接"""
+        import re
+        # Bold
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        # Inline code
+        text = re.sub(r'`([^`]+)`', r'<code>\1</code>', text)
+        # Links (keep text but remove link functionality)
+        text = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<span style="color: palette(link);">\1</span>', text)
+        return text
+    
+    def update_content(self):
+        """更新内容（语言切换时调用）"""
+        self.load_tutorial()
+
 
 class TabDialog(QDialog):
     def __init__(self, parent=None):
@@ -393,8 +862,10 @@ class TabDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(500)
+        self.setMinimumWidth(550)
+        self.setMinimumHeight(650)
+        # 设置初始窗口大小，确保有足够空间显示所有内容
+        self.resize(700, 750)
         
         # 创建标签页
         self.tab_widget = QTabWidget()
@@ -412,6 +883,10 @@ class TabDialog(QDialog):
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
+        # 创建教程页面
+        self.tutorial_widget = TutorialWidget()
+        self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
+        
         # 创建关于页面
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about'])
@@ -467,10 +942,8 @@ class TabDialog(QDialog):
         
         self.setLayout(layout)
         
-        # 连接配置对话框的信号
-        self.config_widget.config_dialog.settings_saved.connect(self.on_settings_saved)
-    
-        # 连接语言切换信号
+        # 连接配置组件的信号
+        self.config_widget.settings_saved.connect(self.on_settings_saved)
         self.config_widget.language_changed.connect(self.on_language_changed)
     
     def on_language_changed(self, new_language):
@@ -488,24 +961,29 @@ class TabDialog(QDialog):
         # 更新标签页标题
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
         self.tab_widget.setTabText(1, self.i18n['shortcuts'])
-        self.tab_widget.setTabText(2, self.i18n['about'])
+        self.tab_widget.setTabText(2, self.i18n.get('tutorial', 'Tutorial'))
+        self.tab_widget.setTabText(3, self.i18n['about'])
         logger.debug("已更新标签页标题")
         
-        # 更新按钮文本
+        # 更新保存按钮文本
         if hasattr(self, 'save_button'):
             self.save_button.setText(self.i18n.get('save_button', 'Save'))
-        if hasattr(self, 'new_version_button'):
-            self.new_version_button.setText(self.i18n.get('new_version_button', 'New Version'))
-        if hasattr(self, 'close_button'):
-            self.close_button.setText(self.i18n.get('close_button', 'Close'))
-        logger.debug("已更新按钮文本")
+            logger.debug("已更新保存按钮文本")
         
-        # 更新关闭按钮文本（兼容旧代码）
+        # 更新所有按钮文本（包括关闭按钮）
+        for button in self.findChildren(QPushButton):
+            button_text = button.text()
+            # 更新关闭按钮
+            if button_text in ['Close', '关闭', 'Закрыть', 'Fermer', 'Schließen', 'Cerrar', 'Chiudi', 'Fechar', 'Sluiten', 'Stäng', 'Lukk', 'Sulje', 'Luk', '閉じる', '關閉', '闭']:
+                button.setText(self.i18n.get('close_button', 'Close'))
+                logger.debug("已更新关闭按钮文本")
+        
+        # 也更新QDialogButtonBox中的按钮（如果存在）
         for button_box in self.findChildren(QDialogButtonBox):
             close_button = button_box.button(QDialogButtonBox.Close)
             if close_button:
                 close_button.setText(self.i18n.get('close_button', 'Close'))
-                logger.debug("已更新关闭按钮文本")
+                logger.debug("已更新QDialogButtonBox关闭按钮文本")
         
         # 确保 ConfigDialog 实例也更新了语言
         if hasattr(self.config_widget, 'config_dialog'):
@@ -522,22 +1000,22 @@ class TabDialog(QDialog):
         self.about_widget.update_content()
         
         # 通知主界面更新菜单，直接传递新语言参数
-        logger.debug(f"通知主界面更新菜单，语言: {new_language}")
-        ask_grok_plugin.plugin_instance.update_menu_texts(new_language)
-        
-        # 更新主对话框的界面语言
-        if (hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
-            ask_grok_plugin.plugin_instance.ask_dialog):
-            logger.debug(f"更新主对话框的界面语言为: {new_language}")
-            # 如果存在update_language方法，直接调用
-            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'update_language'):
-                ask_grok_plugin.plugin_instance.ask_dialog.update_language(new_language)
+        if plugin_instance:
+            logger.debug(f"通知主界面更新菜单，语言: {new_language}")
+            plugin_instance.update_menu_texts(new_language)
             
-            # 更新 response_handler 和 suggestion_handler 的 i18n 对象
-            if hasattr(ask_grok_plugin.plugin_instance.ask_dialog, 'suggestion_handler'):
-                logger.debug("更新对话框组件的i18n对象")
-                ask_grok_plugin.plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
-                ask_grok_plugin.plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
+            # 更新主对话框的界面语言
+            if hasattr(plugin_instance, 'ask_dialog') and plugin_instance.ask_dialog:
+                logger.debug(f"更新主对话框的界面语言为: {new_language}")
+                # 如果存在update_language方法，直接调用
+                if hasattr(plugin_instance.ask_dialog, 'update_language'):
+                    plugin_instance.ask_dialog.update_language(new_language)
+                
+                # 更新 response_handler 和 suggestion_handler 的 i18n 对象
+                if hasattr(plugin_instance.ask_dialog, 'suggestion_handler'):
+                    logger.debug("更新对话框组件的i18n对象")
+                    plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
+                    plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
     
     def show_deprecation_notice(self):
         """显示弃用通知对话框"""
@@ -570,23 +1048,21 @@ class TabDialog(QDialog):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 重新加载模型，确保使用最新选择的模型
-        from calibre_plugins.ask_grok.api import api
+        # 重新加载全局 API 实例
+        from calibre_plugins.ask_ai_plugin.api import api
         api.reload_model()
-        logger.debug("已重新加载模型")
         
         # 更新已打开的AskDialog实例的模型信息
         try:
-            if (hasattr(ask_grok_plugin, 'plugin_instance') and 
-                ask_grok_plugin.plugin_instance and 
-                hasattr(ask_grok_plugin.plugin_instance, 'ask_dialog') and 
-                ask_grok_plugin.plugin_instance.ask_dialog):
-                
-                logger.debug("正在更新已打开的AskDialog实例的模型信息")
-                ask_grok_plugin.plugin_instance.ask_dialog.update_model_info()
-                logger.debug("已更新AskDialog实例的模型信息")
+            if plugin_instance and hasattr(plugin_instance, 'ask_dialog') and plugin_instance.ask_dialog:
+                # 确保 AskDialog 的 API 实例也被重新加载
+                if hasattr(plugin_instance.ask_dialog, 'api'):
+                    plugin_instance.ask_dialog.api.reload_model()
+                # 然后更新 UI 显示
+                plugin_instance.ask_dialog.update_model_info()
+                logger.info("配置已保存，模型信息已更新")
         except Exception as e:
-            logger.error(f"更新AskDialog实例的模型信息时出错: {str(e)}")
+            logger.error(f"更新模型信息时出错: {str(e)}")
         
         # 获取最新的语言设置
         new_language = get_prefs().get('language', 'en')
@@ -656,17 +1132,169 @@ class TabDialog(QDialog):
     
     def reject(self):
         """处理关闭按钮"""
-        # 如果配置页面有未保存的更改，先重置字段
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        logger = logging.getLogger(__name__)
+        
+        # 检查是否有未保存的输入框变化
         if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
-            # 直接调用重置方法
-            self.config_widget.config_dialog.reset_to_initial_values()
-            # 重置保存按钮状态
-            if hasattr(self, 'save_button'):
-                self.save_button.setEnabled(False)
-        super().reject()
+            config_dialog = self.config_widget.config_dialog
+            
+            if config_dialog.has_unsaved_input_changes:
+                logger.info("检测到未保存的输入框变化，显示确认对话框")
+                
+                # 创建自定义按钮的确认对话框
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle(self.i18n.get('unsaved_changes_title', 'Unsaved Changes'))
+                msg_box.setText(self.i18n.get('unsaved_changes_message', 'You have unsaved changes. What would you like to do?'))
+                msg_box.setIcon(QMessageBox.Question)
+                
+                # 添加自定义按钮（支持 i18n）
+                save_button = msg_box.addButton(
+                    self.i18n.get('save_and_close', 'Save and Close'), 
+                    QMessageBox.AcceptRole
+                )
+                discard_button = msg_box.addButton(
+                    self.i18n.get('discard_changes', 'Discard Changes'), 
+                    QMessageBox.DestructiveRole
+                )
+                cancel_button = msg_box.addButton(
+                    self.i18n.get('cancel', 'Cancel'), 
+                    QMessageBox.RejectRole
+                )
+                
+                # 设置默认按钮为取消
+                msg_box.setDefaultButton(cancel_button)
+                
+                # 显示对话框
+                msg_box.exec_()
+                clicked_button = msg_box.clickedButton()
+                
+                if clicked_button == save_button:
+                    # 保存并关闭
+                    logger.info("用户选择保存并关闭")
+                    config_dialog.save_settings()
+                    super().reject()
+                elif clicked_button == discard_button:
+                    # 不保存，直接关闭
+                    logger.info("用户选择不保存，直接关闭")
+                    super().reject()
+                else:
+                    # 取消关闭
+                    logger.info("用户取消关闭操作")
+                    return
+            else:
+                # 没有未保存的变化，检查默认 AI 是否有效配置
+                if not self._check_default_ai_before_close():
+                    # 用户取消关闭或选择切换默认 AI
+                    return
+                super().reject()
+        else:
+            super().reject()
+    
+    def _check_default_ai_before_close(self):
+        """关闭前检查默认 AI 是否有效配置
+        
+        Returns:
+            bool: True 表示可以关闭，False 表示用户取消关闭
+        """
+        import logging
+        from PyQt5.QtWidgets import QMessageBox
+        logger = logging.getLogger(__name__)
+        
+        prefs = get_prefs()
+        default_ai = prefs.get('selected_model', 'grok')
+        
+        # 获取已配置的 AI 列表（复用 AskDialog 的逻辑）
+        models_config = prefs.get('models', {})
+        configured_ai_ids = []
+        
+        for ai_id, config in models_config.items():
+            # 检查是否有模型名称
+            has_model = bool(config.get('model', '').strip())
+            if not has_model:
+                continue
+            
+            # 检查是否有有效配置
+            if ai_id == 'ollama':
+                has_valid_config = bool(config.get('api_base_url', '').strip())
+                if not has_valid_config:
+                    continue
+            else:
+                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                has_token = bool(config.get(token_field, '').strip())
+                if not has_token:
+                    continue
+            
+            configured_ai_ids.append(ai_id)
+        
+        # 检查默认 AI 是否在已配置列表中
+        if default_ai not in configured_ai_ids:
+            logger.warning(f"默认 AI ({default_ai}) 未有效配置")
+            
+            # 如果没有任何已配置的 AI，直接关闭
+            if not configured_ai_ids:
+                logger.warning("没有任何已配置的 AI")
+                return True
+            
+            # 获取第一个已配置的 AI 的显示名称
+            first_ai_id = configured_ai_ids[0]
+            first_ai_config = models_config.get(first_ai_id, {})
+            first_ai_name = first_ai_config.get('display_name', first_ai_id)
+            
+            # 获取默认 AI 的显示名称
+            default_ai_config = models_config.get(default_ai, {})
+            default_ai_name = default_ai_config.get('display_name', default_ai)
+            
+            # 弹窗询问用户
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle(self.i18n.get('invalid_default_ai_title', 'Invalid Default AI'))
+            msg_box.setText(self.i18n.get('invalid_default_ai_message', 
+                'The default AI "{default_ai}" is not properly configured.\n\n'
+                'Would you like to switch to "{first_ai}" instead?').format(
+                    default_ai=default_ai_name,
+                    first_ai=first_ai_name
+                ))
+            msg_box.setIcon(QMessageBox.Warning)
+            
+            switch_button = msg_box.addButton(
+                self.i18n.get('switch_to_ai', 'Switch to {ai}').format(ai=first_ai_name),
+                QMessageBox.AcceptRole
+            )
+            keep_button = msg_box.addButton(
+                self.i18n.get('keep_current', 'Keep Current'),
+                QMessageBox.RejectRole
+            )
+            
+            msg_box.setDefaultButton(switch_button)
+            msg_box.exec_()
+            
+            if msg_box.clickedButton() == switch_button:
+                # 切换到第一个已配置的 AI
+                logger.info(f"用户选择切换默认 AI 到: {first_ai_id}")
+                prefs['selected_model'] = first_ai_id
+                
+                # 更新 ConfigDialog 中的选择
+                if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+                    config_dialog = self.config_widget.config_dialog
+                    if hasattr(config_dialog, 'model_combo'):
+                        index = config_dialog.model_combo.findData(first_ai_id)
+                        if index >= 0:
+                            config_dialog.model_combo.setCurrentIndex(index)
+                            logger.info(f"已更新 ConfigDialog 中的默认 AI 选择")
+                
+                return True
+            else:
+                # 保持当前设置
+                logger.info("用户选择保持当前默认 AI 设置")
+                return True
+        
+        # 默认 AI 有效配置，可以关闭
+        return True
 
-from calibre_plugins.ask_grok.response_handler import ResponseHandler
-from calibre_plugins.ask_grok.random_question import SuggestionHandler
+
+from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
+from calibre_plugins.ask_ai_plugin.random_question import SuggestionHandler
 
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
@@ -732,57 +1360,70 @@ class AskDialog(QDialog):
         'zh-yue': '粵語',
     }
     
-    def __init__(self, gui, book_info, api):
-        super().__init__(gui)
-        self.gui = gui
-        self.book_info = book_info
-        self.api = api
-        prefs = get_prefs()
-        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-        self.i18n = get_translation(language)
+    def __init__(self, gui, books_info, api, history_uid=None):
+        """
+        Args:
+            books_info: 单个 Metadata 对象（单书模式）或 Metadata 列表（多书模式）
+            history_uid: 可选，用于加载特定历史记录
+        """
+        import logging
+        logger = logging.getLogger(__name__)
         
-        # 准备书籍元数据用于历史记录
-        pubdate = book_info.get('pubdate', '')
-        # 处理日期对象，确保它是 YYYY-MM-DD 格式的字符串
-        if hasattr(pubdate, 'strftime'):
-            pubdate = pubdate.strftime('%Y-%m-%d')
-        elif isinstance(pubdate, str) and pubdate:
-            # 如果已经是字符串，尝试解析并格式化为 YYYY-MM-DD
-            try:
-                from calibre.utils.date import parse_date
-                pubdate = parse_date(pubdate).strftime('%Y-%m-%d')
-            except:
-                # 如果解析失败，尝试提取日期部分（格式如 YYYY-MM-DDTHH:MM:SS+HH:MM）
-                if 'T' in pubdate:
-                    pubdate = pubdate.split('T')[0]
+        try:
+            super().__init__(gui)
+            logger.info("QDialog 初始化完成")
+            
+            self.gui = gui
+            self.api = api
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            self.i18n = get_translation(language)
+            logger.info(f"语言设置: {language}")
+        except Exception as e:
+            logger.error(f"AskDialog.__init__() 初始化阶段1失败: {str(e)}", exc_info=True)
+            raise
         
-        self.book_metadata = {
-            'title': book_info.get('title', ''),
-            'authors': book_info.get('authors', []),
-            'publisher': book_info.get('publisher', ''),
-            'pubdate': book_info.get('pubdate', ''),
-            'languages': book_info.get('languages', [])
-        }
+        # 统一处理为列表
+        if isinstance(books_info, list):
+            self.books_info = books_info  # 多书模式
+            self.is_multi_book = len(books_info) > 1
+        else:
+            self.books_info = [books_info]  # 单书模式
+            self.is_multi_book = False
+        
+        # 向后兼容：保留 self.book_info 指向第一本书
+        self.book_info = self.books_info[0]
+        
+        # 生成或加载 UID
+        if history_uid:
+            self.current_uid = history_uid
+        else:
+            self.current_uid = self._generate_uid()
+        
+        # 准备书籍元数据列表
+        self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+        
+        # 向后兼容：保留 self.book_metadata
+        self.book_metadata = self.books_metadata[0]
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
         # 确保 SuggestionHandler 正确初始化
         self.suggestion_handler = SuggestionHandler(parent=self)
         
+        # 临时缓存：用于暂存随机问题（在用户点击发送前不保存历史）
+        self._pending_random_question = None
+        self._is_generating_random_question = False
+        
         # 连接语言变更信号
         import logging
         logger = logging.getLogger(__name__)
         logger.debug("连接AskDialog到语言变更信号")
         
-        # 获取TabDialog实例并连接语言变更信号
-        try:
-            from calibre_plugins.ask_grok import ask_grok_plugin
-            if hasattr(ask_grok_plugin, 'plugin_instance') and ask_grok_plugin.plugin_instance:
-                # 将当前对话框保存到插件实例中，方便其他组件访问
-                ask_grok_plugin.plugin_instance.ask_dialog = self
-                logger.debug("已将AskDialog实例保存到插件实例中")
-        except Exception as e:
-            logger.error(f"连接语言变更信号时出错: {str(e)}")
+        # 将当前对话框保存到插件实例中，方便其他组件访问
+        if plugin_instance:
+            plugin_instance.ask_dialog = self
+            logger.debug("已将AskDialog实例保存到插件实例中")
         
         
         # 设置当前书籍元数据到response_handler
@@ -796,8 +1437,17 @@ class AskDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['menu_title'])
-        self.setMinimumWidth(600)  # 增加最小宽度
+        self.setMinimumWidth(500)  # 增加最小宽度
         self.setMinimumHeight(600)
+        
+        # 设置窗口标志，启用最大化和最小化按钮
+        from PyQt5.QtCore import Qt
+        self.setWindowFlags(
+            Qt.Window |  # 作为独立窗口
+            Qt.WindowMaximizeButtonHint |  # 启用最大化按钮
+            Qt.WindowCloseButtonHint |  # 启用关闭按钮
+            Qt.WindowTitleHint  # 显示标题栏
+        )
         
         # 创建 UI
         self.setup_ui()
@@ -808,57 +1458,923 @@ class AskDialog(QDialog):
             send_button=self.send_button,
             i18n=self.i18n,
             api=self.api,
-            input_area=self.input_area  # 添加输入区域
+            input_area=self.input_area,  # 添加输入区域
+            stop_button=self.stop_button  # 添加停止按钮
         )
-        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n)
+        self.suggestion_handler.setup(self.response_area, self.input_area, self.suggest_button, self.api, self.i18n, self.stop_button)
         
         # 添加事件过滤器
         self.input_area.installEventFilter(self)
         
+        # 监听输入框内容变化，动态切换按钮高光状态
+        self.input_area.textChanged.connect(self._update_button_focus)
+        
         # 加载历史记录
-        self._load_history()
+        has_loaded_history = self._load_history()
+        
+        # 初始化后更新所有面板的按钮状态（包括导出历史按钮）
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                if hasattr(panel, 'update_button_states'):
+                    panel.update_button_states()
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
         
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
+        
+        # 检查默认 AI 是否与当前选中的 AI 一致
+        # 只有在没有加载历史记录时才检查（新对话），避免与历史记录的AI冲突
+        if not has_loaded_history:
+            self._check_default_ai_mismatch()
 
-    def _load_history(self):
-        """加载历史记录"""
-        if not hasattr(self, 'book_metadata') or not self.book_metadata:
-            return
+    def _generate_uid(self):
+        """生成唯一 UID"""
+        import hashlib
+        from datetime import datetime
+        
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        book_ids = sorted([str(book.id) for book in self.books_info])
+        book_ids_str = ','.join(book_ids)
+        unique_string = f"{timestamp}_{book_ids_str}"
+        uid_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
+        return f"{timestamp}_{uid_hash}"
+    
+    def _update_history_info_label(self, ai_id, timestamp, model_info=None):
+        """更新历史信息标签
+        
+        Args:
+            ai_id: AI ID
+            timestamp: 时间戳
+            model_info: 可选，模型信息字典 {'provider_name': str, 'model': str, 'api_base': str}
+        """
+        from .config import get_prefs
+        from .api import APIClient
+        from .models.base import DEFAULT_MODELS
+        
+        # 优先使用 model_info（从历史记录中获取）
+        if model_info and isinstance(model_info, dict):
+            provider_name = model_info.get('provider_name', '')
+            model_name = model_info.get('model', '')
             
+            if provider_name and model_name:
+                ai_display = f"{provider_name} - {model_name}"
+            elif provider_name:
+                ai_display = provider_name
+            elif model_name:
+                ai_display = model_name
+            else:
+                ai_display = ai_id
+        else:
+            # 回退到从配置中获取
+            prefs = get_prefs()
+            ai_configs = prefs.get('ai_configs', {})
+            
+            if ai_id in ai_configs:
+                config = ai_configs[ai_id]
+                display_name = config.get('display_name', ai_id)
+                model_name = config.get('model', '')
+                if model_name:
+                    ai_display = f"{display_name} - {model_name}"
+                else:
+                    ai_display = display_name
+            else:
+                ai_provider = APIClient._MODEL_TO_PROVIDER.get(ai_id)
+                if ai_provider and ai_provider in DEFAULT_MODELS:
+                    display_name = DEFAULT_MODELS[ai_provider].display_name
+                    model_name = ai_id if ai_id != 'default' else ''
+                    if model_name:
+                        ai_display = f"{display_name} - {model_name}"
+                    else:
+                        ai_display = display_name
+                else:
+                    ai_display = ai_id
+        
+        # 格式化时间戳（缩略显示）
         try:
-            if hasattr(self.response_handler, 'history_manager'):
-                history = self.response_handler.history_manager.get_history(self.book_metadata)
-                if history:
-                    # 显示历史记录
-                    self.input_area.setPlainText(history['question'])
-                    # 标记为历史记录加载，避免重复保存
-                    self.response_handler._update_ui_from_signal(
-                        history['answer'], 
+            from datetime import datetime
+            dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
+            # 只显示日期和时间，不显示秒
+            time_display = dt.strftime('%m-%d %H:%M')
+        except:
+            time_display = timestamp
+        
+        # 更新标签文本（去掉 AI: 前缀）
+        info_text = f"{ai_display} | {time_display}"
+        logger.info(f"[历史信息标签] 更新标签文本: {info_text}")
+        logger.info(f"[历史信息标签] AI ID: {ai_id}, Provider: {model_info.get('provider_name') if model_info else 'N/A'}, Model: {model_info.get('model') if model_info else 'N/A'}")
+        self.history_info_label.setText(info_text)
+        self.history_info_label.setVisible(True)
+        logger.info(f"[历史信息标签] 标签已设置为可见")
+
+    def _extract_metadata(self, book_info):
+        """提取单本书的元数据"""
+        pubdate = book_info.get('pubdate', '')
+        if hasattr(pubdate, 'strftime'):
+            pubdate = pubdate.strftime('%Y-%m-%d')
+        elif isinstance(pubdate, str) and 'T' in pubdate:
+            pubdate = pubdate.split('T')[0]
+        
+        # 检查书籍是否仍存在于数据库
+        try:
+            db = self.gui.current_db
+            db.get_metadata(book_info.id, index_is_id=True)
+            deleted = False
+        except:
+            deleted = True
+        
+        return {
+            'id': book_info.id,
+            'title': book_info.get('title', ''),
+            'authors': book_info.get('authors', []),
+            'publisher': book_info.get('publisher', ''),
+            'pubdate': pubdate,
+            'languages': book_info.get('languages', []),
+            'series': book_info.get('series', ''),
+            'deleted': deleted
+        }
+    
+    def _update_window_title(self):
+        """更新窗口标题"""
+        if self.is_multi_book:
+            book_count = len(self.books_info)
+            title = f"{self.i18n['menu_title']} - {book_count}{self.i18n.get('books_unit', '本书')}"
+        else:
+            title = f"{self.i18n['menu_title']} - {self.book_info.title}"
+        
+        self.setWindowTitle(title)
+    
+    def _create_metadata_widget(self):
+        """创建可折叠的元数据展示组件"""
+        from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
+        from PyQt5.QtGui import QColor
+        from PyQt5.QtCore import Qt
+        
+        self.metadata_tree = QTreeWidget()
+        self.metadata_tree.setHeaderHidden(True)
+        # 设置为3行文字的高度（每行约20px，加上一些边距）
+        self.metadata_tree.setMaximumHeight(70)  # 3行 x 20px + 边距 ≈ 70px
+        # 确保在内容超出时显示垂直滚动条
+        self.metadata_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # 禁用水平滚动条，避免横向滚动
+        self.metadata_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        for idx, book_meta in enumerate(self.books_metadata):
+            # 创建书籍节点
+            book_item = QTreeWidgetItem(self.metadata_tree)
+            
+            # 设置书籍标题
+            title_text = f"{idx + 1}. {book_meta['title']}"
+            if book_meta['deleted']:
+                title_text += f" ({self.i18n.get('deleted', '已删除')})"
+                book_item.setForeground(0, QColor(128, 128, 128))
+            
+            book_item.setText(0, title_text)
+            
+            # 添加元数据子节点
+            if book_meta['authors']:
+                author_item = QTreeWidgetItem(book_item)
+                author_item.setText(0, f"{self.i18n['metadata_authors']}: {', '.join(book_meta['authors'])}")
+            
+            if book_meta['publisher']:
+                pub_item = QTreeWidgetItem(book_item)
+                pub_item.setText(0, f"{self.i18n['metadata_publisher']}: {book_meta['publisher']}")
+            
+            if book_meta['pubdate']:
+                date_item = QTreeWidgetItem(book_item)
+                date_item.setText(0, f"{self.i18n['metadata_pubyear']}: {book_meta['pubdate']}")
+            
+            if book_meta['languages']:
+                lang_item = QTreeWidgetItem(book_item)
+                lang_name = self.get_language_name(book_meta['languages'][0])
+                lang_item.setText(0, f"{self.i18n['metadata_language']}: {lang_name}")
+            
+            if book_meta['series']:
+                series_item = QTreeWidgetItem(book_item)
+                series_item.setText(0, f"{self.i18n['metadata_series']}: {book_meta['series']}")
+            
+            # 设置默认展开/收起状态
+            # 单书模式：展开；多书模式：收起
+            # 但两种模式都显示书名（作为树节点的根节点文本）
+            book_item.setExpanded(not self.is_multi_book)
+        
+        return self.metadata_tree
+    
+    def _build_multi_book_prompt(self, question):
+        """构建多书提示词"""
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        prefs = get_prefs()
+        
+        template = prefs.get('multi_book_template', '')
+        if not template:
+            template = """以下是关于多本书籍的信息：
+
+{books_metadata}
+
+用户问题：{query}
+
+请基于以上书籍信息回答问题。"""
+        
+        # 拼接所有书籍元数据（包含所有字段：标题、作者、出版日期、系列、出版社、语言）
+        books_metadata_text = []
+        for idx, book in enumerate(self.books_info, 1):
+            book_text = f"书籍 {idx}:\n"
+            book_text += f"  标题: {book.title}\n"
+            
+            if book.authors:
+                book_text += f"  作者: {', '.join(book.authors)}\n"
+            
+            if hasattr(book, 'pubdate') and book.pubdate:
+                year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
+                book_text += f"  出版日期: {year}\n"
+            
+            if hasattr(book, 'series') and book.series:
+                book_text += f"  系列: {book.series}\n"
+            
+            if book.publisher:
+                book_text += f"  出版社: {book.publisher}\n"
+            
+            if book.language:
+                lang_name = self.get_language_name(book.language)
+                book_text += f"  语言: {lang_name}\n"
+            
+            books_metadata_text.append(book_text)
+        
+        prompt = template.format(
+            books_metadata='\n'.join(books_metadata_text),
+            query=question
+        )
+        
+        return prompt
+    
+    def _create_history_switcher(self):
+        """创建历史记录切换按钮和菜单"""
+        from PyQt5.QtWidgets import QToolButton, QMenu, QActionGroup
+        from .ui_constants import BUTTON_HEIGHT
+        
+        self.history_button = QToolButton()
+        self.history_button.setText(self.i18n.get('history', '历史记录'))
+        self.history_button.setPopupMode(QToolButton.InstantPopup)  # 点击整个按钮弹出菜单
+        
+        self.history_menu = QMenu()
+        self.history_button.setMenu(self.history_menu)
+        
+        # 创建动作组，用于实现单选效果
+        self.history_action_group = QActionGroup(self)
+        self.history_action_group.setExclusive(True)
+        
+        # 设置与 AI 切换器一致的样式和大小
+        self.history_button.setMinimumWidth(200)  # 与 AI 切换器相同
+        self.history_button.setFixedHeight(BUTTON_HEIGHT)  # 与 AI 切换器相同高度
+        
+        # 应用标准的 ToolButton 菜单样式
+        from .ui_constants import get_toolbutton_menu_style
+        self.history_button.setStyleSheet(get_toolbutton_menu_style())
+        
+        self._load_related_histories()
+        
+        return self.history_button
+    
+    def _load_related_histories(self):
+        """加载当前书籍关联的所有历史记录"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if not hasattr(self.response_handler, 'history_manager'):
+            return
+        
+        # 动态调整菜单最大宽度，防止超出窗口
+        window_width = self.width()
+        # 菜单最大宽度为窗口宽度的 70%，但不超过 500px，不小于 250px
+        max_menu_width = max(250, min(500, int(window_width * 0.7)))
+        
+        # 使用 setMaximumWidth 而不是 setStyleSheet，这样可以保留 Qt 默认的 hover 效果
+        self.history_menu.setMaximumWidth(max_menu_width)
+        
+        
+        # 清空菜单和动作组
+        self.history_menu.clear()
+        # 清空动作组中的所有动作
+        for action in self.history_action_group.actions():
+            self.history_action_group.removeAction(action)
+        
+        # 获取当前书籍的所有历史记录
+        book_ids = [book.id for book in self.books_info]
+        all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
+        
+        if not all_histories:
+            # 如果没有历史记录，只显示提示，不显示其他选项
+            no_history_action = self.history_menu.addAction(self.i18n.get('no_history', 'No history records'))
+            no_history_action.setEnabled(False)
+            return
+        
+        # 有历史记录时，添加“新对话”选项
+        new_conversation_action = self.history_menu.addAction(self.i18n.get('new_conversation', 'New Conversation'))
+        new_conversation_action.setCheckable(True)
+        new_conversation_action.triggered.connect(self._on_new_conversation)
+        self.history_action_group.addAction(new_conversation_action)
+        
+        # 添加分隔线
+        self.history_menu.addSeparator()
+        
+        # 历史记录列表（按时间倒序显示）
+        # 根据菜单宽度动态计算问题预览的最大字符数
+        # 估算：每个字符约占 8-10px，时间戳约占 150px，留出边距和图标空间
+        max_question_chars = max(15, int((max_menu_width - 200) / 10))
+        
+        # 标记是否找到匹配的历史记录
+        found_match = False
+        
+        for idx, history in enumerate(all_histories):
+            book_count = len(history['books'])
+            # 显示问题的前 N 个字符（根据菜单宽度动态调整）
+            question_text = history.get('question', '').strip()
+            if not question_text:
+                # 使用占位符文本显示空问题
+                question_preview = self.i18n.get('empty_question_placeholder', '(No question)')
+            else:
+                question_preview = question_text[:max_question_chars]
+                if len(question_text) > max_question_chars:
+                    question_preview += '...'
+            display_text = f"{question_preview} - {history['timestamp']}"
+            
+            
+            action = self.history_menu.addAction(display_text)
+            action.setCheckable(True)
+            # 如果是当前UID，设置为选中状态
+            if history['uid'] == self.current_uid:
+                action.setChecked(True)
+                found_match = True
+            else:
+                pass
+            action.triggered.connect(lambda checked, uid=history['uid']: self._on_history_switched(uid))
+            # 添加到动作组，实现单选效果
+            self.history_action_group.addAction(action)
+        
+        # 如果没有找到匹配的历史记录，选中"新对话"
+        if not found_match:
+            new_conversation_action.setChecked(True)
+        else:
+            pass
+        
+        # 在底部添加分隔线和清空选项
+        self.history_menu.addSeparator()
+        clear_action = self.history_menu.addAction(self.i18n.get('clear_current_book_history', 'Clear Current Book History'))
+        clear_action.triggered.connect(self._on_clear_current_book_history)
+    
+    def _on_new_conversation(self):
+        """新对话事件：清空输入和响应区域，并生成新的UID"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 生成新的UID，确保新对话不会覆盖旧的历史记录
+        self.current_uid = self._generate_uid()
+        logger.info(f"新对话已生成新的UID: {self.current_uid}")
+        
+        # 清空输入区域
+        self.input_area.clear()
+        
+        # 清空所有面板的响应区域
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                panel.clear_response()
+            logger.info(f"切换到新对话，已清空 {len(self.response_panels)} 个面板")
+        else:
+            # 单面板模式（向后兼容）
+            self.response_area.clear()
+            logger.info("切换到新对话，已清空响应区域")
+        
+        # 刷新历史记录菜单，更新选中状态
+        self._load_related_histories()
+    
+    def _on_history_switched(self, uid):
+        """历史记录切换事件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 获取历史记录
+        history = self.response_handler.history_manager.get_history_by_uid(uid)
+        if not history:
+            logger.warning(f"未找到历史记录: {uid}")
+            return
+        
+        
+        # 重建书籍列表
+        books_info = []
+        book_ids_to_select = []  # 用于反向选择
+        
+        for book_meta in history['books']:
+            book_ids_to_select.append(book_meta['id'])
+            if not book_meta['deleted']:
+                try:
+                    db = self.gui.current_db
+                    mi = db.get_metadata(book_meta['id'], index_is_id=True)
+                    books_info.append(mi)
+                except Exception as e:
+                    logger.warning(f"无法加载书籍 {book_meta['id']}: {str(e)}")
+        
+        # 更新当前状态
+        if books_info:
+            self.books_info = books_info
+            self.book_info = books_info[0]
+        self.is_multi_book = len(history['books']) > 1
+        self.current_uid = uid
+        
+        # 重新提取元数据
+        self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+        self.book_metadata = self.books_metadata[0]
+        
+        # 反向选择：在 Calibre 中选中这些书籍（如果技术可行）
+        self._select_books_in_calibre(book_ids_to_select)
+        
+        # 更新 UI
+        self._update_window_title()
+        self._rebuild_metadata_widget()
+        
+        # 加载问答内容
+        self.input_area.setPlainText(history['question'])
+        
+        # 处理多AI响应格式
+        if 'answers' in history and isinstance(history['answers'], dict):
+            # 新格式：多AI响应
+            if hasattr(self, 'response_panels') and self.response_panels:
+                # 多面板模式：根据历史记录中的AI响应来加载
+                # 获取历史记录中所有AI的ID（排除'default'）
+                history_ai_ids = [ai_id for ai_id in history['answers'].keys() if ai_id != 'default']
+                
+                # 如果历史记录中没有具体AI ID，只有default，则使用default
+                if not history_ai_ids and 'default' in history['answers']:
+                    history_ai_ids = ['default']
+                
+                logger.info(f"历史记录中包含 {len(history_ai_ids)} 个AI响应: {history_ai_ids}")
+                
+                # 为每个历史AI响应分配一个面板
+                for idx, ai_id in enumerate(history_ai_ids):
+                    if idx >= len(self.response_panels):
+                        logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
+                        break
+                    
+                    panel = self.response_panels[idx]
+                    answer_data = history['answers'][ai_id]
+                    answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                    
+                    # 智能AI切换：检查历史AI是否仍然可用
+                    if ai_id != 'default':
+                        # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
+                        panel.ai_switcher.blockSignals(True)
+                        
+                        # 检查历史AI是否在当前可用的AI列表中
+                        ai_found = False
+                        for i in range(panel.ai_switcher.count()):
+                            if panel.ai_switcher.itemData(i) == ai_id:
+                                panel.ai_switcher.setCurrentIndex(i)
+                                logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
+                                ai_found = True
+                                break
+                        
+                        # 如果历史AI不可用，使用默认AI
+                        if not ai_found:
+                            prefs = get_prefs()
+                            default_ai = prefs.get('selected_model', 'grok')
+                            logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                            
+                            # 尝试切换到默认AI
+                            for i in range(panel.ai_switcher.count()):
+                                if panel.ai_switcher.itemData(i) == default_ai:
+                                    panel.ai_switcher.setCurrentIndex(i)
+                                    logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                    break
+                        
+                        panel.ai_switcher.blockSignals(False)
+                    
+                    # 先设置当前问题
+                    panel.set_current_question(history['question'])
+                    
+                    # 加载历史响应
+                    panel.response_handler._update_ui_from_signal(
+                        answer_text,
                         is_response=True,
                         is_history=True
                     )
-                    logger.info(f"已加载历史记录，时间: {history.get('timestamp', '未知')}")
+                    logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                    
+                    # 更新历史信息标签（只在第一个面板时更新）
+                    if idx == 0:
+                        timestamp = history.get('timestamp', '未知时间')
+                        # 从answer_data中获取model_info（正确的位置）
+                        model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
+                        logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
+                        
+                        # 如果历史记录中没有model_info（旧版本），从面板API获取
+                        if not model_info and hasattr(panel, 'api'):
+                            api_obj = panel.api
+                            model_info = {
+                                'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                'model': getattr(api_obj, 'model', 'Unknown'),
+                                'api_base': getattr(api_obj, 'api_base', '')
+                            }
+                        
+                        self._update_history_info_label(ai_id, timestamp, model_info)
+                    
+                    # 再次更新按钮状态（确保在响应加载后更新）
+                    panel.update_button_states()
+                
+                # 清空未使用的面板
+                for idx in range(len(history_ai_ids), len(self.response_panels)):
+                    self.response_panels[idx].response_area.clear()
+                    logger.debug(f"清空未使用的面板 {idx}")
+                
+                # 统一更新所有面板的AI切换器（实现互斥逻辑）
+                self._update_all_panel_ai_switchers()
+            else:
+                # 单面板模式：加载default或第一个AI的响应
+                if 'default' in history['answers']:
+                    answer_data = history['answers']['default']
+                elif history['answers']:
+                    answer_data = list(history['answers'].values())[0]
+                else:
+                    answer_data = ''
+                
+                answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                self.response_handler._update_ui_from_signal(
+                    answer_text,
+                    is_response=True,
+                    is_history=True
+                )
+        else:
+            # 旧格式：单一响应（向后兼容）
+            answer = history.get('answer', '')
+            self.response_handler._update_ui_from_signal(
+                answer,
+                is_response=True,
+                is_history=True
+            )
+        
+        
+        # 刷新历史记录菜单，更新选中状态
+        self._load_related_histories()
+    
+    def _on_clear_current_book_history(self):
+        """清空当前书籍的历史记录"""
+        from PyQt5.QtWidgets import QMessageBox
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 确认对话框
+        book_count = len(self.books_info)
+        book_titles = ', '.join([book.title[:20] for book in self.books_info[:3]])
+        if book_count > 3:
+            book_titles += f" ... ({book_count} books)"
+        
+        confirm_msg = self.i18n.get(
+            'confirm_clear_book_history',
+            'Are you sure you want to clear all history for:\n{book_titles}?'
+        ).format(book_titles=book_titles)
+        
+        reply = QMessageBox.question(
+            self,
+            self.i18n.get('confirm', 'Confirm'),
+            confirm_msg,
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply != QMessageBox.Yes:
+            return
+        
+        # 获取当前书籍的所有历史记录
+        book_ids = [book.id for book in self.books_info]
+        all_histories = self.response_handler.history_manager.get_related_histories(book_ids)
+        
+        # 删除所有相关历史记录
+        deleted_count = 0
+        for history in all_histories:
+            uid = history['uid']
+            if self.response_handler.history_manager.delete_history(uid):
+                deleted_count += 1
+        
+        
+        # 清空当前界面
+        self.input_area.clear()
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                panel.clear_response()
+        else:
+            self.response_area.clear()
+        
+        # 重新加载历史记录菜单
+        self._load_related_histories()
+        
+        # 显示成功消息
+        success_msg = self.i18n.get('history_cleared', '{deleted_count} history records cleared.').format(deleted_count=deleted_count)
+        QMessageBox.information(
+            self,
+            self.i18n.get('success', 'Success'),
+            success_msg
+        )
+    
+    def _select_books_in_calibre(self, book_ids):
+        """在 Calibre 主界面中选中指定书籍"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from PyQt5.QtCore import QItemSelectionModel
+            
+            # 清除当前选择
+            self.gui.library_view.selectionModel().clear()
+            
+            # 选中指定书籍
+            db = self.gui.current_db
+            selected_count = 0
+            
+            for book_id in book_ids:
+                try:
+                    # 使用 Calibre 的 API 选中书籍
+                    # 通过 set_current_row 方法选中书籍
+                    if db.has_id(book_id):
+                        # 使用 select_rows 方法选中多本书
+                        self.gui.library_view.select_rows([book_id], using_ids=True, change_current=False)
+                        selected_count += 1
+                    else:
+                        logger.debug(f"书籍 {book_id} 不存在于数据库中")
+                except Exception as e:
+                    logger.debug(f"书籍 {book_id} 可能已被删除或不在当前视图中: {str(e)}")
+            
+            logger.info(f"在 Calibre 中选中了 {selected_count}/{len(book_ids)} 本书")
+            
+        except Exception as e:
+            logger.warning(f"无法在 Calibre 中选中书籍: {str(e)}")
+    
+    def _rebuild_metadata_widget(self):
+        """重建元数据组件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 查找并移除旧的元数据树
+            if hasattr(self, 'metadata_tree'):
+                self.metadata_tree.setParent(None)
+                self.metadata_tree.deleteLater()
+            
+            # 创建新的元数据树
+            new_metadata_tree = self._create_metadata_widget()
+            
+            # 找到滚动内容的布局并插入
+            # 由于使用了滚动区域，需要获取 scroll_content 的布局
+            scroll_content = self.scroll_area.widget()
+            layout = scroll_content.layout()
+            # 元数据树应该在顶部栏之后，输入区域之前
+            # 索引 1 的位置（0是顶部栏，1是元数据树，2是输入区域...）
+            layout.insertWidget(1, new_metadata_tree)
+            
+            # 更新顶部书籍信息标签
+            if hasattr(self, 'books_info_label'):
+                if self.is_multi_book:
+                    book_count = len(self.books_info)
+                    books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
+                else:
+                    books_info_text = f"({self.book_info.title[:30]}{'...' if len(self.book_info.title) > 30 else ''})"
+                self.books_info_label.setText(books_info_text)
+                logger.debug(f"已更新书籍信息标签: {books_info_text}")
+            
+            logger.info("元数据组件已重建")
+            
+        except Exception as e:
+            logger.error(f"重建元数据组件失败: {str(e)}")
+
+    def _load_history(self):
+        """加载历史记录 - 智能匹配当前书籍组合
+        
+        Returns:
+            bool: 如果成功加载了历史记录返回True，否则返回False
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 首先检查是否有待发送的随机问题
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            
+            if str(book_ids) in pending_questions:
+                pending_data = pending_questions[str(book_ids)]
+                
+                # 恢复待发送的随机问题状态
+                self.current_uid = pending_data['uid']
+                self._pending_random_question = pending_data['question']
+                self._is_generating_random_question = True
+                self.input_area.setPlainText(pending_data['question'])
+                
+                # 清空响应区域（因为还没有AI回答）
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        panel.clear_response()
+                else:
+                    self.response_area.clear()
+                
+                logger.info("已恢复待发送的随机问题状态，等待用户点击发送")
+                # 不从临时存储中删除，等用户发送后再删除
+                # 这不算加载历史记录，因为还没有AI回答
+                return False
+            
+            # 获取当前书籍ID集合
+            current_book_ids = set([book.id for book in self.books_info])
+            
+            # 获取所有相关历史记录
+            all_histories = self.response_handler.history_manager.get_related_histories(list(current_book_ids))
+            
+            if not all_histories:
+                return False
+            
+            # 查找最佳匹配的历史记录（始终加载最新的，不过滤空问题）
+            matched_history = None
+            
+            # 优先级1: 完全匹配（UID相同的书籍组合）
+            for history in all_histories:
+                history_book_ids = set([book['id'] for book in history['books']])
+                if history_book_ids == current_book_ids:
+                    matched_history = history
+                    question = history.get('question', '').strip()
+                    question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
+                    # 使用现有 UID，不创建新的
+                    old_uid = self.current_uid
+                    self.current_uid = history['uid']
+                    break
+            
+            # 优先级2: 当前选择被包含在某个历史记录中
+            if not matched_history:
+                for history in all_histories:
+                    history_book_ids = set([book['id'] for book in history['books']])
+                    if current_book_ids.issubset(history_book_ids):
+                        matched_history = history
+                        question = history.get('question', '').strip()
+                        question_preview = question[:30] + '...' if len(question) > 30 else question if question else '(空问题)'
+                        # 保持当前 UID，只有发起新对话时才会创建新 UID
+                        break
+            
+            # 如果找到匹配的历史记录，加载它
+            if matched_history:
+                self.input_area.setPlainText(matched_history['question'])
+                
+                # 检查是否有多面板模式
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    # 多面板模式：为每个面板加载对应AI的历史响应
+                    
+                    if 'answers' in matched_history and matched_history['answers']:
+                        # 获取历史记录中所有AI的ID（排除'default'）
+                        history_ai_ids = [ai_id for ai_id in matched_history['answers'].keys() if ai_id != 'default']
+                        
+                        # 如果历史记录中没有具体AI ID，只有default，则使用default
+                        if not history_ai_ids and 'default' in matched_history['answers']:
+                            history_ai_ids = ['default']
+                        
+                        
+                        # 为每个历史AI响应分配一个面板
+                        for idx, ai_id in enumerate(history_ai_ids):
+                            if idx >= len(self.response_panels):
+                                logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
+                                break
+                            
+                            panel = self.response_panels[idx]
+                            answer_data = matched_history['answers'][ai_id]
+                            answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                            
+                            # 智能AI切换：检查历史AI是否仍然可用
+                            if ai_id != 'default':
+                                # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
+                                panel.ai_switcher.blockSignals(True)
+                                
+                                # 检查历史AI是否在当前可用的AI列表中
+                                ai_found = False
+                                for i in range(panel.ai_switcher.count()):
+                                    if panel.ai_switcher.itemData(i) == ai_id:
+                                        panel.ai_switcher.setCurrentIndex(i)
+                                        logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
+                                        ai_found = True
+                                        break
+                                
+                                # 如果历史AI不可用，使用默认AI
+                                if not ai_found:
+                                    prefs = get_prefs()
+                                    default_ai = prefs.get('selected_model', 'grok')
+                                    logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                                    
+                                    # 尝试切换到默认AI
+                                    for i in range(panel.ai_switcher.count()):
+                                        if panel.ai_switcher.itemData(i) == default_ai:
+                                            panel.ai_switcher.setCurrentIndex(i)
+                                            logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                            break
+                                
+                                panel.ai_switcher.blockSignals(False)
+                            
+                            # 先设置当前问题
+                            panel.set_current_question(matched_history['question'])
+                            
+                            # 加载历史响应
+                            panel.response_handler._update_ui_from_signal(
+                                answer_text,
+                                is_response=True,
+                                is_history=True
+                            )
+                            logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                            
+                            # 更新历史信息标签（只在第一个面板时更新）
+                            if idx == 0:
+                                timestamp = matched_history.get('timestamp', '未知时间')
+                                # 从answer_data中获取model_info（正确的位置）
+                                model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
+                                logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
+                                
+                                # 如果历史记录中没有model_info（旧版本），从面板API获取
+                                if not model_info and hasattr(panel, 'api'):
+                                    api_obj = panel.api
+                                    model_info = {
+                                        'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                        'model': getattr(api_obj, 'model', 'Unknown'),
+                                        'api_base': getattr(api_obj, 'api_base', '')
+                                    }
+                                
+                                self._update_history_info_label(ai_id, timestamp, model_info)
+                            
+                            # 再次更新按钮状态（确保在响应加载后更新）
+                            panel.update_button_states()
+                        
+                        # 清空未使用的面板
+                        logger.info(f"准备清空未使用的面板，范围: {len(history_ai_ids)} 到 {len(self.response_panels)}")
+                        for idx in range(len(history_ai_ids), len(self.response_panels)):
+                            panel = self.response_panels[idx]
+                            logger.info(f"准备清空面板 {idx}，panel_index={panel.panel_index}")
+                            panel.response_area.clear()
+                            # 清空后更新按钮状态，禁用复制按钮
+                            logger.info(f"面板 {idx} 已清空，准备更新按钮状态")
+                            panel.update_button_states()
+                            logger.info(f"面板 {idx} 按钮状态已更新")
+                        
+                        # 统一更新所有面板的AI切换器（实现互斥逻辑）
+                        self._update_all_panel_ai_switchers()
+                    else:
+                        logger.warning("历史记录中没有answers字段")
+                else:
+                    # 单面板模式（向后兼容）
+                    logger.info("单面板模式，加载历史记录")
+                    
+                    # 兼容新旧格式：优先使用answers字典，回退到answer字段
+                    if 'answers' in matched_history and matched_history['answers']:
+                        # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
+                        first_ai_id = list(matched_history['answers'].keys())[0]
+                        answer_data = matched_history['answers'][first_ai_id]
+                        answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+                    elif 'answer' in matched_history:
+                        # 旧格式：直接使用answer字段
+                        answer_text = matched_history['answer']
+                        logger.info("加载旧格式历史记录")
+                    else:
+                        answer_text = ""
+                        logger.warning("历史记录中没有找到答案内容")
+                    
+                    if answer_text:
+                        self.response_handler._update_ui_from_signal(
+                            answer_text, 
+                            is_response=True,
+                            is_history=True
+                        )
+                
+                logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
+                
+                # 更新导出历史按钮状态
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        if hasattr(panel, 'update_export_all_button_state'):
+                            panel.update_export_all_button_state()
+                
+                # 刷新历史记录菜单，更新选中状态
+                self._load_related_histories()
+                
+                # 成功加载了历史记录
+                return True
+            else:
+                logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
+                
+                # 即使没有匹配的历史记录，也要更新按钮状态（可能有其他历史记录）
+                if hasattr(self, 'response_panels') and self.response_panels:
+                    for panel in self.response_panels:
+                        if hasattr(panel, 'update_export_all_button_state'):
+                            panel.update_export_all_button_state()
+                
+                # 没有加载历史记录
+                return False
+                
         except Exception as e:
             logger.error(f"加载历史记录失败: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return False
     
-    def clear_history(self):
-        """清除当前书籍的历史记录"""
-        if not hasattr(self, 'book_metadata') or not self.book_metadata:
-            return
-            
-        try:
-            if hasattr(self.response_handler, 'history_manager'):
-                # 这里需要实现清除特定书籍历史记录的逻辑
-                # 由于当前设计是所有历史记录在一个文件中，我们需要更新文件内容
-                # 这需要修改HistoryManager类
-                self.statusBar.showMessage(self.i18n.get('clear_history_not_supported', 'Clear history for single book is not supported yet'))
-        except Exception as e:
-            logger.error(f"清除历史记录失败: {str(e)}")
-            self.statusBar.showMessage(self.i18n.get('clear_history_failed', 'Failed to clear history'))
+    # 注意：clear_history() 方法已废弃，使用 _on_clear_current_book_history() 代替
     
     def closeEvent(self, event):
         # 保存窗口大小
@@ -902,10 +2418,41 @@ class AskDialog(QDialog):
         QToolTip.showText(button.mapToGlobal(button.rect().bottomLeft()), text, button, button.rect(), 2000)
 
     def on_resize(self, event):
-        """窗口大小变化时的处理函数"""
+        """窗口大小变化时的处理函数（包含响应式布局调整）"""
         prefs = get_prefs()
         prefs['ask_dialog_width'] = self.width()
         prefs['ask_dialog_height'] = self.height()
+        
+        # 响应式布局调整
+        height = self.height()
+        
+        # 小屏幕优化（高度 < 650px）
+        if height < 650:
+            # 折叠元数据树（如果是多书模式）
+            if hasattr(self, 'metadata_tree') and self.is_multi_book:
+                for i in range(self.metadata_tree.topLevelItemCount()):
+                    item = self.metadata_tree.topLevelItem(i)
+                    if item:
+                        item.setExpanded(False)
+            
+            # 减小输入框高度
+            if hasattr(self, 'input_area'):
+                self.input_area.setFixedHeight(60)
+            
+            # 减小响应面板最小高度
+            if hasattr(self, 'response_panels'):
+                for panel in self.response_panels:
+                    panel.setMinimumHeight(250)
+        else:
+            # 正常尺寸：恢复默认设置
+            if hasattr(self, 'input_area'):
+                self.input_area.setFixedHeight(80)
+            
+            # 恢复响应面板最小高度
+            if hasattr(self, 'response_panels'):
+                for panel in self.response_panels:
+                    panel.setMinimumHeight(350)
+        
         super().resizeEvent(event)
 
     def update_model_info(self):
@@ -923,13 +2470,6 @@ class AskDialog(QDialog):
             model_display_name = self.api.model_display_name
             logger.debug(f"更新模型信息: {model_display_name}")
             
-            # 更新状态栏中的模型信息标签
-            if hasattr(self, 'model_info_label') and self.model_info_label:
-                self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
-                logger.debug("已更新状态栏模型信息标签")
-            else:
-                logger.warning("无法更新模型信息标签: 标签不存在")
-            
             # 更新窗口标题
             if hasattr(self, 'book_info') and self.book_info:
                 self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
@@ -940,12 +2480,437 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"更新模型信息时出错: {str(e)}")
     
+    # 注意：_populate_model_switcher() 方法已废弃，因为全局模型切换器已被移除
+    
+    # 注意：on_model_switched() 方法已废弃，因为全局模型切换器已被移除
+    # 现在每个面板都有自己的AI切换器，切换逻辑在 response_panel.py 中处理
+    
     def get_language_name(self, lang_code):
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
             return None
         lang_code = lang_code.lower().strip()
         return self.LANGUAGE_MAP.get(lang_code, lang_code)
+    
+    def _create_response_container(self, count: int, action_layout=None):
+        """根据并行AI数量创建响应容器
+        
+        Args:
+            count: 并行AI数量 (目前仅支持1-2)
+            action_layout: 操作区域的布局，用于添加 AI 切换器
+        
+        Returns:
+            包含响应面板的容器组件
+        """
+        from .response_panel import ResponsePanel
+        
+        # 限制为1-2个（3-4功能暂未完成）
+        if count > 2:
+            logger.warning(f"并行AI数量 {count} 超过限制，自动降级到2")
+            count = 2
+        
+        container = QWidget()
+        
+        # 根据数量选择布局
+        if count == 1:
+            # 单列布局
+            layout = QVBoxLayout(container)
+        else:  # count == 2
+            # 横向2个
+            layout = QHBoxLayout(container)
+        
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
+        
+        # 创建响应面板列表
+        self.response_panels = []
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        # 简化逻辑：只处理1-2个面板
+        for i in range(count):
+            # 根据是否传入 action_layout 决定 AI 切换器的位置
+            # action_layout 不为 None：单AI模式，第一个面板的 AI 切换器放在 action_layout
+            # action_layout 为 None：多AI模式，所有面板的 AI 切换器都在自己的 header
+            if action_layout is not None:
+                # 单AI模式：第一个面板不显示header，AI切换器将添加到action_layout
+                show_ai_switcher_in_panel = (i > 0)
+            else:
+                # 多AI模式：所有面板都显示header中的AI切换器
+                show_ai_switcher_in_panel = True
+            
+            panel = ResponsePanel(i, self, self.api, self.i18n, show_ai_switcher=show_ai_switcher_in_panel)
+            panel.ai_changed.connect(self._on_panel_ai_changed)
+            self._setup_panel_handler(panel)
+            self.response_panels.append(panel)
+            layout.addWidget(panel)
+        
+        # 初始化所有面板的AI切换器，并设置默认选择
+        self._update_all_panel_ai_switchers()
+        self._set_default_ai_selections()
+        
+        # 如果有 action_layout（单AI模式），将第一个面板的 AI 切换器添加到操作区域
+        if action_layout and self.response_panels:
+            first_panel = self.response_panels[0]
+            if hasattr(first_panel, 'ai_switcher'):
+                # 在 action_layout 的最左侧插入 AI 切换器
+                action_layout.insertWidget(0, first_panel.ai_switcher)
+        
+        return container
+    
+    def _get_configured_ais(self):
+        """获取已配置的AI列表
+        
+        Returns:
+            list: [(ai_id, display_name), ...]
+        """
+        prefs = get_prefs()
+        models_config = prefs.get('models', {})
+        
+        configured_ais = []
+        for ai_id, config in models_config.items():
+            # 实际检查配置是否有效，而不仅仅依赖 is_configured 标志
+            # 因为 is_configured 可能没有被正确更新
+            
+            # 检查是否有模型名称
+            has_model = bool(config.get('model', '').strip())
+            if not has_model:
+                continue
+            
+            # 检查是否有API Key（Ollama除外，它是本地服务）
+            if ai_id == 'ollama':
+                # Ollama特殊处理：需要有api_base_url和model
+                has_valid_config = bool(config.get('api_base_url', '').strip())
+                if not has_valid_config:
+                    continue
+            else:
+                # 其他AI必须有token
+                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                has_token = bool(config.get(token_field, '').strip())
+                if not has_token:
+                    continue
+            
+            display_name = config.get('display_name', ai_id)
+            model_name = config.get('model', 'unknown')
+            full_display = f"{display_name} - {model_name}"
+            configured_ais.append((ai_id, full_display))
+        
+        return configured_ais
+    
+    def _update_all_panel_ai_switchers(self):
+        """更新所有面板的AI切换器（实现互斥逻辑）"""
+        if not hasattr(self, 'response_panels') or not self.response_panels:
+            return
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        # 获取当前并行AI数量
+        prefs = get_prefs()
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 如果是单面板模式，不应用互斥逻辑
+        if parallel_ai_count == 1:
+            # 单面板模式：所有AI都可用
+            for i, panel in enumerate(self.response_panels):
+                if i < parallel_ai_count:
+                    panel.populate_ai_switcher(configured_ais, set())
+            return
+        
+        # 多面板模式：应用互斥逻辑
+        # 收集已被使用的AI（只收集可见面板的）
+        used_ais = set()
+        for i, panel in enumerate(self.response_panels):
+            # 只收集可见面板（根据 parallel_ai_count）的 AI 使用情况
+            if i < parallel_ai_count:
+                ai_id = panel.get_selected_ai()
+                if ai_id:
+                    used_ais.add(ai_id)
+        
+        # 更新每个面板
+        for i, panel in enumerate(self.response_panels):
+            # 只更新可见面板
+            if i < parallel_ai_count:
+                current_ai = panel.get_selected_ai()
+                # 排除其他面板使用的AI（但保留当前面板自己选中的）
+                other_used_ais = used_ais - {current_ai} if current_ai else used_ais
+                panel.populate_ai_switcher(configured_ais, other_used_ais)
+    
+    def _setup_panel_handler(self, panel):
+        """为面板设置ResponseHandler
+        
+        Args:
+            panel: ResponsePanel实例
+        """
+        from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
+        from calibre_plugins.ask_ai_plugin.api import APIClient
+        
+        # 为每个面板创建独立的APIClient实例
+        # 这样可以避免多面板并发时的模型切换冲突
+        panel_api = APIClient()
+        
+        # 创建独立的ResponseHandler实例
+        handler = ResponseHandler(self)
+        
+        # 设置handler，使用面板独立的API实例
+        handler.setup(
+            response_area=panel.response_area,
+            send_button=self.send_button,
+            i18n=self.i18n,
+            api=panel_api,  # 使用独立的API实例
+            input_area=self.input_area,
+            stop_button=self.stop_button
+        )
+        
+        # 将handler和api关联到面板
+        panel.setup_response_handler(handler)
+        panel.api = panel_api  # 更新面板的API引用
+        
+        # 连接面板的请求完成信号
+        panel.request_finished.connect(self._on_panel_request_finished)
+        
+        logger.info(f"已为面板 {panel.panel_index} 设置独立的ResponseHandler和APIClient")
+    
+    def _on_panel_request_finished(self, panel_index):
+        """面板请求完成事件处理
+        
+        Args:
+            panel_index: 完成的面板索引
+        """
+        logger.info(f"面板 {panel_index} 请求完成")
+        
+        # 检查是否所有面板都已完成
+        # 这里简化处理：任何一个面板完成都不改变按钮状态
+        # 实际上应该等所有面板都完成，但这需要更复杂的状态管理
+        # 暂时保持按钮状态不变，让用户手动点击停止按钮来恢复
+    
+    def _set_default_ai_selections(self):
+        """为每个面板设置默认的AI选择
+        
+        规则：
+        1. 从配置中读取上次的选择（记忆功能）
+        2. 如果没有记忆，按顺序分配不同的AI
+        3. 如果AI数量不足，超出的面板留空
+        """
+        prefs = get_prefs()
+        
+        # 读取上次的AI选择记忆
+        saved_selections = prefs.get('panel_ai_selections', {})
+        
+        # 获取已配置的AI列表
+        configured_ais = self._get_configured_ais()
+        
+        if not configured_ais:
+            logger.warning("没有已配置的AI，无法设置默认选择")
+            return
+        
+        # 为每个面板设置默认AI
+        for i, panel in enumerate(self.response_panels):
+            panel_key = f"panel_{i}"
+            
+            # 1. 优先使用记忆的选择
+            if panel_key in saved_selections:
+                saved_ai_id = saved_selections[panel_key]
+                # 检查这个AI是否还存在且可用
+                if any(ai_id == saved_ai_id for ai_id, _ in configured_ais):
+                    index = panel.ai_switcher.findData(saved_ai_id)
+                    if index >= 0:
+                        panel.ai_switcher.setCurrentIndex(index)
+                        logger.info(f"面板 {i} 恢复上次选择: {saved_ai_id}")
+                        continue
+            
+            # 2. 如果没有记忆或记忆的AI不可用，按顺序分配
+            if i < len(configured_ais):
+                ai_id, _ = configured_ais[i]
+                index = panel.ai_switcher.findData(ai_id)
+                if index >= 0:
+                    panel.ai_switcher.setCurrentIndex(index)
+                    logger.info(f"面板 {i} 默认选择: {ai_id}")
+            else:
+                # 3. AI数量不足，留空
+                panel.ai_switcher.setCurrentIndex(-1)
+                logger.info(f"面板 {i} 留空（AI数量不足）")
+        
+        # 更新所有面板的AI切换器（实现互斥）
+        self._update_all_panel_ai_switchers()
+    
+    def _check_default_ai_mismatch(self):
+        """检查配置中的默认 AI 是否与当前选中的 AI 一致
+        
+        如果不一致，弹窗询问用户是否切换到默认 AI
+        
+        注意：只在 Parallel AI Count 为 1 时才检查，为 2 时跳过
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtCore import QTimer
+        
+        prefs = get_prefs()
+        
+        # 获取并行AI数量
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 如果是并行模式（2个AI），跳过检查
+        # 因为并行模式下，用户已经在配置中明确选择了要使用的AI
+        if parallel_ai_count == 2:
+            logger.debug("并行AI模式（2个AI），跳过默认AI检查")
+            return
+        
+        default_ai = prefs.get('selected_model', 'grok')
+        
+        # 获取第一个面板当前选中的 AI
+        if not self.response_panels:
+            return
+        
+        first_panel = self.response_panels[0]
+        current_ai_id = first_panel.ai_switcher.currentData()
+        
+        # 如果当前 AI 是 None（未选择），不需要提示，直接返回
+        if current_ai_id is None:
+            logger.debug("当前未选择 AI，跳过默认 AI 检查")
+            return
+        
+        # 如果一致，也需要确保 API 使用的是面板选中的 AI（而不是配置中的默认 AI）
+        # 因为用户可能之前选择了"否"，导致面板 AI 与配置不一致
+        if current_ai_id == default_ai:
+            logger.debug(f"当前 AI ({current_ai_id}) 与默认 AI ({default_ai}) 一致")
+            # 仍然需要切换 API 到面板选中的 AI，确保一致性
+            self._switch_api_to_panel_ai(current_ai_id)
+            return
+        
+        # 获取 AI 显示名称
+        from .models.base import DEFAULT_MODELS, AIProvider
+        from .api import APIClient
+        
+        default_ai_provider = APIClient._MODEL_TO_PROVIDER.get(default_ai)
+        current_ai_provider = APIClient._MODEL_TO_PROVIDER.get(current_ai_id)
+        
+        default_ai_name = DEFAULT_MODELS.get(default_ai_provider).display_name if default_ai_provider else default_ai
+        # 处理 None 的情况，使用 i18n
+        if current_ai_id is None:
+            current_ai_name = self.i18n.get('select_ai', '-- Select AI --')
+        else:
+            current_ai_name = DEFAULT_MODELS.get(current_ai_provider).display_name if current_ai_provider else current_ai_id
+        
+        logger.info(f"检测到 AI 不一致 - 当前: {current_ai_name} ({current_ai_id}), 默认: {default_ai_name} ({default_ai})")
+        
+        # 使用 QTimer 延迟弹窗，避免在初始化过程中阻塞
+        def show_dialog():
+            reply = QMessageBox.question(
+                self,
+                self.i18n.get('default_ai_mismatch_title', '默认 AI 已更改'),
+                self.i18n.get('default_ai_mismatch_message', 
+                    '检测到配置中的默认 AI 已更改为 "{default_ai}"，\n'
+                    '但当前对话使用的是 "{current_ai}"。\n\n'
+                    '是否切换到新的默认 AI？').format(
+                        default_ai=default_ai_name,
+                        current_ai=current_ai_name
+                    ),
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            
+            if reply == QMessageBox.Yes:
+                # 切换到默认 AI
+                logger.info(f"用户选择切换到默认 AI: {default_ai}")
+                
+                # 先重新更新面板的AI切换器，确保所有AI都可用
+                logger.info(f"重新更新面板AI切换器，确保 {default_ai} 可用")
+                self._update_all_panel_ai_switchers()
+                
+                # 更新第一个面板的 AI 选择
+                index = first_panel.ai_switcher.findData(default_ai)
+                logger.info(f"在面板 0 的AI切换器中查找 {default_ai}，index={index}")
+                
+                # 调试：打印面板中所有可用的AI
+                available_ais = []
+                for i in range(first_panel.ai_switcher.count()):
+                    ai_id = first_panel.ai_switcher.itemData(i)
+                    ai_text = first_panel.ai_switcher.itemText(i)
+                    available_ais.append(f"{ai_text}({ai_id})")
+                logger.info(f"面板 0 当前可用的AI: {', '.join(available_ais)}")
+                
+                if index >= 0:
+                    first_panel.ai_switcher.setCurrentIndex(index)
+                    
+                    # 重新加载 API 模型
+                    self.api.reload_model()
+                    
+                    # 更新窗口标题
+                    self._update_window_title()
+                    
+                    logger.info(f"已切换到默认 AI: {default_ai_name}")
+                else:
+                    logger.warning(f"未找到默认 AI: {default_ai}")
+            else:
+                # 用户选择继续使用当前 AI
+                logger.info(f"用户选择继续使用当前 AI: {current_ai_name} ({current_ai_id})")
+                
+                # 强制 API 使用当前面板选中的 AI，而不是配置中的默认 AI
+                self._switch_api_to_panel_ai(current_ai_id)
+        
+        # 延迟 100ms 后显示对话框
+        QTimer.singleShot(100, show_dialog)
+        
+        # 初始化完成，允许弹出确认对话框
+        for panel in self.response_panels:
+            panel._is_initializing = False
+    
+    def _switch_api_to_panel_ai(self, ai_id: str):
+        """强制 API 切换到指定的 AI
+        
+        当用户选择不切换到默认 AI 时，需要确保 API 使用面板选中的 AI
+        
+        Args:
+            ai_id: AI 模型 ID（如 'openrouter', 'gemini' 等）
+        """
+        try:
+            # 使用 API 的内部方法切换模型
+            self.api._switch_to_model(ai_id)
+            logger.info(f"API 已切换到面板选中的 AI: {ai_id}")
+            
+            # 更新窗口标题
+            self._update_window_title()
+        except Exception as e:
+            logger.error(f"切换 API 到面板 AI 失败: {str(e)}")
+    
+    def _save_panel_ai_selections(self):
+        """保存所有面板的AI选择到配置"""
+        prefs = get_prefs()
+        
+        selections = {}
+        for i, panel in enumerate(self.response_panels):
+            ai_id = panel.get_selected_ai()
+            if ai_id:
+                selections[f"panel_{i}"] = ai_id
+        
+        prefs['panel_ai_selections'] = selections
+        logger.info(f"已保存面板AI选择: {selections}")
+    
+    def _on_panel_ai_changed(self, panel_index, new_ai_id):
+        """面板AI切换事件处理
+        
+        Args:
+            panel_index: 面板索引
+            new_ai_id: 新选中的AI ID
+        """
+        # 更新对应面板的API对象（修复模型信息显示错误）
+        if panel_index < len(self.response_panels) and new_ai_id:
+            panel = self.response_panels[panel_index]
+            # 切换面板的API到选中的AI
+            panel.api._switch_to_model(new_ai_id)
+            logger.info(f"[面板AI切换] 面板{panel_index}: {new_ai_id}")
+        
+        # 如果是第一个面板切换 AI，同步更新 API 使用的模型
+        # 这样随机问题和发送请求都会使用面板选中的 AI
+        if panel_index == 0 and new_ai_id:
+            self._switch_api_to_panel_ai(new_ai_id)
+        
+        # 更新所有面板的AI切换器（实现互斥）
+        self._update_all_panel_ai_switchers()
+        
+        # 保存选择到配置
+        self._save_panel_ai_selections()
     
     def setup_ui(self):
         # 确保模型已经加载
@@ -954,68 +2919,84 @@ class AskDialog(QDialog):
         # 获取当前使用的模型显示名称
         model_display_name = self.api.model_display_name
         
-        # 更新窗口标题，包含模型信息
-        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.title}")
-        self.setMinimumWidth(500)
-        self.setMinimumHeight(500)  # 设置最小高度与配置对话框一致
+        # 更新窗口标题
+        self._update_window_title()
         
+        # 获取并行AI数量配置
+        prefs = get_prefs()
+        self.parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        
+        # 限制为1-2个AI（3-4功能暂未完成）
+        if self.parallel_ai_count > 2:
+            logger.warning(f"并行AI数量 {self.parallel_ai_count} 超过限制，自动降级到2")
+            self.parallel_ai_count = 2
+            prefs['parallel_ai_count'] = 2
+        
+        # 根据并行AI数量动态设置最小宽度和高度（降低最小高度以适应小屏幕）
+        min_widths = {
+            1: 600,   # 单个：保持现有
+            2: 1000,  # 2个：每个500px
+        }
+        min_heights = {
+            1: 500,   # 单个：降低到500px以适应笔记本
+            2: 500,   # 2个横向：同样高度
+        }
+        self.setMinimumWidth(min_widths.get(self.parallel_ai_count, 600))
+        self.setMinimumHeight(min_heights.get(self.parallel_ai_count, 500))
+        
+        # 创建主布局（用于包含滚动区域）
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
+        
+        # 创建滚动区域
+        from PyQt5.QtWidgets import QScrollArea
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        
+        # 创建滚动内容容器
+        scroll_content = QWidget()
         layout = QVBoxLayout()
-        self.setLayout(layout)
+        layout.setSpacing(0)  # 手动控制每个元素的间距
+        layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
+        scroll_content.setLayout(layout)
         
-        # 添加一个状态栏用于显示加载状态和模型信息
-        self.statusBar = QStatusBar()
+        self.scroll_area.setWidget(scroll_content)
+        main_layout.addWidget(self.scroll_area)
         
-        # 添加模型信息到状态栏
-        # 确保显示正确的模型名称，而不是 "Unknown Model"
-        model_display_name = self.api.model_display_name
-        self.model_info_label = QLabel(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
-        self.model_info_label.setStyleSheet("color: #666; font-size: 12px; padding-right: 10px;")
-        self.statusBar.addPermanentWidget(self.model_info_label)
+        # 创建顶部栏：标题 + 书籍信息
+        top_bar = QHBoxLayout()
+        top_bar.setSpacing(SPACING_SMALL)
         
-        layout.addWidget(self.statusBar)
+        # 左侧：对话标题
+        title_label = QLabel(self.i18n['menu_title'])
+        title_label.setStyleSheet(f"font-weight: bold; font-size: {FONT_SIZE_LARGE}pt;")
+        top_bar.addWidget(title_label)
         
-        # 创建书籍信息显示区域 - 使用 QTextEdit 替代 QLabel 以支持滚动条
-        info_area = QTextEdit()
-        info_area.setReadOnly(True)  # 设置为只读
-        info_area.setFrameShape(QTextEdit.NoFrame)  # 无边框
-        info_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)  # 需要时显示滚动条
-        info_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)  # 禁用水平滚动条
-        info_area.setStyleSheet("""
-            QTextEdit {
-                background-color: palette(base);
-                color: palette(text);
-                font-size: 13px;
-                padding: 10px;
-                border-radius: 5px;
-                border: 1px solid palette(mid);
-                line-height: 1.5;
-            }
-        """)
-        # 设置高度和滚动条策略
-        info_area.setMinimumHeight(20)
-        info_area.setMaximumHeight(100)
+        # 书籍信息标签（仅在多书模式下显示）
+        if self.is_multi_book:
+            book_count = len(self.books_info)
+            books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
+            self.books_info_label = QLabel(books_info_text)
+            self.books_info_label.setStyleSheet("color: palette(dark); font-size: 0.9em; margin-left: 8px;")
+            top_bar.addWidget(self.books_info_label)
         
-        # 构建书籍信息
-        metadata_info = []
-        if self.book_info.title:
-            metadata_info.append(f"{self.i18n['metadata_title']}-{self.book_info.title}")
-        if self.book_info.authors:
-            metadata_info.append(f"{self.i18n['metadata_authors']}-{', '.join(self.book_info.authors)}")
-        if self.book_info.publisher:
-            metadata_info.append(f"{self.i18n['metadata_publisher']}-{self.book_info.publisher}")
-        if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
-            year = str(self.book_info.pubdate.year) if hasattr(self.book_info.pubdate, 'year') else str(self.book_info.pubdate)
-            metadata_info.append(f"{self.i18n['metadata_pubyear']}-{year}")
-        if self.book_info.language:
-            metadata_info.append(f"{self.i18n['metadata_language']}-{self.get_language_name(self.book_info.language)}")
-        if getattr(self.book_info, 'series', None):
-            metadata_info.append(f"{self.i18n['metadata_series']}-{self.book_info.series}")
+        top_bar.addStretch()
         
-        if len(metadata_info) == 1:  # 只有 Metadata 提示，没有实际数据
-            metadata_info.append(f"{self.i18n.get('no_metadata', 'No metadata available')}.")
+        layout.addLayout(top_bar)
         
-        info_area.setHtml("<br>".join(metadata_info))
-        layout.addWidget(info_area)
+        # 区域1：输入区域（使用紧凑间距）
+        from .ui_constants import SPACING_ASK_COMPACT, SPACING_ASK_SECTION
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
+        
+        # 创建可折叠的书籍元数据树形组件
+        metadata_widget = self._create_metadata_widget()
+        layout.addWidget(metadata_widget)
+        
+        layout.addSpacing(SPACING_ASK_COMPACT)
         
         # 创建输入区域
         self.input_area = QTextEdit()
@@ -1036,236 +3017,232 @@ class AskDialog(QDialog):
         """)
         layout.addWidget(self.input_area)
         
+        layout.addSpacing(SPACING_ASK_COMPACT)
+        
         # 创建操作区域
         action_layout = QHBoxLayout()
+        action_layout.setSpacing(SPACING_SMALL)
         
-        # 创建随机问题按钮
+        # 左侧：AI 切换器（单AI模式）或历史记录按钮（多AI模式）
+        # 注意：具体内容将在后续根据 parallel_ai_count 添加
+        
+        # 添加弹性空间，将右侧按钮推到右边
+        action_layout.addStretch()
+        
+        # 右侧：随机问题按钮
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
-        self.suggest_button.setMinimumWidth(80)
+        apply_button_style(self.suggest_button, min_width=120)  # 设置固定宽度，与加载状态一致
         self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.suggest_button.setDefault(True)  # 初始设置为默认按钮（高光状态）
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
         self.suggest_action.setShortcut(QKeySequence("Ctrl+R"))
-
-        # 设置快捷键的范围为窗口级别的
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
-
         self.suggest_action.triggered.connect(self.generate_suggestion)
         self.addAction(self.suggest_action)
         
-        # 设置按钮样式
-        self.suggest_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(mid);
-                color: white;
-            }
-        """)
         action_layout.addWidget(self.suggest_button)
         
-        # 添加弹性空间
-        action_layout.addStretch()
+        # 右侧：停止按钮（初始隐藏）
+        self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
+        self.stop_button.clicked.connect(self.stop_request)
+        apply_button_style(self.stop_button, min_width=120)  # 使用标准样式和固定宽度
+        self.stop_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.stop_button.setVisible(False)  # 初始隐藏
+        action_layout.addWidget(self.stop_button)
         
-        # 创建发送按钮
+        # 右侧：发送按钮
         self.send_button = QPushButton(self.i18n['send_button'])
         self.send_button.clicked.connect(self.send_question)
-        self.send_button.setMinimumWidth(80)
-        self.send_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        apply_button_style(self.send_button, min_width=120)  # 设置固定宽度，与加载状态一致
+        self.send_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.send_button.setDefault(False)  # 初始不是默认按钮
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
         self.send_action.setShortcut(QKeySequence("Ctrl+Enter" if not sys.platform == 'darwin' else "Cmd+Enter"))
-
-        # 设置快捷键的范围为窗口级别的
         self.send_action.setShortcutContext(Qt.WindowShortcut)
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
 
-        # 设置发送按钮样式
-        self.send_button.setStyleSheet("""
-            QPushButton {
-                color: palette(text);
-                padding: 2px 12px;
-                min-height: 1.2em;
-                max-height: 1.2em;
-                min-width: 80px;
-            }
-            QPushButton:hover:enabled {
-                background-color: palette(midlight);
-            }
-            QPushButton:pressed {
-                background-color: palette(mid);
-            }
-        """)
         action_layout.addWidget(self.send_button)
         
-        layout.addLayout(action_layout)
-        
-        # 创建响应区域容器
-        response_container = QWidget()
-        response_layout = QVBoxLayout(response_container)
-        response_layout.setContentsMargins(0, 0, 0, 0)
-        response_layout.setSpacing(5)
-        
-        # 创建响应区域
-        self.response_area = QTextBrowser()
-        self.response_area.setOpenExternalLinks(True)  # 允许打开外部链接
-        self.response_area.setMinimumHeight(250)  # 设置最小高度，允许用户拉伸
-        self.response_area.setTextInteractionFlags(
-            Qt.TextInteractionFlag.TextBrowserInteraction | 
-            Qt.TextInteractionFlag.TextSelectableByMouse
-        )
-        self.response_area.setStyleSheet("""
-            QTextBrowser {
-                border: 1px dashed palette(mid);
-                color: palette(text);
-                border-radius: 4px;
-                padding: 5px;
-            }
-        """)
-        self.response_area.setPlaceholderText(self.i18n['response_placeholder'])
-        
-        # 创建按钮容器
-        button_container = QWidget()
-        button_layout = QHBoxLayout(button_container)
-        button_layout.setContentsMargins(0, 0, 0, 0)
-        button_layout.setSpacing(5)
-        
-        # 复制响应按钮
-        self.copy_response_btn = QPushButton(self.i18n.get('copy_response', 'Copy Response'))
-        self.copy_response_btn.setStyleSheet("""
-            QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
-        self.copy_response_btn.clicked.connect(self.copy_response)
-        
-        # 复制问题和响应按钮
-        copy_qa_text = self.i18n.get('copy_question_response', 'Copy Q&A')
-        copy_qa_text = copy_qa_text.replace('&', '&&')
-        self.copy_qr_btn = QPushButton(copy_qa_text)
-        self.copy_qr_btn.setStyleSheet("""
-            QPushButton {
-                padding: 3px 8px;
-                font-size: 12px;
-                border: 1px solid palette(mid);
-                border-radius: 3px;
-                background: transparent;
-            }
-            QPushButton:hover {
-                background: palette(midlight);
-            }
-        """)
-        self.copy_qr_btn.clicked.connect(self.copy_question_response)
-        
-        # 添加按钮到布局
-        button_layout.addWidget(self.copy_response_btn)
-        button_layout.addWidget(self.copy_qr_btn)
-        button_layout.addStretch()
-        
-        # 将响应区域和按钮添加到容器
-        response_layout.addWidget(self.response_area)
-        response_layout.addWidget(button_container)
-        
-        # 添加到主布局
+        # 根据并行AI数量决定布局
+        if self.parallel_ai_count == 1:
+            # 单AI模式：历史记录按钮在响应区域上方，AI切换器在action_layout
+            layout.addLayout(action_layout)
+            
+            # 区域1和区域2之间使用较大间距
+            layout.addSpacing(SPACING_ASK_SECTION)
+            
+            # 区域2：响应区域（使用紧凑间距）
+            
+            # 创建历史记录信息栏（在响应面板之前）
+            history_info_layout = QHBoxLayout()
+            history_info_layout.setSpacing(SPACING_SMALL)
+            history_info_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # 左侧：历史记录按钮
+            history_button = self._create_history_switcher()
+            history_info_layout.addWidget(history_button)
+            
+            # 右侧：历史信息标签（初始隐藏）
+            self.history_info_label = QLabel()
+            self.history_info_label.setStyleSheet("""
+                QLabel {
+                    color: palette(dark);
+                    font-size: 0.9em;
+                    padding: 5px;
+                }
+            """)
+            self.history_info_label.setVisible(False)
+            history_info_layout.addWidget(self.history_info_label)
+            history_info_layout.addStretch()
+            
+            layout.addLayout(history_info_layout)
+            
+            layout.addSpacing(SPACING_ASK_COMPACT)
+            
+            # 创建响应面板容器（AI切换器在action_layout）
+            response_container = self._create_response_container(self.parallel_ai_count, action_layout)
+        else:
+            # 多AI模式：历史记录按钮在action_layout，AI切换器在各自面板header
+            # 在action_layout左侧添加历史记录按钮
+            history_button = self._create_history_switcher()
+            action_layout.insertWidget(0, history_button)
+            
+            layout.addLayout(action_layout)
+            
+            # 区域1和区域2之间使用较大间距
+            layout.addSpacing(SPACING_ASK_SECTION)
+            
+            # 创建历史信息标签（放在响应面板上方，但不创建单独的layout）
+            self.history_info_label = QLabel()
+            self.history_info_label.setStyleSheet("""
+                QLabel {
+                    color: palette(dark);
+                    font-size: 0.9em;
+                    padding: 5px;
+                }
+            """)
+            self.history_info_label.setVisible(False)
+            layout.addWidget(self.history_info_label)
+            
+            layout.addSpacing(SPACING_ASK_COMPACT)
+            
+            # 创建响应面板容器（AI切换器在各自面板header）
+            response_container = self._create_response_container(self.parallel_ai_count, None)
         layout.addWidget(response_container)
         
-        # 设置 Markdown 支持
-        self.response_area.document().setDefaultStyleSheet("""
-            strong { font-weight: bold; }
-            em { font-style: italic; }
-            h1 { font-size: 1.2em; }
-            h2 { font-size: 1.1em; }
-            h3 { font-size: 1.1em; }
-            code { 
-                background-color: palette(midlight); 
-                padding: 2px 4px; 
-                border-radius: 3px; 
-                font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            }
-            pre { 
-                background-color: palette(midlight); 
-                padding: 10px; 
-                border-radius: 5px; 
-                margin: 10px 0; 
-                white-space: pre-wrap;
-                word-wrap: break-word;
-            }
-            /* 基础表格样式 */
-            table {
-                border-collapse: collapse;
-                width: 100%;
-                margin: 15px 0;
-                border: 1px solid palette(midlight);
-                font-size: 0.95em;
-                line-height: 1.5;
-            }
-            /* 表格单元格 */
-            th, td {
-                border: 1px solid palette(midlight);
-                padding: 8px 12px;
-                text-align: left;
-                vertical-align: top;
-            }
-            /* 表头样式 */
-            thead {
-                background-color: palette(light);
-                font-weight: bold;
-            }
-            /* 表格行 */
-            tr {
-                border-bottom: 1px solid palette(midlight);
-            }
-            /* 最后一行不需要下边框 */
-            tr:last-child {
-                border-bottom: none;
-            }
-            /* 斑马纹 */
-            tr:nth-child(even) {
-                background-color: rgba(0, 0, 0, 0.02);
-            }
-            blockquote { 
-                border-left: 4px solid palette(midlight); 
-                margin: 10px 0; 
-                padding: 0 10px; 
-                color: #333;
-                background-color: rgba(0, 0, 0, 0.02);
-            }
-            ul, ol { 
-                margin: 10px 0; 
-                padding-left: 20px; 
-            }
-            li { margin: 5px 0; }
-        """)
-        layout.addWidget(self.response_area)
+        # 为向后兼容，保留 response_area 和 response_handler 引用（指向第一个面板）
+        if self.response_panels:
+            self.response_area = self.response_panels[0].response_area
+            self.response_handler = self.response_panels[0].response_handler
+    
+    def _update_button_focus(self):
+        """根据输入框内容动态切换按钮的高光状态"""
+        has_text = bool(self.input_area.toPlainText().strip())
+        
+        # 如果用户修改了输入框内容，清除随机问题相关的临时状态
+        if hasattr(self, '_pending_random_question'):
+            current_text = self.input_area.toPlainText()
+            if current_text != self._pending_random_question:
+                # 用户修改了随机问题，清除临时缓存和标记
+                if self._pending_random_question is not None:
+                    logger.debug("用户修改了输入框内容，清除随机问题临时状态")
+                    self._pending_random_question = None
+                    if hasattr(self, '_is_generating_random_question'):
+                        self._is_generating_random_question = False
+        
+        if has_text:
+            # 输入框有内容：发送按钮高光，随机问题按钮取消高光
+            self.send_button.setDefault(True)
+            self.suggest_button.setDefault(False)
+        else:
+            # 输入框为空：随机问题按钮高光，发送按钮取消高光
+            self.suggest_button.setDefault(True)
+            self.send_button.setDefault(False)
+    
+    def _has_history_data(self):
+        """检查当前UID是否有历史记录（有AI回答）
+        
+        Returns:
+            bool: 如果有历史记录且包含AI回答返回True，否则返回False
+        """
+        if not hasattr(self, 'response_handler') or not hasattr(self.response_handler, 'history_manager'):
+            return False
+        
+        history = self.response_handler.history_manager.get_history_by_uid(self.current_uid)
+        if not history:
+            return False
+        
+        # 检查是否有AI回答
+        answers = history.get('answers', {})
+        if not answers:
+            return False
+        
+        # 检查是否有任何非空的回答
+        for ai_id, answer_data in answers.items():
+            if isinstance(answer_data, dict):
+                answer = answer_data.get('answer', '')
+            else:
+                answer = answer_data
+            if answer and answer.strip():
+                return True
+        
+        return False
     
     def generate_suggestion(self):
-        """生成问题随机问题"""
-        if not self.api:
+        """生成随机问题（只发送到第一个AI面板）"""
+        # 检查是否有有效的AI配置
+        if not self.api or not self.api._ai_model:
+            logger.warning("未配置有效的AI服务，显示提示")
+            self._show_ai_service_required_dialog()
             return
-            
+        
+        # 随机问题只使用第一个AI（不并行）
+        if hasattr(self, 'response_panels') and self.response_panels:
+            # 确保第一个面板有选中的AI
+            first_panel = self.response_panels[0]
+            if not first_panel.get_selected_ai():
+                logger.warning("第一个面板没有选中AI，无法生成随机问题")
+                self._show_ai_service_required_dialog()
+                return
+        
+        # 检查是否有历史数据
+        if self._has_history_data():
+            logger.info("检测到当前有历史记录，点击随机问题将创建新会话")
+            # 创建新会话
+            self._on_new_conversation()
+        
+        # 标记这是一个随机问题请求
+        self._is_generating_random_question = True
+        
         self.suggestion_handler.generate(self.book_info)
 
+    def _show_ai_service_required_dialog(self):
+        """显示需要AI服务的提示对话框"""
+        from PyQt5.QtWidgets import QMessageBox
+        
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n.get('auth_token_required_title', 'AI Service Required'))
+        msg_box.setText(self.i18n.get('auth_token_required_message', 
+            'Please configure a valid AI service in Plugin Configuration.'))
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 只添加确认按钮（避免在Ask对话框打开时再打开配置对话框导致错误）
+        msg_box.addButton(
+            self.i18n.get('confirm', 'OK'),
+            QMessageBox.AcceptRole
+        )
+        
+        msg_box.exec_()
+    
     def _check_auth_token(self):
         """检查当前选择的模型是否设置了API Key"""
-        from calibre_plugins.ask_grok.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         
         prefs = get_prefs()
         selected_model = prefs.get('selected_model', 'grok')
@@ -1276,20 +3253,13 @@ class AskDialog(QDialog):
         token_field = 'auth_token' if selected_model == 'grok' else 'api_key'
         token = model_config.get(token_field, '')
         
-        # 如果是Custom模型，不强制要求API Key
-        if selected_model == 'custom':
+        # 如果是Ollama模型，不强制要求API Key（本地服务）
+        if selected_model == 'ollama':
             return True
             
         if not token or not token.strip():
-            # 只显示一个警告对话框，不自动打开配置窗口
-            from PyQt5.QtWidgets import QMessageBox
-            
-            # 显示警告信息
-            QMessageBox.information(
-                self,
-                self.i18n.get('auth_token_required_title', 'API Key Required'),
-                self.i18n.get('auth_token_required_message', 'Please set your API Key in the configuration dialog.')
-            )
+            # 显示友好的提示对话框
+            self._show_ai_service_required_dialog()
             
             # 直接返回False，表示验证失败
             return False
@@ -1299,8 +3269,34 @@ class AskDialog(QDialog):
     def send_question(self):
         """发送问题"""
         import logging
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
         logger = logging.getLogger(__name__)
-        logger.info("=== 开始处理用户问题 ===")
+        
+        # 检查是否是随机问题请求
+        is_random_question = hasattr(self, '_is_generating_random_question') and self._is_generating_random_question
+        
+        # 如果是随机问题，已经在generate_suggestion中创建了新会话，这里不需要再创建
+        # 如果不是随机问题，检查当前UID是否已有历史记录
+        if not is_random_question:
+            if hasattr(self, 'response_handler') and hasattr(self.response_handler, 'history_manager'):
+                if self.current_uid in self.response_handler.history_manager.histories:
+                    old_uid = self.current_uid
+                    self.current_uid = self._generate_uid()
+                    logger.info(f"检测到已有历史记录，生成新UID: {old_uid} -> {self.current_uid}")
+        else:
+            logger.info("随机问题请求，使用已创建的新会话UID")
+            # 清除临时存储中的待发送随机问题（因为用户已经点击发送）
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            if str(book_ids) in pending_questions:
+                del pending_questions[str(book_ids)]
+                prefs['pending_random_questions'] = pending_questions
+                logger.info(f"已清除临时存储中的待发送随机问题: book_ids={book_ids}")
+            
+            # 重置标记和临时缓存
+            self._is_generating_random_question = False
+            self._pending_random_question = None
         
         # 检查 token 是否有效
         if not self._check_auth_token():
@@ -1313,100 +3309,163 @@ class AskDialog(QDialog):
             # 标准化换行符并确保使用 UTF-8 编码
             question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
         
-            # 准备模板变量
-
-            # 安全地获取书籍的作者或作者列表
-            try:
-                authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-                author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                author_str = self.i18n.get('unknown', 'Unknown')
-            
-            # 安全地获取书籍的出版年份
-            try:
-                pubyear = ''
-                if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
-                    if hasattr(self.book_info.pubdate, 'year'):
-                        pubyear = str(self.book_info.pubdate.year)
+            # 根据模式构建提示词
+            if self.is_multi_book:
+                # 多书模式：使用多书提示词
+                logger.info("使用多书模式构建提示词...")
+                prompt = self._build_multi_book_prompt(question)
+            else:
+                # 单书模式：使用原有逻辑
+                logger.info("使用单书模式构建提示词...")
+                
+                # 安全地获取书籍的作者或作者列表
+                try:
+                    authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
+                    author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
+                except AttributeError:
+                    author_str = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的出版年份
+                try:
+                    pubyear = ''
+                    if hasattr(self.book_info, 'pubdate') and self.book_info.pubdate:
+                        if hasattr(self.book_info.pubdate, 'year'):
+                            pubyear = str(self.book_info.pubdate.year)
+                        else:
+                            pubyear = str(self.book_info.pubdate)
                     else:
-                        pubyear = str(self.book_info.pubdate)
-                else:
+                        pubyear = self.i18n.get('unknown', 'Unknown')
+                except Exception as e:
+                    logger.error(f"获取出版年份时出错: {str(e)}")
                     pubyear = self.i18n.get('unknown', 'Unknown')
-            except Exception as e:
-                logger.error(f"获取出版年份时出错: {str(e)}")
-                pubyear = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的语言类别
+                try:
+                    language = self.book_info.language
+                    language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
+                except (AttributeError, KeyError) as e:
+                    language_name = self.i18n.get('unknown', 'Unknown')
+                
+                # 安全地获取书籍的系列名
+                try:
+                    series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
+                except AttributeError:
+                    series = self.i18n.get('unknown', 'Unknown')
+                
+                # 准备模板变量
+                template_vars = {
+                    'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
+                    'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
+                    'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
+                    'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
+                }
+                
+                # 获取配置的模板
+                prefs = get_prefs()
+                template = prefs.get('template', '')
+                
+                # 如果模板为空，使用默认模板
+                if not template:
+                    template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
+                
+                logger.info(f"使用的模板: {template}")
+                
+                # 检查并替换模板中的变量名，确保用户输入能够正确插入
+                if '{query}' not in template and '{question}' in template:
+                    logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
+                    template = template.replace('{question}', '{query}')
+                
+                # 格式化提示词
+                try:
+                    prompt = template.format(**template_vars)
+                except KeyError as e:
+                    self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
+                    return
             
-            # 安全地获取书籍的语言类别
-            try:
-                language = self.book_info.language
-                language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
-            except (AttributeError, KeyError) as e:
-                language_name = self.i18n.get('unknown', 'Unknown')
+            logger.info(f"最终提示词长度: {len(prompt)}")
             
-            # 安全地获取书籍的系列名
-            try:
-                series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
-            except AttributeError:
-                series = self.i18n.get('unknown', 'Unknown')
-            
-            # 准备模板变量
-            logger.info("准备模板变量...")
-            template_vars = {
-                'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
-                'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
-                'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
-            }
-            logger.info(f"模板变量准备完成: {template_vars}")
         except Exception as e:
             self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
         
-        # 获取配置的模板
-        from calibre_plugins.ask_grok.config import get_prefs
-        prefs = get_prefs()
-        template = prefs.get('template', '')
-        
-        # 如果模板为空，使用默认模板
-        if not template:
-            template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
-        
-        logger.info(f"使用的模板: {template}")
-        
-        # 检查并替换模板中的变量名，确保用户输入能够正确插入
-        if '{query}' not in template and '{question}' in template:
-            logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
-            template = template.replace('{question}', '{query}')
-        
-        # 格式化提示词
-        try:
-            logger.info("正在格式化提示词...")
-            prompt = template.format(**template_vars)
-            logger.info(f"格式化后的提示词: {prompt[:500]}{'...' if len(prompt) > 500 else ''}")
-        except KeyError as e:
-            self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
-            return
-        
-        # 如果提示词过长，可能会导致超时
-        if len(prompt) > 2000:  # 设置一个合理的限制
+        # 如果提示词过长，可能会导致超时（多书模式允许更长）
+        max_length = 4000 if self.is_multi_book else 2000
+        if len(prompt) > max_length:
             self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
             return
         
-        # 禁用发送按钮并显示加载状态
-        self.send_button.setEnabled(False)
-        self.send_button.setText(self.i18n.get('sending', 'Sending...'))
+        # 隐藏历史信息标签（发送新问题时）
+        if hasattr(self, 'history_info_label'):
+            old_text = self.history_info_label.text()
+            logger.info(f"[历史信息标签] 发送新问题，隐藏标签。旧内容: {old_text}")
+            self.history_info_label.setVisible(False)
         
-        # 开始异步请求
-        logger.info("开始异步请求...")
+        # 禁用发送按钮并显示加载状态，显示停止按钮
+        self.send_button.setVisible(False)
+        self.stop_button.setVisible(True)
+        
+        # 开始异步请求 - 并行发送到所有面板
+        parallel_start_time = time.time()
         try:
-            self.response_handler.start_async_request(prompt)
-            logger.info("异步请求已启动")
+            if hasattr(self, 'response_panels') and self.response_panels:
+                # 多面板模式：并行发送到所有面板
+                for panel in self.response_panels:
+                    # 设置当前问题（用于按钮状态判断）
+                    panel.set_current_question(question)
+                    
+                    selected_ai = panel.get_selected_ai()
+                    if selected_ai:
+                        request_time = time.time()
+                        elapsed_ms = (request_time - parallel_start_time) * 1000
+                        panel.send_request(prompt, model_id=selected_ai)
+                    else:
+                        logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")
+                total_time = (time.time() - parallel_start_time) * 1000
+                logger.info(f"所有请求已发出，总耗时: {total_time:.2f}ms，面板数: {len(self.response_panels)}")
+            else:
+                # 向后兼容：单面板模式
+                self.response_handler.start_async_request(prompt)
+                logger.info("异步请求已启动（单面板模式）")
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
-            self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
+            if hasattr(self, 'response_handler'):
+                self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
+            # 恢复按钮状态
+            self.send_button.setVisible(True)
+            self.stop_button.setVisible(False)
+    
+    def stop_request(self):
+        """停止当前请求（包括发送请求和随机问题生成）"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("用户请求停止当前请求")
+        
+        # 检查是否是随机问题生成请求
+        if hasattr(self, 'suggestion_handler') and self.suggestion_handler:
+            # 检查是否有正在进行的随机问题生成
+            if hasattr(self.suggestion_handler, '_worker') and self.suggestion_handler._worker and not self.suggestion_handler._worker.is_finished():
+                logger.info("停止随机问题生成")
+                self.suggestion_handler.stop()
+                return
+        
+        # 停止所有面板的请求
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                if hasattr(panel, 'response_handler') and panel.response_handler:
+                    panel.response_handler.cancel_request()
+            logger.info(f"已停止 {len(self.response_panels)} 个面板的请求")
+        elif hasattr(self, 'response_handler'):
+            # 向后兼容：单面板模式
+            self.response_handler.cancel_request()
+        
+        # 恢复按钮状态
+        self.send_button.setVisible(True)
+        self.stop_button.setVisible(False)
+        
+        logger.info("请求已停止，按钮状态已恢复")
     
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
@@ -1415,6 +3474,21 @@ class AskDialog(QDialog):
             if ((event.modifiers() & Qt.ControlModifier or event.modifiers() & Qt.MetaModifier) and 
                 (event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter)):
                 self.send_question()
+                return True
+            
+            # 处理单独的 Enter 键：根据输入框内容决定触发哪个按钮
+            if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+                # 检查是否有修饰键（Shift等），如果有则不处理（允许换行）
+                if event.modifiers() & (Qt.ShiftModifier | Qt.AltModifier):
+                    return False
+                
+                has_text = bool(self.input_area.toPlainText().strip())
+                if has_text:
+                    # 输入框有内容：触发发送
+                    self.send_question()
+                else:
+                    # 输入框为空：触发随机问题
+                    self.generate_suggestion()
                 return True
         return False
 
@@ -1440,6 +3514,187 @@ class AskDialog(QDialog):
         clipboard.setText(text)
         self._show_copy_tooltip(self.copy_qr_btn, self.i18n.get('copied', 'Copied!'))
     
+    def export_to_pdf(self):
+        """导出当前问答为PDF文件"""
+        import logging
+        from PyQt5.QtWidgets import QFileDialog, QMessageBox
+        from datetime import datetime
+        
+        logger = logging.getLogger(__name__)
+        
+        # 获取问题和回答
+        question = self.input_area.toPlainText().strip()
+        response = self.response_area.toPlainText().strip()
+        
+        if not question and not response:
+            logger.warning("没有内容可导出")
+            return
+        
+        # 生成默认文件名（使用时间戳）
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"ask_ai_qa_{timestamp}.pdf"
+        
+        # 打开文件保存对话框
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            self.i18n.get('export_pdf_dialog_title', 'Export to PDF'),
+            default_filename,
+            "PDF Files (*.pdf)"
+        )
+        
+        if not file_path:
+            logger.debug("用户取消了PDF导出")
+            return
+        
+        try:
+            # 使用最简单的方式：直接使用 response_area 的打印功能
+            from PyQt5.QtPrintSupport import QPrinter
+            
+            printer = QPrinter()
+            printer.setOutputFileName(file_path)
+            
+            # 构建书籍元数据信息
+            separator = "=" * 40  # 缩短分隔线从60到40字符
+            metadata_lines = []
+            if hasattr(self, 'book_metadata') and self.book_metadata:
+                metadata_lines.append(separator)
+                metadata_lines.append(self.i18n.get('pdf_book_metadata', 'BOOK METADATA'))
+                metadata_lines.append(separator)
+                
+                if self.book_metadata.get('title'):
+                    title_label = self.i18n.get('metadata_title', 'Title')
+                    metadata_lines.append(f"{title_label}: {self.book_metadata['title']}")
+                
+                if self.book_metadata.get('authors'):
+                    authors = ', '.join(self.book_metadata['authors']) if isinstance(self.book_metadata['authors'], list) else str(self.book_metadata['authors'])
+                    authors_label = self.i18n.get('metadata_authors', 'Authors')
+                    metadata_lines.append(f"{authors_label}: {authors}")
+                
+                if self.book_metadata.get('publisher'):
+                    publisher_label = self.i18n.get('metadata_publisher', 'Publisher')
+                    metadata_lines.append(f"{publisher_label}: {self.book_metadata['publisher']}")
+                
+                if self.book_metadata.get('pubdate'):
+                    pubdate = str(self.book_metadata['pubdate'])
+                    # 只保留年月，去掉详细时间
+                    if 'T' in pubdate:
+                        pubdate = pubdate.split('T')[0]  # 去掉时间部分
+                    if len(pubdate) > 7:
+                        pubdate = pubdate[:7]  # 只保留 YYYY-MM
+                    pubdate_label = self.i18n.get('metadata_pubyear', 'Publication Date')
+                    metadata_lines.append(f"{pubdate_label}: {pubdate}")
+                
+                if self.book_metadata.get('languages'):
+                    languages = ', '.join(self.book_metadata['languages']) if isinstance(self.book_metadata['languages'], list) else str(self.book_metadata['languages'])
+                    languages_label = self.i18n.get('metadata_language', 'Languages')
+                    metadata_lines.append(f"{languages_label}: {languages}")
+                
+                metadata_lines.append("")
+            
+            # 获取当前使用的AI模型信息
+            model_info_lines = []
+            try:
+                if hasattr(self, 'api') and self.api:
+                    logger.debug(f"API对象存在: {self.api}")
+                    
+                    model_info_lines.append("")
+                    model_info_lines.append(separator)
+                    model_info_lines.append(self.i18n.get('pdf_ai_model_info', 'AI MODEL INFORMATION'))
+                    model_info_lines.append(separator)
+                    
+                    # 使用新的provider_name属性获取提供商名称
+                    provider = self.api.provider_name
+                    model_name = self.api.model
+                    api_url = self.api.api_base
+                    
+                    provider_label = self.i18n.get('pdf_provider', 'Provider')
+                    model_label = self.i18n.get('pdf_model', 'Model')
+                    api_url_label = self.i18n.get('pdf_api_base_url', 'API Base URL')
+                    
+                    model_info_lines.append(f"{provider_label}: {provider}")
+                    model_info_lines.append(f"{model_label}: {model_name}")
+                    if api_url:
+                        model_info_lines.append(f"{api_url_label}: {api_url}")
+                else:
+                    logger.warning("没有API对象")
+                    info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                    model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
+            except Exception as e:
+                logger.error(f"获取模型信息失败: {str(e)}", exc_info=True)
+                info_not_available = self.i18n.get('pdf_info_not_available', 'Information not available')
+                model_info_lines.append(f"{self.i18n.get('pdf_provider', 'Provider')}: {info_not_available}")
+            
+            # 组合所有内容
+            content_parts = []
+            
+            # 1. 书籍元数据（最开头）
+            if metadata_lines:
+                content_parts.append('\n'.join(metadata_lines))
+            
+            # 2. 问题
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_question', 'QUESTION'))
+            content_parts.append(separator)
+            content_parts.append(question if question else self.i18n.get('no_question', 'No question'))
+            content_parts.append("")
+            
+            # 3. 回答
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_answer', 'ANSWER'))
+            content_parts.append(separator)
+            content_parts.append(response if response else self.i18n.get('no_response', 'No response'))
+            
+            # 4. AI模型信息（最后）
+            if model_info_lines:
+                content_parts.extend(model_info_lines)
+            
+            # 5. 生成信息
+            content_parts.append("")
+            content_parts.append(separator)
+            content_parts.append(self.i18n.get('pdf_generated_by', 'GENERATED BY'))
+            content_parts.append(separator)
+            plugin_label = self.i18n.get('pdf_plugin', 'Plugin')
+            github_label = self.i18n.get('pdf_github', 'GitHub')
+            software_label = self.i18n.get('pdf_software', 'Software')
+            time_label = self.i18n.get('pdf_generated_time', 'Generated Time')
+            content_parts.append(f"{plugin_label}: Ask AI Plugin (Calibre Plugin)")
+            content_parts.append(f"{github_label}: https://github.com/sheldonrrr/ask_grok")
+            content_parts.append(f"{software_label}: Calibre E-book Manager (https://calibre-ebook.com)")
+            content_parts.append(f"{time_label}: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            content_parts.append(separator)
+            
+            content = '\n'.join(content_parts)
+            
+            # 使用 response_area 的文档直接打印
+            from PyQt5.QtGui import QTextDocument
+            doc = QTextDocument()
+            doc.setPlainText(content)
+            doc.print(printer)
+            
+            logger.info(f"PDF导出成功: {file_path}")
+            # 显示成功提示
+            success_msg = self.i18n.get('pdf_exported', 'PDF Exported!')
+            self._show_copy_tooltip(self.export_pdf_btn, success_msg)
+            
+            # 同时在状态栏显示消息（如果可用）
+            try:
+                from PyQt5.QtWidgets import QApplication
+                if QApplication.instance():
+                    main_window = QApplication.instance().activeWindow()
+                    if main_window and hasattr(main_window, 'statusBar'):
+                        main_window.statusBar().showMessage(f"{success_msg} - {file_path}", 3000)
+            except:
+                pass
+            
+        except Exception as e:
+            logger.error(f"导出PDF失败: {str(e)}", exc_info=True)
+            error_msg = self.i18n.get('export_pdf_error', 'Failed to export PDF: {0}').format(str(e))
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                error_msg
+            )
+    
     def _show_copy_tooltip(self, button, text):
         """在按钮位置显示复制成功的提示"""
         from PyQt5.QtWidgets import QToolTip
@@ -1452,7 +3707,7 @@ class AskDialog(QDialog):
         
         # 如果没有指定语言，从配置中获取
         if not new_language:
-            from calibre_plugins.ask_grok.config import get_prefs
+            from calibre_plugins.ask_ai_plugin.config import get_prefs
             prefs = get_prefs()
             new_language = prefs.get('language', 'en')
         
@@ -1474,10 +3729,6 @@ class AskDialog(QDialog):
         if hasattr(self, 'input_area'):
             self.input_area.setPlaceholderText(self.i18n.get('ask_placeholder', 'Ask about this book...'))
         
-        # 更新模型信息标签
-        if hasattr(self, 'model_info_label'):
-            self.model_info_label.setText(f"{self.i18n.get('using_model', 'Model')}: {model_display_name}")
-        
         # 更新复制按钮文本
         if hasattr(self, 'copy_response_btn'):
             self.copy_response_btn.setToolTip(self.i18n.get('copy_response', 'Copy response'))
@@ -1493,6 +3744,23 @@ class AskDialog(QDialog):
     
     def closeEvent(self, event):
         """处理窗口关闭事件"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # 如果有待发送的随机问题，保存到临时存储
+        if hasattr(self, '_pending_random_question') and self._pending_random_question:
+            # 使用书籍ID作为key保存待发送的随机问题和新会话UID
+            book_ids = tuple(sorted([book.id for book in self.books_info]))
+            prefs = get_prefs()
+            pending_questions = prefs.get('pending_random_questions', {})
+            pending_questions[str(book_ids)] = {
+                'question': self._pending_random_question,
+                'uid': self.current_uid,
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            prefs['pending_random_questions'] = pending_questions
+            logger.info(f"保存待发送的随机问题到临时存储: book_ids={book_ids}, uid={self.current_uid}")
+        
         # 准备关闭，让线程自然结束
         self.response_handler.prepare_close()
         self.suggestion_handler.prepare_close()  # 改用 prepare_close

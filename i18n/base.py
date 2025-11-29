@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Base module for internationalization (i18n) in Ask Grok plugin.
+Base module for internationalization (i18n) in Ask AI Plugin.
 This module is a compatibility layer that re-exports classes and functions from models.base.
 """
 

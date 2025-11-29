@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Internationalization package for Ask Grok plugin.
+Internationalization package for Ask AI Plugin.
 This package provides translations for the plugin interface.
 """
 
@@ -15,6 +15,7 @@ from ..models.base import (
     get_translation,
     get_default_template,
     get_suggestion_template,
+    get_multi_book_template,
     get_all_languages,
     get_model_specific_translation,
     get_current_model_config,
@@ -49,6 +50,7 @@ __all__ = [
     'get_translation',
     'get_default_template',
     'get_suggestion_template',
+    'get_multi_book_template',
     'get_all_languages',
     'get_model_specific_translation',
     'get_current_model_config',

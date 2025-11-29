@@ -10,31 +10,23 @@ logger = logging.getLogger(__name__)
 
 def mask_api_key(api_key, visible_chars=4, mask_chars=8):
     """
-    隐藏API Key的后8位字符，只保留前几位字符
+    隐藏API Key，只保留前几位字符，其余全部掩码
     
     :param api_key: 原始API Key
-    :param visible_chars: 保留可见的前几位字符数
-    :param mask_chars: 需要掩码的字符数
-    :return: 隐藏后的API Key
+    :param visible_chars: 保留可见的前几位字符数（默认4）
+    :param mask_chars: 显示的掩码字符数（默认8）
+    :return: 隐藏后的API Key，格式如 "sk-o********"
     """
     if not api_key or len(api_key) <= visible_chars:
         return api_key
     
-    # 保留前visible_chars位，后面的替换为*号
+    # 保留前visible_chars位
     visible_part = api_key[:visible_chars]
     
-    # 确定要掩码的部分长度
-    mask_length = min(mask_chars, len(api_key) - visible_chars)
+    # 后面全部用固定数量的*号替代，不暴露任何额外信息
+    mask_part = '*' * mask_chars
     
-    # 构建掩码部分
-    mask_part = '*' * mask_length
-    
-    # 如果API Key长度超过visible_chars + mask_chars，保留剩余部分
-    remaining = ''
-    if len(api_key) > visible_chars + mask_length:
-        remaining = api_key[visible_chars + mask_length:]
-    
-    return visible_part + mask_part + remaining
+    return visible_part + mask_part
 
 def mask_api_key_in_text(text):
     """

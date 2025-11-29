@@ -1,10 +1,10 @@
-# Ask Grok
+# Ask AI Plugin(old name: Ask Grok)
 
-A simple calibre plugin that allows users to ask questions about books using various AI models including Grok, Google Gemini, and DeepSeek.
+A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok, DeepSeek, Nvidia AI, OpenRouter, Ollama, and custom AI providers.
 
 ## Preview
 
-<img src="https://github.com/sheldonrrr/ask_grok/blob/main/ask_grok_gif_preview.gif" width="400">
+![Ask AI Plugin Preview](ask_ai_plugin_gif_preview.gif)
 
 ## Features
 
@@ -20,10 +20,10 @@ A simple calibre plugin that allows users to ask questions about books using var
 
 ### Install from calibre Plugin Index (Recommended)
 
-Ask Grok is now available in the official calibre Plugin Index:
+Ask AI Plugin is now available in the official calibre Plugin Index:
 
 1. In calibre, select "Preferences" -> "Plugins" -> "Get new plugins"
-2. Search for "Ask Grok" in the search box
+2. Search for "Ask AI Plugin" in the search box
 3. Select the plugin and click "Install"
 4. After installation, restart calibre
 
@@ -37,13 +37,19 @@ Import the file to calibre custom plugins:
 2. Select the downloaded plugin file to install
 3. After installation, restart calibre
 
-## Get API Keys
+## Supported AI Providers
 
-Grok(x.AI) https://console.x.ai/
-Google Gemini https://aistudio.google.com/
-DeepSeek https://platform.deepseek.com/
+- **OpenAI** - https://platform.openai.com/
+- **Anthropic (Claude)** - https://console.anthropic.com/
+- **Google Gemini** - https://aistudio.google.com/
+- **Grok (x.AI)** - https://console.x.ai/
+- **DeepSeek** - https://platform.deepseek.com/
+- **Nvidia AI** - https://build.nvidia.com/ (Free tier available)
+- **OpenRouter** - https://openrouter.ai/
+- **Ollama** - https://ollama.ai/ (Local AI models)
+- **Custom** - Any OpenAI-compatible API endpoint
 
-### Free API Key
+### Free Nvidia API Key
 
 Recently, Nvidia released a free API key for llama, Deepseek-r1, you can get free API key from [here](https://build.nvidia.com/).
 
@@ -62,8 +68,8 @@ API Key:
 
 ## Configure API Key
 
-  - Click the Ask Grok dropdown menu in the menu bar, select `Configure`
-  - Select the AI model you want to use (Grok, Google Gemini, or DeepSeek)
+  - Click the Ask AI Plugin dropdown menu in the menu bar, select `Configure`
+  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Nvidia, OpenRouter, Ollama, or Custom)
   - Enter the corresponding API Key into the API Key input box
   - Click the `Save` button
   - Done
@@ -71,9 +77,9 @@ API Key:
 ## Interface Usage
 
 1. Select a book in the calibre library
-2. Click the "Ask Grok" button in the toolbar
+2. Click the "Ask AI Plugin" button in the toolbar
 3. Enter your question in the popup dialog
-4. Click "Send" to get an answer from your configured AI model (Grok, Google Gemini, or DeepSeek)
+4. Click "Send" to get an answer from your configured AI provider
 5. Click "Random Question" to request AI-generated questions based on your selected language
 
 ## Language Support
@@ -118,28 +124,28 @@ API Key:
 
 ## Privacy Handling
 
-- The AI providers' API Keys (Grok, Google Gemini, DeepSeek) are saved as a Json file locally after input and are not transmitted to any third-party servers
+- All AI providers' API Keys are saved as a JSON file locally after input and are not transmitted to any third-party servers
 - When sending requests to AI providers, the plugin will use the book's Metadata information submitted to the selected AI provider
 - The plugin's privacy handling will depend on each AI provider's own privacy policy.
 
 ## Troubleshooting
 
-If you continue to experience `Request failed` or other issues, please delete the Ask Grok and related configuration files and then re-install the latest version of the plugin.
+If you continue to experience `Request failed` or other issues, please delete the Ask AI Plugin and related configuration files and then re-install the latest version of the plugin.
 
-Delete Ask Grok and related configuration files:
+Delete Ask AI Plugin and related configuration files:
 - calibre Preference
 - Miscellaneous
 - Open calibre Configuration Folder(Button)
 - Plugins(Open this folder)
-- Delete all things with `ask_grok` as prefix
+- Delete all things with `ask_ai_plugin` as prefix
 - Install Plugin's Latest Version
 - Restart calibre
 
-About Ask Grok Configuration Files:
-- Ask Grok.zip/Ask Grok folder: Plugin folder, delete it to remove the plugin
-- ask_grok.json: Plugin configuration file, delete it to remove the plugin's configuration information
-- ask_grok.logs folder: Plugin log folder, delete it to remove the plugin's log information
-- ask_grok_latest_history.json: Plugin recent query history file, delete it to remove the plugin's recent query history information
+About Ask AI Plugin Configuration Files:
+- Ask AI Plugin.zip/Ask AI Plugin folder: Plugin folder, delete it to remove the plugin
+- ask_ai_plugin.json: Plugin configuration file, delete it to remove the plugin's configuration information
+- ask_ai_plugin_logs folder: Plugin log folder, delete it to remove the plugin's log information
+- ask_ai_plugin_latest_history.json: Plugin recent query history file, delete it to remove the plugin's recent query history information
 
 Note!
 - When providing feedback, please do not provide your AI provider's API Key, please keep it confidential, once leaked, your AI provider's API Key may be abused.

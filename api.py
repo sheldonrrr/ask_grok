@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import json
-import requests
-import urllib3
-from typing import Optional, Dict, Any, Tuple, Union
+from typing import Optional, Dict, Any, Tuple, Union, List
 import logging
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import urllib3
+
 from .i18n import get_translation
 from .models import AIModelFactory, BaseAIModel
 from .models.base import AIProvider, DEFAULT_MODELS, DEFAULT_PROVIDER
@@ -41,18 +44,29 @@ class APIClient:
         'grok': AIProvider.AI_GROK,
         'gemini': AIProvider.AI_GEMINI,
         'deepseek': AIProvider.AI_DEEPSEEK,
-        'custom': AIProvider.AI_CUSTOM
+        'custom': AIProvider.AI_CUSTOM,
+        'openai': AIProvider.AI_OPENAI,
+        'anthropic': AIProvider.AI_ANTHROPIC,
+        'nvidia': AIProvider.AI_NVIDIA,
+        'openrouter': AIProvider.AI_OPENROUTER,
+        'ollama': AIProvider.AI_OLLAMA
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 
-                 max_retries: int = 3, timeout: float = 30.0):
+                 max_retries: int = 3, timeout: float = None):
         """初始化 AI 模型 API 客户端
         
         Args:
             i18n: 国际化文本字典
             max_retries: 最大重试次数
-            timeout: 请求超时时间（秒）
+            timeout: 请求超时时间（秒），如果为None则从配置中读取
         """
+        # 如果没有指定timeout，从配置中读取
+        if timeout is None:
+            from .config import get_prefs
+            prefs = get_prefs()
+            timeout = prefs.get('request_timeout', 60)
+        
         self._timeout = timeout
         self._ai_model = None  # 当前使用的 AI 模型实例
         self._model_name = None  # 当前使用的模型名称
@@ -135,7 +149,7 @@ class APIClient:
                 
             raise AIAPIError(error_msg, error_type=error_type) from e
     
-    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None) -> str:
+    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None, model_id: str = None) -> str:
         """向 AI 模型发送问题并获取回答，支持流式请求
         
         Args:
@@ -144,6 +158,7 @@ class APIClient:
             return_dict: 是否返回完整的响应字典，默认为 False，只返回文本
             stream: 是否使用流式请求，默认为 False
             stream_callback: 流式响应回调函数，用于处理流式响应的每个片段
+            model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
             
         Returns:
             str 或 dict: 如果 return_dict 为 False，返回回答文本；否则返回完整的响应字典
@@ -154,20 +169,30 @@ class APIClient:
         # 更新 i18n 以确保使用正确的语言
         self.i18n = get_translation(lang_code)
         
-        # 检查模型是否已加载
-        if not self._ai_model:
-            # 尝试重新加载模型
-            self._load_current_model()
-            
-            if not self._ai_model:
-                error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
-                raise AIAPIError(error_msg, error_type="config_error")
+        # 如果指定了model_id，临时切换模型
+        original_model = None
+        original_model_name = None
+        if model_id and model_id != self._model_name:
+            logger.info(f"临时切换模型: {self._model_name} -> {model_id}")
+            original_model = self._ai_model
+            original_model_name = self._model_name
+            self._switch_to_model(model_id)
         
         try:
+            # 检查模型是否已加载
+            if not self._ai_model:
+                # 尝试重新加载模型
+                self._load_current_model()
+                
+                if not self._ai_model:
+                    error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
+                    raise AIAPIError(error_msg, error_type="config_error")
+            
             # 准备请求参数
             kwargs = {
                 'temperature': 0.7,
-                'max_tokens': 2000
+                'max_tokens': 2000,
+                'timeout': self._timeout  # 使用配置的超时时间
             }
             
             # 检查模型是否支持流式传输以及是否在配置中启用了流式传输
@@ -218,10 +243,20 @@ class APIClient:
         except AIAPIError:
             # 直接重新抛出 AIAPIError
             raise
+        except requests.exceptions.Timeout as e:
+            # 处理超时错误
+            error_msg = self.i18n.get('request_timeout_error', 'Request timeout. Current timeout: {timeout} seconds').format(timeout=self._timeout)
+            raise AIAPIError(error_msg, error_type="timeout_error") from e
         except Exception as e:
-            # 处理其他未知错误
-            error_msg = f"{self.i18n.get('unknown_error', 'Unknown error')}: {str(e)}"
+            # 处理其他未知错误（错误信息可能已经格式化好）
+            error_msg = str(e)
             raise AIAPIError(error_msg, error_type="unknown_error") from e
+        finally:
+            # 恢复原始模型
+            if original_model is not None:
+                logger.info(f"恢复原始模型: {model_id} -> {original_model_name}")
+                self._ai_model = original_model
+                self._model_name = original_model_name
     
     def _get_provider_from_model_name(self, model_name: str) -> AIProvider:
         """根据模型名称获取对应的AIProvider枚举值
@@ -234,28 +269,49 @@ class APIClient:
         """
         return self._MODEL_TO_PROVIDER.get(model_name, DEFAULT_PROVIDER)
     
+    def _switch_to_model(self, model_id: str):
+        """临时切换到指定的模型
+        
+        Args:
+            model_id: 模型ID（如'grok', 'openai'等）
+        """
+        from calibre.utils.config import JSONConfig
+        try:
+            # 获取配置
+            prefs = JSONConfig('plugins/ask_ai_plugin')
+            models_config = prefs.get('models', {})
+            
+            # 获取指定模型的配置
+            model_config = models_config.get(model_id, {})
+            
+            if not model_config:
+                logger.warning(f"未找到模型 {model_id} 的配置")
+                return
+            
+            # 确保配置中包含语言设置，用于错误信息国际化
+            if 'language' not in model_config:
+                model_config['language'] = prefs.get('language', 'en')
+                logger.debug(f"Added language to model config: {model_config['language']}")
+            
+            # 创建模型实例
+            self._model_name = model_id
+            self._ai_model = AIModelFactory.create_model(model_id, model_config)
+            logger.info(f"已切换到模型: {model_id}")
+            
+        except Exception as e:
+            logger.error(f"切换模型 {model_id} 时出错: {str(e)}")
+    
     def _load_current_model(self):
         """加载当前选择的模型"""
         from calibre.utils.config import JSONConfig
         try:
             # 获取当前配置
-            prefs = JSONConfig('plugins/ask_grok')
+            prefs = JSONConfig('plugins/ask_ai_plugin')
             selected_model = prefs.get('selected_model', 'grok')  # 仍然使用字符串作为配置键
             models_config = prefs.get('models', {})
             
-            # 添加调试日志
-            logger.debug(f"当前选中的模型: {selected_model}")
-            # 安全记录所有模型配置，隐藏API Key
-            safe_models_config = safe_log_config(models_config)
-            logger.debug(f"所有模型配置: {safe_models_config}")
-            
             # 获取选中模型的配置
             model_config = models_config.get(selected_model, {})
-            
-            # 添加调试日志
-            # 安全记录选中模型的配置，隐藏API Key
-            safe_model_config = safe_log_config(model_config)
-            logger.debug(f"选中模型的配置: {safe_model_config}")
             
             # 获取对应的AIProvider枚举值
             provider = self._get_provider_from_model_name(selected_model)
@@ -272,6 +328,11 @@ class APIClient:
             
             # 创建模型实例
             if model_config:
+                # 确保配置中包含语言设置，用于错误信息国际化
+                if 'language' not in model_config:
+                    model_config['language'] = prefs.get('language', 'en')
+                    logger.debug(f"Added language to model config: {model_config['language']}")
+                
                 self._model_name = selected_model
                 self._ai_model = AIModelFactory.create_model(selected_model, model_config)
                 # 安全记录模型配置，隐藏API Key
@@ -283,7 +344,11 @@ class APIClient:
                 self._ai_model = None
                 
         except Exception as e:
-            logger.error(f"加载 AI 模型时出错: {str(e)}")
+            # 如果是缺少配置，使用 WARNING 级别；其他错误使用 ERROR
+            if "Missing required configuration" in str(e):
+                logger.warning(f"AI 模型配置不完整: {str(e)}")
+            else:
+                logger.error(f"加载 AI 模型时出错: {str(e)}")
             self._model_name = None
             self._ai_model = None
     
@@ -300,7 +365,7 @@ class APIClient:
         import random
         
         # 获取当前配置
-        prefs = JSONConfig('plugins/ask_grok')
+        prefs = JSONConfig('plugins/ask_ai_plugin')
         random_questions = prefs.get('random_questions', {})
         
         # 获取当前语言的随机问题提示词
@@ -355,21 +420,31 @@ class APIClient:
             response = response.strip()
             if response.startswith('"') and response.endswith('"'):
                 response = response[1:-1].strip()
+            
+            # 过滤掉 think 标签（用于 Deepseek-R1 等推理模型）
+            import re
+            # 移除 <think>...</think> 标签及其内容
+            response = re.sub(r'<think>.*?</think>', '', response, flags=re.DOTALL)
+            response = response.strip()
+            
+            # 如果过滤后为空，返回错误
+            if not response:
+                error_msg = self.i18n.get('empty_response_after_filter', 'Response is empty after filtering think tags')
+                logger.error(f"{model_name}: {error_msg}")
+                raise AIAPIError(error_msg)
                 
             return response
                 
         except AIAPIError as api_error:
             # 记录详细的 API 错误信息
             logger.error(f"{model_name} API 错误: {str(api_error)}")
-            # 返回带有更详细错误信息的错误消息
-            error_msg = self.i18n.get('api_error_template', 'API request failed: {error}')
-            return f"Error: {error_msg.format(error=str(api_error))}"
+            # 抛出异常，让调用者处理（会触发 error_occurred 信号）
+            raise
         except Exception as e:
             # 记录详细的异常信息
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
-            # 处理其他未知错误
-            error_msg = self.i18n.get('random_question_error', 'Error generating random question')
-            return f"Error: {error_msg}: {str(e)}"
+            # 抛出异常，让调用者处理（会触发 error_occurred 信号）
+            raise
     
     def reload_model(self):
         """重新加载当前选择的模型"""
@@ -468,6 +543,160 @@ class APIClient:
             
         # 如果没有配置，使用默认值
         return DEFAULT_MODELS[provider].default_model_name
+    
+    @property
+    def current_model(self):
+        """获取当前AI模型实例"""
+        if not self._ai_model:
+            self._load_current_model()
+        return self._ai_model
+    
+    @property
+    def provider_name(self):
+        """获取当前模型的提供商名称"""
+        if not self._model_name:
+            self._load_current_model()
+        
+        if not self._model_name:
+            return 'Unknown'
+        
+        # 获取对应的AIProvider枚举值
+        provider = self._get_provider_from_model_name(self._model_name)
+        
+        # 从默认模型配置中获取显示名称
+        model_config = DEFAULT_MODELS.get(provider)
+        if model_config:
+            return model_config.display_name
+        
+        return self._model_name.capitalize()
+    
+    def fetch_available_models(self, model_name, config, skip_verification=False): 
+        """
+        从 AI 提供商获取可用模型列表
+        
+        Args:
+            model_name: 模型提供商名称 ('grok', 'openai', 'gemini', etc.)
+            config: 模型配置字典，包含 api_key, api_base_url 等
+            skip_verification: 跳过 API Key 验证
+            
+        Returns:
+            Tuple[bool, Union[List[str], str]]: 
+                - (True, List[str]): 成功，返回模型名称列表
+                - (False, str): 失败，返回错误消息
+        """
+        try:
+            # 1. 验证参数
+            if not model_name or not config:
+                error_msg = self.i18n.get('invalid_params', 'Invalid parameters')
+                logger.error(f"fetch_available_models: {error_msg}")
+                return False, error_msg
+            
+            # 2. 验证 API Key（Ollama 不需要）
+            # 先确定 API Key 字段名称
+            api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
+            
+            if model_name != 'ollama':
+                api_key = config.get(api_key_field, '').strip()
+                logger.info(f"[{model_name}] API 客户端接收到的 API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
+                if not api_key:
+                    error_msg = self.i18n.get('api_key_required', 'API Key is required')
+                    logger.warning(f"fetch_available_models: {error_msg}")
+                    return False, error_msg
+            else:
+                logger.info(f"[{model_name}] Ollama 是本地服务，跳过 API Key 验证")
+            
+            # 3. 创建临时模型实例（添加语言设置）
+            logger.debug(f"Creating temporary model instance for {model_name}")
+            # 确保配置中包含语言设置，用于错误信息国际化
+            if 'language' not in config:
+                from .config import get_prefs
+                prefs = get_prefs()
+                config['language'] = prefs.get('language', 'en')
+                logger.debug(f"Added language to config: {config['language']}")
+            
+            if model_name != 'ollama':
+                logger.info(f"[{model_name}] 创建模型实例前的配置 - API Key: {'存在' if config.get(api_key_field) else '为空'}")
+            temp_model = AIModelFactory.create_model(model_name, config)
+            if model_name != 'ollama':
+                logger.info(f"[{model_name}] 模型实例创建成功，config 中的 API Key: {'存在' if temp_model.config.get(api_key_field) else '为空'}")
+            else:
+                logger.info(f"[{model_name}] 模型实例创建成功")
+            
+            # 4. 调用模型的 fetch_available_models 方法
+            logger.info(f"Fetching available models for {model_name}, skip_verification={skip_verification}")
+            models = temp_model.fetch_available_models(skip_verification=skip_verification)
+            
+            # 5. 返回成功结果
+            logger.info(f"Successfully fetched {len(models)} models for {model_name}")
+            return True, models
+            
+        except NotImplementedError:
+            error_msg = self.i18n.get('model_list_not_supported', 
+                                     'This provider does not support automatic model list fetching')
+            logger.warning(f"{model_name} does not support model list fetching")
+            return False, error_msg
+            
+        except AIAPIError as e:
+            error_msg = str(e)
+            logger.error(f"Failed to fetch models for {model_name}: {error_msg}")
+            return False, error_msg
+            
+        except Exception as e:
+            # 异常信息已经在 models/base.py 中格式化好（用户友好描述 + 技术细节）
+            error_msg = str(e)
+            logger.error(f"Unexpected error while fetching models for {model_name}: {error_msg}")
+            return False, error_msg
+    
+    def test_model(self, model_name, config, test_model_name=None):
+        """
+        测试指定的模型是否可用
+        
+        Args:
+            model_name: 模型提供商名称 ('grok', 'openai', 'gemini', 'ollama', etc.)
+            config: 模型配置字典，包含 api_key, api_base_url 等
+            test_model_name: 要测试的模型名称（对于 Ollama，如果为 None 则使用配置的默认模型）
+            
+        Returns:
+            Tuple[bool, str]: 
+                - (True, success_message): 成功
+                - (False, error_message): 失败，返回错误消息
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # 确保配置中包含语言设置
+            if 'language' not in config:
+                from .config import get_prefs
+                prefs = get_prefs()
+                config['language'] = prefs.get('language', 'en')
+            
+            # 创建临时模型实例
+            logger.info(f"[{model_name}] 创建模型实例进行测试")
+            temp_model = AIModelFactory.create_model(model_name, config)
+            
+            # 调用验证方法
+            if model_name == 'ollama':
+                # Ollama 需要指定测试模型
+                if test_model_name is None:
+                    test_model_name = config.get('model', temp_model.DEFAULT_MODEL)
+                logger.info(f"[Ollama] 测试模型: {test_model_name}")
+                temp_model.verify_api_key_with_test_request(test_model=test_model_name)
+            else:
+                # 其他模型使用默认验证
+                logger.info(f"[{model_name}] 测试 API Key 有效性")
+                temp_model.verify_api_key_with_test_request()
+            
+            # 测试成功
+            success_msg = self.i18n.get('model_test_success', 'Model test successful')
+            logger.info(f"[{model_name}] 模型测试成功")
+            return True, success_msg
+            
+        except Exception as e:
+            # 测试失败，返回错误信息（已经格式化好）
+            error_msg = str(e)
+            logger.error(f"[{model_name}] 模型测试失败: {error_msg}")
+            return False, error_msg
 
 
 # 创建 APIClient 的全局实例，供其他模块导入使用

@@ -2,10 +2,12 @@
 Grok AI 模型实现
 """
 import json
-import requests
 import time
 import logging
 from typing import Dict, Any, Optional
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation
@@ -26,11 +28,16 @@ class GrokModel(BaseAIModel):
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['auth_token', 'api_base_url', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['auth_token', 'api_base_url']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -103,8 +110,8 @@ class GrokModel(BaseAIModel):
             "max_tokens": kwargs.get('max_tokens', 128000)
         }
         
-        # 添加流式传输支持
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # 添加流式传输支持（只有明确指定 stream=True 才添加）
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data
@@ -132,7 +139,7 @@ class GrokModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
                 
                 api_url = f"{self.config['api_base_url']}/chat/completions"
                 
@@ -266,7 +273,7 @@ class GrokModel(BaseAIModel):
                 return full_content
             else:
                 # 非流式请求
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.grok')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
                 
                 logger.debug("开始Grok非流式请求")
                 try:
@@ -365,6 +372,22 @@ class GrokModel(BaseAIModel):
         """
         return True
     
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "x.AI (Grok)"
+    
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
         """
@@ -378,3 +401,6 @@ class GrokModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    # Grok 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models
+    # 注意：Grok 使用 auth_token 而不是 api_key，但 prepare_headers() 已经处理了这个差异

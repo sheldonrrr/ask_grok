@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-German language translations for Ask Grok plugin.
+German language translations for Ask AI Plugin.
 """
 
 from ..models.base import BaseTranslation, TranslationRegistry, AIProvider
@@ -29,10 +29,14 @@ class GermanTranslation(BaseTranslation):
         return """Sie sind ein Buchexperte. Generieren Sie für das Buch \"{title}\" von {author}, Sprache: {language}, EINE aufschlussreiche Frage, die den Lesern hilft, die Kernideen des Buches, praktische Anwendungen oder einzigartige Perspektiven besser zu verstehen. Regeln: 1. Geben Sie NUR die Frage zurück, ohne Einleitung oder Erklärung 2. Konzentrieren Sie sich auf den Inhalt des Buches, nicht nur auf den Titel 3. Stellen Sie eine praktische und zum Nachdenken anregende Frage 4. Halten Sie es kurz (30-200 Wörter) 5. Seien Sie kreativ und generieren Sie jedes Mal eine andere Frage, auch für dasselbe Buch"""
     
     @property
+    def multi_book_default_template(self) -> str:
+        return """Hier sind Informationen über mehrere Bücher: {books_metadata} Benutzerfrage: {query} Bitte beantworten Sie die Frage basierend auf den obigen Buchinformationen."""
+    
+    @property
     def translations(self) -> dict:
         return {
             # Plugin-Informationen
-            'plugin_name': 'Ask Grok',
+            'plugin_name': 'Ask AI Plugin',
             'plugin_desc': 'Stellen Sie Fragen zu einem Buch mit KI',
             
             # UI - Tabs und Abschnitte
@@ -47,12 +51,67 @@ class GermanTranslation(BaseTranslation):
             'ok_button': 'OK',
             'save_button': 'Speichern',
             'send_button': 'Senden',
+            'stop_button': 'Stoppen',
             'suggest_button': 'Zufällige Frage',
             'copy_response': 'Antwort kopieren',
             'copy_question_response': 'F&&A kopieren',
+            'export_pdf': 'PDF exportieren',
+            'export_current_qa': 'Aktuelles Q&A exportieren',
+            'export_history': 'Verlauf exportieren',
+            
+            # Export-Einstellungen
+            'export_settings': 'Export-Einstellungen',
+            'enable_default_export_folder': 'In Standardordner exportieren',
+            'no_folder_selected': 'Kein Ordner ausgewählt',
+            'browse': 'Durchsuchen...',
+            'select_export_folder': 'Export-Ordner auswählen',
+            
+            # Schaltflächentext und Menüelemente
+            'copy_response_btn': 'Antwort kopieren',
+            'copy_qa_btn': 'F&A kopieren',
+            'export_current_btn': 'F&A als PDF exportieren',
+            'export_history_btn': 'Verlauf als PDF exportieren',
+            'copy_mode_response': 'Antwort',
+            'copy_mode_qa': 'F&A',
+            'export_mode_current': 'Aktuelles F&A',
+            'export_mode_history': 'Verlauf',
+            
+            # PDF-Export bezogen
+            'model_provider': 'Anbieter',
+            'model_name': 'Modell',
+            'model_api_url': 'API-Basis-URL',
+            'pdf_model_info': 'KI-Modell-Informationen',
+            'pdf_software': 'Software',
+            'export_all_history_dialog_title': 'Gesamten Verlauf als PDF exportieren',
+            'export_all_history_title': 'GESAMTER Q&A-VERLAUF',
+            'export_history_insufficient': 'Mindestens 2 Verlaufseinträge erforderlich zum Exportieren.',
+            'history_record': 'Eintrag',
+            'question_label': 'Frage',
+            'answer_label': 'Antwort',
+            'default_ai': 'Standard-KI',
+            'export_time': 'Exportiert am',
+            'total_records': 'Gesamteinträge',
+            'info': 'Information',
+            'yes': 'Ja',
+            'no': 'Nein',
+            'no_book_selected_title': 'Kein Buch Ausgewählt',
+            'no_book_selected_message': 'Bitte wählen Sie zuerst ein Buch aus, bevor Sie Fragen stellen.',
+            'set_default_ai_title': 'Standard-KI Festlegen',
+            'set_default_ai_message': 'Sie haben zu "{0}" gewechselt. Möchten Sie diese als Standard-KI für zukünftige Anfragen festlegen?',
+            'set_default_ai_success': 'Standard-KI wurde auf "{0}" festgelegt.',
+            'default_ai_mismatch_title': 'Standard-KI Geändert',
+            'default_ai_mismatch_message': 'Die Standard-KI in der Konfiguration wurde auf "{default_ai}" geändert,\naber der aktuelle Dialog verwendet "{current_ai}".\n\nMöchten Sie zur neuen Standard-KI wechseln?',
             'copied': 'Kopiert!',
+            'pdf_exported': 'PDF exportiert!',
+            'export_pdf_dialog_title': 'In PDF exportieren',
+            'export_pdf_error': 'Fehler beim Exportieren der PDF: {0}',
+            'no_question': 'Keine Frage',
+            'no_response': 'Keine Antwort',
             'saved': 'Gespeichert',
             'close_button': 'Schließen',
+            'open_local_tutorial': 'Lokales Tutorial öffnen',
+            'tutorial_open_failed': 'Tutorial konnte nicht geöffnet werden',
+            'tutorial': 'Tutorial',
             
             # UI - Konfigurationsfelder
             'token_label': 'API-Schlüssel:',
@@ -81,15 +140,29 @@ class GermanTranslation(BaseTranslation):
             
             # UI - Menüpunkte
             'menu_title': 'Fragen',
-            'menu_ask': 'Frage {model}',
+            'menu_ask': 'Frage',
             
             # UI - Statusmeldungen
-            'loading': 'Laden',
+            'loading': 'Laden...',
             'loading_text': 'Frage stellen',
             'save_success': 'Einstellungen gespeichert',
             'sending': 'Senden...',
             'requesting': 'Anfrage läuft',
             'formatting': 'Anfrage erfolgreich, Formatierung läuft',
+            
+            # UI - Modellliste-Funktion
+            'load_models': 'Modelle laden',
+            'use_custom_model': 'Benutzerdefinierten Modellnamen verwenden',
+            'custom_model_placeholder': 'Benutzerdefinierten Modellnamen eingeben',
+            'model_placeholder': 'Bitte laden Sie zuerst Modelle',
+            'models_loaded': '{count} Modelle erfolgreich geladen',
+            'load_models_failed': 'Fehler beim Laden der Modelle: {error}',
+            'model_list_not_supported': 'Dieser Anbieter unterstützt kein automatisches Abrufen der Modellliste',
+            'api_key_required': 'Bitte geben Sie zuerst den API-Schlüssel ein',
+            'invalid_params': 'Ungültige Parameter',
+            'warning': 'Warnung',
+            'success': 'Erfolg',
+            'error': 'Fehler',
             
             # Metadatenfelder
             'metadata_title': 'Titel',
@@ -101,15 +174,38 @@ class GermanTranslation(BaseTranslation):
             'no_metadata': 'Keine Metadaten',
             'no_series': 'Keine Reihe',
             'unknown': 'Unbekannt',
+
+            # Multi-book feature
+            'books_unit': ' Bücher',
+            'new_conversation': 'Neue Unterhaltung',
+            'single_book': 'Einzelnes Buch',
+            'multi_book': 'Mehrere Bücher',
+            'deleted': 'Gelöscht',
+            'history': 'Verlauf',
+            'no_history': 'Keine Verlaufseinträge',
+            'empty_question_placeholder': '(Keine Frage)',
+            'history_ai_unavailable': 'Diese KI wurde aus der Konfiguration entfernt',
+            'clear_current_book_history': 'Verlauf des aktuellen Buches löschen',
+            'confirm_clear_book_history': 'Möchten Sie wirklich den gesamten Verlauf für folgende Bücher löschen?\n{book_titles}',
+            'confirm': 'Bestätigen',
+            'history_cleared': '{deleted_count} Verlaufseinträge gelöscht.',
+            'multi_book_template_label': 'Prompt-Vorlage für mehrere Bücher:',
+            'multi_book_placeholder_hint': 'Verwenden Sie {books_metadata} für Buchinformationen, {query} für die Benutzerfrage',
             
             # Fehlermeldungen
-            'error': 'Fehler: ',
             'network_error': 'Verbindungsfehler',
             'request_timeout': 'Anfrage-Timeout',
             'request_failed': 'Anfrage fehlgeschlagen',
+            'request_stopped': 'Anfrage gestoppt',
             'question_too_long': 'Frage zu lang',
             'auth_token_required_title': 'API-Schlüssel erforderlich',
-            'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen',
+            'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen.',
+            'open_configuration': 'Konfiguration öffnen',
+            'cancel': 'Abbrechen',
+            "invalid_default_ai_title": "Ungültige Standard-KI",
+            "invalid_default_ai_message": "Die Standard-KI \"{default_ai}\" ist nicht richtig konfiguriert.\n\nMöchten Sie stattdessen zu \"{first_ai}\" wechseln?",
+            "switch_to_ai": "Wechseln zu {ai}",
+            "keep_current": "Aktuell Beibehalten",
             'error_preparing_request': 'Fehler bei der Anfragevorbereitung',
             'empty_suggestion': 'Leerer Vorschlag',
             'process_suggestion_error': 'Fehler bei der Vorschlagsverarbeitung',
@@ -125,9 +221,19 @@ class GermanTranslation(BaseTranslation):
             'auth_error_403': 'Zugriff verweigert',
             'rate_limit': 'Zu viele Anfragen',
             'invalid_json': 'Ungültiges JSON',
-            'no_response': 'Keine Antwort',
             'template_error': 'Vorlagenfehler',
             'no_model_configured': 'Kein KI-Modell konfiguriert. Bitte konfigurieren Sie ein KI-Modell in den Einstellungen.',
+            'no_ai_configured_title': 'Keine KI konfiguriert',
+            'no_ai_configured_message': 'Willkommen! Um Fragen zu Ihren Büchern zu stellen, müssen Sie zuerst einen KI-Anbieter konfigurieren.\n\nEmpfohlen für Anfänger:\n• Nvidia AI - 6 Monate KOSTENLOSER API-Zugang mit nur Ihrer Telefonnummer (keine Kreditkarte erforderlich)\n• Ollama - KI-Modelle lokal auf Ihrem Computer ausführen (völlig kostenlos und privat)\n\nMöchten Sie jetzt die Plugin-Konfiguration öffnen, um einen KI-Anbieter einzurichten?',
+            'open_settings': 'Plugin-Konfiguration',
+            'ask_anyway': 'Trotzdem fragen',
+            'later': 'Später',
+            'reset_all_data': 'Alle Daten zurücksetzen',
+            'reset_all_data_warning': 'Dies löscht alle API-Schlüssel, Prompt-Vorlagen und lokale Verlaufseinträge. Ihre Spracheinstellung wird beibehalten. Bitte vorsichtig vorgehen.',
+            'reset_all_data_confirm_title': 'Zurücksetzen bestätigen',
+            'reset_all_data_confirm_message': 'Sind Sie sicher, dass Sie das Plugin auf den Ausgangszustand zurücksetzen möchten?\n\nDies löscht dauerhaft:\n• Alle API-Schlüssel\n• Alle benutzerdefinierten Prompt-Vorlagen\n• Alle Gesprächsverläufe\n• Alle Plugin-Einstellungen (Spracheinstellung wird beibehalten)\n\nDiese Aktion kann nicht rückgängig gemacht werden!',
+            'reset_all_data_success': 'Alle Plugin-Daten wurden erfolgreich zurückgesetzt. Bitte starten Sie calibre neu, damit die Änderungen wirksam werden.',
+            'reset_all_data_failed': 'Fehler beim Zurücksetzen der Plugin-Daten: {error}',
             'random_question_error': 'Fehler beim Generieren einer zufälligen Frage',
             'clear_history_failed': 'Löschen des Verlaufs fehlgeschlagen',
             'clear_history_not_supported': 'Löschen des Verlaufs für ein einzelnes Buch wird noch nicht unterstützt',
@@ -160,10 +266,15 @@ class GermanTranslation(BaseTranslation):
             'model_name_required': 'Modellname ist erforderlich',
             'api_key_empty': 'API-Schlüssel ist leer. Bitte geben Sie einen gültigen API-Schlüssel ein.',
             
+            # Modellliste abrufen
+            'fetching_models_from': 'Modelle werden von {url} abgerufen',
+            'successfully_fetched_models': '{count} {provider}-Modelle erfolgreich abgerufen',
+            'failed_to_fetch_models': 'Fehler beim Abrufen der Modelle: {error}',
+            
             # Über Informationen
             'author_name': 'Sheldon',
             'user_manual': 'Benutzerhandbuch',
-            'about_plugin': 'Warum Ask Grok?',
+            'about_plugin': 'Warum Ask AI Plugin?',
             'learn_how_to_use': 'Nutzungsanleitung',
             'email': 'iMessage',
             
@@ -173,23 +284,80 @@ class GermanTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Benutzerdefiniert',
             'model_enable_streaming': 'Streaming aktivieren',
-            'model_disable_ssl_verify': 'SSL-Verifizierung deaktivieren',
             
-            # Allgemeine Systemnachrichten
+            # AI Switcher
+            'no_configured_models': 'Keine KI konfiguriert - Bitte in den Einstellungen konfigurieren',
+            
+            # Provider specific info
+            'nvidia_free_info': '💡 Neue Benutzer erhalten 6 Monate kostenlosen API-Zugang - Keine Kreditkarte erforderlich',
+            
+            # Common system messages
             'default_system_message': 'Sie sind ein Experte für Buchanalysen. Ihre Aufgabe ist es, Benutzern zu helfen, Bücher besser zu verstehen, indem Sie aufschlussreiche Fragen und Analysen bereitstellen.',
 
-            # Deprecation notice
-            'deprecation_notice_title': 'Wichtiger Hinweis: Plugin umbenannt',
-            'deprecation_notice_message': '''Das Ask Grok-Plugin wurde in „Ask AI“ umbenannt.
+            # Request timeout settings
+            'request_timeout_label': 'Anfrage-Timeout:',
+            'seconds': 'Sekunden',
+            'request_timeout_error': 'Anfrage-Timeout. Aktuelles Timeout: {timeout} Sekunden',
+            
+            # Parallel AI settings
+            'parallel_ai_count_label': 'Anzahl paralleler KIs:',
+            'parallel_ai_count_tooltip': 'Anzahl der gleichzeitig abzufragenden KI-Modelle (1-2 verfügbar, 3-4 in Kürze)',
+            'parallel_ai_notice': 'Hinweis: Dies betrifft nur das Senden von Fragen. Zufällige Fragen verwenden immer eine einzelne KI.',
+            'suggest_maximize': 'Tipp: Maximieren Sie das Fenster für eine bessere Ansicht mit 3 KIs',
+            'ai_panel_label': 'KI {index}:',
+            'no_ai_available': 'Keine KI für dieses Panel verfügbar',
+            'add_more_ai_providers': 'Bitte fügen Sie weitere KI-Anbieter in den Einstellungen hinzu',
+            'select_ai': '-- KI auswählen --',
+            'select_model': '-- Modell wechseln --',
+            'request_model_list': 'Bitte Modellliste anfordern',
+            'coming_soon': 'Demnächst verfügbar',
+            'advanced_feature_tooltip': 'Diese Funktion befindet sich in der Entwicklung. Bleiben Sie dran für Updates!',
+            
+            # PDF export section titles
+            'pdf_book_metadata': 'BUCHMETADATEN',
+            'pdf_question': 'FRAGE',
+            'pdf_answer': 'ANTWORT',
+            'pdf_ai_model_info': 'KI-MODELL-INFORMATIONEN',
+            'pdf_generated_by': 'GENERIERET VON',
+            'pdf_provider': 'Anbieter',
+            'pdf_model': 'Modell',
+            'pdf_api_base_url': 'API-Basis-URL',
+            'pdf_panel': 'Panel',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_software': 'Software',
+            'pdf_generated_time': 'Generierte Zeit',
+            'discard_changes': 'Änderungen Verwerfen',
+            'empty_response': 'Leere Antwort von API erhalten',
+            'empty_response_after_filter': 'Antwort ist nach dem Filtern von Think-Tags leer',
+            'error_401': 'API-Schlüssel-Authentifizierung fehlgeschlagen. Bitte prüfen: API-Schlüssel ist korrekt, Konto hat ausreichendes Guthaben, API-Schlüssel ist nicht abgelaufen.',
+            'error_403': 'Zugriff verweigert. Bitte prüfen: API-Schlüssel hat ausreichende Berechtigungen, keine regionalen Zugriffsbeschränkungen.',
+            'error_404': 'API-Endpunkt nicht gefunden. Bitte prüfen Sie, ob die API-Basis-URL-Konfiguration korrekt ist.',
+            'error_429': 'Zu viele Anfragen, Ratenlimit erreicht. Bitte versuchen Sie es später erneut.',
+            'error_5xx': 'Serverfehler. Bitte versuchen Sie es später erneut oder prüfen Sie den Status des Dienstanbieters.',
+            'error_network': 'Netzwerkverbindung fehlgeschlagen. Bitte prüfen Sie Netzwerkverbindung, Proxy-Einstellungen oder Firewall-Konfiguration.',
+            'error_unknown': 'Unbekannter Fehler.',
+            'gemini_geo_restriction': 'Gemini API ist in Ihrer Region nicht verfügbar. Bitte versuchen Sie:\n1. VPN verwenden, um von einer unterstützten Region aus zu verbinden\n2. Andere KI-Anbieter verwenden (OpenAI, Anthropic, DeepSeek usw.)\n3. Google AI Studio für Regionsverfügbarkeit prüfen',
+            'load_models_list': 'Modellliste Laden',
+            'loading_models_text': 'Modelle werden geladen',
+            'model_test_success': 'Modelltest erfolgreich! Konfiguration gespeichert.',
+            'models_loaded_with_selection': '{count} Modelle erfolgreich geladen.\nAusgewähltes Modell: {model}',
+            'ollama_model_not_available': 'Modell "{model}" ist nicht verfügbar. Bitte prüfen:\n1. Ist das Modell gestartet? Ausführen: ollama run {model}\n2. Ist der Modellname korrekt?\n3. Ist das Modell heruntergeladen? Ausführen: ollama pull {model}',
+            'ollama_service_not_running': 'Ollama-Dienst läuft nicht. Bitte starten Sie zuerst den Ollama-Dienst.',
+            'ollama_service_timeout': 'Ollama-Dienst-Verbindungszeitüberschreitung. Bitte prüfen Sie, ob der Dienst ordnungsgemäß läuft.',
+            'reset_ai_confirm_message': '{ai_name} wird auf den Standardzustand zurückgesetzt.\n\nDies wird löschen:\n• API-Schlüssel\n• Benutzerdefinierter Modellname\n• Andere konfigurierte Parameter\n\nFortfahren?',
+            'reset_ai_confirm_title': 'Zurücksetzen Bestätigen',
+            'reset_current_ai': 'Aktuelle KI auf Standard Zurücksetzen',
+            'reset_tooltip': 'Aktuelle KI auf Standardwerte zurücksetzen',
+            'save_and_close': 'Speichern und Schließen',
+            'skip': 'Überspringen',
+            'technical_details': 'Technische Details',
+            'test_current_model': 'Aktuelles Modell Testen',
+            'test_model_button': 'Modell Testen',
+            'test_model_prompt': 'Modelle erfolgreich geladen! Möchten Sie das ausgewählte Modell "{model}" testen?',
+            'unsaved_changes_message': 'Sie haben ungespeicherte Änderungen. Was möchten Sie tun?',
+            'unsaved_changes_title': 'Ungespeicherte Änderungen',
 
-Sie finden beide Plugins vom selben Autor „Sheldon“ in Calibres Online-Plugin-Liste.
 
-Wichtige Änderungen:
-• Das neue Ask AI-Plugin unterstützt gängigere KI-Dienste, darunter OpenAI, Anthropic, OpenRouter, Ollama, Gemini und mehr
-• Dieses Plugin wird in 1 Monat als veraltet gekennzeichnet
-
-Ich empfehle, auf das neue Ask AI-Plugin umzusteigen, um weiterhin Updates und Support zu erhalten.''',
-            'deprecation_dont_show_again': 'Nicht erneut anzeigen',
-            'deprecation_got_it': 'Verstanden',
-            'new_version_button': 'Neue Version',
+            'pdf_info_not_available': 'Informationen nicht verfügbar',
         }

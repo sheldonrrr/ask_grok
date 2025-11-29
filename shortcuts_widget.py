@@ -1,11 +1,11 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QGroupBox, QFrame, QScrollArea
 from PyQt5.QtCore import Qt
 from .i18n import get_translation, get_suggestion_template
-from calibre_plugins.ask_grok.config import get_prefs
+from calibre_plugins.ask_ai_plugin.config import get_prefs
 import sys
 
-# Shortcut for ask: Command + L(macOS), Ctrl + L(other)
-# Shortcut for config: Command + K(macOS), Ctrl + K(other)
+# Shortcut for ask: F3 (all platforms)
+# Shortcut for config: F2 (all platforms)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
 
@@ -34,11 +34,38 @@ class ShortcutsWidget(QWidget):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.NoFrame)
+        scroll_area.setObjectName("shortcuts_scroll")
+        # 去除滚动区域的边框和内边距
+        # 使用 ID 选择器确保只影响这个特定的 QScrollArea
+        style = """
+            QScrollArea#shortcuts_scroll {
+                padding: 0px;
+                margin: 0px;
+                border: none;
+            }
+            QScrollArea#shortcuts_scroll > QWidget {
+                background: transparent;
+            }
+            QScrollArea#shortcuts_scroll QWidget#qt_scrollarea_viewport {
+                background: transparent;
+                border: none;
+                margin: 0px;
+                padding: 0px;
+            }
+        """
+        scroll_area.setStyleSheet(style)
+        # 直接设置 viewport 的边距
+        if scroll_area.viewport():
+            scroll_area.viewport().setContentsMargins(0, 0, 0, 0)
         
         # 创建内容容器
         content_widget = QWidget()
+        # 只为这个特定的 widget 设置样式，不影响子控件
+        content_widget.setStyleSheet("QWidget#shortcuts_container { background: transparent; border: none; }")
+        content_widget.setObjectName("shortcuts_container")
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(15)
+        content_layout.setContentsMargins(0, 0, 0, 0)
         
         # 创建单个快捷键组 - 使用虚线边框而不是内阴影
         shortcuts_group = QGroupBox()
@@ -79,10 +106,10 @@ class ShortcutsWidget(QWidget):
         # 不设置组标题，保持空白
         self.shortcuts_group.setTitle("")
         
-        # 定义所有快捷键
+        # 定义所有快捷键（部分快捷键在不同平台有所不同）
         shortcuts = [
-            (self.i18n.get('menu_ask', 'Ask {model}').format(model='Grok'), f'{modifier_display}+L'),
-            (self.i18n.get('config_title', 'Configuration'), f'{modifier_display}+K'),
+            (self.i18n.get('menu_ask', 'Ask'), 'F3'),
+            (self.i18n.get('config_title', 'Configuration'), 'F2'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
             (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
         ]
@@ -90,7 +117,6 @@ class ShortcutsWidget(QWidget):
         # 创建快捷键标签样式
         label_style = """
             QLabel {
-                font-size: 13px;
                 color: palette(text);
                 padding: 2px;
             }

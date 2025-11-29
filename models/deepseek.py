@@ -2,16 +2,18 @@
 Deepseek AI 模型实现
 """
 import json
-import requests
 import time
 import logging
 from typing import Dict, Any, Optional
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation
 
 # 获取日志记录器
-logger = logging.getLogger('calibre_plugins.ask_grok.models.deepseek')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.deepseek')
 
 
 class DeepseekModel(BaseAIModel):
@@ -29,11 +31,16 @@ class DeepseekModel(BaseAIModel):
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['api_key', 'api_base_url', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['api_key', 'api_base_url']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -105,9 +112,12 @@ class DeepseekModel(BaseAIModel):
             ],
             "model": self.config.get('model', self.DEFAULT_MODEL),
             "temperature": kwargs.get('temperature', 0.7),
-            "max_tokens": kwargs.get('max_tokens', 8192),
-            "stream": kwargs.get('stream', self.config.get('enable_streaming', True))
+            "max_tokens": kwargs.get('max_tokens', 8192)
         }
+        
+        # 添加流式传输支持（只有明确指定 stream=True 才添加）
+        if kwargs.get('stream', False):
+            data['stream'] = True
         
         return data
     
@@ -141,6 +151,14 @@ class DeepseekModel(BaseAIModel):
                     stream_callback = kwargs.get('stream_callback')
                     logger.info(f"开始流式请求, 回调函数存在: {stream_callback is not None}")
                     
+                    # 初始化日志计数器
+                    chunk_count = 0
+                    last_log_length = 0
+                    
+                    # 累积推理内容
+                    reasoning_buffer = ""
+                    is_reasoning = False
+                    
                     try:
                         with requests.post(
                             f"{self.config['api_base_url']}/chat/completions",
@@ -151,12 +169,11 @@ class DeepseekModel(BaseAIModel):
                             stream=True
                         ) as response:
                             response.raise_for_status()
-                            logger.info(f"流式响应状态码: {response.status_code}")
+                            logger.debug(f"流式响应状态码: {response.status_code}")
                             
                             for line in response.iter_lines():
                                 if line:
                                     line = line.decode('utf-8')
-                                    logger.debug(f"收到流式响应行: {line[:50]}...")
                                     
                                     if line.startswith('data: '):
                                         line = line[6:]
@@ -166,15 +183,58 @@ class DeepseekModel(BaseAIModel):
                                         
                                         try:
                                             chunk = json.loads(line)
-                                            content = chunk.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                                            delta = chunk.get('choices', [{}])[0].get('delta', {})
+                                            
+                                            # 获取常规内容
+                                            content = delta.get('content', '')
+                                            
+                                            # 获取推理内容（deepseek-reasoner 特有）
+                                            reasoning_content = delta.get('reasoning_content', '')
+                                            
+                                            # 处理推理内容
+                                            if reasoning_content:
+                                                # 累积推理内容
+                                                reasoning_buffer += reasoning_content
+                                                
+                                                # 流式发送推理内容（使用特殊标记）
+                                                if not is_reasoning:
+                                                    # 第一次接收推理内容，发送开始标记
+                                                    if stream_callback and callable(stream_callback):
+                                                        stream_callback("<think>")
+                                                    is_reasoning = True
+                                                
+                                                # 发送推理内容片段
+                                                if stream_callback and callable(stream_callback):
+                                                    stream_callback(reasoning_content)
+                                                    
+                                            elif is_reasoning and content:
+                                                # 推理结束，常规内容开始
+                                                # 发送推理结束标记
+                                                if stream_callback and callable(stream_callback):
+                                                    stream_callback("</think>\n\n")
+                                                
+                                                # 将累积的推理内容添加到完整内容
+                                                if reasoning_buffer:
+                                                    think_chunk = f"<think>{reasoning_buffer}</think>\n\n"
+                                                    full_content += think_chunk
+                                                    reasoning_buffer = ""
+                                                is_reasoning = False
                                             
                                             if content:
                                                 full_content += content
-                                                logger.info(f"解析出内容片段, 长度: {len(content)}字符, 累计: {len(full_content)}字符")
+                                                chunk_count += 1
+                                                
+                                                # 检测并记录特殊标签（用于调试推理内容）
+                                                if '<' in content and any(tag in content for tag in ['think', 'reasoning', 'ds-think']):
+                                                    logger.warning(f"[Deepseek Debug] 检测到可能的推理标签，内容片段: {repr(content[:200])}")
+                                                
+                                                # 每1000字符记录一次日志
+                                                if len(full_content) - last_log_length >= 1000:
+                                                    logger.info(f"[Deepseek Stream] 已接收 {chunk_count} 个片段，累计 {len(full_content)} 字符 (~{len(full_content)//4} tokens)")
+                                                    last_log_length = len(full_content)
                                                 
                                                 # 如果提供了回调函数，则调用它
                                                 if stream_callback and callable(stream_callback):
-                                                    logger.info(f"调用流式回调函数, 传递内容长度: {len(content)}字符")
                                                     stream_callback(content)
                                         except json.JSONDecodeError as e:
                                             logger.error(f"JSON解析错误: {str(e)}, 行内容: {line[:50]}...")
@@ -182,8 +242,25 @@ class DeepseekModel(BaseAIModel):
                     except Exception as e:
                         logger.error(f"流式请求处理异常: {str(e)}")
                         raise
+                    
+                    # 处理流结束时可能还有未发送的推理内容
+                    if reasoning_buffer:
+                        # 发送推理结束标记
+                        if stream_callback and callable(stream_callback):
+                            stream_callback("</think>\n\n")
                         
-                    logger.info(f"流式请求完成, 总内容长度: {len(full_content)}字符")
+                        think_chunk = f"<think>{reasoning_buffer}</think>\n\n"
+                        full_content += think_chunk
+                        logger.info(f"[Deepseek Stream] 流结束时发送剩余推理内容，长度: {len(reasoning_buffer)} 字符")
+                        
+                    # 统计推理内容和常规内容
+                    think_count = full_content.count('<think>')
+                    think_close_count = full_content.count('</think>')
+                    
+                    logger.info(f"[Deepseek Stream] 流式请求完成")
+                    logger.info(f"[Deepseek Stream] 总内容长度: {len(full_content)} 字符 (~{len(full_content)//4} tokens)")
+                    logger.info(f"[Deepseek Stream] 推理块数量: {think_count} 个（完整: {think_close_count}）")
+                    
                     return full_content
                 else:
                     # 使用普通请求
@@ -197,7 +274,20 @@ class DeepseekModel(BaseAIModel):
                     response.raise_for_status()
                     
                     result = response.json()
-                    return result['choices'][0]['message']['content']
+                    message = result['choices'][0]['message']
+                    
+                    # 获取常规内容
+                    content = message.get('content', '')
+                    
+                    # 获取推理内容（deepseek-reasoner 特有）
+                    reasoning_content = message.get('reasoning_content', '')
+                    
+                    # 如果有推理内容，用 <think> 标签包裹并放在前面
+                    if reasoning_content:
+                        logger.warning(f"[Deepseek Debug] 非流式响应中检测到推理内容，长度: {len(reasoning_content)}")
+                        return f"<think>{reasoning_content}</think>\n\n{content}"
+                    
+                    return content
             
             except requests.exceptions.RequestException as e:
                 if attempt < max_retries - 1:
@@ -224,6 +314,22 @@ class DeepseekModel(BaseAIModel):
         :return: 始终返回 True，因为 Deepseek API 支持流式传输
         """
         return True
+    
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "Deepseek"
         
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
@@ -238,3 +344,5 @@ class DeepseekModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    # Deepseek 使用基类的默认实现（OpenAI 兼容格式），无需重写 fetch_available_models

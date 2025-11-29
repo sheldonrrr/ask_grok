@@ -4,8 +4,10 @@ Custom AI 模型实现
 支持用户自定义的本地或远程API模型，如Ollama等
 """
 import json
-import requests
 from typing import Dict, Any, Optional
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation
@@ -23,17 +25,22 @@ class CustomModel(BaseAIModel):
     
     def _validate_config(self):
         """
-        验证 Custom 模型配置
-        对于本地模型，API Key是可选的，只验证必要的配置项
+        验证 Custom 模型配置（实现抽象方法）
+        验证必要的配置项
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['api_base_url', 'model']
-        for key in required_keys:
-            if not self.config.get(key):
-                translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
-        # API Key是可选的，不做强制检查
+        # 只验证 api_base_url，model 可以为空（在 Load Models 时）
+        if not self.config.get('api_base_url'):
+            translations = get_translation(self.config.get('language', 'en'))
+            raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key='api_base_url'))
+        # model 在 Load Models 时可以为空，不做强制检查
+    
+    def validate_config(self):
+        """
+        验证 Custom 模型配置（公共方法）
+        """
+        self._validate_config()
     
     def validate_token(self) -> bool:
         """
@@ -47,14 +54,13 @@ class CustomModel(BaseAIModel):
         # 而对于Custom模型，API Key是可选的
         self._validate_config()
         
-        # 验证API基础URL和模型名称
+        # 验证API基础URL（必需）
         if not self.config.get('api_base_url'):
             translations = get_translation(self.config.get('language', 'en'))
             raise ValueError(translations.get('api_base_url_required', 'API Base URL is required'))
         
-        if not self.config.get('model'):
-            translations = get_translation(self.config.get('language', 'en'))
-            raise ValueError(translations.get('model_name_required', 'Model name is required'))
+        # model 在 Load Models 时可以为空，只在实际对话时才需要
+        # 所以这里不验证 model
         
         # 对于API Key，如果提供了就验证非空，但不强制要求提供
         # 这样本地模型就可以不需要API Key
@@ -108,8 +114,8 @@ class CustomModel(BaseAIModel):
             "temperature": kwargs.get('temperature', 0.7)
         }
         
-        # 添加流式传输支持
-        if kwargs.get('stream', self.config.get('enable_streaming', True)):
+        # 添加流式传输支持（只有明确指定 stream=True 才添加）
+        if kwargs.get('stream', False):
             data['stream'] = True
             
         return data
@@ -132,8 +138,15 @@ class CustomModel(BaseAIModel):
         stream_callback = kwargs.get('stream_callback', None)
         
         try:
-            # 构建API URL
-            api_url = f"{self.config['api_base_url']}/api/chat"
+            # 构建API URL - 使用基类的智能 URL 构建方法
+            base_url = self.config['api_base_url']
+            
+            # 如果 base_url 已经包含完整路径，直接使用
+            if '/api/chat' in base_url or '/chat/completions' in base_url:
+                api_url = base_url
+            else:
+                # 使用基类方法智能拼接 URL
+                api_url = self.build_api_url(base_url, '/v1/chat/completions')
             
             # 如果使用流式传输
             if use_stream and stream_callback:
@@ -151,28 +164,45 @@ class CustomModel(BaseAIModel):
                     headers=headers,
                     json=data,
                     stream=True,
-                    timeout=kwargs.get('timeout', 60),
-                    verify=False  # 本地API可能不需要验证SSL
+                    timeout=kwargs.get('timeout', 60)
                 ) as response:
                     response.raise_for_status()
                     
                     for line in response.iter_lines():
                         if not line:
                             continue
+                        
+                        # 解码行
+                        line_str = line.decode('utf-8') if isinstance(line, bytes) else line
+                        
+                        # OpenAI 格式使用 "data: " 前缀
+                        if line_str.startswith('data: '):
+                            line_str = line_str[6:]  # 移除 "data: " 前缀
+                        
+                        # 跳过 [DONE] 标记
+                        if line_str.strip() == '[DONE]':
+                            break
                             
                         try:
                             # 解析JSON响应
-                            chunk = json.loads(line)
+                            chunk = json.loads(line_str)
                             
-                            # 提取内容
-                            if 'message' in chunk and 'content' in chunk['message']:
+                            # 尝试 OpenAI 格式：提取 choices[0].delta.content
+                            if 'choices' in chunk and len(chunk['choices']) > 0:
+                                delta = chunk['choices'][0].get('delta', {})
+                                content = delta.get('content', '')
+                                if content:
+                                    full_content += content
+                                    stream_callback(content)
+                            # 兼容 Ollama 格式：提取 message.content
+                            elif 'message' in chunk and 'content' in chunk['message']:
                                 content = chunk['message']['content']
-                                full_content += content
-                                stream_callback(content)
-                                
-                            # 检查是否完成
-                            if chunk.get('done', False):
-                                break
+                                if content:
+                                    full_content += content
+                                    stream_callback(content)
+                                # 检查是否完成
+                                if chunk.get('done', False):
+                                    break
                                 
                         except json.JSONDecodeError:
                             continue
@@ -181,7 +211,7 @@ class CustomModel(BaseAIModel):
             else:
                 # 非流式请求
                 import logging
-                logger = logging.getLogger('calibre_plugins.ask_grok.models.custom')
+                logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.custom')
                 
                 logger.debug("开始Custom模型非流式请求")
                 try:
@@ -208,8 +238,7 @@ class CustomModel(BaseAIModel):
                         api_url,
                         headers=headers,
                         json=data,
-                        timeout=kwargs.get('timeout', 60),
-                        verify=False  # 本地API可能不需要验证SSL
+                        timeout=kwargs.get('timeout', 60)
                     )
                     response.raise_for_status()
                     
@@ -217,10 +246,16 @@ class CustomModel(BaseAIModel):
                     
                     result = response.json()
                     
-                    # 提取内容 - 适用于Ollama格式
+                    # 尝试 OpenAI 格式
+                    if 'choices' in result and len(result['choices']) > 0:
+                        content = result['choices'][0]['message']['content']
+                        logger.debug(f"成功获取响应内容（OpenAI格式），长度: {len(content)}")
+                        return content
+                    
+                    # 兼容 Ollama 格式
                     if 'message' in result and 'content' in result['message']:
                         content = result['message']['content']
-                        logger.debug(f"成功获取响应内容，长度: {len(content)}")
+                        logger.debug(f"成功获取响应内容（Ollama格式），长度: {len(content)}")
                         return content
                     
                     # 如果响应格式不符合预期
@@ -259,6 +294,22 @@ class CustomModel(BaseAIModel):
         """
         return True
     
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "Custom"
+    
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
         """
@@ -271,5 +322,6 @@ class CustomModel(BaseAIModel):
             "api_base_url": cls.DEFAULT_API_BASE_URL,
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
-            "disable_ssl_verify": False,  # 默认启用SSL验证，本地模型可能需要禁用
         }
+    
+    # Custom 模型使用基类的 build_api_url 方法，无需重写 prepare_models_request_url

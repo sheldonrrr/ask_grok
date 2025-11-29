@@ -4,15 +4,17 @@ Google Gemini 模型实现
 import json
 import re
 import time
-import requests
 from typing import Dict, Any, Optional
 import logging
+
+# 从 vendor 命名空间导入第三方库
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .base import BaseAIModel
 from ..i18n import get_translation
 
 # 获取日志记录器
-logger = logging.getLogger('calibre_plugins.ask_grok.models.gemini')
+logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.gemini')
 
 class GeminiModel(BaseAIModel):
     """
@@ -29,15 +31,20 @@ class GeminiModel(BaseAIModel):
         
         :raises ValueError: 当配置无效时抛出异常
         """
-        required_keys = ['api_key', 'model']
+        # 基本必需字段（不包括 model，因为在获取模型列表时可能为空）
+        required_keys = ['api_key']
         for key in required_keys:
             if not self.config.get(key):
                 translations = get_translation(self.config.get('language', 'en'))
-                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: API Key'))
+                raise ValueError(translations.get('missing_required_config', 'Missing required configuration: {key}').format(key=key))
         
         # 确保 api_base_url 存在，如果不存在则使用默认值
         if 'api_base_url' not in self.config:
             self.config['api_base_url'] = self.DEFAULT_API_BASE_URL
+        
+        # 如果 model 为空，使用默认值
+        if not self.config.get('model'):
+            self.config['model'] = self.DEFAULT_MODEL
     
     def get_token(self) -> str:
         """
@@ -181,8 +188,8 @@ class GeminiModel(BaseAIModel):
         headers = self.prepare_headers()
         data = self.prepare_request_data(prompt, **kwargs)
         
-        # 获取流式传输设置
-        use_stream = kwargs.get('stream', self.config.get('enable_streaming', True))
+        # 获取流式传输设置（只有明确指定才使用流式）
+        use_stream = kwargs.get('stream', False)
         stream_callback = kwargs.get('stream_callback', None)
         
         # 根据是否使用流式传输构建不同的URL
@@ -194,7 +201,6 @@ class GeminiModel(BaseAIModel):
             url = f"{api_base_url}/models/{model_name}:generateContent"
             params = {}
         
-        logger.debug(f"请求URL: {url}, 参数: {params}")
         
         # 重试设置
         max_retries = 3
@@ -208,7 +214,6 @@ class GeminiModel(BaseAIModel):
                     chunk_count = 0
                     last_chunk_time = time.time()
                     
-                    logger.debug("开始流式请求")
                     # 增加超时时间到 300 秒，避免长回复时请求超时
                     with requests.post(
                         url,
@@ -219,13 +224,11 @@ class GeminiModel(BaseAIModel):
                         stream=True
                     ) as response:
                         response.raise_for_status()
-                        logger.debug(f"流式响应状态码: {response.status_code}")
                         
                         try:
                             for line in response.iter_lines():
                                 if line:
                                     line = line.decode('utf-8')
-                                    logger.debug(f"收到流式响应行: {line[:50]}...")
                                     
                                     # 处理 SSE 格式，必须以 'data: ' 开头
                                     if line.startswith('data: '):
@@ -233,12 +236,10 @@ class GeminiModel(BaseAIModel):
                                         
                                         # 特殊情况处理：如果是 [DONE] 标记
                                         if line.strip() == "[DONE]":
-                                            logger.debug("收到流式响应结束标记 [DONE]")
                                             break
                                         
                                         try:
                                             chunk_data = json.loads(line)
-                                            logger.debug(f"解析JSON数据: {json.dumps(chunk_data, ensure_ascii=False)[:100]}...")
                                             
                                             # 解析 Gemini 流式响应格式
                                             if 'candidates' in chunk_data and chunk_data['candidates']:
@@ -275,7 +276,6 @@ class GeminiModel(BaseAIModel):
                             
                             # 如果已经有内容，尝试恢复连接
                             if full_content:
-                                logger.info("尝试恢复连接以获取完整响应...")
                                 try:
                                     # 保存当前已接收的内容
                                     current_content = full_content
@@ -304,7 +304,6 @@ class GeminiModel(BaseAIModel):
                                     # 设置更长的超时时间
                                     recovery_timeout = kwargs.get('timeout', 300) + 60
                                     
-                                    logger.info(f"发起恢复请求，超时时间: {recovery_timeout}秒")
                                     
                                     # 发起恢复请求
                                     with requests.post(
@@ -316,7 +315,6 @@ class GeminiModel(BaseAIModel):
                                         stream=True
                                     ) as recovery_response:
                                         recovery_response.raise_for_status()
-                                        logger.info(f"恢复连接成功，状态码: {recovery_response.status_code}")
                                         
                                         # 处理恢复响应
                                         for line in recovery_response.iter_lines():
@@ -327,7 +325,6 @@ class GeminiModel(BaseAIModel):
                                                     line = line[6:]
                                                     
                                                     if line.strip() == "[DONE]":
-                                                        logger.info("恢复请求收到结束标记 [DONE]")
                                                         break
                                                     
                                                     try:
@@ -349,23 +346,17 @@ class GeminiModel(BaseAIModel):
                                                         logger.error(f"恢复请求JSON解析错误: {str(je)}")
                                                         continue
                                         
-                                        logger.info(f"恢复请求完成，新增内容长度: {len(full_content) - len(current_content)}")
                                 except Exception as recovery_e:
                                     logger.error(f"恢复连接失败: {str(recovery_e)}")
                                     logger.warning(f"将返回已接收的 {len(full_content)} 字符内容")
                             else:
                                 raise  # 如果没有内容，抛出异常
                     
-                    logger.debug(f"流式请求完成, 总内容长度: {len(full_content)}字符")
                     
                     return full_content
                 else:
                     # 普通请求处理
-                    logger.debug("开始普通请求，禁用流式传输")
                     try:
-                        logger.debug(f"请求URL: {url}")
-                        logger.debug(f"请求头: {json.dumps({k: '***' if k.lower() in ['authorization', 'x-goog-api-key'] else v for k, v in headers.items()}, ensure_ascii=False)}")
-                        logger.debug(f"请求数据: {json.dumps(data, ensure_ascii=False)[:500]}...")
                         
                         response = requests.post(
                             url,
@@ -376,9 +367,7 @@ class GeminiModel(BaseAIModel):
                         )
                         response.raise_for_status()
                         
-                        logger.debug(f"响应状态码: {response.status_code}")
                         result = response.json()
-                        logger.debug(f"普通响应: {json.dumps(result, ensure_ascii=False)[:200]}...")
                         
                         # 解析 Gemini API 响应
                         if 'candidates' in result and result['candidates']:
@@ -386,7 +375,6 @@ class GeminiModel(BaseAIModel):
                             if 'content' in candidate and 'parts' in candidate['content']:
                                 text_parts = [part['text'] for part in candidate['content']['parts'] if 'text' in part]
                                 content = ''.join(text_parts)
-                                logger.debug(f"成功解析响应内容，长度: {len(content)}")
                                 return content
                         
                         # 如果无法获取响应内容，返回错误信息
@@ -395,7 +383,6 @@ class GeminiModel(BaseAIModel):
                         if 'error' in result:
                             error_msg = f"{error_msg}: {result['error'].get('message', translations.get('unknown_error', 'Unknown error'))}"
                         logger.error(f"Gemini API 响应解析失败: {error_msg}")
-                        logger.debug(f"完整响应: {json.dumps(result, ensure_ascii=False)}")
                         raise Exception(error_msg)
                     except requests.exceptions.RequestException as req_e:
                         logger.error(f"Gemini API 请求异常: {str(req_e)}")
@@ -413,7 +400,6 @@ class GeminiModel(BaseAIModel):
                 if attempt < max_retries - 1:
                     # 如果不是最后一次尝试，则等待后重试
                     retry_wait = retry_delay * (2 ** attempt)  # 指数退避
-                    logger.info(f"第 {attempt+1} 次请求失败，{retry_wait} 秒后重试")
                     time.sleep(retry_wait)
                     continue
                 
@@ -447,6 +433,22 @@ class GeminiModel(BaseAIModel):
                 
                 raise Exception(error_msg) from e
     
+    def get_model_name(self) -> str:
+        """
+        获取当前模型名称
+        
+        :return: 模型名称字符串
+        """
+        return self.config.get('model', self.DEFAULT_MODEL)
+    
+    def get_provider_name(self) -> str:
+        """
+        获取提供商名称
+        
+        :return: 提供商名称字符串
+        """
+        return "Google Gemini"
+    
     def supports_streaming(self) -> bool:
         """
         检查 Gemini 模型是否支持流式传输
@@ -468,3 +470,125 @@ class GeminiModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,  # 默认启用流式传输
         }
+    
+    def prepare_models_request_headers(self) -> Dict[str, str]:
+        """
+        准备获取模型列表的请求头
+        Gemini 获取模型列表时不需要在请求头中添加 API key
+        API key 通过 URL 参数传递
+        
+        GET 请求不需要 Content-Type 头
+        
+        :return: 请求头字典
+        """
+        return {}
+    
+    def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
+        """
+        准备获取模型列表的完整 URL
+        Gemini 将 API key 作为 URL 参数
+        
+        :param base_url: API 基础 URL
+        :param endpoint: API 端点路径
+        :return: 完整的请求 URL
+        """
+        api_key = self.config.get('api_key', '')
+        return f"{base_url}{endpoint}?key={api_key}"
+    
+    def parse_models_response(self, data: Dict[str, Any]) -> list:
+        """
+        解析 Gemini API 的模型列表响应
+        Gemini 使用 "models" 字段，且模型名称有 "models/" 前缀需要移除
+        
+        :param data: API 响应的 JSON 数据
+        :return: 模型名称列表
+        """
+        models = []
+        for model in data.get('models', []):
+            model_name = model.get('name', '')
+            # Remove "models/" prefix if present
+            if model_name.startswith('models/'):
+                models.append(model_name.replace('models/', ''))
+            else:
+                models.append(model_name)
+        return models
+    
+    def verify_api_key_with_test_request(self) -> None:
+        """
+        Gemini 使用 URL 参数传递 API Key，需要自定义验证逻辑
+        """
+        import logging
+        from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
+        from ..i18n import get_translation
+        
+        logger = logging.getLogger(self.get_logger_name())
+        provider_name = self.get_provider_name()
+        
+        try:
+            # Gemini 的验证：发送一个最小的 generateContent 请求
+            api_key = self.config.get('api_key', '')
+            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            model_name = self.DEFAULT_MODEL
+            
+            # Gemini 的 API Key 通过 URL 参数传递
+            url = f"{api_base_url}/models/{model_name}:generateContent?key={api_key}"
+            
+            # 最小的测试请求
+            test_data = {
+                "contents": [{
+                    "parts": [{"text": "hi"}]
+                }],
+                "generationConfig": {
+                    "maxOutputTokens": 1
+                }
+            }
+            
+            headers = {"Content-Type": "application/json"}
+            
+            
+            # 在线模型超时时间（15秒）
+            timeout_seconds = 15
+            response = requests.post(
+                url,
+                headers=headers,
+                json=test_data,
+                timeout=timeout_seconds,
+                verify=False
+            )
+            
+            logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
+            logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
+            
+            if response.status_code == 401 or response.status_code == 403:
+                logger.error(f"[{provider_name}] API Key 无效 - {response.status_code}")
+                translations = get_translation(self.config.get('language', 'en'))
+                error_msg = translations.get('error_401', 
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                tech_details = translations.get('technical_details', 'Technical Details')
+                raise Exception(f"{error_msg}\n\n{tech_details}: HTTP {response.status_code} - Invalid API Key")
+            
+            elif response.status_code in [200, 400]:
+                logger.info(f"[{provider_name}] API Key 验证成功 - 状态码: {response.status_code}")
+            
+            else:
+                logger.warning(f"[{provider_name}] 收到未预期的状态码: {response.status_code}")
+                
+        except requests.exceptions.Timeout as e:
+            # 超时错误 - 添加超时时间信息
+            logger.error(f"[{provider_name}] API Key 验证请求超时: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            error_msg = translations.get('error_network', 
+                'Network connection failed. Please check network connection, proxy settings, or firewall configuration.')
+            tech_details = translations.get('technical_details', 'Technical Details')
+            raise Exception(f"{error_msg}\n\n{tech_details}: Timeout after {timeout_seconds} seconds")
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
+            if hasattr(e, 'response') and e.response is not None:
+                if e.response.status_code in [401, 403]:
+                    translations = get_translation(self.config.get('language', 'en'))
+                    error_msg = translations.get('error_401', 
+                        'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                    tech_details = translations.get('technical_details', 'Technical Details')
+                    raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            logger.info(f"[{provider_name}] API Key 验证通过（收到非401/403响应）")
