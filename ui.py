@@ -292,6 +292,32 @@ class AskAIPluginUI(InterfaceAction):
                 f"打开询问弹窗时发生错误:\n{str(e)}"
             )
     
+    def _show_deprecation_notice(self):
+        """显示弃用通知对话框"""
+        # 创建消息框
+        msg_box = QMessageBox(self.gui)
+        msg_box.setWindowTitle(self.i18n['deprecation_notice_title'])
+        msg_box.setText(self.i18n['deprecation_notice_message'])
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 添加按钮（按照添加顺序：左侧到右侧）
+        # ActionRole 按钮显示在左侧，RejectRole 按钮显示在右侧
+        dont_show_btn = msg_box.addButton(self.i18n['deprecation_dont_show_again'], QMessageBox.ActionRole)
+        got_it_btn = msg_box.addButton(self.i18n['deprecation_got_it'], QMessageBox.RejectRole)
+        msg_box.setDefaultButton(got_it_btn)
+        
+        # 显示对话框
+        msg_box.exec_()
+        
+        # 处理用户选择
+        clicked_button = msg_box.clickedButton()
+        prefs = get_prefs()
+        
+        if clicked_button == dont_show_btn:
+            # 用户选择"不再提醒"
+            prefs['show_deprecation_notice'] = False
+            logger.info("Deprecation notice disabled by user")
+    
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
@@ -899,10 +925,15 @@ class TabDialog(QDialog):
         # 添加弹性空间，使按钮分别位于左右两侧
         button_layout.addStretch()
         
+        # 添加New Version按钮（右侧，Close按钮左边）
+        self.new_version_button = QPushButton(self.i18n.get('new_version_button', 'New Version'))
+        self.new_version_button.clicked.connect(self.show_deprecation_notice)
+        button_layout.addWidget(self.new_version_button)
+        
         # 添加Close按钮（右侧）
-        close_button = QPushButton(self.i18n.get('close_button', 'Close'))
-        close_button.clicked.connect(self.reject)
-        button_layout.addWidget(close_button)
+        self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        self.close_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.close_button)
         
         # 添加右侧间距
         button_layout.addSpacing(10)
@@ -985,6 +1016,32 @@ class TabDialog(QDialog):
                     logger.debug("更新对话框组件的i18n对象")
                     plugin_instance.ask_dialog.response_handler.update_i18n(self.i18n)
                     plugin_instance.ask_dialog.suggestion_handler.update_i18n(self.i18n)
+    
+    def show_deprecation_notice(self):
+        """显示弃用通知对话框"""
+        # 创建消息框
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n['deprecation_notice_title'])
+        msg_box.setText(self.i18n['deprecation_notice_message'])
+        msg_box.setIcon(QMessageBox.Information)
+        
+        # 添加按钮（按照添加顺序：左侧到右侧）
+        # ActionRole 按钮显示在左侧，RejectRole 按钮显示在右侧
+        dont_show_btn = msg_box.addButton(self.i18n['deprecation_dont_show_again'], QMessageBox.ActionRole)
+        got_it_btn = msg_box.addButton(self.i18n['deprecation_got_it'], QMessageBox.RejectRole)
+        msg_box.setDefaultButton(got_it_btn)
+        
+        # 显示对话框
+        msg_box.exec_()
+        
+        # 处理用户选择
+        clicked_button = msg_box.clickedButton()
+        prefs = get_prefs()
+        
+        if clicked_button == dont_show_btn:
+            # 用户选择"不再提醒"
+            prefs['show_deprecation_notice'] = False
+            logger.info("Deprecation notice disabled by user from config dialog")
     
     def on_settings_saved(self):
         """当设置保存时的处理函数"""
