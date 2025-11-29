@@ -82,7 +82,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'export_pdf_dialog_title': '导出为PDF',
             'export_pdf_error': '导出PDF失败：{0}',
             'no_question': '无问题',
-            'no_response': '无回答',
             'saved': '已保存',
             'close_button': '关闭',
             'open_local_tutorial': '打开本地教程',
@@ -113,7 +112,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'unsaved_changes_message': '您有未保存的更改。您想要：',
             'save_and_close': '保存并关闭',
             'discard_changes': '不保存',
-            'cancel': '取消',
             'invalid_default_ai_title': '默认AI配置无效',
             'invalid_default_ai_message': '默认AI "{default_ai}" 未正确配置。\n\n是否切换到 "{first_ai}"？',
             'switch_to_ai': '切换到 {ai}',
@@ -176,7 +174,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'api_key_required': '请先输入 API Key',
             'invalid_params': '无效的参数',
             'warning': '警告',
-            'success': '成功',
             'error': '错误',
             
             # 元数据字段
@@ -318,7 +315,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_enable_streaming': '启用流式传输',
             
             # AI Switcher
-            'current_ai': '当前AI',
             'no_configured_models': '未配置 AI - 请在设置中配置', # 补充缺失
             
             # 提供商特定信息
@@ -358,7 +354,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'pdf_panel': '面板',
             'pdf_plugin': '插件',
             'pdf_github': 'GitHub',
-            'pdf_software': '软件',
             'pdf_generated_time': '生成时间',
             'pdf_info_not_available': '信息不可用',
         }

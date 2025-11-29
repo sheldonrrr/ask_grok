@@ -324,7 +324,6 @@ class FrenchTranslation(BaseTranslation):
             'pdf_panel': 'Panneau',
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
-            'pdf_software': 'Logiciel',
             'pdf_generated_time': 'Heure de génération',
             'default_ai_mismatch_title': 'IA par Défaut Modifiée',
             'default_ai_mismatch_message': 'L\'IA par défaut dans la configuration a été changée en "{default_ai}",\nmais la boîte de dialogue actuelle utilise "{current_ai}".\n\nVoulez-vous passer à la nouvelle IA par défaut?',
