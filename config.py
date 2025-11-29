@@ -3024,10 +3024,30 @@ class ConfigDialog(QWidget):
                     os.remove(history_db_path)
                     logger.info(f"已删除历史记录数据库(旧版): {history_db_path}")
                 
-                # 3. 删除日志文件（可选）
+                # 3. 删除日志文件（需要先关闭所有日志处理器）
                 log_dir = os.path.join(plugins_dir, 'ask_ai_plugin_logs')
                 if os.path.exists(log_dir):
+                    # 关闭所有日志处理器以释放文件句柄（Windows需要）
+                    root_logger = logging.getLogger()
+                    handlers_to_remove = []
+                    for handler in root_logger.handlers[:]:  # 使用切片创建副本以避免迭代时修改
+                        if isinstance(handler, logging.FileHandler):
+                            # 检查是否是插件的日志文件
+                            if 'ask_ai_plugin_logs' in handler.baseFilename:
+                                handler.close()
+                                handlers_to_remove.append(handler)
+                    
+                    # 移除已关闭的处理器
+                    for handler in handlers_to_remove:
+                        root_logger.removeHandler(handler)
+                    
+                    logger.info(f"已关闭 {len(handlers_to_remove)} 个日志处理器")
+                    
+                    # 现在可以安全删除日志目录
                     import shutil
+                    import time
+                    # 在Windows上，可能需要短暂延迟以确保文件句柄完全释放
+                    time.sleep(0.1)
                     shutil.rmtree(log_dir)
                     logger.info(f"已删除日志目录: {log_dir}")
                 
