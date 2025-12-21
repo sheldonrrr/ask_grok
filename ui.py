@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton,
 from PyQt5.QtCore import Qt, QTimer, QSize, pyqtSignal, QPoint, QRect, QEvent, QObject, QUrl
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2 import info_dialog
+from calibre.gui2.keyboard import NameConflict
 from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_ai_plugin.api import APIClient
 from .i18n import get_translation, get_suggestion_template
@@ -49,7 +50,7 @@ class AskAIPluginUI(InterfaceAction):
     name = 'Ask AI Plugin'
     # 所有平台统一使用F3，避免Qt键盘映射冲突
     action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'F3')
-    action_shortcut_name = 'Ask AI Plugin'
+    action_shortcut_name = 'Ask AI: Ask'
     action_type = 'global'
     
     def __init__(self, parent, site_customization):
@@ -83,27 +84,88 @@ class AskAIPluginUI(InterfaceAction):
             }
         """)
         
-        # 添加主要动作
-        # 在菜单文本中直接显示快捷键，避免与action_spec冲突
-        menu_text_with_shortcut = f"{self.i18n['menu_title']}\tF3"
-        self.ask_action = QAction(menu_text_with_shortcut, self)
-        
+        # 添加主要动作（在菜单中显示当前生效的快捷键提示）
+        self.ask_action = QAction(self.i18n['menu_title'], self)
         self.ask_action.triggered.connect(self.show_dialog)
+        try:
+            # 复用 calibre 管理的主快捷键（实际注册在 menuless_qaction 上）
+            self.ask_action.setShortcuts(self.menuless_qaction.shortcuts())
+        except Exception:
+            pass
         self.menu.addAction(self.ask_action)
         
         # 添加分隔符
         self.menu.addSeparator()
 
-        # 添加配置菜单项
-        self.config_action = QAction(self.i18n['config_title'], self)
+        # 添加配置菜单项（通过 calibre 快捷键系统注册，允许用户在 Preferences -> Shortcuts 中自定义）
+        self.config_action = self.create_menu_action(
+            self.menu,
+            unique_name='open_configuration',
+            text=self.i18n['config_title'],
+            shortcut='F2',
+            description=None,
+            triggered=self.show_configuration,
+            shortcut_name='Ask AI: Open Configuration',
+            persist_shortcut=True,
+        )
 
-        # 所有平台统一使用 F2 作为配置快捷键
-        shortcut = QKeySequence("F2")
-        
-        self.config_action.setShortcut(shortcut)
-        self.config_action.setShortcutContext(Qt.ApplicationShortcut)
-        self.config_action.triggered.connect(self.show_configuration)
-        self.menu.addAction(self.config_action)
+        # 注册对话框内快捷键（始终出现在 Preferences -> Shortcuts 中）
+        # 注意：实际 QAction 会在 AskDialog 创建时通过 replace_action 绑定到对话框 action 上
+        try:
+            self.gui.keyboard.register_shortcut(
+                self.unique_name + ' - ask_dialog_send',
+                'Ask AI: Send (in dialog)',
+                default_keys=('Ctrl+Enter',),
+                action=None,
+                description=None,
+                group=self.action_spec[0],
+                persist_shortcut=True,
+            )
+        except NameConflict:
+            pass
+        except Exception:
+            pass
+
+        try:
+            self.gui.keyboard.register_shortcut(
+                self.unique_name + ' - ask_dialog_random_question',
+                'Ask AI: Random Question (in dialog)',
+                default_keys=('Ctrl+R',),
+                action=None,
+                description=None,
+                group=self.action_spec[0],
+                persist_shortcut=True,
+            )
+        except NameConflict:
+            pass
+        except Exception:
+            pass
+
+        # 如果快捷键被标记为 Custom 但 keys 为空（通常来自冲突或旧版本遗留），
+        # 则清理该空映射，让 calibre 回退使用 default_keys。
+        try:
+            send_un = self.unique_name + ' - ask_dialog_send'
+            rand_un = self.unique_name + ' - ask_dialog_random_question'
+            m = self.gui.keyboard.config.get('map', {}) or {}
+            if m.get(send_un) in ((), [], None):
+                with self.gui.keyboard.config:
+                    m2 = self.gui.keyboard.config.get('map', {}) or {}
+                    if m2.get(send_un) in ((), [], None):
+                        m2.pop(send_un, None)
+                        self.gui.keyboard.config['map'] = m2
+            if m.get(rand_un) in ((), [], None):
+                with self.gui.keyboard.config:
+                    m2 = self.gui.keyboard.config.get('map', {}) or {}
+                    if m2.get(rand_un) in ((), [], None):
+                        m2.pop(rand_un, None)
+                        self.gui.keyboard.config['map'] = m2
+        except Exception:
+            pass
+
+        try:
+            self.gui.keyboard.finalize()
+        except Exception:
+            pass
         
         #添加分隔符
         self.menu.addSeparator()
@@ -144,6 +206,12 @@ class AskAIPluginUI(InterfaceAction):
         self.config_action.setText(self.i18n['config_title'])
         self.ask_action.setText(self.i18n['menu_title'])
         self.about_action.setText(self.i18n['about'])
+
+        # 同步 Ask 菜单项显示的快捷键（跟随用户在 Preferences->Shortcuts 的自定义）
+        try:
+            self.ask_action.setShortcuts(self.menuless_qaction.shortcuts())
+        except Exception:
+            pass
         
     def initialize_api(self):
         try:
@@ -615,8 +683,10 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # 读取教程
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
+            # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.4.md')
+            if not tutorial_data:
+                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
@@ -862,10 +932,10 @@ class TabDialog(QDialog):
         
         # 设置窗口属性
         self.setWindowTitle(self.i18n['config_title'])
-        self.setMinimumWidth(550)
+        self.setMinimumWidth(780)
         self.setMinimumHeight(650)
         # 设置初始窗口大小，确保有足够空间显示所有内容
-        self.resize(700, 750)
+        self.resize(900, 780)
         
         # 创建标签页
         self.tab_widget = QTabWidget()
@@ -924,11 +994,16 @@ class TabDialog(QDialog):
         
         # 添加弹性空间，使按钮分别位于左右两侧
         button_layout.addStretch()
-        
-        # 添加New Version按钮（右侧，Close按钮左边）
-        self.new_version_button = QPushButton(self.i18n.get('new_version_button', 'New Version'))
-        self.new_version_button.clicked.connect(self.show_deprecation_notice)
-        button_layout.addWidget(self.new_version_button)
+
+        # 添加 Reddit 链接（关闭按钮左侧）
+        self.reddit_link = QLabel()
+        self.reddit_link.setTextFormat(Qt.RichText)
+        self.reddit_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.reddit_link.setOpenExternalLinks(True)
+        self.reddit_link.setCursor(Qt.PointingHandCursor)
+        self.reddit_link.setText('<a href="https://www.reddit.com/r/AskGrokPlugin/">Reddit</a>')
+        button_layout.addWidget(self.reddit_link)
+        button_layout.addSpacing(12)
         
         # 添加Close按钮（右侧）
         self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
@@ -1395,6 +1470,7 @@ class AskDialog(QDialog):
         self.book_info = self.books_info[0]
         
         # 生成或加载 UID
+        self._explicit_history_uid = history_uid
         if history_uid:
             self.current_uid = history_uid
         else:
@@ -1469,9 +1545,38 @@ class AskDialog(QDialog):
         # 监听输入框内容变化，动态切换按钮高光状态
         self.input_area.textChanged.connect(self._update_button_focus)
         
-        # 加载历史记录
+        # 加载历史记录（仅在显式指定 history_uid 时加载）
         has_loaded_history = self._load_history()
-        
+
+        # 将 Preferences->Shortcuts 中的快捷键绑定到对话框 action（仅对话框窗口内生效）
+        try:
+            if plugin_instance and hasattr(plugin_instance, 'gui'):
+                send_un = plugin_instance.unique_name + ' - ask_dialog_send'
+                rand_un = plugin_instance.unique_name + ' - ask_dialog_random_question'
+
+                plugin_instance.gui.keyboard.replace_action(send_un, self.send_action)
+                plugin_instance.gui.keyboard.replace_action(rand_un, self.suggest_action)
+                plugin_instance.gui.keyboard.finalize()
+
+                # Fallback defaults: if calibre clears defaults due to conflicts,
+                # keep dialog usable by applying a local WindowShortcut.
+                # Do NOT override user customizations in Preferences->Shortcuts (including disabling).
+                cfg_map = {}
+                try:
+                    cfg_map = plugin_instance.gui.keyboard.config.get('map', {}) or {}
+                except Exception:
+                    cfg_map = {}
+
+                if (cfg_map.get(send_un) in (None, (), [])) and not self.send_action.shortcuts():
+                    key = 'Ctrl+Enter'
+                    self.send_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
+
+                if (cfg_map.get(rand_un) in (None, (), [])) and not self.suggest_action.shortcuts():
+                    key = 'Ctrl+R'
+                    self.suggest_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
+        except Exception:
+            pass
+
         # 初始化后更新所有面板的按钮状态（包括导出历史按钮）
         if hasattr(self, 'response_panels') and self.response_panels:
             for panel in self.response_panels:
@@ -1480,7 +1585,7 @@ class AskDialog(QDialog):
         
         # 设置窗口大小
         self.resize(self.saved_width, self.saved_height)
-        
+
         # 连接窗口大小变化信号
         self.resizeEvent = self.on_resize
         
@@ -1488,6 +1593,31 @@ class AskDialog(QDialog):
         # 只有在没有加载历史记录时才检查（新对话），避免与历史记录的AI冲突
         if not has_loaded_history:
             self._check_default_ai_mismatch()
+
+    def _register_dialog_shortcut(self, action, unique_suffix, shortcut_name, default_keys):
+        try:
+            if plugin_instance is not None and hasattr(plugin_instance, 'unique_name'):
+                unique_name = f'{plugin_instance.unique_name} - {unique_suffix}'
+            else:
+                unique_name = f'Ask AI Plugin - {unique_suffix}'
+
+            keys = ((default_keys,) if isinstance(default_keys, (str, bytes)) else tuple(default_keys))
+            self.gui.keyboard.register_shortcut(
+                unique_name,
+                shortcut_name,
+                default_keys=keys,
+                action=action,
+                description=None,
+                group='Ask AI Plugin',
+                persist_shortcut=True,
+            )
+            # Ensure shortcut dicts get fully initialized (including set_to_default)
+            # and key conflicts are resolved for the newly registered shortcut.
+            self.gui.keyboard.finalize()
+        except NameConflict:
+            pass
+        except Exception:
+            pass
 
     def _generate_uid(self):
         """生成唯一 UID"""
@@ -2179,6 +2309,11 @@ class AskDialog(QDialog):
                 # 不从临时存储中删除，等用户发送后再删除
                 # 这不算加载历史记录，因为还没有AI回答
                 return False
+
+            # 新打开对话框默认视为“新对话”，不自动加载最近历史
+            # 否则会覆盖 Config 中的默认 AI / 用户当前选择
+            if not self._explicit_history_uid:
+                return False
             
             # 获取当前书籍ID集合
             current_book_ids = set([book.id for book in self.books_info])
@@ -2696,7 +2831,7 @@ class AskDialog(QDialog):
         prefs = get_prefs()
         
         # 读取上次的AI选择记忆
-        saved_selections = prefs.get('panel_ai_selections', {})
+        saved_selections = prefs.get('panel_ai_selections', {}) or {}
         
         # 获取已配置的AI列表
         configured_ais = self._get_configured_ais()
@@ -2705,9 +2840,27 @@ class AskDialog(QDialog):
             logger.warning("没有已配置的AI，无法设置默认选择")
             return
         
+        # 读取当前配置中的默认AI
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        default_ai = prefs.get('selected_model', 'grok')
+        
         # 为每个面板设置默认AI
         for i, panel in enumerate(self.response_panels):
             panel_key = f"panel_{i}"
+
+            # 始终优先：第一个面板使用当前配置中的默认AI
+            # 说明：
+            # - 用户在 Config 里切换默认 AI 的意图应覆盖历史记忆（panel_ai_selections）
+            # - 否则会出现“Config 已改默认 AI，但 Ask 仍使用上次记忆”的体验不一致
+            if i == 0:
+                if any(ai_id == default_ai for ai_id, _ in configured_ais):
+                    index = panel.ai_switcher.findData(default_ai)
+                    if index >= 0:
+                        panel.ai_switcher.setCurrentIndex(index)
+                        saved_selections[panel_key] = default_ai
+                        logger.info(f"面板 {i} 使用配置中的默认AI: {default_ai}")
+                        continue
+                # 如果默认AI不在已配置列表中，则继续走通用逻辑
             
             # 1. 优先使用记忆的选择
             if panel_key in saved_selections:
@@ -2726,12 +2879,17 @@ class AskDialog(QDialog):
                 index = panel.ai_switcher.findData(ai_id)
                 if index >= 0:
                     panel.ai_switcher.setCurrentIndex(index)
+                    saved_selections[panel_key] = ai_id
                     logger.info(f"面板 {i} 默认选择: {ai_id}")
             else:
                 # 3. AI数量不足，留空
                 panel.ai_switcher.setCurrentIndex(-1)
+                saved_selections.pop(panel_key, None)
                 logger.info(f"面板 {i} 留空（AI数量不足）")
         
+        # 将更新后的面板选择记忆回写到配置中
+        prefs['panel_ai_selections'] = saved_selections
+
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
     
@@ -3038,7 +3196,6 @@ class AskDialog(QDialog):
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
-        self.suggest_action.setShortcut(QKeySequence("Ctrl+R"))
         self.suggest_action.setShortcutContext(Qt.WindowShortcut)
         self.suggest_action.triggered.connect(self.generate_suggestion)
         self.addAction(self.suggest_action)
@@ -3062,7 +3219,6 @@ class AskDialog(QDialog):
 
         # 创建发送动作和快捷键
         self.send_action = QAction(self.i18n['send_button'], self)
-        self.send_action.setShortcut(QKeySequence("Ctrl+Enter" if not sys.platform == 'darwin' else "Cmd+Enter"))
         self.send_action.setShortcutContext(Qt.WindowShortcut)
         self.send_action.triggered.connect(self.send_question)
         self.addAction(self.send_action)
@@ -3202,11 +3358,13 @@ class AskDialog(QDialog):
             self._show_ai_service_required_dialog()
             return
         
-        # 随机问题只使用第一个AI（不并行）
+        # 随机问题只使用第一个AI（不并行），并显式使用其当前选中的模型
+        model_id = None
         if hasattr(self, 'response_panels') and self.response_panels:
             # 确保第一个面板有选中的AI
             first_panel = self.response_panels[0]
-            if not first_panel.get_selected_ai():
+            model_id = first_panel.get_selected_ai()
+            if not model_id:
                 logger.warning("第一个面板没有选中AI，无法生成随机问题")
                 self._show_ai_service_required_dialog()
                 return
@@ -3220,7 +3378,8 @@ class AskDialog(QDialog):
         # 标记这是一个随机问题请求
         self._is_generating_random_question = True
         
-        self.suggestion_handler.generate(self.book_info)
+        # 使用选中的模型生成随机问题
+        self.suggestion_handler.generate(self.book_info, model_id=model_id)
 
     def _show_ai_service_required_dialog(self):
         """显示需要AI服务的提示对话框"""
@@ -3470,13 +3629,8 @@ class AskDialog(QDialog):
     def eventFilter(self, obj, event):
         """事件过滤器，用于处理快捷键"""
         if event.type() == event.KeyPress:
-            # 检查是否按下了 Ctrl+Enter 或 Cmd+Return
-            if ((event.modifiers() & Qt.ControlModifier or event.modifiers() & Qt.MetaModifier) and 
-                (event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter)):
-                self.send_question()
-                return True
-            
             # 处理单独的 Enter 键：根据输入框内容决定触发哪个按钮
+            # 注意：Ctrl/Cmd+Enter 由 QAction shortcut 处理，以保证在对话框任意控件聚焦时均可触发。
             if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
                 # 检查是否有修饰键（Shift等），如果有则不处理（允许换行）
                 if event.modifiers() & (Qt.ShiftModifier | Qt.AltModifier):

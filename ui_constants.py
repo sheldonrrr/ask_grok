@@ -61,6 +61,7 @@ SEPARATOR_COLOR = "#d0d0d0"
 # 文字颜色
 TEXT_COLOR_PRIMARY = "palette(text)"
 TEXT_COLOR_SECONDARY = "palette(dark)"  # 使用 Qt 调色板，支持明暗模式
+TEXT_COLOR_SECONDARY_STRONG = "palette(text)"  # 用于说明/提示文本，浅色主题下更易读
 TEXT_COLOR_DISABLED = "palette(mid)"  # 使用 Qt 调色板，支持明暗模式
 
 # 背景颜色
@@ -93,7 +94,7 @@ def get_groupbox_style(border_style="dashed"):
         }}
         QGroupBox::title {{
             font-weight: bold;
-            color: {TEXT_COLOR_SECONDARY};
+            color: {TEXT_COLOR_SECONDARY_STRONG};
             padding: 0 {SPACING_SMALL}px;
             subcontrol-origin: margin;
             subcontrol-position: top left;

@@ -44,6 +44,7 @@ class FrenchTranslation(BaseTranslation):
             'general_tab': 'Général',
             'ai_models': 'IA',
             'shortcuts': 'Raccourcis',
+            'shortcuts_note': "Vous pouvez personnaliser ces raccourcis dans calibre : Préférences -> Raccourcis (recherchez 'Ask AI').\nCette page affiche les raccourcis par défaut/exemples. Si vous les avez modifiés dans Raccourcis, les paramètres de calibre sont prioritaires.",
             'about': 'À propos',
             'metadata': 'Métadonnées',
             
@@ -324,7 +325,6 @@ class FrenchTranslation(BaseTranslation):
             'pdf_panel': 'Panneau',
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
-            'pdf_software': 'Logiciel',
             'pdf_generated_time': 'Heure de génération',
             'default_ai_mismatch_title': 'IA par Défaut Modifiée',
             'default_ai_mismatch_message': 'L\'IA par défaut dans la configuration a été changée en "{default_ai}",\nmais la boîte de dialogue actuelle utilise "{current_ai}".\n\nVoulez-vous passer à la nouvelle IA par défaut?',

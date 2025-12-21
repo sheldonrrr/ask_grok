@@ -196,7 +196,21 @@ class TranslationRegistry:
 def get_translation(lang_code: str) -> Dict[str, str]:
     """获取指定语言代码的翻译"""
     translation = TranslationRegistry.get_translation(lang_code)
-    return translation.translations
+    # Per-key fallback: use English as base and override with target language.
+    # This guarantees missing keys never raise KeyError in UI code that uses
+    # dict indexing, while still allowing partial translations.
+    en_translation = TranslationRegistry.get_translation(TranslationRegistry._default_language)
+    base = {}
+    try:
+        base = en_translation.translations.copy() if en_translation is not None else {}
+    except Exception:
+        base = {}
+    try:
+        if translation is not None and translation is not en_translation:
+            base.update(translation.translations)
+    except Exception:
+        pass
+    return base
 
 
 def format_http_error(e: Exception, lang_code: str = 'en') -> str:

@@ -44,6 +44,7 @@ class EnglishTranslation(BaseTranslation):
             'general_tab': 'General',
             'ai_models': 'AI',
             'shortcuts': 'Shortcuts',
+            'shortcuts_note': "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\nThis page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence.",
             'about': 'About',
             'metadata': 'Metadata',
             

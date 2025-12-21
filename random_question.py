@@ -16,7 +16,7 @@ class SuggestionWorker(QThread):
     error_occurred = pyqtSignal(str)
     finished = pyqtSignal()
     
-    def __init__(self, api, book_info, i18n=None, current_question=None):
+    def __init__(self, api, book_info, i18n=None, current_question=None, model_id=None):
         super().__init__(None)  # 不设置父对象，避免随父对象一起销毁
         self.api = api
         self.i18n = i18n or {}
@@ -28,6 +28,7 @@ class SuggestionWorker(QThread):
             
         self.book_info = book_info
         self.current_question = current_question  # 保存当前问题
+        self.model_id = model_id  # 本次请求要使用的模型ID
         self._is_cancelled = False
         self._is_finished = False  # 标记线程是否完成
 
@@ -87,9 +88,13 @@ class SuggestionWorker(QThread):
             except Exception as e:
                 logger.warning(f"获取模型信息失败: {str(e)}")
                 
-            # 调用 API 获取随机问题，确保传递 lang_code 参数
+            # 调用 API 获取随机问题，确保传递 lang_code 参数，并使用指定模型
             logger.info("正在调用 API 获取随机问题...")
-            suggestion = self.api.random_question(prompt, lang_code=get_prefs()['language'])
+            suggestion = self.api.random_question(
+                prompt,
+                lang_code=get_prefs()['language'],
+                model_id=self.model_id
+            )
             
             # 记录 API 返回的随机问题
             if suggestion:
@@ -389,7 +394,7 @@ class SuggestionHandler(QObject):
             self._stop_loading_animation()
             self._stop_cleanup_timer()
 
-    def generate(self, book_info):
+    def generate(self, book_info, model_id=None):
         """生成随机问题"""
         if not self.api:
             logger.error("API信息没有成功初始化，随机问题生成失败。")
@@ -403,10 +408,10 @@ class SuggestionHandler(QObject):
             logger.warning("已有随机问题请求在进行中，忽略新请求")
             return
         
-        # 检查当前选中的模型
+        # 检查当前选中的模型（优先使用调用方传入的 model_id）
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
-        selected_model = prefs.get('selected_model', 'grok')
+        selected_model = model_id or prefs.get('selected_model', 'grok')
         
         # 如果是Custom模型，不需要检查API Key
         if selected_model == 'custom':
@@ -446,10 +451,11 @@ class SuggestionHandler(QObject):
         # 总是传递当前问题，不进行与_original_input的比较
         # 这样即使第二次点击，也会将当前显示的问题传递给API
         self._worker = SuggestionWorker(
-            self.api, 
-            book_info, 
+            self.api,
+            book_info,
             i18n=self.i18n,
-            current_question=current_question if current_question else None
+            current_question=current_question if current_question else None,
+            model_id=model_id
         )
         self._worker.result.connect(self._on_suggestion_received)
         self._worker.error_occurred.connect(self._on_error)

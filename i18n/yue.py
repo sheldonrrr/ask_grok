@@ -317,7 +317,6 @@ class CantoneseTranslation(BaseTranslation):
             'pdf_panel': '面板',
             'pdf_plugin': '插件',
             'pdf_github': 'GitHub',
-            'pdf_software': '軟件',
             'pdf_generated_time': '生成時間',
             'default_ai_mismatch_title': '預設 AI 已更改',
             'default_ai_mismatch_message': '配置中嘅預設 AI 已經改咗做 "{default_ai}",\n但係而家嘅對話框用緊 "{current_ai}"。\n\n你想唔想切換到新嘅預設 AI？',

@@ -81,7 +81,6 @@ class DanishTranslation(BaseTranslation):
             'model_name': 'Model',
             'model_api_url': 'API Basis-URL',
             'pdf_model_info': 'AI-Modelinformation',
-            'pdf_software': 'Software',
             
             'export_all_history_dialog_title': 'Eksporter Hele Historikken til PDF',
             'export_all_history_title': 'HELE S&S HISTORIK',

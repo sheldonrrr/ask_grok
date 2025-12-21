@@ -381,14 +381,15 @@ class APIClient:
         # 随机选择一个问题提示词
         return random.choice(question_list)
     
-    def random_question(self, prompt: str, lang_code: str = 'en') -> str:
+    def random_question(self, prompt: str, lang_code: str = 'en', model_id: str = None) -> str:
         """生成随机问题
         
-        使用当前配置的 AI 模型生成随机问题
+        使用当前配置的 AI 模型生成随机问题，或在提供 model_id 时临时切换到指定模型。
         
         Args:
             prompt: 包含书籍信息的提示词
             lang_code: 语言代码，用于获取相应的翻译文本
+            model_id: 可选，要使用的模型ID（如 'grok', 'gemini' 等）。如果为 None，则使用当前模型。
             
         Returns:
             str: 生成的随机问题
@@ -398,9 +399,18 @@ class APIClient:
         """
         # 更新 i18n 以确保使用正确的语言
         self.i18n = get_translation(lang_code)
+
+        # 如有需要，临时切换模型
+        original_model = None
+        original_model_name = None
+        if model_id and model_id != self._model_name:
+            original_model = self._ai_model
+            original_model_name = self._model_name
+            logger.info(f"[random_question] 临时切换模型: {self._model_name} -> {model_id}")
+            self._switch_to_model(model_id)
         
         # 获取当前使用的模型名称，用于日志记录
-        model_name = self._ai_model.__class__.__name__
+        model_name = self._ai_model.__class__.__name__ if self._ai_model else 'UnknownModel'
         logger.debug(f"使用 {model_name} 生成随机问题，提示词: {prompt[:50]}...")
         
         try:
@@ -445,6 +455,12 @@ class APIClient:
             logger.error(f"{model_name} 随机问题生成异常: {str(e)}", exc_info=True)
             # 抛出异常，让调用者处理（会触发 error_occurred 信号）
             raise
+        finally:
+            # 如果进行了临时模型切换，这里恢复原始模型
+            if original_model is not None:
+                logger.info(f"[random_question] 恢复原始模型: {self._model_name} -> {original_model_name}")
+                self._ai_model = original_model
+                self._model_name = original_model_name
     
     def reload_model(self):
         """重新加载当前选择的模型"""
