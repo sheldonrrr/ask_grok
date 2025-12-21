@@ -111,6 +111,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'open_local_tutorial': '打開本地教學',
         'tutorial_open_failed': '打開教學失敗',
         'tutorial': '教學',
+
+        'model_display_name_perplexity': 'Perplexity',
         
         # UI - 設定欄位
         'token_label': 'API金鑰:',

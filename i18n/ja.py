@@ -111,6 +111,8 @@ class JapaneseTranslation(BaseTranslation):
             'open_local_tutorial': 'ローカルチュートリアルを開く',
             'tutorial_open_failed': 'チュートリアルを開けませんでした',
             'tutorial': 'チュートリアル',
+
+            'model_display_name_perplexity': 'Perplexity',
             
             # UI - 設定フィールド
             'token_label': 'APIキー:',

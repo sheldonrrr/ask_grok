@@ -89,6 +89,8 @@ class EnglishTranslation(BaseTranslation):
             'open_local_tutorial': 'Open Local Tutorial',
             'tutorial_open_failed': 'Failed to open tutorial',
             'tutorial': 'Tutorial',
+
+            'model_display_name_perplexity': 'Perplexity',
             
             # UI - Configuration fields
             'token_label': 'API Key:',

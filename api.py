@@ -49,6 +49,7 @@ class APIClient:
         'anthropic': AIProvider.AI_ANTHROPIC,
         'nvidia': AIProvider.AI_NVIDIA,
         'openrouter': AIProvider.AI_OPENROUTER,
+        'perplexity': AIProvider.AI_PERPLEXITY,
         'ollama': AIProvider.AI_OLLAMA
     }
     
@@ -416,7 +417,7 @@ class APIClient:
         try:
             # 明确指定 stream=False，禁用流式传输
             logger.debug(f"{model_name}: 开始请求随机问题，禁用流式传输")
-            response = self._ai_model.ask(prompt, stream=False)
+            response = self._ai_model.ask(prompt, stream=False, is_random_question=True)
             
             logger.debug(f"{model_name}: 成功获取响应，长度: {len(response) if response else 0}")
             

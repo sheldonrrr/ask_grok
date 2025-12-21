@@ -112,6 +112,8 @@ class FrenchTranslation(BaseTranslation):
             'open_local_tutorial': 'Ouvrir le tutoriel local',
             'tutorial_open_failed': 'Échec de l\'ouverture du tutoriel',
             'tutorial': 'Tutoriel',
+
+            'model_display_name_perplexity': 'Perplexity',
             
             # UI - Champs de configuration
             'token_label': 'Clé API:',

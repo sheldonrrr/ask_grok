@@ -18,6 +18,7 @@ class AIProvider(Enum):
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
     AI_NVIDIA = auto()    # Nvidia AI (Free tier available)
     AI_OPENROUTER = auto() # OpenRouter (Model aggregator)
+    AI_PERPLEXITY = auto() # Perplexity (Sonar)
     AI_OLLAMA = auto()    # Ollama (Local models)
 
 
@@ -103,6 +104,13 @@ DEFAULT_MODELS = {
         api_key_label="OpenRouter API Key:",
         default_api_base_url="https://openrouter.ai/api/v1",
         default_model_name="openai/gpt-4o-mini"
+    ),
+    AIProvider.AI_PERPLEXITY: ModelConfig(
+        provider=AIProvider.AI_PERPLEXITY,
+        display_name="Perplexity",
+        api_key_label="Perplexity API Key:",
+        default_api_base_url="https://api.perplexity.ai",
+        default_model_name="sonar-pro"
     ),
     AIProvider.AI_OLLAMA: ModelConfig(
         provider=AIProvider.AI_OLLAMA,
