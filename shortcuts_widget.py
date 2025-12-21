@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QGroupBox
 from PyQt5.QtCore import Qt
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.config import get_prefs
+from calibre_plugins.ask_ai_plugin.ui_constants import TEXT_COLOR_SECONDARY_STRONG
 import sys
 
 # Shortcut for ask: F3 (all platforms)
@@ -29,6 +30,16 @@ class ShortcutsWidget(QWidget):
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
         self.setLayout(main_layout)
+
+        self.note_label = QLabel()
+        self.note_label.setWordWrap(True)
+        self.note_label.setStyleSheet(f"QLabel {{ color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 0.95em; }}")
+        self.note_label.setText(self.i18n.get(
+            'shortcuts_note',
+            "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\n"
+            "This page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence."
+        ))
+        main_layout.addWidget(self.note_label)
         
         # 创建滚动区域以支持内容过多时滚动
         scroll_area = QScrollArea()
@@ -88,20 +99,27 @@ class ShortcutsWidget(QWidget):
         
     def update_shortcuts(self):
         """更新快捷键显示"""
-        # 清除现有标签
-        for label in self.labels:
-            label.deleteLater()
+        # 获取当前语言的翻译
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+
+        # 更新顶部说明文字
+        if hasattr(self, 'note_label') and self.note_label is not None:
+            self.note_label.setText(self.i18n.get(
+                'shortcuts_note',
+                "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\n"
+                "This page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence."
+            ))
+
+        # 完整清理布局，避免语言切换时旧控件未及时销毁导致叠加
+        self._clear_layout(self.shortcuts_layout)
         self.labels.clear()
         
         # 判断当前系统
         is_mac = sys.platform == 'darwin'
         modifier_display = '⌘' if is_mac else 'Ctrl'
         enter_key = '↩' if is_mac else 'Enter'
-        
-        # 获取当前语言的翻译
-        prefs = get_prefs()
-        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
-        self.i18n = get_translation(language)
         
         # 不设置组标题，保持空白
         self.shortcuts_group.setTitle("")
@@ -124,6 +142,22 @@ class ShortcutsWidget(QWidget):
         
         # 添加快捷键
         self._add_shortcuts_to_layout(shortcuts, self.shortcuts_layout, label_style)
+
+    def _clear_layout(self, layout):
+        """彻底清理布局中的所有子控件，避免重复叠加"""
+        if layout is None:
+            return
+        while True:
+            item = layout.takeAt(0)
+            if item is None:
+                break
+            w = item.widget()
+            child_layout = item.layout()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
+            elif child_layout is not None:
+                self._clear_layout(child_layout)
     
     def _add_shortcuts_to_layout(self, shortcuts, layout, style):
         """将快捷键添加到指定布局中"""

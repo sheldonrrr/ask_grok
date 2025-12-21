@@ -139,6 +139,7 @@ prefs.defaults['models'] = {
 prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['multi_book_template'] = get_multi_book_template('en')
 prefs.defaults['language'] = 'en'
+prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = {}
@@ -169,6 +170,34 @@ def get_prefs(force_reload=False):
     # 确保语言键存在，如果不存在则使用默认值 'en'
     if 'language' not in prefs:
         prefs['language'] = 'en'
+
+    # 如果用户没有在插件内明确选择过语言，则默认跟随 calibre 的界面语言（若插件支持）
+    # calibre 语言来自 Preferences -> Look & Feel -> Choose language
+    try:
+        if not prefs.get('language_user_set', False):
+            from calibre.utils.localization import get_lang
+
+            calibre_lang = (get_lang() or 'en').replace('-', '_')
+            base = calibre_lang.split('_')[0].lower()
+
+            # Map calibre language codes to plugin language codes
+            plugin_lang = None
+            if base == 'zh':
+                # Prefer Traditional for TW/HK/MO, otherwise Simplified
+                upper = calibre_lang.upper()
+                if '_TW' in upper or '_HK' in upper or '_MO' in upper:
+                    plugin_lang = 'zht'
+                else:
+                    plugin_lang = 'zh'
+            elif base == 'en':
+                plugin_lang = 'en'
+
+            supported = {code for code, _ in SUPPORTED_LANGUAGES}
+            if plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
+                prefs['language'] = plugin_lang
+                prefs.commit()
+    except Exception:
+        pass
     
     # 确保 models 键存在
     if 'models' not in prefs:
@@ -194,6 +223,50 @@ def get_prefs(force_reload=False):
             'model': GROK_CONFIG.default_model_name,
             'display_name': GROK_CONFIG.display_name  # 设置固定的显示名称
         }
+
+    # 清理历史配置中误保存的占位符模型名称（例如“-- 切换Model --”）
+    # 目的：避免占位符被当作真实 model 写入配置，进而在 UI 中被复制到自定义模型输入框。
+    try:
+        # 收集所有语言下的 select_model / request_model_list 文本，用于识别占位符
+        placeholder_texts = set()
+        for code, _name in SUPPORTED_LANGUAGES:
+            try:
+                t = get_translation(code)
+                placeholder_texts.add(t.get('select_model', ''))
+                placeholder_texts.add(t.get('request_model_list', ''))
+            except Exception:
+                pass
+
+        changed = False
+        for _model_id, cfg in (prefs.get('models') or {}).items():
+            if not isinstance(cfg, dict):
+                continue
+
+            # 默认情况下不启用“Use custom model name”
+            if 'use_custom_model_name' not in cfg:
+                cfg['use_custom_model_name'] = False
+                changed = True
+
+            model_val = (cfg.get('model') or '').strip()
+            if model_val and model_val in placeholder_texts:
+                logger.warning(
+                    f"[prefs_sanitize] Detected placeholder model stored in prefs. model_id={_model_id}, model='{model_val}'. Clearing it and disabling use_custom_model_name."
+                )
+                cfg['model'] = ''
+                cfg['use_custom_model_name'] = False
+                changed = True
+            elif not model_val and cfg.get('use_custom_model_name'):
+                # 没有有效 model 时，确保不处于自定义模式
+                logger.warning(
+                    f"[prefs_sanitize] use_custom_model_name=True but model is empty. model_id={_model_id}. Forcing use_custom_model_name=False."
+                )
+                cfg['use_custom_model_name'] = False
+                changed = True
+
+        if changed:
+            prefs.commit()
+    except Exception:
+        pass
     
     # 不再强制更新模型名称，保留用户的自定义设置
     # 只有当模型名称不存在时，才使用默认值
@@ -353,6 +426,8 @@ class ModelConfigWidget(QWidget):
             # 添加占位符选项
             placeholder_text = self.i18n.get('select_model', '-- No Model --')
             self.model_combo.addItem(placeholder_text)
+            # 标记占位符，便于语言切换时更新文本
+            self.model_combo.setItemData(0, 'select_model')
             
             # 从缓存加载模型列表
             prefs = get_prefs()
@@ -363,6 +438,8 @@ class ModelConfigWidget(QWidget):
                 # 没有缓存时，添加提示项
                 hint_text = self.i18n.get('request_model_list', 'Please request model list')
                 self.model_combo.addItem(hint_text)
+                # 标记提示项，便于语言切换时更新文本
+                self.model_combo.setItemData(1, 'request_model_list')
                 # 禁用提示项
                 model = self.model_combo.model()
                 item = model.item(1)  # 第二项是提示项
@@ -520,6 +597,9 @@ class ModelConfigWidget(QWidget):
             # 使用自定义模型名称
             config['use_custom_model_name'] = True
             config['model'] = self.custom_model_input.text().strip() if hasattr(self, 'custom_model_input') else ''
+            logger.debug(
+                f"[get_config] model_id={self.model_id} use_custom_model_name=True custom_model_input='{config['model']}'"
+            )
         else:
             # 使用下拉框选中的模型
             config['use_custom_model_name'] = False
@@ -527,9 +607,15 @@ class ModelConfigWidget(QWidget):
                 current_text = self.model_combo.currentText().strip()
                 # 过滤掉占位符文本，避免保存无效的模型名称
                 if self._is_placeholder_text(current_text):
+                    logger.debug(
+                        f"[get_config] model_id={self.model_id} placeholder selected in combo, clearing model. combo_text='{current_text}'"
+                    )
                     config['model'] = ''  # 占位符不保存
                 else:
                     config['model'] = current_text
+                logger.debug(
+                    f"[get_config] model_id={self.model_id} use_custom_model_name=False saved_model='{config['model']}' combo_text='{current_text}'"
+                )
             else:
                 config['model'] = ''
         
@@ -770,6 +856,7 @@ class ModelConfigWidget(QWidget):
                 # 先添加占位符
                 placeholder_text = self.i18n.get('select_model', '-- No Model --')
                 self.model_combo.addItem(placeholder_text)
+                self.model_combo.setItemData(0, 'select_model')
                 # 再添加模型列表
                 self.model_combo.addItems(models)
                 
@@ -980,14 +1067,49 @@ class ModelConfigWidget(QWidget):
         
         # 如果切换到自定义，复制当前选中的模型名称（排除占位符）
         if use_custom:
+            before_text = ''
+            try:
+                before_text = self.custom_model_input.text()
+            except Exception:
+                before_text = ''
             current_text = self.model_combo.currentText()
-            
-            # 使用 _is_placeholder_text 方法检查是否是占位符
-            if not self._is_placeholder_text(current_text):
-                logger.info(f"[on_custom_model_toggled] 复制模型名称: {current_text}")
-                self.custom_model_input.setText(current_text)
-            else:
+
+            # 优先用 itemData 标记来判断是否占位符/提示项（避免语言切换后文本比对失败）
+            try:
+                current_index = self.model_combo.currentIndex()
+                current_tag = self.model_combo.itemData(current_index)
+            except Exception:
+                current_index = -1
+                current_tag = None
+
+            is_placeholder = (current_tag in ('select_model', 'request_model_list'))
+            if not is_placeholder:
+                # 兼容旧数据：如果没有 tag，再回退到文本判断
+                is_placeholder = self._is_placeholder_text(current_text)
+
+            logger.warning(
+                f"[on_custom_model_toggled] model_id={self.model_id} use_custom=True combo_index={current_index} combo_tag={current_tag} combo_text='{current_text}' is_placeholder={is_placeholder} custom_before='{before_text}'"
+            )
+
+            if is_placeholder:
                 logger.info(f"[on_custom_model_toggled] 当前是占位符，不复制: {current_text}")
+                # 关键：保持输入框为空，让 placeholder 生效
+                if not self.custom_model_input.text().strip():
+                    self.custom_model_input.clear()
+            else:
+                # 只有在用户还没输入自定义名称时，才自动带入当前选中的模型名
+                if not self.custom_model_input.text().strip():
+                    logger.info(f"[on_custom_model_toggled] 复制模型名称: {current_text}")
+                    self.custom_model_input.setText(current_text)
+
+            after_text = ''
+            try:
+                after_text = self.custom_model_input.text()
+            except Exception:
+                after_text = ''
+            logger.warning(
+                f"[on_custom_model_toggled] model_id={self.model_id} use_custom=True custom_after='{after_text}'"
+            )
             # 设置焦点到输入框
             self.custom_model_input.setFocus()
         
@@ -1020,7 +1142,11 @@ class ModelConfigWidget(QWidget):
             # 使用自定义模式
             logger.info(f"[load_model_config] 设置为自定义模式")
             self.use_custom_model_checkbox.setChecked(True)
-            self.custom_model_input.setText(model_name)
+            # 避免把占位符文本当作真实模型名写入自定义输入框
+            if model_name and not self._is_placeholder_text(model_name):
+                self.custom_model_input.setText(model_name)
+            else:
+                self.custom_model_input.clear()
         else:
             # 尝试在下拉框中选中（如果列表已加载）
             logger.info(f"[load_model_config] 使用下拉框模式 - combo.count()={self.model_combo.count()}")
@@ -1033,14 +1159,18 @@ class ModelConfigWidget(QWidget):
                     # 模型不在列表中，重置为占位符，并在自定义输入框显示
                     logger.info(f"[load_model_config] 模型不在列表中，重置为占位符")
                     self.model_combo.setCurrentIndex(0)
-                    if model_name:
+                    if model_name and not self._is_placeholder_text(model_name):
                         self.custom_model_input.setText(model_name)
+                    else:
+                        self.custom_model_input.clear()
             else:
                 # 只有占位符（没有实际模型），重置为占位符
                 logger.info(f"[load_model_config] 只有占位符，重置为占位符")
                 self.model_combo.setCurrentIndex(0)
-                if model_name:
+                if model_name and not self._is_placeholder_text(model_name):
                     self.custom_model_input.setText(model_name)
+                else:
+                    self.custom_model_input.clear()
         
         logger.info(f"[load_model_config] 加载完成 - checkbox.isChecked()={self.use_custom_model_checkbox.isChecked()}, custom_input.isEnabled()={self.custom_model_input.isEnabled()}")
     
@@ -1081,6 +1211,24 @@ class ModelConfigWidget(QWidget):
         # 更新自定义模型输入框的placeholder
         if hasattr(self, 'custom_model_input'):
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
+
+        # 更新模型下拉框中的占位符/提示项文本（未配置/未加载模型时）
+        # 通过 userData 标记来识别这些项，避免依赖旧语言的显示文本
+        if hasattr(self, 'model_combo') and self.model_combo is not None:
+            try:
+                for idx in range(self.model_combo.count()):
+                    tag = self.model_combo.itemData(idx)
+                    if tag == 'select_model':
+                        self.model_combo.setItemText(idx, self.i18n.get('select_model', '-- No Model --'))
+                    elif tag == 'request_model_list':
+                        self.model_combo.setItemText(idx, self.i18n.get('request_model_list', 'Please request model list'))
+                        # 保持提示项不可选
+                        model = self.model_combo.model()
+                        item = model.item(idx)
+                        if item:
+                            item.setEnabled(False)
+            except Exception:
+                pass
         
         # 使用 objectName 映射更新 Label（完全移除硬编码文本检测）
         label_map = {
@@ -1254,8 +1402,10 @@ class ModelConfigWidget(QWidget):
             self.model_combo.clear()
             placeholder_text = self.i18n.get('select_model', '-- Select Model --')
             self.model_combo.addItem(placeholder_text)
+            self.model_combo.setItemData(0, 'select_model')
             hint_text = self.i18n.get('request_model_list', 'Please request model list')
             self.model_combo.addItem(hint_text)
+            self.model_combo.setItemData(1, 'request_model_list')
             # 禁用提示项
             model = self.model_combo.model()
             item = model.item(1)
@@ -1604,12 +1754,12 @@ class ConfigDialog(QWidget):
         self._update_panel_ai_selectors()
         
         # 添加并行AI提示信息
-        from .ui_constants import TEXT_COLOR_SECONDARY
+        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
             'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
         parallel_notice.setObjectName('label_parallel_ai_notice')
         parallel_notice.setWordWrap(True)
-        parallel_notice.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: 5px 0; font-style: italic;")
+        parallel_notice.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
@@ -1733,7 +1883,7 @@ class ConfigDialog(QWidget):
         # 添加占位符说明
         placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
         placeholder_hint.setObjectName('label_multi_book_placeholder_hint')
-        placeholder_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-style: italic; padding: 5px 0;")
+        placeholder_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
         placeholder_hint.setWordWrap(True)
         multi_book_template_layout.addWidget(placeholder_hint)
         
@@ -2123,6 +2273,7 @@ class ConfigDialog(QWidget):
         
         # 立即保存语言设置到全局配置
         prefs['language'] = lang_code
+        prefs['language_user_set'] = True
         prefs.commit()  # 立即提交更改
         
         # 更新界面语言

@@ -44,6 +44,7 @@ class FrenchTranslation(BaseTranslation):
             'general_tab': 'Général',
             'ai_models': 'IA',
             'shortcuts': 'Raccourcis',
+            'shortcuts_note': "Vous pouvez personnaliser ces raccourcis dans calibre : Préférences -> Raccourcis (recherchez 'Ask AI').\nCette page affiche les raccourcis par défaut/exemples. Si vous les avez modifiés dans Raccourcis, les paramètres de calibre sont prioritaires.",
             'about': 'À propos',
             'metadata': 'Métadonnées',
             

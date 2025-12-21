@@ -44,6 +44,7 @@ class SpanishTranslation(BaseTranslation):
             'general_tab': 'General',
             'ai_models': 'IA',
             'shortcuts': 'Atajos',
+            'shortcuts_note': "Puedes personalizar estos atajos en calibre: Preferencias -> Atajos (busca 'Ask AI').\nEsta página muestra los atajos predeterminados/de ejemplo. Si los cambiaste en Atajos, la configuración de calibre tiene prioridad.",
             'about': 'Acerca de',
             'metadata': 'Metadatos',
             

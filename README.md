@@ -82,22 +82,40 @@ API Key:
 4. Click "Send" to get an answer from your configured AI provider
 5. Click "Random Question" to request AI-generated questions based on your selected language
 
+## Keyboard Shortcuts
+
+This plugin supports shortcut customization via calibre.
+
+Customize shortcuts:
+1. Open calibre
+2. Go to Preferences -> Shortcuts
+3. Search for "Ask AI"
+
+Default shortcuts:
+- Ask AI: Ask (global): F3
+- Ask AI: Open Configuration: F2
+- Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
+- Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
+
 ## Language Support
 
-- Danish (da)
-- German (de)
+Mainly maintained UI languages (new UI strings are guaranteed to be updated):
 - English (en)
+- German (de)
 - Spanish (es)
-- Finnish (fi)
 - French (fr)
 - Japanese (ja)
+- Simplified Chinese (zh)
+- Traditional Chinese (zht)
+
+Legacy languages (still selectable, but new UI strings might not be updated):
+- Danish (da)
+- Finnish (fi)
 - Dutch (nl)
 - Norwegian (no)
 - Portuguese (pt)
 - Russian (ru)
 - Swedish (sv)
-- Simplified Chinese (zh)
-- Traditional Chinese (zht)
 - Cantonese (yue)
 
 ## Requirements

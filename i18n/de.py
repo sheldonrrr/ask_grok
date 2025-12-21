@@ -44,6 +44,7 @@ class GermanTranslation(BaseTranslation):
             'general_tab': 'Allgemein',
             'ai_models': 'KI',
             'shortcuts': 'Tastenkombinationen',
+            'shortcuts_note': "Sie können diese Tastenkombinationen in calibre anpassen: Einstellungen -> Tastenkombinationen (Suche nach 'Ask AI').\nDiese Seite zeigt die Standard-/Beispiel-Tastenkombinationen. Wenn Sie sie in den Tastenkombinationen geändert haben, haben die calibre-Einstellungen Vorrang.",
             'about': 'Über',
             'metadata': 'Metadaten',
             

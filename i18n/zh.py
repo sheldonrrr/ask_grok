@@ -44,6 +44,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'general_tab': '常规',
             'ai_models': 'AI',
             'shortcuts': '快捷键',
+            'shortcuts_note': "快捷键可在 calibre：Preferences -> Shortcuts 中自定义（搜索 'Ask AI'）。\n本页展示的是默认快捷键/示例，若你已在 Shortcuts 中修改，请以 calibre 设置为准。",
             'about': '关于',
             'metadata': '元数据',
             

@@ -44,6 +44,7 @@ class JapaneseTranslation(BaseTranslation):
             'general_tab': '一般',
             'ai_models': 'AI',
             'shortcuts': 'ショートカット',
+            'shortcuts_note': "これらのショートカットは calibre でカスタマイズできます: 設定 -> ショートカット（'Ask AI' で検索）。\nこのページはデフォルト/例のショートカットを表示しています。ショートカット設定で変更した場合は、calibre の設定が優先されます。",
             'about': '情報',
             'metadata': 'メタデータ',
             
