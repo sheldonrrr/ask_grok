@@ -14,9 +14,7 @@ ToC of this tutorial:
 - Troubleshooting
 - Privacy
 - Tips
-- Recent Updates
 - Getting Help
-- FAQ
 
 Note: This plugin was renamed from Ask Grok to Ask AI Plugin because it now supports multiple AI providers, not just Grok.
 
@@ -40,20 +38,20 @@ Option 1: Nvidia (Recommended)
 - Setup: Visit https://build.nvidia.com/ and sign up
 - Get your API key and paste it in the plugin's Nvidia AI configuration
 
-Option 2: Ollama (Local, No Internet)
+Option 2: Google Gemini
+- Free tier: 15 requests per minute
+- Get key at: https://aistudio.google.com/
+
+Option 3: OpenRouter
+- Free models: there are some free models available at: https://openrouter.ai/models?q=free
+- Get key at: https://openrouter.ai/settings/keys
+
+Option 4: Ollama (Local, No Internet)
 - Cost: Free forever
 - Privacy: Runs on your computer, nothing sent online
 - Setup: Download from https://ollama.com/ and install
 - Run in terminal: ollama pull llama3.2
 - Select Ollama in plugin, no API key needed
-
-Option 3: Google Gemini
-- Free tier: 15 requests per minute
-- Get key at: https://aistudio.google.com/
-
-Option 4: OpenRouter
-- Free models: there are some free models available at: https://openrouter.ai/models?q=free
-- Get key at: https://openrouter.ai/settings/keys
 
 ## Installation
 
