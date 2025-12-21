@@ -369,10 +369,11 @@ class ModelConfigWidget(QWidget):
         if model_config:
             # Nvidia 特殊提示：免费 API Key 信息
             if self.model_id == 'nvidia':
+                from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
                 info_label = QLabel(self.i18n.get('nvidia_free_info', 
                     'New users get 6 months free API access - No credit card required'))
                 info_label.setObjectName('label_nvidia_free_info')
-                info_label.setStyleSheet("color: palette(mid); padding: 5px 0;")
+                info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 info_label.setWordWrap(True)
                 main_layout.addWidget(info_label)
             

@@ -1470,6 +1470,7 @@ class AskDialog(QDialog):
         self.book_info = self.books_info[0]
         
         # 生成或加载 UID
+        self._explicit_history_uid = history_uid
         if history_uid:
             self.current_uid = history_uid
         else:
@@ -1544,7 +1545,7 @@ class AskDialog(QDialog):
         # 监听输入框内容变化，动态切换按钮高光状态
         self.input_area.textChanged.connect(self._update_button_focus)
         
-        # 加载历史记录
+        # 加载历史记录（仅在显式指定 history_uid 时加载）
         has_loaded_history = self._load_history()
 
         # 将 Preferences->Shortcuts 中的快捷键绑定到对话框 action（仅对话框窗口内生效）
@@ -2308,6 +2309,11 @@ class AskDialog(QDialog):
                 # 不从临时存储中删除，等用户发送后再删除
                 # 这不算加载历史记录，因为还没有AI回答
                 return False
+
+            # 新打开对话框默认视为“新对话”，不自动加载最近历史
+            # 否则会覆盖 Config 中的默认 AI / 用户当前选择
+            if not self._explicit_history_uid:
+                return False
             
             # 获取当前书籍ID集合
             current_book_ids = set([book.id for book in self.books_info])
@@ -2842,8 +2848,11 @@ class AskDialog(QDialog):
         for i, panel in enumerate(self.response_panels):
             panel_key = f"panel_{i}"
 
-            # 单AI模式下：强制第一个面板使用当前配置中的默认AI
-            if parallel_ai_count == 1 and i == 0:
+            # 始终优先：第一个面板使用当前配置中的默认AI
+            # 说明：
+            # - 用户在 Config 里切换默认 AI 的意图应覆盖历史记忆（panel_ai_selections）
+            # - 否则会出现“Config 已改默认 AI，但 Ask 仍使用上次记忆”的体验不一致
+            if i == 0:
                 if any(ai_id == default_ai for ai_id, _ in configured_ais):
                     index = panel.ai_switcher.findData(default_ai)
                     if index >= 0:
