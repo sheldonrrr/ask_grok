@@ -115,7 +115,7 @@ class AskAIPluginUI(InterfaceAction):
             self.gui.keyboard.register_shortcut(
                 self.unique_name + ' - ask_dialog_send',
                 'Ask AI: Send (in dialog)',
-                default_keys=(('Cmd+Enter',) if sys.platform == 'darwin' else ('Ctrl+Enter',)),
+                default_keys=('Ctrl+Enter',),
                 action=None,
                 description=None,
                 group=self.action_spec[0],
@@ -130,7 +130,7 @@ class AskAIPluginUI(InterfaceAction):
             self.gui.keyboard.register_shortcut(
                 self.unique_name + ' - ask_dialog_random_question',
                 'Ask AI: Random Question (in dialog)',
-                default_keys=(('Cmd+R',) if sys.platform == 'darwin' else ('Ctrl+R',)),
+                default_keys=('Ctrl+R',),
                 action=None,
                 description=None,
                 group=self.action_spec[0],
@@ -1567,11 +1567,11 @@ class AskDialog(QDialog):
                     cfg_map = {}
 
                 if (cfg_map.get(send_un) in (None, (), [])) and not self.send_action.shortcuts():
-                    key = 'Cmd+Enter' if sys.platform == 'darwin' else 'Ctrl+Enter'
+                    key = 'Ctrl+Enter'
                     self.send_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
 
                 if (cfg_map.get(rand_un) in (None, (), [])) and not self.suggest_action.shortcuts():
-                    key = 'Cmd+R' if sys.platform == 'darwin' else 'Ctrl+R'
+                    key = 'Ctrl+R'
                     self.suggest_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
         except Exception:
             pass
@@ -2825,7 +2825,7 @@ class AskDialog(QDialog):
         prefs = get_prefs()
         
         # 读取上次的AI选择记忆
-        saved_selections = prefs.get('panel_ai_selections', {})
+        saved_selections = prefs.get('panel_ai_selections', {}) or {}
         
         # 获取已配置的AI列表
         configured_ais = self._get_configured_ais()
@@ -2834,9 +2834,24 @@ class AskDialog(QDialog):
             logger.warning("没有已配置的AI，无法设置默认选择")
             return
         
+        # 读取当前配置中的默认AI
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        default_ai = prefs.get('selected_model', 'grok')
+        
         # 为每个面板设置默认AI
         for i, panel in enumerate(self.response_panels):
             panel_key = f"panel_{i}"
+
+            # 单AI模式下：强制第一个面板使用当前配置中的默认AI
+            if parallel_ai_count == 1 and i == 0:
+                if any(ai_id == default_ai for ai_id, _ in configured_ais):
+                    index = panel.ai_switcher.findData(default_ai)
+                    if index >= 0:
+                        panel.ai_switcher.setCurrentIndex(index)
+                        saved_selections[panel_key] = default_ai
+                        logger.info(f"面板 {i} 使用配置中的默认AI: {default_ai}")
+                        continue
+                # 如果默认AI不在已配置列表中，则继续走通用逻辑
             
             # 1. 优先使用记忆的选择
             if panel_key in saved_selections:
@@ -2855,12 +2870,17 @@ class AskDialog(QDialog):
                 index = panel.ai_switcher.findData(ai_id)
                 if index >= 0:
                     panel.ai_switcher.setCurrentIndex(index)
+                    saved_selections[panel_key] = ai_id
                     logger.info(f"面板 {i} 默认选择: {ai_id}")
             else:
                 # 3. AI数量不足，留空
                 panel.ai_switcher.setCurrentIndex(-1)
+                saved_selections.pop(panel_key, None)
                 logger.info(f"面板 {i} 留空（AI数量不足）")
         
+        # 将更新后的面板选择记忆回写到配置中
+        prefs['panel_ai_selections'] = saved_selections
+
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
     
@@ -3329,11 +3349,13 @@ class AskDialog(QDialog):
             self._show_ai_service_required_dialog()
             return
         
-        # 随机问题只使用第一个AI（不并行）
+        # 随机问题只使用第一个AI（不并行），并显式使用其当前选中的模型
+        model_id = None
         if hasattr(self, 'response_panels') and self.response_panels:
             # 确保第一个面板有选中的AI
             first_panel = self.response_panels[0]
-            if not first_panel.get_selected_ai():
+            model_id = first_panel.get_selected_ai()
+            if not model_id:
                 logger.warning("第一个面板没有选中AI，无法生成随机问题")
                 self._show_ai_service_required_dialog()
                 return
@@ -3347,7 +3369,8 @@ class AskDialog(QDialog):
         # 标记这是一个随机问题请求
         self._is_generating_random_question = True
         
-        self.suggestion_handler.generate(self.book_info)
+        # 使用选中的模型生成随机问题
+        self.suggestion_handler.generate(self.book_info, model_id=model_id)
 
     def _show_ai_service_required_dialog(self):
         """显示需要AI服务的提示对话框"""
