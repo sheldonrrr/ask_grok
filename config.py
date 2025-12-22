@@ -1438,6 +1438,8 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_NVIDIA
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
+        elif self.model_id == 'perplexity':
+            provider = AIProvider.AI_PERPLEXITY
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
         else:
@@ -1512,6 +1514,55 @@ class ModelConfigWidget(QWidget):
             if 'models' in prefs and self.model_id in prefs['models']:
                 prefs['models'][self.model_id]['is_configured'] = False
                 logger.info(f"已将 {self.model_id} 标记为未配置状态")
+
+            # 8.1 同步重置 prefs 中的模型配置为默认值（确保真正清空 API Key / 恢复默认 model）
+            if 'models' in prefs:
+                prefs_models = prefs.get('models', {}) or {}
+                current = prefs_models.get(self.model_id, {}) or {}
+                current['api_base_url'] = model_config.default_api_base_url
+                current['model'] = model_config.default_model_name
+                if self.model_id == 'grok':
+                    current['auth_token'] = ''
+                    if 'api_key' in current:
+                        try:
+                            del current['api_key']
+                        except Exception:
+                            pass
+                elif self.model_id != 'ollama':
+                    current['api_key'] = ''
+                current['enable_streaming'] = True
+                current['enabled'] = False
+
+                # Reset provider-specific extra fields
+                if self.model_id == 'openrouter':
+                    current['http_referer'] = ''
+                    current['x_title'] = 'Ask AI Plugin'
+                if self.model_id == 'custom':
+                    if 'disable_ssl_verify' in current:
+                        current['disable_ssl_verify'] = False
+                    if 'disable_ssl_verify_checkbox' in current:
+                        current['disable_ssl_verify_checkbox'] = False
+                prefs_models[self.model_id] = current
+                prefs['models'] = prefs_models
+                logger.info(f"已将 {self.model_id} 的 prefs 配置重置为默认值")
+
+            # 8.2 Perplexity：恢复硬编码模型列表并默认选中 sonar
+            if self.model_id == 'perplexity':
+                try:
+                    self.model_combo.clear()
+                    self.model_combo.addItem(placeholder_text)
+                    self.model_combo.setItemData(0, 'select_model')
+
+                    for m in ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research']:
+                        self.model_combo.addItem(m)
+                        self.model_combo.setItemData(self.model_combo.count() - 1, m)
+
+                    default_model = model_config.default_model_name
+                    idx = self.model_combo.findText(default_model)
+                    self.model_combo.setCurrentIndex(idx if idx >= 0 else 1)
+                    logger.info(f"Perplexity 模型列表已恢复，默认选中: {default_model}")
+                except Exception:
+                    pass
             
             # 9. 更新 Load Models 按钮状态
             self.update_load_models_button_state()
