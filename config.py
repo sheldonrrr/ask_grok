@@ -1202,6 +1202,14 @@ class ModelConfigWidget(QWidget):
             # 尝试在下拉框中选中（如果列表已加载）
             logger.info(f"[load_model_config] 使用下拉框模式 - combo.count()={self.model_combo.count()}")
             if self.model_combo.count() > 1:  # 大于1表示有占位符+实际模型
+                # Perplexity: if no saved model yet, default-select the first real model.
+                # This avoids cross-platform signal timing differences where the earlier
+                # setCurrentIndex(1) may be overwritten back to placeholder.
+                if self.model_id == 'perplexity' and not (model_name or '').strip():
+                    logger.info("[load_model_config] Perplexity 未保存模型，默认选中第一个模型")
+                    self.model_combo.setCurrentIndex(1)
+                    return
+
                 index = self.model_combo.findText(model_name)
                 logger.info(f"[load_model_config] 查找模型 '{model_name}' - index={index}")
                 if index >= 0:

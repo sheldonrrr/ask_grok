@@ -25,7 +25,7 @@ logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.perplexity')
 class PerplexityModel(BaseAIModel):
     """Perplexity Sonar model."""
 
-    DEFAULT_MODEL = "sonar-pro"
+    DEFAULT_MODEL = "sonar"
     DEFAULT_API_BASE_URL = "https://api.perplexity.ai"
 
     def _validate_config(self):

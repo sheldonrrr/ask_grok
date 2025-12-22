@@ -110,7 +110,7 @@ DEFAULT_MODELS = {
         display_name="Perplexity",
         api_key_label="Perplexity API Key:",
         default_api_base_url="https://api.perplexity.ai",
-        default_model_name="sonar-pro"
+        default_model_name="sonar"
     ),
     AIProvider.AI_OLLAMA: ModelConfig(
         provider=AIProvider.AI_OLLAMA,
