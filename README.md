@@ -1,6 +1,6 @@
 # Ask AI Plugin(old name: Ask Grok)
 
-A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok, DeepSeek, Nvidia AI, OpenRouter, Ollama, and custom AI providers.
+A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok, DeepSeek, Nvidia AI, Perplexity (Sonar), OpenRouter, Ollama, and custom AI providers.
 
 ## Preview
 
@@ -45,9 +45,12 @@ Import the file to calibre custom plugins:
 - **Grok (x.AI)** - https://console.x.ai/
 - **DeepSeek** - https://platform.deepseek.com/
 - **Nvidia AI** - https://build.nvidia.com/ (Free tier available)
+- **Perplexity (Sonar)** - https://docs.perplexity.ai/ (Great for research-style answers with citations)
 - **OpenRouter** - https://openrouter.ai/
 - **Ollama** - https://ollama.ai/ (Local AI models)
 - **Custom** - Any OpenAI-compatible API endpoint
+
+Note: For Perplexity, when the API returns citations/search results, the plugin appends a plain-text reference section with full URLs at the end of the answer for easy copy/paste.
 
 ### Free Nvidia API Key
 

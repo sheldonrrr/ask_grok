@@ -195,9 +195,9 @@ def open_tutorial_in_browser():
             return False
         
         # Read tutorial using plugin's get_resources method
-        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.4.md')
+        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.5.md')
         if not tutorial_data:
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.4.md')
         
         if not tutorial_data:
             logger.error("Failed to read tutorial")

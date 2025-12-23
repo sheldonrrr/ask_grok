@@ -18,6 +18,7 @@ from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
 from .models.nvidia import NvidiaModel
 from .models.openrouter import OpenRouterModel
+from .models.perplexity import PerplexityModel
 from .models.ollama import OllamaModel
 from calibre.utils.config import JSONConfig
 
@@ -59,6 +60,7 @@ OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
 NVIDIA_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA)
 OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
+PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
 # 默认配置
@@ -125,6 +127,14 @@ prefs.defaults['models'] = {
         'enable_streaming': True,
         'http_referer': '',  # Optional: for ranking on OpenRouter
         'x_title': 'Ask AI Plugin',  # Optional: app name
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'perplexity': {
+        'api_key': '',
+        'api_base_url': PERPLEXITY_CONFIG.default_api_base_url,
+        'model': PERPLEXITY_CONFIG.default_model_name,
+        'display_name': PERPLEXITY_CONFIG.display_name,
+        'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
     },
     'ollama': {
@@ -359,6 +369,9 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'nvidia':
             provider = AIProvider.AI_NVIDIA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'perplexity':
+            provider = AIProvider.AI_PERPLEXITY
+            model_config = get_current_model_config(provider)
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
             model_config = get_current_model_config(provider)
@@ -433,7 +446,25 @@ class ModelConfigWidget(QWidget):
             # 从缓存加载模型列表
             prefs = get_prefs()
             cached_models = prefs.get('cached_models', {})
-            if self.model_id in cached_models and cached_models[self.model_id]:
+            if self.model_id == 'perplexity':
+                # Perplexity: hardcoded models (no reliable public model list endpoint)
+                hardcoded_models = [
+                    'sonar',
+                    'sonar-pro',
+                    'sonar-reasoning-pro',
+                    'sonar-deep-research',
+                ]
+                self.model_combo.addItems(hardcoded_models)
+                # Mark as loaded so the button becomes "Test Current Model"
+                self._models_loaded = True
+                # Default-select Sonar so user can test immediately (prefer saved model if valid)
+                saved_model = (self.config.get('model') or '').strip()
+                if saved_model and saved_model in hardcoded_models:
+                    idx = self.model_combo.findText(saved_model)
+                    self.model_combo.setCurrentIndex(idx if idx >= 1 else 1)
+                else:
+                    self.model_combo.setCurrentIndex(1)
+            elif self.model_id in cached_models and cached_models[self.model_id]:
                 self.model_combo.addItems(cached_models[self.model_id])
             else:
                 # 没有缓存时，添加提示项
@@ -575,6 +606,10 @@ class ModelConfigWidget(QWidget):
                 config['api_key'] = ''
                 logger.warning(f"[Nvidia get_config] api_key_edit 控件不存在！")
             config['display_name'] = 'Nvidia AI'  # 设置固定的显示名称
+        elif self.model_id == 'perplexity':
+            provider = AIProvider.AI_PERPLEXITY
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Perplexity'  # 设置固定的显示名称
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -755,6 +790,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_NVIDIA
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'perplexity':
+            provider = AIProvider.AI_PERPLEXITY
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
             model_config = get_current_model_config(provider)
@@ -805,6 +844,11 @@ class ModelConfigWidget(QWidget):
         """点击加载模型按钮 - 根据状态执行加载或测试"""
         import logging
         logger = logging.getLogger(__name__)
+
+        # Perplexity: always test current model (no model list loading)
+        if self.model_id == 'perplexity':
+            self._test_current_model()
+            return
         
         # 如果已加载模型，则执行测试
         if self._models_loaded:
@@ -936,6 +980,12 @@ class ModelConfigWidget(QWidget):
     
     def update_load_models_button_state(self):
         """更新加载模型按钮的状态和文本"""
+        if self.model_id == 'perplexity':
+            # Perplexity: no model list loading, only test current model
+            self.load_models_button.setText(self.i18n.get('test_current_model', 'Test Current Model'))
+            self.load_models_animation.original_text = self.i18n.get('test_current_model', 'Test Current Model')
+            return
+
         if self._models_loaded:
             # 已加载模型，显示"测试当前模型"
             self.load_models_button.setText(self.i18n.get('test_current_model', 'Test Current Model'))
@@ -1152,6 +1202,14 @@ class ModelConfigWidget(QWidget):
             # 尝试在下拉框中选中（如果列表已加载）
             logger.info(f"[load_model_config] 使用下拉框模式 - combo.count()={self.model_combo.count()}")
             if self.model_combo.count() > 1:  # 大于1表示有占位符+实际模型
+                # Perplexity: if no saved model yet, default-select the first real model.
+                # This avoids cross-platform signal timing differences where the earlier
+                # setCurrentIndex(1) may be overwritten back to placeholder.
+                if self.model_id == 'perplexity' and not (model_name or '').strip():
+                    logger.info("[load_model_config] Perplexity 未保存模型，默认选中第一个模型")
+                    self.model_combo.setCurrentIndex(1)
+                    return
+
                 index = self.model_combo.findText(model_name)
                 logger.info(f"[load_model_config] 查找模型 '{model_name}' - index={index}")
                 if index >= 0:
@@ -1285,6 +1343,9 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'nvidia':
                 from .models import NvidiaModel
                 model_config = NvidiaModel
+            elif self.model_id == 'perplexity':
+                from .models import PerplexityModel
+                model_config = PerplexityModel
             elif self.model_id == 'openrouter':
                 from .models import OpenRouterModel
                 model_config = OpenRouterModel
@@ -1313,6 +1374,7 @@ class ModelConfigWidget(QWidget):
             'anthropic': AIProvider.AI_ANTHROPIC,
             'nvidia': AIProvider.AI_NVIDIA,
             'openrouter': AIProvider.AI_OPENROUTER,
+            'perplexity': AIProvider.AI_PERPLEXITY,
             'ollama': AIProvider.AI_OLLAMA,
         }
         
@@ -1376,6 +1438,8 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_NVIDIA
         elif self.model_id == 'openrouter':
             provider = AIProvider.AI_OPENROUTER
+        elif self.model_id == 'perplexity':
+            provider = AIProvider.AI_PERPLEXITY
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
         else:
@@ -1450,6 +1514,55 @@ class ModelConfigWidget(QWidget):
             if 'models' in prefs and self.model_id in prefs['models']:
                 prefs['models'][self.model_id]['is_configured'] = False
                 logger.info(f"已将 {self.model_id} 标记为未配置状态")
+
+            # 8.1 同步重置 prefs 中的模型配置为默认值（确保真正清空 API Key / 恢复默认 model）
+            if 'models' in prefs:
+                prefs_models = prefs.get('models', {}) or {}
+                current = prefs_models.get(self.model_id, {}) or {}
+                current['api_base_url'] = model_config.default_api_base_url
+                current['model'] = model_config.default_model_name
+                if self.model_id == 'grok':
+                    current['auth_token'] = ''
+                    if 'api_key' in current:
+                        try:
+                            del current['api_key']
+                        except Exception:
+                            pass
+                elif self.model_id != 'ollama':
+                    current['api_key'] = ''
+                current['enable_streaming'] = True
+                current['enabled'] = False
+
+                # Reset provider-specific extra fields
+                if self.model_id == 'openrouter':
+                    current['http_referer'] = ''
+                    current['x_title'] = 'Ask AI Plugin'
+                if self.model_id == 'custom':
+                    if 'disable_ssl_verify' in current:
+                        current['disable_ssl_verify'] = False
+                    if 'disable_ssl_verify_checkbox' in current:
+                        current['disable_ssl_verify_checkbox'] = False
+                prefs_models[self.model_id] = current
+                prefs['models'] = prefs_models
+                logger.info(f"已将 {self.model_id} 的 prefs 配置重置为默认值")
+
+            # 8.2 Perplexity：恢复硬编码模型列表并默认选中 sonar
+            if self.model_id == 'perplexity':
+                try:
+                    self.model_combo.clear()
+                    self.model_combo.addItem(placeholder_text)
+                    self.model_combo.setItemData(0, 'select_model')
+
+                    for m in ['sonar', 'sonar-pro', 'sonar-reasoning-pro', 'sonar-deep-research']:
+                        self.model_combo.addItem(m)
+                        self.model_combo.setItemData(self.model_combo.count() - 1, m)
+
+                    default_model = model_config.default_model_name
+                    idx = self.model_combo.findText(default_model)
+                    self.model_combo.setCurrentIndex(idx if idx >= 0 else 1)
+                    logger.info(f"Perplexity 模型列表已恢复，默认选中: {default_model}")
+                except Exception:
+                    pass
             
             # 9. 更新 Load Models 按钮状态
             self.update_load_models_button_state()
@@ -1510,6 +1623,7 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('openai', OpenAIModel)
         AIModelFactory.register_model('anthropic', AnthropicModel)
         AIModelFactory.register_model('nvidia', NvidiaModel)
+        AIModelFactory.register_model('perplexity', PerplexityModel)
         AIModelFactory.register_model('openrouter', OpenRouterModel)
         AIModelFactory.register_model('ollama', OllamaModel)
         
@@ -1639,6 +1753,7 @@ class ConfigDialog(QWidget):
             (AIProvider.AI_GROK, 'grok'),
             (AIProvider.AI_DEEPSEEK, 'deepseek'),
             (AIProvider.AI_NVIDIA, 'nvidia'),
+            (AIProvider.AI_PERPLEXITY, 'perplexity'),
             (AIProvider.AI_OPENROUTER, 'openrouter'),
             (AIProvider.AI_OLLAMA, 'ollama'),
             (AIProvider.AI_CUSTOM, 'custom'),
@@ -2143,6 +2258,7 @@ class ConfigDialog(QWidget):
             (AIProvider.AI_GROK, 'grok'),
             (AIProvider.AI_DEEPSEEK, 'deepseek'),
             (AIProvider.AI_NVIDIA, 'nvidia'),
+            (AIProvider.AI_PERPLEXITY, 'perplexity'),
             (AIProvider.AI_OPENROUTER, 'openrouter'),
             (AIProvider.AI_OLLAMA, 'ollama'),
             (AIProvider.AI_CUSTOM, 'custom'),

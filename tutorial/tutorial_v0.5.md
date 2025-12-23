@@ -1,5 +1,6 @@
-# Ask AI Plugin User Manual v0.3
-Latest updated: November 29, 2025, Ask AI Plugin v1.3.5
+
+# Ask AI Plugin User Manual v0.5
+Latest updated: December 22, 2025, Ask AI Plugin v1.3.7
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -7,15 +8,14 @@ ToC of this tutorial:
 - Installation
 - First Time Setup an AI Service
 - How to Use
+- Keyboard Shortcuts
 - Random Questions
 - Other Features
 - Configuration
 - Troubleshooting
 - Privacy
 - Tips
-- Recent Updates
 - Getting Help
-- FAQ
 
 Note: This plugin was renamed from Ask Grok to Ask AI Plugin because it now supports multiple AI providers, not just Grok.
 
@@ -39,23 +39,27 @@ Option 1: Nvidia (Recommended)
 - Setup: Visit https://build.nvidia.com/ and sign up
 - Get your API key and paste it in the plugin's Nvidia AI configuration
 
-Option 2: Ollama (Local, No Internet)
+Option 2: Google Gemini
+- Free tier: 15 requests per minute
+- Get key at: https://aistudio.google.com/
+
+Option 3: OpenRouter
+- Free models: there are some free models available at: https://openrouter.ai/models?q=free
+- Get key at: https://openrouter.ai/settings/keys
+
+Option 4: Ollama (Local, No Internet)
 - Cost: Free forever
 - Privacy: Runs on your computer, nothing sent online
 - Setup: Download from https://ollama.com/ and install
 - Run in terminal: ollama pull llama3.2
 - Select Ollama in plugin, no API key needed
 
-Option 3: Google Gemini
-- Free tier: 15 requests per minute
-- Get key at: https://aistudio.google.com/
-
 ## Installation
 
 Method 1 (Recommended):
 1. Open calibre
 2. Go to Preferences -> Plugins -> Get new plugins
-3. Search for "Ask AI"(Author: Sheldon)
+3. Search for "Ask AI Plugin" (Author: Sheldon)
 4. Click Install
 5. Restart calibre
 
@@ -70,37 +74,62 @@ Method 2 (Manual):
 Example: Setting up Nvidia AI (free)
 
 1. Click Ask AI Plugin menu in calibre toolbar
-2. Select Configure
+2. Select Configuration
 3. Find Nvidia AI section
 4. Paste your API key
 5. Base URL is already filled in
 6. Click Load Model List button
 7. Select a model from dropdown
-8. Saved appear(Now automatically selected)
 
 Done!
 
 ## How to Use
 
 1. Select a book or multiple books in calibre
-2. Click Ask AI button in toolbar
+2. Open Ask dialog:
+   - Click Ask AI Plugin button in toolbar, or
+   - Use the global shortcut (default: F3)
 3. Type your question
-4. Click Send (or Ctrl+Enter)
+4. Click Send (or use Ctrl+Enter / Cmd+Enter)
 
 The plugin automatically includes book metadata. You don't need to type title or author.
 
+### Perplexity (Sonar) for Research
+
+Perplexity is useful when you want answers with sources.
+
+When Perplexity returns citations/search results, the plugin appends a plain-text "Citations" / "Search Results" section (with full URLs) at the end of the answer, so you can copy/paste the links.
+
+## Keyboard Shortcuts
+
+This plugin supports full shortcut customization via calibre.
+
+How to customize:
+1. Open calibre
+2. Go to Preferences -> Shortcuts
+3. Search for "Ask AI"
+4. Edit the shortcuts you want
+
+Common shortcuts (defaults):
+- Ask AI: Ask (global): F3
+- Ask AI: Open Configuration: F2
+- Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
+- Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
+
+Note: If you customized shortcuts in calibre, your custom settings take precedence.
+
 ## Random Questions
 
-1. Click Random Question button
+1. Click Random Question button (or Ctrl+R / Cmd+R)
 2. AI suggests a question
 
-Customize prompts in Configure -> Edit Random Question Prompts
+Customize prompts in Configuration -> Edit Random Question Prompts
 
 ## Other Features
 
-- Parallel AI Comparison: Set Parallel AI Panels to 2 in Configure, then compare responses from different AIs side-by-side
+- Parallel AI Comparison: Set Parallel AI Panels to 2 in Configuration, then compare responses from different AIs side-by-side
 - History: Auto-saved conversations, click History button to view past Q&A
-- PDF Export: Click Export PDF to save conversations, set default folder in Configure -> Export Settings
+- PDF Export: Click Export PDF to save conversations, set default folder in Configuration -> Export Settings
 
 ## Configuration
 
@@ -144,6 +173,7 @@ Ollama Not Working:
 What is sent to AI:
 - Book metadata (title, author, publisher, date, language)
 - Your questions
+- Prompts if you customize them
 
 NOT sent:
 - Your calibre tags, comments, or reviews
@@ -163,43 +193,9 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 2. Use parallel panels to compare different AIs.
 3. Be specific in questions for better answers.
 
-## Recent Updates
-
-v1.3.3 (November 2025):
-- Better PDF export with book titles
-- Fixed language switching bugs
-- Improved parallel AI display
-
-v1.3.2 (November 2025):
-- Added OpenAI, Anthropic, Nvidia support
-- Parallel AI comparison
-- PDF export
-- Multiple books support
-- Renamed to Ask AI Plugin
-
 ## Getting Help
 
 GitHub: https://github.com/sheldonrrr/ask_grok
 calibre Forum: https://www.mobileread.com/forums/showthread.php?p=4547077
 Email: sheldonrrr@gmail.com
 
-## FAQ
-
-Q: Why doesn't my ChatGPT Plus work?
-A: Subscriptions and API keys are separate services. Use free options like Nvidia or Ollama.
-
-Q: What's a token?
-A: About 4 characters. A typical Q&A uses 500-2000 tokens.
-
-Q: Can I ask about book content?
-A: Plugin only sends metadata. AI answers from its training data.
-
-Q: Is my data shared?
-A: Only book metadata is sent. Your library and reading history stay private.
-
-Q: Why is Ollama slower?
-A: Runs on your computer. Cloud AIs use powerful servers. Trade-off: Ollama is free and private.
-
--
-
-Help improve it: https://www.reddit.com/r/AskGrokPlugin/

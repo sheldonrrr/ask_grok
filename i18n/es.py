@@ -111,6 +111,8 @@ class SpanishTranslation(BaseTranslation):
             'open_local_tutorial': 'Abrir tutorial local',
             'tutorial_open_failed': 'Error al abrir el tutorial',
             'tutorial': 'Tutorial',
+
+            'model_display_name_perplexity': 'Perplexity',
             
             # UI - Campos de configuración
             'token_label': 'Clave API:',

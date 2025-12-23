@@ -13,6 +13,7 @@ from .openai import OpenAIModel
 from .anthropic import AnthropicModel
 from .nvidia import NvidiaModel
 from .openrouter import OpenRouterModel
+from .perplexity import PerplexityModel
 from .ollama import OllamaModel
 
 # 注册模型到工厂类
@@ -24,7 +25,8 @@ AIModelFactory.register_model('openai', OpenAIModel)
 AIModelFactory.register_model('anthropic', AnthropicModel)
 AIModelFactory.register_model('nvidia', NvidiaModel)
 AIModelFactory.register_model('openrouter', OpenRouterModel)
+AIModelFactory.register_model('perplexity', PerplexityModel)
 AIModelFactory.register_model('ollama', OllamaModel)
 
 # 导出公共接口
-__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'OpenRouterModel', 'OllamaModel']
+__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'OpenRouterModel', 'PerplexityModel', 'OllamaModel']

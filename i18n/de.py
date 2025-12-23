@@ -113,6 +113,8 @@ class GermanTranslation(BaseTranslation):
             'open_local_tutorial': 'Lokales Tutorial öffnen',
             'tutorial_open_failed': 'Tutorial konnte nicht geöffnet werden',
             'tutorial': 'Tutorial',
+
+            'model_display_name_perplexity': 'Perplexity',
             
             # UI - Konfigurationsfelder
             'token_label': 'API-Schlüssel:',
