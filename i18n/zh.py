@@ -41,12 +41,33 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # UI - 标签和区域
             'config_title': '配置',
-            'general_tab': '常规',
-            'ai_models': 'AI',
+            'general_tab': '通用',
+            'ai_models': 'AI 服务商',
             'shortcuts': '快捷键',
-            'shortcuts_note': "快捷键可在 calibre：Preferences -> Shortcuts 中自定义（搜索 'Ask AI'）。\n本页展示的是默认快捷键/示例，若你已在 Shortcuts 中修改，请以 calibre 设置为准。",
+            'shortcuts_note': "快捷键可在 calibre：Preferences -> Shortcuts 中自定义（搜索 'Ask AI'）。\n本页显示的是默认快捷键/示例，若你已在 Shortcuts 中修改，请以 calibre 设置为准。",
+            'prompts_tab': '提示词',
             'about': '关于',
             'metadata': '元数据',
+            
+            # 区域说明文字
+            'language_settings': '语言',
+            'language_subtitle': '选择你偏好的界面语言',
+            'ai_providers_subtitle': '配置AI服务商并选择默认AI',
+            'prompts_subtitle': '自定义向AI发送问题的方式',
+            'export_settings_subtitle': '设置导出PDF的默认文件夹',
+            'debug_settings_subtitle': '启用调试日志以排查问题',
+            'reset_all_data_subtitle': '⚠️ 警告：这将永久删除所有设置和数据',
+            
+            # 提示词标签页
+            'prompts_explanation_title': '提示词工作原理',
+            'prompts_explanation': '当你点击发送时，插件会根据提示词模板提取并拼接动态字段，然后提交给AI。其运行原理是依赖AI的训练数据中包含该书籍的信息，而不是将书籍全文发送给AI。',
+            'reset_prompts': '重置提示词为默认值',
+            'reset_prompts_confirm': '确定要将所有提示词模板重置为默认值吗？此操作无法撤销。',
+            'unsaved_changes_title': '未保存的更改',
+            'unsaved_changes_message': '提示词标签页有未保存的更改，是否保存？',
+            'use_interface_language': '始终要求AI使用当前插件界面语言回答',
+            'language_instruction_label': '已添加到提示词的语言指令：',
+            'language_instruction_text': '请使用{language_name}回答。',
             
             # UI - 按钮和操作
             'ok_button': '确定',
@@ -242,6 +263,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'open_settings': '插件配置',
             'ask_anyway': '仍要询问',
             'later': '稍后',
+            'debug_settings': '调试设置',
+            'enable_debug_logging': '启用调试日志 (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': '禁用后，调试日志将不会写入文件。这可以防止日志文件变得过大。',
             'reset_all_data': '重置所有数据',
             'reset_all_data_warning': '这将会删除所有API密钥、提示词模板和本地历史记录。您的语言偏好将被保留。请慎重操作。',
             'reset_all_data_confirm_title': '确认重置',

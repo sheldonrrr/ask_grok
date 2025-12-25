@@ -45,8 +45,29 @@ class GermanTranslation(BaseTranslation):
             'ai_models': 'KI',
             'shortcuts': 'Tastenkombinationen',
             'shortcuts_note': "Sie können diese Tastenkombinationen in calibre anpassen: Einstellungen -> Tastenkombinationen (Suche nach 'Ask AI').\nDiese Seite zeigt die Standard-/Beispiel-Tastenkombinationen. Wenn Sie sie in den Tastenkombinationen geändert haben, haben die calibre-Einstellungen Vorrang.",
+            'prompts_tab': 'Prompts',
             'about': 'Über',
             'metadata': 'Metadaten',
+            
+            # Abschnittsuntertitel
+            'language_settings': 'Sprache',
+            'language_subtitle': 'Wählen Sie Ihre bevorzugte Oberflächensprache',
+            'ai_providers_subtitle': 'KI-Anbieter konfigurieren und Standard-KI auswählen',
+            'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
+            'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
+            'debug_settings_subtitle': 'Debug-Protokollierung zur Fehlerbehebung aktivieren',
+            'reset_all_data_subtitle': '⚠️ Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
+            
+            # Prompts-Tab
+            'prompts_explanation_title': 'Wie Prompts funktionieren',
+            'prompts_explanation': 'Wenn Sie auf Senden klicken, extrahiert das Plugin dynamische Felder aus Ihrer Prompt-Vorlage, kombiniert sie und sendet sie an die KI. Das zugrunde liegende Prinzip ist, dass die KI auf Trainingsdaten angewiesen ist, die Informationen über das Buch enthalten, anstatt den vollständigen Text des Buches an die KI zu senden.',
+            'reset_prompts': 'Prompts auf Standard zurücksetzen',
+            'reset_prompts_confirm': 'Möchten Sie wirklich alle Prompt-Vorlagen auf ihre Standardwerte zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden.',
+            'unsaved_changes_title': 'Nicht gespeicherte Änderungen',
+            'unsaved_changes_message': 'Sie haben nicht gespeicherte Änderungen im Prompts-Tab. Möchten Sie diese speichern?',
+            'use_interface_language': 'KI immer bitten, in der aktuellen Plugin-Oberflächensprache zu antworten',
+            'language_instruction_label': 'Zu Prompts hinzugefügte Sprachanweisung:',
+            'language_instruction_text': 'Bitte antworten Sie auf {language_name}.',
             
             # UI - Schaltflächen und Aktionen
             'ok_button': 'OK',
@@ -231,6 +252,9 @@ class GermanTranslation(BaseTranslation):
             'open_settings': 'Plugin-Konfiguration',
             'ask_anyway': 'Trotzdem fragen',
             'later': 'Später',
+            'debug_settings': 'Debug-Einstellungen',
+            'enable_debug_logging': 'Debug-Protokollierung aktivieren (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': 'Wenn deaktiviert, werden Debug-Protokolle nicht in die Datei geschrieben. Dies kann verhindern, dass die Protokolldatei zu groß wird.',
             'reset_all_data': 'Alle Daten zurücksetzen',
             'reset_all_data_warning': 'Dies löscht alle API-Schlüssel, Prompt-Vorlagen und lokale Verlaufseinträge. Ihre Spracheinstellung wird beibehalten. Bitte vorsichtig vorgehen.',
             'reset_all_data_confirm_title': 'Zurücksetzen bestätigen',

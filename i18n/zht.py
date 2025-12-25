@@ -45,8 +45,29 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_models': '人工智能',
         'shortcuts': '快捷鍵',
         'shortcuts_note': "快捷鍵可在 calibre：Preferences -> Shortcuts 中自訂（搜尋 'Ask AI'）。\n本頁顯示的是預設快捷鍵/範例，若你已在 Shortcuts 中修改，請以 calibre 設定為準。",
+        'prompts_tab': '提示詞',
         'about': '關於',
         'metadata': '元數據',
+        
+        # 區域字幕
+        'language_settings': '語言',
+        'language_subtitle': '選擇你喜好的介面語言',
+        'ai_providers_subtitle': '配置AI服務商並選擇預設AI',
+        'prompts_subtitle': '自定義向AI發送問題的方式',
+        'export_settings_subtitle': '設定匯出PDF的預設資料夾',
+        'debug_settings_subtitle': '啟用除錯日誌以排查問題',
+        'reset_all_data_subtitle': '⚠️ 警告：這將永久刪除所有設定和資料',
+        
+        # 提示詞標籤頁
+        'prompts_explanation_title': '提示詞工作原理',
+        'prompts_explanation': '當你點擊發送時，插件會根據提示詞模板提取並拼接動態字段，然後提交給AI。其運行原理是依賴AI的訓練數據中包含該書籍的信息，而不是將書籍全文發送給AI。',
+        'reset_prompts': '重置提示詞為預設值',
+        'reset_prompts_confirm': '確定要將所有提示詞模板重置為預設值嗎？此操作無法撤銷。',
+        'unsaved_changes_title': '未儲存的更改',
+        'unsaved_changes_message': '提示詞標籤頁有未儲存的更改，是否儲存？',
+        'use_interface_language': '始終要求AI使用當前插件界面語言回答',
+        'language_instruction_label': '已添加到提示詞的語言指令：',
+        'language_instruction_text': '請使用{language_name}回答。',
         
         # UI - 按鈕和操作
         'ok_button': '確定',
@@ -226,6 +247,9 @@ class TraditionalChineseTranslation(BaseTranslation):
         'open_settings': '外掛程式配置',
         'ask_anyway': '仍要詢問',
         'later': '稍後',
+        'debug_settings': '調試設定',
+        'enable_debug_logging': '啟用調試日誌 (ask_ai_plugin_debug.log)',
+        'debug_logging_hint': '禁用後，調試日誌將不會寫入文件。這可以防止日誌文件變得過大。',
         'reset_all_data': '重置所有資料',
         'reset_all_data_warning': '這將會刪除所有API密鑰、提示詞模板和本地歷史記錄。您的語言偏好將被保留。請慎重操作。',
         'reset_all_data_confirm_title': '確認重置',

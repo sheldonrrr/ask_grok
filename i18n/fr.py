@@ -45,8 +45,29 @@ class FrenchTranslation(BaseTranslation):
             'ai_models': 'IA',
             'shortcuts': 'Raccourcis',
             'shortcuts_note': "Vous pouvez personnaliser ces raccourcis dans calibre : Préférences -> Raccourcis (recherchez 'Ask AI').\nCette page affiche les raccourcis par défaut/exemples. Si vous les avez modifiés dans Raccourcis, les paramètres de calibre sont prioritaires.",
+            'prompts_tab': 'Prompts',
             'about': 'À propos',
             'metadata': 'Métadonnées',
+            
+            # Sous-titres de section
+            'language_settings': 'Langue',
+            'language_subtitle': 'Choisissez votre langue d\'interface préférée',
+            'ai_providers_subtitle': 'Configurez les fournisseurs d\'IA et sélectionnez votre IA par défaut',
+            'prompts_subtitle': 'Personnalisez la façon dont les questions sont envoyées à l\'IA',
+            'export_settings_subtitle': 'Définissez le dossier par défaut pour l\'export de PDF',
+            'debug_settings_subtitle': 'Activez la journalisation de débogage pour le dépannage',
+            'reset_all_data_subtitle': '⚠️ Attention : Cela supprimera définitivement tous vos paramètres et données',
+            
+            # Onglet Prompts
+            'prompts_explanation_title': 'Comment fonctionnent les Prompts',
+            'prompts_explanation': 'Lorsque vous cliquez sur Envoyer, le plugin extrait et combine les champs dynamiques de votre modèle de prompt, puis les soumet à l\'IA. Le principe sous-jacent est que l\'IA s\'appuie sur des données d\'entraînement qui incluent des informations sur le livre, plutôt que d\'envoyer le texte complet du livre à l\'IA.',
+            'reset_prompts': 'Réinitialiser les Prompts par défaut',
+            'reset_prompts_confirm': 'Êtes-vous sûr de vouloir réinitialiser tous les modèles de prompts à leurs valeurs par défaut ? Cette action ne peut pas être annulée.',
+            'unsaved_changes_title': 'Modifications non enregistrées',
+            'unsaved_changes_message': 'Vous avez des modifications non enregistrées dans l\'onglet Prompts. Voulez-vous les enregistrer ?',
+            'use_interface_language': 'Toujours demander à l\'IA de répondre dans la langue actuelle de l\'interface du plugin',
+            'language_instruction_label': 'Instruction de langue ajoutée aux prompts :',
+            'language_instruction_text': 'Veuillez répondre en {language_name}.',
             
             # UI - Boutons et actions
             'ok_button': 'OK',
@@ -229,6 +250,9 @@ class FrenchTranslation(BaseTranslation):
             'open_settings': 'Configuration du Plugin',
             'ask_anyway': 'Demander Quand Même',
             'later': 'Plus Tard',
+            'debug_settings': 'Paramètres de Débogage',
+            'enable_debug_logging': 'Activer la journalisation de débogage (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': 'Lorsque désactivé, les journaux de débogage ne seront pas écrits dans le fichier. Cela peut empêcher le fichier journal de devenir trop volumineux.',
             'reset_all_data': 'Réinitialiser Toutes les Données',
             'reset_all_data_warning': 'Cela supprimera toutes les clés API, les modèles de prompt et les enregistrements d\'historique locaux. Votre préférence linguistique sera préservée. Veuillez procéder avec prudence.',
             'reset_all_data_confirm_title': 'Confirmer la Réinitialisation',

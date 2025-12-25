@@ -42,11 +42,32 @@ class EnglishTranslation(BaseTranslation):
             # UI - Tabs and sections
             'config_title': 'Configuration',
             'general_tab': 'General',
-            'ai_models': 'AI',
+            'ai_models': 'AI Providers',
             'shortcuts': 'Shortcuts',
             'shortcuts_note': "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\nThis page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence.",
+            'prompts_tab': 'Prompts',
             'about': 'About',
             'metadata': 'Metadata',
+            
+            # Section subtitles
+            'language_settings': 'Language',
+            'language_subtitle': 'Choose your preferred interface language',
+            'ai_providers_subtitle': 'Configure AI providers and select your default AI',
+            'prompts_subtitle': 'Customize how questions are sent to AI',
+            'export_settings_subtitle': 'Set default folder for exporting PDFs',
+            'debug_settings_subtitle': 'Enable debug logging for troubleshooting',
+            'reset_all_data_subtitle': '⚠️ Warning: This will permanently delete all your settings and data',
+            
+            # Prompts tab
+            'prompts_explanation_title': 'How Prompts Work',
+            'prompts_explanation': 'When you click Send, the plugin extracts and combines dynamic fields from your prompt template, then submits them to the AI. The underlying principle is that the AI relies on training data that includes information about the book, rather than sending the full text of the book to the AI.',
+            'reset_prompts': 'Reset Prompts to Default',
+            'reset_prompts_confirm': 'Are you sure you want to reset all prompt templates to their default values? This action cannot be undone.',
+            'unsaved_changes_title': 'Unsaved Changes',
+            'unsaved_changes_message': 'You have unsaved changes in the Prompts tab. Do you want to save them?',
+            'use_interface_language': 'Always ask AI to respond in current plugin interface language',
+            'language_instruction_label': 'Language instruction added to prompts:',
+            'language_instruction_text': 'Please respond in {language_name}.',
             
             # UI - Buttons and actions
             'ok_button': 'OK',
@@ -245,6 +266,9 @@ class EnglishTranslation(BaseTranslation):
             'open_settings': 'Plugin Configuration',
             'ask_anyway': 'Ask Anyway',
             'later': 'Later',
+            'debug_settings': 'Debug Settings',
+            'enable_debug_logging': 'Enable debug logging (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.',
             'reset_all_data': 'Reset All Data',
             'reset_all_data_warning': 'This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.',
             'reset_all_data_confirm_title': 'Confirm Reset',

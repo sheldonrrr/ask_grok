@@ -45,8 +45,29 @@ class JapaneseTranslation(BaseTranslation):
             'ai_models': 'AI',
             'shortcuts': 'ショートカット',
             'shortcuts_note': "これらのショートカットは calibre でカスタマイズできます: 設定 -> ショートカット（'Ask AI' で検索）。\nこのページはデフォルト/例のショートカットを表示しています。ショートカット設定で変更した場合は、calibre の設定が優先されます。",
+            'prompts_tab': 'プロンプト',
             'about': '情報',
             'metadata': 'メタデータ',
+            
+            # セクションサブタイトル
+            'language_settings': '言語',
+            'language_subtitle': 'お好みのインターフェース言語を選択してください',
+            'ai_providers_subtitle': 'AIプロバイダーを設定し、デフォルトのAIを選択してください',
+            'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
+            'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
+            'debug_settings_subtitle': 'トラブルシューティングのためにデバッグログを有効化',
+            'reset_all_data_subtitle': '⚠️ 警告：すべての設定とデータが完全に削除されます',
+            
+            # プロンプトタブ
+            'prompts_explanation_title': 'プロンプトの仕組み',
+            'prompts_explanation': '送信をクリックすると、プラグインはプロンプトテンプレートから動的フィールドを抽出して組み合わせ、AIに送信します。基本原理は、本の全文をAIに送信するのではなく、AIが本に関する情報を含むトレーニングデータに依存することです。',
+            'reset_prompts': 'プロンプトをデフォルトにリセット',
+            'reset_prompts_confirm': 'すべてのプロンプトテンプレートをデフォルト値にリセットしてもよろしいですか？この操作は元に戻せません。',
+            'unsaved_changes_title': '未保存の変更',
+            'unsaved_changes_message': 'プロンプトタブに未保存の変更があります。保存しますか？',
+            'use_interface_language': 'AIに常に現在のプラグインインターフェース言語で回答するよう依頼する',
+            'language_instruction_label': 'プロンプトに追加された言語指示：',
+            'language_instruction_text': '{language_name}で回答してください。',
             
             # UI - ボタンとアクション
             'ok_button': 'OK',
@@ -229,6 +250,9 @@ class JapaneseTranslation(BaseTranslation):
             'open_settings': 'プラグイン設定',
             'ask_anyway': 'とにかく質問する',
             'later': '後で',
+            'debug_settings': 'デバッグ設定',
+            'enable_debug_logging': 'デバッグログを有効にする (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': '無効にすると、デバッグログはファイルに書き込まれません。これにより、ログファイルが大きくなりすぎるのを防ぐことができます。',
             'reset_all_data': 'すべてのデータをリセット',
             'reset_all_data_warning': 'これにより、すべてのAPIキー、プロンプトテンプレート、ローカル履歴レコードが削除されます。言語設定は保持されます。慎重に進めてください。',
             'reset_all_data_confirm_title': 'リセットの確認',

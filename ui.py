@@ -21,6 +21,7 @@ from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_ai_plugin.api import APIClient
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
+from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
 from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
 from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
 from calibre_plugins.ask_ai_plugin.ui_constants import (
@@ -949,6 +950,17 @@ class TabDialog(QDialog):
         
         # 语言变更信号已在下方连接到config_widget.config_dialog.language_changed
 
+        # 创建Prompts页面
+        self.prompts_widget = PromptsWidget(self)
+        self.tab_widget.addTab(self.prompts_widget, self.i18n.get('prompts_tab', 'Prompts'))
+        
+        # 连接Prompts页面的配置变更信号
+        self.prompts_widget.config_changed.connect(self.update_save_button_state)
+        
+        # 加载Prompts页面的初始值
+        current_lang = get_prefs().get('language', 'en')
+        self.prompts_widget.load_initial_values(current_lang)
+
         # 创建快捷键页面
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
@@ -1035,10 +1047,17 @@ class TabDialog(QDialog):
         
         # 更新标签页标题
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
-        self.tab_widget.setTabText(1, self.i18n['shortcuts'])
-        self.tab_widget.setTabText(2, self.i18n.get('tutorial', 'Tutorial'))
-        self.tab_widget.setTabText(3, self.i18n['about'])
+        self.tab_widget.setTabText(1, self.i18n.get('prompts_tab', 'Prompts'))
+        self.tab_widget.setTabText(2, self.i18n['shortcuts'])
+        self.tab_widget.setTabText(3, self.i18n.get('tutorial', 'Tutorial'))
+        self.tab_widget.setTabText(4, self.i18n['about'])
         logger.debug("已更新标签页标题")
+        
+        # 更新 Prompts Widget 的 i18n
+        if hasattr(self, 'prompts_widget'):
+            self.prompts_widget.i18n = self.i18n
+            self.prompts_widget.retranslate_ui()
+            # 注意：retranslate_ui() 已经处理了模板的重新加载，不需要再调用 load_initial_values
         
         # 更新保存按钮文本
         if hasattr(self, 'save_button'):
@@ -1162,19 +1181,49 @@ class TabDialog(QDialog):
         
         :param index: 当前标签页索引
         """
-        # 仅在 General 标签页（索引为0）显示保存按钮
+        # 检查离开的标签页是否有未保存的更改
+        if hasattr(self, 'last_tab_index') and self.last_tab_index == 1:  # Prompts tab
+            if hasattr(self, 'prompts_widget') and self.prompts_widget.check_for_changes():
+                reply = QMessageBox.question(
+                    self,
+                    self.i18n.get('unsaved_changes_title', 'Unsaved Changes'),
+                    self.i18n.get('unsaved_changes_message', 
+                        'You have unsaved changes in the Prompts tab. Do you want to save them?'),
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                    QMessageBox.Yes
+                )
+                
+                if reply == QMessageBox.Yes:
+                    self.prompts_widget.save_settings()
+                    self.on_settings_saved()
+                elif reply == QMessageBox.Cancel:
+                    # 取消切换，返回到 Prompts tab
+                    self.tab_widget.setCurrentIndex(self.last_tab_index)
+                    return
+        
+        # 保存当前标签页索引
+        self.last_tab_index = index
+        
+        # 在 General 标签页（索引为0）或 Prompts 标签页（索引为1）显示保存按钮
         if hasattr(self, 'save_button'):
-            self.save_button.setVisible(index == 0)
+            self.save_button.setVisible(index == 0 or index == 1)
             
-            # 如果切换到 General 标签页，更新保存按钮状态
-            if index == 0:
+            # 如果切换到 General 或 Prompts 标签页，更新保存按钮状态
+            if index == 0 or index == 1:
                 self.update_save_button_state()
     
     def on_save_clicked(self):
         """处理保存按钮点击事件"""
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
-            # 调用配置对话框的保存方法
-            self.config_widget.config_dialog.save_settings()
+        current_index = self.tab_widget.currentIndex()
+        
+        if current_index == 0:  # General tab
+            if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+                # 调用配置对话框的保存方法
+                self.config_widget.config_dialog.save_settings()
+        elif current_index == 1:  # Prompts tab
+            if hasattr(self, 'prompts_widget'):
+                self.prompts_widget.save_settings()
+                self.on_settings_saved()
     
     def on_settings_saved(self):
         """处理设置保存成功事件"""
@@ -1192,18 +1241,25 @@ class TabDialog(QDialog):
     
     def update_save_button_state(self):
         """更新保存按钮的启用/禁用状态"""
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
-            # 检查是否有配置变更
-            config_dialog = self.config_widget.config_dialog
-            has_changes = config_dialog.check_for_changes()
+        current_index = self.tab_widget.currentIndex()
+        has_changes = False
+        
+        if current_index == 0:  # General tab
+            if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+                # 检查是否有配置变更
+                config_dialog = self.config_widget.config_dialog
+                has_changes = config_dialog.check_for_changes()
+        elif current_index == 1:  # Prompts tab
+            if hasattr(self, 'prompts_widget'):
+                has_changes = self.prompts_widget.check_for_changes()
+        
+        # 根据是否有变更设置保存按钮状态
+        if hasattr(self, 'save_button'):
+            self.save_button.setEnabled(has_changes)
             
-            # 根据是否有变更设置保存按钮状态
-            if hasattr(self, 'save_button'):
-                self.save_button.setEnabled(has_changes)
-                
-            # 如果有变更，隐藏保存成功提示
-            if has_changes and hasattr(self, 'save_feedback_label'):
-                self.save_feedback_label.hide()
+        # 如果有变更，隐藏保存成功提示
+        if has_changes and hasattr(self, 'save_feedback_label'):
+            self.save_feedback_label.hide()
     
     def reject(self):
         """处理关闭按钮"""
@@ -1211,8 +1267,29 @@ class TabDialog(QDialog):
         from PyQt5.QtWidgets import QMessageBox
         logger = logging.getLogger(__name__)
         
+        # 检查 Prompts Tab 是否有未保存的更改
+        if hasattr(self, 'prompts_widget') and self.prompts_widget.check_for_changes():
+            logger.info("检测到 Prompts Tab 有未保存的更改，显示确认对话框")
+            
+            reply = QMessageBox.question(
+                self,
+                self.i18n.get('unsaved_changes_title', 'Unsaved Changes'),
+                self.i18n.get('unsaved_changes_message', 
+                    'You have unsaved changes in the Prompts tab. Do you want to save them?'),
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Yes
+            )
+            
+            if reply == QMessageBox.Yes:
+                self.prompts_widget.save_settings()
+                super().reject()
+            elif reply == QMessageBox.No:
+                super().reject()
+            else:
+                return  # 取消关闭
+        
         # 检查是否有未保存的输入框变化
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
+        elif hasattr(self, 'config_widget') and hasattr(self.config_widget, 'config_dialog'):
             config_dialog = self.config_widget.config_dialog
             
             if config_dialog.has_unsaved_input_changes:

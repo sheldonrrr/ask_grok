@@ -75,31 +75,76 @@ FONT_SIZE_MEDIUM = 13
 FONT_SIZE_LARGE = 14
 
 # ============ GroupBox样式 ============
-def get_groupbox_style(border_style="dashed"):
+def get_groupbox_style(border_style="none"):
     """
-    获取统一的GroupBox样式
+    获取统一的GroupBox样式（不包含标题，标题由外部单独管理）
     
     Args:
-        border_style: 边框样式 "solid" 或 "dashed"
+        border_style: 边框样式 "solid", "dashed" 或 "none"（默认无边框，使用背景色区分）
     """
+    if border_style == "none":
+        # 无边框样式，使用浅色背景区分区域
+        return f"""
+            QGroupBox {{
+                border: none;
+                background-color: {BG_COLOR_ALTERNATE};
+                border-radius: 6px;
+                padding: {PADDING_LARGE}px;
+                margin-top: 0px;
+                margin-bottom: {SPACING_MEDIUM}px;
+                margin-left: 0px;
+                margin-right: 0px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0;
+                margin: 0;
+            }}
+        """
+    else:
+        # 带边框样式（兼容旧代码）
+        return f"""
+            QGroupBox {{
+                border: 1px {border_style} {BORDER_COLOR_MEDIUM};
+                border-radius: 4px;
+                padding: {PADDING_LARGE}px;
+                margin-top: {SPACING_SMALL}px;
+                margin-bottom: {SPACING_MEDIUM}px;
+                margin-left: {SPACING_SMALL}px;
+                margin-right: {SPACING_SMALL}px;
+            }}
+            QGroupBox::title {{
+                font-weight: bold;
+                color: {TEXT_COLOR_SECONDARY_STRONG};
+                padding: 0 {SPACING_SMALL}px;
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                left: {SPACING_MEDIUM}px;
+            }}
+        """
+
+# ============ Section Title样式 ============
+def get_section_title_style():
+    """获取统一的section title样式（放在GroupBox外部）"""
     return f"""
-        QGroupBox {{
-            border: 1px {border_style} {BORDER_COLOR_MEDIUM};
-            border-radius: 4px;
-            padding: {PADDING_LARGE}px;
-            margin-top: {SPACING_SMALL}px;
-            margin-bottom: {SPACING_MEDIUM}px;
-            margin-left: {SPACING_SMALL}px;
-            margin-right: {SPACING_SMALL}px;
-        }}
-        QGroupBox::title {{
-            font-weight: bold;
-            color: {TEXT_COLOR_SECONDARY_STRONG};
-            padding: 0 {SPACING_SMALL}px;
-            subcontrol-origin: margin;
-            subcontrol-position: top left;
-            left: {SPACING_MEDIUM}px;
-        }}
+        font-weight: bold;
+        font-size: 1.08em;
+        color: {TEXT_COLOR_PRIMARY};
+        text-transform: uppercase;
+        padding: 0;
+        margin: {SPACING_LARGE}px 0 {SPACING_SMALL}px 0;
+    """
+
+# ============ Subtitle样式 ============
+def get_subtitle_style():
+    """获取统一的subtitle样式（放在GroupBox外部）"""
+    return f"""
+        color: palette(text);
+        font-size: 1em;
+        padding: 0;
+        margin: 0 0 {SPACING_SMALL}px 0;
+        opacity: 0.7;
     """
 
 # ============ 分隔线样式 ============

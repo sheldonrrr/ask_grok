@@ -45,8 +45,29 @@ class SpanishTranslation(BaseTranslation):
             'ai_models': 'IA',
             'shortcuts': 'Atajos',
             'shortcuts_note': "Puedes personalizar estos atajos en calibre: Preferencias -> Atajos (busca 'Ask AI').\nEsta página muestra los atajos predeterminados/de ejemplo. Si los cambiaste en Atajos, la configuración de calibre tiene prioridad.",
+            'prompts_tab': 'Prompts',
             'about': 'Acerca de',
             'metadata': 'Metadatos',
+            
+            # Subtítulos de sección
+            'language_settings': 'Idioma',
+            'language_subtitle': 'Elige tu idioma de interfaz preferido',
+            'ai_providers_subtitle': 'Configura proveedores de IA y selecciona tu IA predeterminada',
+            'prompts_subtitle': 'Personaliza cómo se envían las preguntas a la IA',
+            'export_settings_subtitle': 'Establece la carpeta predeterminada para exportar PDFs',
+            'debug_settings_subtitle': 'Activa el registro de depuración para solucionar problemas',
+            'reset_all_data_subtitle': '⚠️ Advertencia: Esto eliminará permanentemente toda tu configuración y datos',
+            
+            # Pestaña de Prompts
+            'prompts_explanation_title': 'Cómo funcionan los Prompts',
+            'prompts_explanation': 'Cuando haces clic en Enviar, el plugin extrae y combina campos dinámicos de tu plantilla de prompt y los envía a la IA. El principio subyacente es que la IA se basa en datos de entrenamiento que incluyen información sobre el libro, en lugar de enviar el texto completo del libro a la IA.',
+            'reset_prompts': 'Restablecer Prompts a valores predeterminados',
+            'reset_prompts_confirm': '¿Estás seguro de que deseas restablecer todas las plantillas de prompts a sus valores predeterminados? Esta acción no se puede deshacer.',
+            'unsaved_changes_title': 'Cambios sin guardar',
+            'unsaved_changes_message': 'Tienes cambios sin guardar en la pestaña de Prompts. ¿Deseas guardarlos?',
+            'use_interface_language': 'Solicitar siempre a la IA que responda en el idioma de la interfaz del plugin actual',
+            'language_instruction_label': 'Instrucción de idioma agregada a los prompts:',
+            'language_instruction_text': 'Por favor responde en {language_name}.',
             
             # UI - Botones y acciones
             'ok_button': 'OK',
@@ -229,6 +250,9 @@ class SpanishTranslation(BaseTranslation):
             'open_settings': 'Configuración del Plugin',
             'ask_anyway': 'Preguntar de Todos Modos',
             'later': 'Más Tarde',
+            'debug_settings': 'Configuración de Depuración',
+            'enable_debug_logging': 'Habilitar registro de depuración (ask_ai_plugin_debug.log)',
+            'debug_logging_hint': 'Cuando está deshabilitado, los registros de depuración no se escribirán en el archivo. Esto puede evitar que el archivo de registro se vuelva demasiado grande.',
             'reset_all_data': 'Restablecer Todos los Datos',
             'reset_all_data_warning': 'Esto eliminará todas las claves API, plantillas de prompts y registros de historial local. Su preferencia de idioma se conservará. Por favor, proceda con precaución.',
             'reset_all_data_confirm_title': 'Confirmar Restablecimiento',

@@ -30,7 +30,11 @@ KEYWORDS = 'bookAI readingAI multiAI OpenAI Anthropic Gemini DeepSeek Nvidia Oll
 # 配置日志
 import tempfile
 import os
-from calibre.utils.config import config_dir
+from calibre.utils.config import config_dir, JSONConfig
+
+# 获取插件配置
+prefs = JSONConfig('plugins/ask_ai_plugin')
+enable_debug_logging = prefs.get('enable_debug_logging', False)
 
 # 创建插件日志目录
 log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
@@ -48,7 +52,7 @@ for handler in root_logger.handlers:
         break
 
 # 只有在没有处理器时才添加，避免重复
-if not handlers_exist:
+if not handlers_exist and enable_debug_logging:
     # 配置根日志记录器
     root_logger.setLevel(logging.DEBUG)
     
