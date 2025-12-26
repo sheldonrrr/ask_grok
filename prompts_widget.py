@@ -10,7 +10,7 @@ from PyQt5.QtGui import QFontMetrics
 
 from .i18n import get_default_template, get_suggestion_template, get_multi_book_template
 from .ui_constants import (
-    SPACING_SMALL, SPACING_LARGE,
+    SPACING_SMALL, SPACING_MEDIUM, SPACING_ASK_COMPACT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
     TEXT_COLOR_SECONDARY_STRONG
 )
@@ -47,18 +47,18 @@ class PromptsWidget(QWidget):
         # 创建内容容器
         content_widget = QWidget()
         content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(SPACING_LARGE, SPACING_LARGE, SPACING_LARGE, SPACING_LARGE)
-        content_layout.setSpacing(SPACING_LARGE)
+        content_layout.setContentsMargins(SPACING_SMALL, 0, SPACING_SMALL, 0)
+        content_layout.setSpacing(SPACING_ASK_COMPACT)  # 使用紧凑间距匹配General Tab
         content_widget.setLayout(content_layout)
-        
-        # 添加说明部分
-        self.add_explanation_section(content_layout)
         
         # 添加语言偏好设置部分
         self.add_language_preference_section(content_layout)
         
         # 添加提示词模板部分
         self.add_prompts_section(content_layout)
+        
+        # 添加动态字段示例部分
+        self.add_dynamic_fields_examples(content_layout)
         
         # 添加重置按钮
         self.add_reset_button(content_layout)
@@ -69,36 +69,32 @@ class PromptsWidget(QWidget):
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
         
-    def add_explanation_section(self, parent_layout):
-        """添加说明部分"""
-        # 创建说明组
-        explanation_group = QGroupBox()
-        explanation_group.setStyleSheet(get_groupbox_style())
-        explanation_layout = QVBoxLayout()
-        explanation_layout.setSpacing(SPACING_SMALL)
-        
-        # 标题
-        title = QLabel(self.i18n.get('prompts_explanation_title', 'How Prompts Work'))
-        title.setStyleSheet(get_section_title_style())
-        title.setObjectName('title_prompts_explanation')
-        explanation_layout.addWidget(title)
-        
-        # 说明文字
-        explanation = QLabel(self.i18n.get('prompts_explanation', 
-            'When you click Send, the plugin extracts and combines dynamic fields from your prompt template, '
-            'then submits them to the AI. The underlying principle is that the AI relies on training data that '
-            'includes information about the book, rather than sending the full text of the book to the AI.'))
-        explanation.setWordWrap(True)
-        explanation.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
-        explanation.setObjectName('subtitle_prompts_explanation')
-        explanation_layout.addWidget(explanation)
-        
-        explanation_group.setLayout(explanation_layout)
-        parent_layout.addWidget(explanation_group)
         
     def add_language_preference_section(self, parent_layout):
         """添加语言偏好设置部分"""
         from PyQt5.QtWidgets import QCheckBox
+        
+        # Section Title - 第一个section，顶部间距较小
+        lang_pref_title = QLabel(self.i18n.get('language_preference_title', 'Language Preference'))
+        lang_pref_title.setObjectName('title_language_preference')
+        first_section_style = f"""
+            font-weight: bold;
+            font-size: 1.08em;
+            color: palette(text);
+            text-transform: uppercase;
+            padding: 0;
+            margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
+        """
+        lang_pref_title.setStyleSheet(first_section_style)
+        parent_layout.addWidget(lang_pref_title)
+        
+        # Subtitle
+        lang_pref_subtitle = QLabel(self.i18n.get('language_preference_subtitle', 
+            'Control whether AI responses should match your interface language'))
+        lang_pref_subtitle.setObjectName('subtitle_language_preference')
+        lang_pref_subtitle.setWordWrap(True)
+        lang_pref_subtitle.setStyleSheet(get_subtitle_style())
+        parent_layout.addWidget(lang_pref_subtitle)
         
         # 创建语言偏好组
         lang_pref_group = QGroupBox()
@@ -110,7 +106,7 @@ class PromptsWidget(QWidget):
         self.use_interface_language_checkbox = QCheckBox(
             self.i18n.get('use_interface_language', 'Always ask AI to respond in current plugin interface language')
         )
-        self.use_interface_language_checkbox.setChecked(True)  # 默认勾选
+        self.use_interface_language_checkbox.setChecked(False)  # 默认不勾选
         self.use_interface_language_checkbox.stateChanged.connect(self.on_language_preference_changed)
         lang_pref_layout.addWidget(self.use_interface_language_checkbox)
         
@@ -128,11 +124,25 @@ class PromptsWidget(QWidget):
     
     def add_prompts_section(self, parent_layout):
         """添加提示词模板部分"""
+        # Section Title
+        prompts_title = QLabel(self.i18n.get('prompt_templates_title', 'Prompt Templates'))
+        prompts_title.setObjectName('title_prompt_templates')
+        prompts_title.setStyleSheet(get_section_title_style())
+        parent_layout.addWidget(prompts_title)
+        
+        # Subtitle
+        prompts_subtitle = QLabel(self.i18n.get('prompt_templates_subtitle', 
+            'Customize how book information is sent to AI using dynamic fields like {title}, {author}, {query}'))
+        prompts_subtitle.setObjectName('subtitle_prompt_templates')
+        prompts_subtitle.setWordWrap(True)
+        prompts_subtitle.setStyleSheet(get_subtitle_style())
+        parent_layout.addWidget(prompts_subtitle)
+        
         # 创建提示词组
         prompts_group = QGroupBox()
         prompts_group.setStyleSheet(get_groupbox_style())
         prompts_layout = QVBoxLayout()
-        prompts_layout.setSpacing(SPACING_LARGE)
+        prompts_layout.setSpacing(SPACING_MEDIUM)
         
         # Ask Prompts
         ask_layout = QVBoxLayout()
@@ -162,11 +172,11 @@ class PromptsWidget(QWidget):
         
         prompts_layout.addLayout(random_layout)
         
-        # Multi-Book Template
+        # Multi-Book Prompts
         multi_layout = QVBoxLayout()
         multi_layout.setSpacing(SPACING_SMALL)
-        multi_label = QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template'))
-        multi_label.setObjectName('label_multi_book_template')
+        multi_label = QLabel(self.i18n.get('multi_book_prompts_label', 'Multi-Book Prompts'))
+        multi_label.setObjectName('label_multi_book_prompts')
         multi_layout.addWidget(multi_label)
         
         self.multi_book_template_edit = QPlainTextEdit(self)
@@ -186,6 +196,48 @@ class PromptsWidget(QWidget):
         
         prompts_group.setLayout(prompts_layout)
         parent_layout.addWidget(prompts_group)
+    
+    def add_dynamic_fields_examples(self, parent_layout):
+        """添加动态字段使用示例"""
+        # Section Title
+        examples_title = QLabel(self.i18n.get('dynamic_fields_title', 'Dynamic Fields Reference'))
+        examples_title.setObjectName('title_dynamic_fields')
+        examples_title.setStyleSheet(get_section_title_style())
+        parent_layout.addWidget(examples_title)
+        
+        # Subtitle
+        examples_subtitle = QLabel(self.i18n.get('dynamic_fields_subtitle', 
+            'Available fields and example values from "Frankenstein" by Mary Shelley'))
+        examples_subtitle.setObjectName('subtitle_dynamic_fields')
+        examples_subtitle.setWordWrap(True)
+        examples_subtitle.setStyleSheet(get_subtitle_style())
+        parent_layout.addWidget(examples_subtitle)
+        
+        # 创建示例组
+        examples_group = QGroupBox()
+        examples_group.setStyleSheet(get_groupbox_style())
+        examples_layout = QVBoxLayout()
+        examples_layout.setSpacing(SPACING_SMALL)
+        
+        # 创建示例表格
+        example_text = self.i18n.get('dynamic_fields_examples', 
+            '<b>{title}</b> → Frankenstein<br>'
+            '<b>{author}</b> → Mary Shelley<br>'
+            '<b>{publisher}</b> → Lackington, Hughes, Harding, Mavor & Jones<br>'
+            '<b>{pubyear}</b> → 1818<br>'
+            '<b>{language}</b> → English<br>'
+            '<b>{series}</b> → (none)<br>'
+            '<b>{query}</b> → Your question text')
+        
+        examples_label = QLabel(example_text)
+        examples_label.setObjectName('label_dynamic_fields_examples')
+        examples_label.setWordWrap(True)
+        examples_label.setTextFormat(Qt.RichText)
+        examples_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 0; line-height: 1.6;")
+        examples_layout.addWidget(examples_label)
+        
+        examples_group.setLayout(examples_layout)
+        parent_layout.addWidget(examples_group)
         
     def setup_text_edit_height(self, text_edit):
         """设置文本编辑框的高度"""
@@ -220,8 +272,7 @@ class PromptsWidget(QWidget):
     def on_language_preference_changed(self):
         """语言偏好变更时触发"""
         self.update_language_instruction_display()
-        # 更新提示词模板中的语言指令
-        self.update_prompts_with_language_instruction()
+        # 隐藏提示词系统：不再自动添加到文本框
         self.on_config_changed()
     
     def get_language_instruction_text(self):
@@ -285,24 +336,19 @@ class PromptsWidget(QWidget):
         
         return '\n'.join(lines)
     
-    def update_prompts_with_language_instruction(self):
-        """更新所有提示词模板，添加或移除语言指令"""
-        language_instruction = self.get_language_instruction_text()
+    def get_final_prompt(self, base_prompt):
+        """获取最终提示词（添加隐藏的语言指令）
         
-        # 更新 Ask Prompts
-        current_template = self.template_edit.toPlainText()
-        clean_template = self.remove_language_instruction(current_template)
-        self.template_edit.setPlainText(clean_template + language_instruction)
-        
-        # 更新 Random Questions
-        current_random = self.random_questions_edit.toPlainText()
-        clean_random = self.remove_language_instruction(current_random)
-        self.random_questions_edit.setPlainText(clean_random + language_instruction)
-        
-        # 更新 Multi-Book Template
-        current_multi = self.multi_book_template_edit.toPlainText()
-        clean_multi = self.remove_language_instruction(current_multi)
-        self.multi_book_template_edit.setPlainText(clean_multi + language_instruction)
+        Args:
+            base_prompt: 基础提示词（用户在配置中编辑的内容）
+            
+        Returns:
+            str: 如果启用语言偏好，返回添加了语言指令的提示词；否则返回原始提示词
+        """
+        if self.use_interface_language_checkbox.isChecked():
+            language_instruction = self.get_language_instruction_text()
+            return base_prompt + language_instruction
+        return base_prompt
     
     def update_language_instruction_display(self):
         """更新语言指令显示"""
@@ -347,46 +393,78 @@ class PromptsWidget(QWidget):
             # 获取当前语言
             current_lang = self.parent_dialog.config_widget.config_dialog.lang_combo.currentData()
             
-            # 重置为默认模板
+            # 重置为默认模板（不添加语言指令，因为是隐藏提示词）
             self.template_edit.setPlainText(get_default_template(current_lang))
             self.random_questions_edit.setPlainText(get_suggestion_template(current_lang))
             self.multi_book_template_edit.setPlainText(get_multi_book_template(current_lang))
-            
-            # 如果启用了语言偏好，重新添加语言指令
-            if self.use_interface_language_checkbox.isChecked():
-                self.update_prompts_with_language_instruction()
             
             logger.info("提示词已重置为默认值")
             
     def load_initial_values(self, lang_code):
         """加载初始值"""
         from .config import get_prefs
+        from .i18n import get_all_languages
         prefs = get_prefs()
         
-        # 加载提示词（不包含语言指令）
-        self.template_edit.setPlainText(prefs.get('template', get_default_template(lang_code)))
+        # 加载提示词（隐藏提示词系统：不在文本框中显示语言指令）
+        saved_template = prefs.get('template', '')
+        
+        # 检查保存的模板是否是其他语言的默认模板，如果是则替换为当前语言的默认模板
+        if saved_template:
+            is_default_from_other_lang = False
+            all_languages = get_all_languages()
+            for other_lang_code in all_languages.keys():
+                if other_lang_code != lang_code:
+                    other_default = get_default_template(other_lang_code)
+                    if saved_template.strip() == other_default.strip():
+                        is_default_from_other_lang = True
+                        break
+            
+            if is_default_from_other_lang:
+                # 使用当前语言的默认模板
+                self.template_edit.setPlainText(get_default_template(lang_code))
+            else:
+                # 使用保存的自定义模板
+                self.template_edit.setPlainText(saved_template)
+        else:
+            # 没有保存的模板，使用当前语言的默认模板
+            self.template_edit.setPlainText(get_default_template(lang_code))
+        
         self.random_questions_edit.setPlainText(get_suggestion_template(lang_code))
         
         # 加载多书提示词，如果为空则使用默认模板
         multi_book_template = prefs.get('multi_book_template', '')
-        if not multi_book_template or not multi_book_template.strip():
+        
+        # 检查保存的多书模板是否是其他语言的默认模板
+        if multi_book_template and multi_book_template.strip():
+            is_default_from_other_lang = False
+            all_languages = get_all_languages()
+            for other_lang_code in all_languages.keys():
+                if other_lang_code != lang_code:
+                    other_default = get_multi_book_template(other_lang_code)
+                    if multi_book_template.strip() == other_default.strip():
+                        is_default_from_other_lang = True
+                        break
+            
+            if is_default_from_other_lang:
+                # 使用当前语言的默认模板
+                multi_book_template = get_multi_book_template(lang_code)
+        else:
+            # 没有保存的模板，使用当前语言的默认模板
             multi_book_template = get_multi_book_template(lang_code)
+        
         self.multi_book_template_edit.setPlainText(multi_book_template)
         
-        # 加载语言偏好设置（默认为True）
-        use_interface_lang = prefs.get('use_interface_language', True)
+        # 加载语言偏好设置（默认为False）
+        use_interface_lang = prefs.get('use_interface_language', False)
         self.use_interface_language_checkbox.setChecked(use_interface_lang)
         self.update_language_instruction_display()
         
-        # 如果启用了语言偏好，添加语言指令到提示词
-        if use_interface_lang:
-            self.update_prompts_with_language_instruction()
-        
-        # 保存初始值用于变更检测（保存不含语言指令的原始值）
+        # 保存初始值用于变更检测（隐藏提示词系统：直接保存文本框内容）
         self.initial_values = {
-            'template': self.remove_language_instruction(self.template_edit.toPlainText()),
-            'random_questions': self.remove_language_instruction(self.random_questions_edit.toPlainText()),
-            'multi_book_template': self.remove_language_instruction(self.multi_book_template_edit.toPlainText()),
+            'template': self.template_edit.toPlainText(),
+            'random_questions': self.random_questions_edit.toPlainText(),
+            'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': use_interface_lang
         }
         
@@ -398,9 +476,9 @@ class PromptsWidget(QWidget):
         # 获取当前语言
         current_lang = self.parent_dialog.config_widget.config_dialog.lang_combo.currentData()
         
-        # 保存提示词（移除语言指令，只保存原始模板）
+        # 保存提示词（隐藏提示词系统：直接保存文本框内容，无需移除语言指令）
         # 检查是否是默认模板，如果是默认模板则保存为空字符串，让系统自动使用默认模板
-        current_template = self.remove_language_instruction(self.template_edit.toPlainText())
+        current_template = self.template_edit.toPlainText()
         default_template = get_default_template(current_lang)
         
         # 如果当前模板与默认模板相同，保存为空字符串（表示使用默认模板）
@@ -410,7 +488,7 @@ class PromptsWidget(QWidget):
             prefs['template'] = current_template
         
         # 同样处理多书模板
-        current_multi = self.remove_language_instruction(self.multi_book_template_edit.toPlainText())
+        current_multi = self.multi_book_template_edit.toPlainText()
         default_multi = get_multi_book_template(current_lang)
         
         if current_multi.strip() == default_multi.strip():
@@ -425,11 +503,11 @@ class PromptsWidget(QWidget):
         
         prefs.commit()
         
-        # 更新初始值（保存不含语言指令的原始值，与 check_for_changes 保持一致）
+        # 更新初始值（隐藏提示词系统：直接保存文本框内容）
         self.initial_values = {
-            'template': self.remove_language_instruction(self.template_edit.toPlainText()),
-            'random_questions': self.remove_language_instruction(self.random_questions_edit.toPlainText()),
-            'multi_book_template': self.remove_language_instruction(self.multi_book_template_edit.toPlainText()),
+            'template': self.template_edit.toPlainText(),
+            'random_questions': self.random_questions_edit.toPlainText(),
+            'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': self.use_interface_language_checkbox.isChecked()
         }
         
@@ -440,16 +518,16 @@ class PromptsWidget(QWidget):
         if not hasattr(self, 'initial_values'):
             return False
             
-        # 移除语言指令后比较（因为语言指令是动态添加的）
-        current_template = self.remove_language_instruction(self.template_edit.toPlainText())
-        current_random = self.remove_language_instruction(self.random_questions_edit.toPlainText())
-        current_multi = self.remove_language_instruction(self.multi_book_template_edit.toPlainText())
+        # 隐藏提示词系统：直接比较文本框内容
+        current_template = self.template_edit.toPlainText()
+        current_random = self.random_questions_edit.toPlainText()
+        current_multi = self.multi_book_template_edit.toPlainText()
         current_use_lang = self.use_interface_language_checkbox.isChecked()
         
         template_changed = current_template != self.initial_values.get('template', '')
         random_changed = current_random != self.initial_values.get('random_questions', '')
         multi_changed = current_multi != self.initial_values.get('multi_book_template', '')
-        lang_pref_changed = current_use_lang != self.initial_values.get('use_interface_language', True)
+        lang_pref_changed = current_use_lang != self.initial_values.get('use_interface_language', False)
         
         return template_changed or random_changed or multi_changed or lang_pref_changed
         
@@ -457,16 +535,28 @@ class PromptsWidget(QWidget):
         """更新界面语言"""
         # 更新所有标签
         label_map = {
-            'title_prompts_explanation': ('prompts_explanation_title', 'How Prompts Work'),
-            'subtitle_prompts_explanation': ('prompts_explanation', 
-                'When you click Send, the plugin extracts and combines dynamic fields from your prompt template, '
-                'then submits them to the AI. The underlying principle is that the AI relies on training data that '
-                'includes information about the book, rather than sending the full text of the book to the AI.'),
+            'title_language_preference': ('language_preference_title', 'Language Preference'),
+            'subtitle_language_preference': ('language_preference_subtitle', 
+                'Control whether AI responses should match your interface language'),
+            'title_prompt_templates': ('prompt_templates_title', 'Prompt Templates'),
+            'subtitle_prompt_templates': ('prompt_templates_subtitle', 
+                'Customize how book information is sent to AI using dynamic fields like {title}, {author}, {query}'),
             'label_ask_prompts': ('ask_prompts', 'Ask Prompts'),
             'label_random_questions_prompts': ('random_questions_prompts', 'Random Questions Prompts'),
-            'label_multi_book_template': ('multi_book_template_label', 'Multi-Book Prompt Template'),
+            'label_multi_book_prompts': ('multi_book_prompts_label', 'Multi-Book Prompts'),
             'label_multi_book_placeholder_hint': ('multi_book_placeholder_hint', 
                 'Use {books_metadata} for book information, {query} for user question'),
+            'title_dynamic_fields': ('dynamic_fields_title', 'Dynamic Fields Reference'),
+            'subtitle_dynamic_fields': ('dynamic_fields_subtitle', 
+                'Available fields and example values from "Frankenstein" by Mary Shelley'),
+            'label_dynamic_fields_examples': ('dynamic_fields_examples', 
+                '<b>{title}</b> → Frankenstein<br>'
+                '<b>{author}</b> → Mary Shelley<br>'
+                '<b>{publisher}</b> → Lackington, Hughes, Harding, Mavor & Jones<br>'
+                '<b>{pubyear}</b> → 1818<br>'
+                '<b>{language}</b> → English<br>'
+                '<b>{series}</b> → (none)<br>'
+                '<b>{query}</b> → Your question text'),
         }
         
         for label in self.findChildren(QLabel):
@@ -488,25 +578,17 @@ class PromptsWidget(QWidget):
         current_lang = self.parent_dialog.config_widget.config_dialog.lang_combo.currentData()
         
         # 重新加载提示词模板（使用新语言的默认模板）
-        # Ask Prompts - 使用新语言的默认模板
+        # 隐藏提示词系统：不在文本框中添加语言指令
         self.template_edit.setPlainText(get_default_template(current_lang))
-        
-        # Random Questions - 使用新语言的默认模板
         self.random_questions_edit.setPlainText(get_suggestion_template(current_lang))
-        
-        # Multi-Book Template - 使用新语言的默认模板
         self.multi_book_template_edit.setPlainText(get_multi_book_template(current_lang))
-        
-        # 如果启用了语言偏好，添加语言指令
-        if hasattr(self, 'use_interface_language_checkbox') and self.use_interface_language_checkbox.isChecked():
-            self.update_prompts_with_language_instruction()
         
         # 更新初始值，避免误判为有变更
         # 因为切换语言后加载了新语言的默认模板，需要更新 initial_values
         self.initial_values = {
-            'template': self.remove_language_instruction(self.template_edit.toPlainText()),
-            'random_questions': self.remove_language_instruction(self.random_questions_edit.toPlainText()),
-            'multi_book_template': self.remove_language_instruction(self.multi_book_template_edit.toPlainText()),
+            'template': self.template_edit.toPlainText(),
+            'random_questions': self.random_questions_edit.toPlainText(),
+            'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': self.use_interface_language_checkbox.isChecked()
         }
         

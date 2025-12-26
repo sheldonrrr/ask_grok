@@ -1913,6 +1913,10 @@ class AskDialog(QDialog):
             query=question
         )
         
+        # 应用隐藏的语言指令（如果启用）
+        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'prompts_widget'):
+            prompt = self.config_widget.prompts_widget.get_final_prompt(prompt)
+        
         return prompt
     
     def _create_history_switcher(self):
@@ -3620,6 +3624,10 @@ class AskDialog(QDialog):
                 except KeyError as e:
                     self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
                     return
+                
+                # 应用隐藏的语言指令（如果启用）
+                if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'prompts_widget'):
+                    prompt = self.config_widget.prompts_widget.get_final_prompt(prompt)
             
             logger.info(f"最终提示词长度: {len(prompt)}")
             

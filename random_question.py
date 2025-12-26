@@ -78,6 +78,18 @@ class SuggestionWorker(QThread):
                 avoid_repeat = self.i18n.get("avoid_repeat_question", " Also, please make sure the new question is different from this one:").format(self.current_question.strip())
                 prompt += avoid_repeat
             
+            # 应用隐藏的语言指令（如果启用）
+            # 从父对话框获取 prompts_widget
+            try:
+                from PyQt5.QtWidgets import QApplication
+                for widget in QApplication.topLevelWidgets():
+                    if hasattr(widget, 'config_widget') and hasattr(widget.config_widget, 'prompts_widget'):
+                        prompt = widget.config_widget.prompts_widget.get_final_prompt(prompt)
+                        logger.info("已应用隐藏的语言指令到随机问题提示词")
+                        break
+            except Exception as e:
+                logger.warning(f"应用隐藏语言指令时出错: {str(e)}")
+            
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
             
