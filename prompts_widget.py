@@ -320,6 +320,7 @@ class PromptsWidget(QWidget):
     def add_reset_button(self, parent_layout):
         """添加重置按钮"""
         reset_layout = QHBoxLayout()
+        reset_layout.setContentsMargins(0, SPACING_MEDIUM, 0, SPACING_MEDIUM)  # Add top and bottom spacing
         reset_layout.addStretch()
         
         reset_button = QPushButton(self.i18n.get('reset_prompts', 'Reset Prompts to Default'))
