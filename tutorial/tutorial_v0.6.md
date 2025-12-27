@@ -1,5 +1,6 @@
-# Ask AI Plugin User Manual v0.4
-Latest updated: December 21, 2025, Ask AI Plugin v1.3.6
+
+# Ask AI Plugin User Manual v0.6
+Latest updated: December 27, 2025, Ask AI Plugin v1.3.8
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -9,6 +10,7 @@ ToC of this tutorial:
 - How to Use
 - Keyboard Shortcuts
 - Random Questions
+- Prompts *(new)*
 - Other Features
 - Configuration
 - Troubleshooting
@@ -93,6 +95,12 @@ Done!
 
 The plugin automatically includes book metadata. You don't need to type title or author.
 
+### Perplexity (Sonar) for Research
+
+Perplexity is useful when you want answers with sources.
+
+When Perplexity returns citations/search results, the plugin appends a plain-text "Citations" / "Search Results" section (with full URLs) at the end of the answer, so you can copy/paste the links.
+
 ## Keyboard Shortcuts
 
 This plugin supports full shortcut customization via calibre.
@@ -116,7 +124,48 @@ Note: If you customized shortcuts in calibre, your custom settings take preceden
 1. Click Random Question button (or Ctrl+R / Cmd+R)
 2. AI suggests a question
 
-Customize prompts in Configuration -> Edit Random Question Prompts
+Customize prompts in Configuration -> Prompts Tab -> Random Question Prompts
+
+## Prompts
+
+The Prompts Tab (accessible via toolbar menu or Configuration) lets you customize how the plugin communicates with AI.
+
+### Persona
+
+Define your research background and goals. This text is prepended to every prompt sent to AI.
+
+Example personas:
+- "As a literature professor, I focus on narrative techniques and literary analysis."
+- "I'm researching 19th century European history, especially political movements."
+- "As a student, I want simple explanations suitable for beginners."
+
+The more specific your persona, the more relevant AI responses will be.
+
+Tips:
+- Include your field of study or profession
+- Mention your expertise level (beginner, expert, etc.)
+- Describe what aspects you care about most
+
+### Prompt Templates
+
+Three customizable templates:
+
+1. **Single Book Prompt**: Used when asking about one book
+   - Available variables: {title}, {author}, {publisher}, {pubyear}, {language}, {series}, {query}
+
+2. **Multi-Book Prompt**: Used when asking about multiple selected books
+   - Available variables: {books_metadata}, {query}
+
+3. **Random Question Prompt**: Used when generating random questions
+   - Available variables: {title}, {author}, {language}
+
+### Use Interface Language
+
+When enabled, the plugin adds an instruction asking AI to respond in your current plugin language. Useful if you want responses in a specific language regardless of the book's language.
+
+### Reset to Default
+
+Click "Reset Prompts to Default" to restore all prompts and settings to their original values.
 
 ## Other Features
 
@@ -130,6 +179,7 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
+- Debug Logging: Enable/disable debug log file (thanks to Comfy.n for feedback)
 
 AI Provider Settings:
 - API Key: Your authentication key
@@ -137,8 +187,10 @@ AI Provider Settings:
 - Model: Select from dropdown or enter custom
 - Enable Streaming: Get responses word-by-word
 
-Template Settings:
+Prompts Tab (separate tab for better management):
+- Persona: Define your research background and goals to help AI provide more relevant responses
 - Customize prompts for single book, multiple books, or random questions
+- Use Interface Language: Ask AI to respond in your plugin language
 
 Export Settings:
 - Set default PDF save location
@@ -166,6 +218,7 @@ Ollama Not Working:
 What is sent to AI:
 - Book metadata (title, author, publisher, date, language)
 - Your questions
+- Your persona (if enabled)
 - Prompts if you customize them
 
 NOT sent:
@@ -185,6 +238,8 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 1. First ask: "Is this book in your training data?" If AI says no, it can't help much.
 2. Use parallel panels to compare different AIs.
 3. Be specific in questions for better answers.
+4. Set up a detailed persona for more relevant responses.
+5. Use Perplexity for research questions that need citations.
 
 ## Getting Help
 
@@ -192,10 +247,3 @@ GitHub: https://github.com/sheldonrrr/ask_grok
 calibre Forum: https://www.mobileread.com/forums/showthread.php?p=4547077
 Email: sheldonrrr@gmail.com
 
-## FAQ
-
-Q: What's a token?
-A: About 4 characters. A typical Q&A uses 500-2000 tokens.
-
-Q: Can I ask about book content?
-A: Plugin only sends metadata. AI answers from its training data.

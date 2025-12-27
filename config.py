@@ -29,7 +29,7 @@ from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    get_groupbox_style, get_separator_style
+    get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style
 )
 
 # 初始化日志
@@ -163,6 +163,10 @@ prefs.defaults['default_export_folder'] = ''  # Default export folder path
 prefs.defaults['copy_mode'] = 'response'  # Copy mode: 'response' or 'qa'
 prefs.defaults['export_mode'] = 'current'  # Export mode: 'current' or 'history'
 
+# Persona settings
+prefs.defaults['use_persona'] = True  # Whether to use persona in prompts
+prefs.defaults['persona'] = 'As a researcher, I want to research through book data.'  # User's persona text
+
 def get_prefs(force_reload=False):
     """获取配置
     
@@ -172,10 +176,6 @@ def get_prefs(force_reload=False):
     # 如果需要强制重新加载
     if force_reload and isinstance(prefs, JSONConfig):
         prefs.refresh()
-    
-    # 确保模板不为空，如果为空则使用当前语言的默认模板
-    if not prefs['template']:
-        prefs['template'] = get_default_template(prefs.get('language', 'en'))
     
     # 确保语言键存在，如果不存在则使用默认值 'en'
     if 'language' not in prefs:
@@ -205,9 +205,21 @@ def get_prefs(force_reload=False):
             supported = {code for code, _ in SUPPORTED_LANGUAGES}
             if plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
                 prefs['language'] = plugin_lang
+                # 同时更新模板为对应语言的默认模板
+                prefs['template'] = get_default_template(plugin_lang)
+                prefs['multi_book_template'] = get_multi_book_template(plugin_lang)
                 prefs.commit()
     except Exception:
         pass
+    
+    # 确保模板不为空，如果为空则使用当前语言的默认模板
+    # 注意：这个检查必须在语言确定之后执行
+    if not prefs['template']:
+        prefs['template'] = get_default_template(prefs.get('language', 'en'))
+    
+    # 确保多书模板不为空
+    if not prefs.get('multi_book_template'):
+        prefs['multi_book_template'] = get_multi_book_template(prefs.get('language', 'en'))
     
     # 确保 models 键存在
     if 'models' not in prefs:
@@ -1711,8 +1723,30 @@ class ConfigDialog(QWidget):
         content_widget.setLayout(content_layout)
         
         # 1. 顶部：语言选择
-        lang_group = QGroupBox(self.i18n.get('display', 'Display'))
-        lang_group.setObjectName('groupbox_display')  # 设置ObjectName用于语言切换
+        # Section Title（外部）- 第一个 section，顶部间距较小
+        lang_title = QLabel(self.i18n.get('language_settings', 'Language'))
+        lang_title.setObjectName('title_language')
+        first_section_style = f"""
+            font-weight: bold;
+            font-size: 1.08em;
+            color: palette(text);
+            text-transform: uppercase;
+            padding: 0;
+            margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
+        """
+        lang_title.setStyleSheet(first_section_style)
+        content_layout.addWidget(lang_title)
+        
+        # Subtitle（外部）
+        lang_subtitle = QLabel(self.i18n.get('language_subtitle', 'Choose your preferred interface language'))
+        lang_subtitle.setObjectName('subtitle_language')
+        lang_subtitle.setWordWrap(True)
+        lang_subtitle.setStyleSheet(get_subtitle_style())
+        content_layout.addWidget(lang_subtitle)
+        
+        # GroupBox（无标题）
+        lang_group = QGroupBox()
+        lang_group.setObjectName('groupbox_display')
         lang_group.setStyleSheet(get_groupbox_style())
         lang_layout = QVBoxLayout()
         lang_layout.setSpacing(SPACING_SMALL)
@@ -1728,10 +1762,25 @@ class ConfigDialog(QWidget):
         lang_layout.addWidget(language_label)
         lang_layout.addWidget(self.lang_combo)
         lang_group.setLayout(lang_layout)
+        content_layout.addWidget(lang_group)
 
         # 2. 中部：AI模型选择和配置
-        model_group = QGroupBox(self.i18n.get('ai_models', 'AI'))
-        model_group.setObjectName('groupbox_ai_models')  # 设置ObjectName用于语言切换
+        # Section Title（外部）
+        ai_title = QLabel(self.i18n.get('ai_models', 'AI Providers'))
+        ai_title.setObjectName('title_ai_providers')
+        ai_title.setStyleSheet(get_section_title_style())
+        content_layout.addWidget(ai_title)
+        
+        # Subtitle（外部）
+        ai_subtitle = QLabel(self.i18n.get('ai_providers_subtitle', 'Configure AI providers and select your default AI'))
+        ai_subtitle.setObjectName('subtitle_ai_providers')
+        ai_subtitle.setWordWrap(True)
+        ai_subtitle.setStyleSheet(get_subtitle_style())
+        content_layout.addWidget(ai_subtitle)
+        
+        # GroupBox（无标题）
+        model_group = QGroupBox()
+        model_group.setObjectName('groupbox_ai_models')
         model_group.setStyleSheet(get_groupbox_style())
         model_layout = QVBoxLayout()
         model_layout.setSpacing(SPACING_MEDIUM)
@@ -1879,138 +1928,24 @@ class ConfigDialog(QWidget):
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
+        content_layout.addWidget(model_group)
         
-        # 3. 底部：提示词模板配置
-        template_group = QGroupBox(self.i18n.get('prompt_template', 'Prompts'))
-        template_group.setObjectName('groupbox_prompt_template')  # 设置ObjectName用于语言切换
-        template_group.setStyleSheet(get_groupbox_style())
-        template_layout = QVBoxLayout()
-        template_layout.setSpacing(SPACING_MEDIUM)
+        # 3. Export Settings
+        # Section Title（外部）
+        export_title = QLabel(self.i18n.get('export_settings', 'Export Settings'))
+        export_title.setObjectName('title_export_settings')
+        export_title.setStyleSheet(get_section_title_style())
+        content_layout.addWidget(export_title)
         
-        # 主提示词模板
-        main_template_layout = QVBoxLayout()
-        main_template_layout.setSpacing(SPACING_SMALL)
-        ask_prompts_label = QLabel(self.i18n.get('ask_prompts', 'Ask Prompts'))
-        ask_prompts_label.setObjectName('label_ask_prompts')
-        main_template_layout.addWidget(ask_prompts_label)
+        # Subtitle（外部）
+        export_subtitle = QLabel(self.i18n.get('export_settings_subtitle', 'Set default folder for exporting PDFs'))
+        export_subtitle.setObjectName('subtitle_export_settings')
+        export_subtitle.setWordWrap(True)
+        export_subtitle.setStyleSheet(get_subtitle_style())
+        content_layout.addWidget(export_subtitle)
         
-        self.template_edit = QPlainTextEdit(self)
-        self.template_edit.setPlainText(get_prefs()['template'])
-        self.template_edit.textChanged.connect(self.on_config_changed)
-
-        # 设置初始高度为大约5行文字的高度
-        font_metrics = QFontMetrics(self.template_edit.font())
-        line_height = font_metrics.lineSpacing()
-        padding = 10  # 上下内边距
-        five_lines_height = line_height * 5 + padding
-        ten_lines_height = line_height * 10 + padding
-        
-        # 设置初始高度和最小/最大高度限制
-        self.template_edit.setMinimumHeight(five_lines_height)  # 最小5行高度
-        self.template_edit.setMaximumHeight(ten_lines_height)  # 最大10行高度
-        
-        # 设置大小策略以允许垂直扩展和调整大小
-        self.template_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # 确保滚动条在需要时出现
-        self.template_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.template_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        main_template_layout.addWidget(self.template_edit)
-        
-        # 将主提示词模板添加到模板布局
-        template_layout.addLayout(main_template_layout)
-        
-        # 随机问题提示词
-        random_questions_layout = QVBoxLayout()
-        random_questions_layout.setSpacing(SPACING_SMALL)
-        random_questions_label = QLabel(self.i18n.get('random_questions_prompts', 'Random Questions Prompts'))
-        random_questions_label.setObjectName('label_random_questions_prompts')
-        random_questions_layout.addWidget(random_questions_label)
-        
-        self.random_questions_edit = QPlainTextEdit(self)
-        
-        # 从配置中加载随机问题提示词，如果不存在则使用默认值
-        random_questions = get_prefs().get('random_questions', {})
-        current_lang = self.lang_combo.currentData()
-        
-        # 获取随机问题提示词，如果不存在或为空则使用默认模板
-        saved_questions = random_questions.get(current_lang)
-        if saved_questions and saved_questions.strip():
-            default_value = saved_questions
-        else:
-            default_value = get_suggestion_template(current_lang)
-        
-        self.random_questions_edit.setPlainText(default_value)
-
-        self.random_questions_edit.textChanged.connect(self.on_config_changed)
-
-        # 设置初始高度为大约5行文字的高度
-        font_metrics = QFontMetrics(self.random_questions_edit.font())
-        line_height = font_metrics.lineSpacing()
-        padding = 10  # 上下内边距
-        five_lines_height = line_height * 5 + padding
-        ten_lines_height = line_height * 10 + padding
-        
-        # 设置初始高度和最小/最大高度限制
-        self.random_questions_edit.setMinimumHeight(five_lines_height)  # 最小5行高度
-        self.random_questions_edit.setMaximumHeight(ten_lines_height)  # 最大10行高度
-        
-        # 设置大小策略以允许垂直扩展和调整大小
-        self.random_questions_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # 确保滚动条在需要时出现
-        self.random_questions_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.random_questions_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        random_questions_layout.addWidget(self.random_questions_edit)
-        
-        # 将随机问题提示词添加到模板布局
-        template_layout.addLayout(random_questions_layout)
-        
-        # 多书提示词模板
-        multi_book_template_layout = QVBoxLayout()
-        multi_book_template_layout.setSpacing(SPACING_SMALL)
-        multi_book_label = QLabel(self.i18n.get('multi_book_template_label', 'Multi-Book Prompt Template'))
-        multi_book_label.setObjectName('label_multi_book_template')
-        multi_book_template_layout.addWidget(multi_book_label)
-        
-        self.multi_book_template_edit = QPlainTextEdit(self)
-        self.multi_book_template_edit.setPlainText(get_prefs().get('multi_book_template', ''))
-        self.multi_book_template_edit.textChanged.connect(self.on_config_changed)
-        
-        # 设置初始高度为大约5行文字的高度
-        font_metrics = QFontMetrics(self.multi_book_template_edit.font())
-        line_height = font_metrics.lineSpacing()
-        padding = 10  # 上下内边距
-        five_lines_height = line_height * 5 + padding
-        ten_lines_height = line_height * 10 + padding
-        
-        # 设置初始高度和最小/最大高度限制
-        self.multi_book_template_edit.setMinimumHeight(five_lines_height)  # 最小5行高度
-        self.multi_book_template_edit.setMaximumHeight(ten_lines_height)  # 最大10行高度
-        
-        # 设置大小策略以允许垂直扩展和调整大小
-        self.multi_book_template_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        
-        # 确保滚动条在需要时出现
-        self.multi_book_template_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.multi_book_template_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        multi_book_template_layout.addWidget(self.multi_book_template_edit)
-        
-        # 添加占位符说明
-        placeholder_hint = QLabel(self.i18n.get('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'))
-        placeholder_hint.setObjectName('label_multi_book_placeholder_hint')
-        placeholder_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
-        placeholder_hint.setWordWrap(True)
-        multi_book_template_layout.addWidget(placeholder_hint)
-        
-        # 将多书提示词模板添加到模板布局
-        template_layout.addLayout(multi_book_template_layout)
-        
-        # 将布局设置应用到模板组
-        template_group.setLayout(template_layout)
-        
-        # 4. Export Settings
-        export_group = QGroupBox(self.i18n.get('export_settings', 'Export Settings'))
+        # GroupBox（无标题）
+        export_group = QGroupBox()
         export_group.setObjectName('groupbox_export_settings')
         export_group.setStyleSheet(get_groupbox_style())
         export_layout = QVBoxLayout()
@@ -2063,21 +1998,73 @@ class ConfigDialog(QWidget):
         export_layout.addLayout(folder_layout)
         
         export_group.setLayout(export_layout)
+        content_layout.addWidget(export_group)
         
-        # 5. 危险区域：重置所有数据
-        reset_group = QGroupBox(self.i18n.get('reset_all_data', 'Reset All Data'))
+        # 5. Debug Logging Settings
+        # Section Title（外部）
+        debug_title = QLabel(self.i18n.get('debug_settings', 'Debug Settings'))
+        debug_title.setObjectName('title_debug_settings')
+        debug_title.setStyleSheet(get_section_title_style())
+        content_layout.addWidget(debug_title)
+        
+        # Subtitle（外部）
+        debug_subtitle = QLabel(self.i18n.get('debug_settings_subtitle', 'Enable debug logging for troubleshooting'))
+        debug_subtitle.setObjectName('subtitle_debug_settings')
+        debug_subtitle.setWordWrap(True)
+        debug_subtitle.setStyleSheet(get_subtitle_style())
+        content_layout.addWidget(debug_subtitle)
+        
+        # GroupBox（无标题）
+        debug_group = QGroupBox()
+        debug_group.setObjectName('groupbox_debug_settings')
+        debug_group.setStyleSheet(get_groupbox_style())
+        debug_layout = QVBoxLayout()
+        debug_layout.setSpacing(SPACING_SMALL)
+        
+        # 复选框：启用调试日志
+        self.enable_debug_logging_checkbox = QCheckBox(
+            self.i18n.get('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)')
+        )
+        self.enable_debug_logging_checkbox.setObjectName('checkbox_enable_debug_logging')
+        self.enable_debug_logging_checkbox.setChecked(
+            self.initial_values.get('enable_debug_logging', False)
+        )
+        self.enable_debug_logging_checkbox.stateChanged.connect(self.on_config_changed)
+        debug_layout.addWidget(self.enable_debug_logging_checkbox)
+        
+        # 说明文字
+        debug_hint = QLabel(self.i18n.get('debug_logging_hint', 
+            'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'))
+        debug_hint.setObjectName('label_debug_hint')
+        debug_hint.setWordWrap(True)
+        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
+        debug_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
+        debug_layout.addWidget(debug_hint)
+        
+        debug_group.setLayout(debug_layout)
+        content_layout.addWidget(debug_group)
+        
+        # 6. 危险区域：重置所有数据
+        # Section Title（外部）
+        reset_title = QLabel(self.i18n.get('reset_all_data', 'Reset All Data'))
+        reset_title.setObjectName('title_reset_all_data')
+        reset_title.setStyleSheet(get_section_title_style())
+        content_layout.addWidget(reset_title)
+        
+        # Subtitle（外部，红色警告）
+        reset_subtitle = QLabel(self.i18n.get('reset_all_data_subtitle', 
+            '⚠️ Warning: This will permanently delete all your settings and data'))
+        reset_subtitle.setObjectName('subtitle_reset_all_data')
+        reset_subtitle.setWordWrap(True)
+        reset_subtitle.setStyleSheet("color: #dc3545; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
+        content_layout.addWidget(reset_subtitle)
+        
+        # GroupBox（无标题，无红色边框）
+        reset_group = QGroupBox()
         reset_group.setObjectName('groupbox_reset_data')
-        reset_group.setStyleSheet(get_groupbox_style() + "QGroupBox { border-color: #dc3545; }")  # 红色边框表示危险操作
+        reset_group.setStyleSheet(get_groupbox_style())
         reset_layout = QVBoxLayout()
         reset_layout.setSpacing(SPACING_SMALL)
-        
-        # 警告文字
-        warning_label = QLabel(self.i18n.get('reset_all_data_warning', 
-            'This will delete all API Keys, prompt templates, and local history records. Please proceed with caution.'))
-        warning_label.setObjectName('label_reset_warning')
-        warning_label.setWordWrap(True)
-        warning_label.setStyleSheet("color: #dc3545; font-weight: bold; padding: 5px 0;")
-        reset_layout.addWidget(warning_label)
         
         # 重置按钮
         self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
@@ -2102,15 +2089,10 @@ class ConfigDialog(QWidget):
         reset_layout.addWidget(self.reset_button)
         
         reset_group.setLayout(reset_layout)
-        
-        # 添加所有组件到内容布局
-        content_layout.addSpacing(SPACING_ASK_COMPACT)  # 顶部添加小间距
-        content_layout.addWidget(lang_group)
-        content_layout.addWidget(model_group)
-        content_layout.addWidget(template_group)
-        content_layout.addWidget(export_group)
         content_layout.addWidget(reset_group)
-        content_layout.addSpacing(SPACING_MEDIUM)  # 底部添加固定间距，确保最后一个元素不会被遮挡
+        
+        # 底部添加固定间距和弹性空间
+        content_layout.addSpacing(SPACING_MEDIUM)
         content_layout.addStretch()
         
         # 将内容容器设置到主滚动区域
@@ -2302,11 +2284,11 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
             'request_timeout': prefs.get('request_timeout', 60),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
-            'default_export_folder': prefs.get('default_export_folder', '')
+            'default_export_folder': prefs.get('default_export_folder', ''),
+            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
         # 调试日志
@@ -2322,33 +2304,6 @@ class ConfigDialog(QWidget):
         
         # 更新模型名称显示
         self.update_model_name_display()
-        
-        # 设置模板
-        self.template_edit.setPlainText(self.initial_values['template'])
-        # 保存原始文本用于变更检测
-        self.initial_values['template_raw'] = self.template_edit.toPlainText()
-        
-        # 设置多书提示词模板
-        if hasattr(self, 'multi_book_template_edit'):
-            self.multi_book_template_edit.setPlainText(self.initial_values.get('multi_book_template', ''))
-            # 保存原始文本用于变更检测
-            self.initial_values['multi_book_template_raw'] = self.multi_book_template_edit.toPlainText()
-        
-        # 设置随机问题提示词
-        random_questions = self.initial_values['random_questions']
-        
-        # 获取随机问题提示词，如果不存在或为空则使用默认模板
-        saved_questions = random_questions.get(current_lang)
-        if saved_questions and saved_questions.strip():
-            default_value = saved_questions
-        else:
-            default_value = get_suggestion_template(current_lang)
-        
-        self.random_questions_edit.setPlainText(default_value)
-        # 保存原始文本用于变更检测
-        if 'random_questions_raw' not in self.initial_values:
-            self.initial_values['random_questions_raw'] = {}
-        self.initial_values['random_questions_raw'][current_lang] = self.random_questions_edit.toPlainText()
         
         # 设置当前模型
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
@@ -2446,39 +2401,6 @@ class ConfigDialog(QWidget):
                             button.setText(reset_text)
                             button.setToolTip(reset_tooltip)
         
-        # 更新模板内容
-        self.template_edit.setPlainText(get_default_template(lang_code))
-        self.template_edit.setPlaceholderText(self.i18n.get('template_placeholder', 'Enter your prompt template here...'))
-        
-        # 更新多书模板内容
-        self.multi_book_template_edit.setPlainText(get_multi_book_template(lang_code))
-        self.multi_book_template_edit.setPlaceholderText(self.i18n.get('multi_book_template_placeholder', 'Enter your multi-book prompt template here...'))
-        
-        # 更新随机问题提示词
-        random_questions = get_prefs().get('random_questions', {})
-        saved_questions = random_questions.get(lang_code)
-        if saved_questions and saved_questions.strip():
-            default_value = saved_questions
-        else:
-            default_value = get_suggestion_template(lang_code)
-        self.random_questions_edit.setPlainText(default_value)
-        self.random_questions_edit.setPlaceholderText(self.i18n.get('random_questions_placeholder', 'Enter your random questions prompts here...'))
-        
-        # 确保所有标签都被更新，使用更全面的方法
-        # 首先更新所有标签页和标签文本
-        self.setWindowTitle(self.i18n.get('config_title', 'Ask AI Plugin Configuration'))
-        if hasattr(self, 'tab_widget'):
-            self.tab_widget.setTabText(0, self.i18n.get('general_tab', 'General'))
-            self.tab_widget.setTabText(1, self.i18n.get('ai_models', 'AI'))
-        
-        # 更新GroupBox标题
-        for group_box in self.findChildren(QGroupBox):
-            if 'display' in group_box.title().lower():
-                group_box.setTitle(self.i18n.get('display', 'Display'))
-            elif 'ai' in group_box.title().lower():
-                group_box.setTitle(self.i18n.get('ai_models', 'AI'))
-            elif 'prompt' in group_box.title().lower():
-                group_box.setTitle(self.i18n.get('prompt_template', 'Prompts'))
         
         # 更新所有标签
         known_labels = {
@@ -2575,25 +2497,29 @@ class ConfigDialog(QWidget):
             self.tab_widget.setTabText(0, self.i18n.get('general_tab', 'General'))
             self.tab_widget.setTabText(1, self.i18n.get('ai_models', 'AI'))
         
-        # 更新GroupBox标题（使用ObjectName，语言无关）
-        groupbox_map = {
-            'groupbox_display': ('display', 'Display'),
-            'groupbox_ai_models': ('ai_models', 'AI'),
-            'groupbox_prompt_template': ('prompt_template', 'Prompts'),
-            'groupbox_export_settings': ('export_settings', 'Export Settings'),
-            'groupbox_reset_data': ('reset_all_data', 'Reset All Data')
-        }
-        
+        # GroupBox 标题已移到外部作为独立的 QLabel，不再需要更新 GroupBox 的 title
+        # 确保所有 GroupBox 的标题为空
         for group_box in self.findChildren(QGroupBox):
-            obj_name = group_box.objectName()
-            if obj_name in groupbox_map:
-                i18n_key, fallback = groupbox_map[obj_name]
-                new_title = self.i18n.get(i18n_key, fallback)
-                old_title = group_box.title()
-                group_box.setTitle(new_title)
+            if group_box.title():  # 如果有标题，清空它
+                group_box.setTitle('')
         
         # 更新所有标签文本（使用ObjectName，语言无关）
         label_map = {
+            # Section titles
+            'title_language': ('language_settings', 'Language'),
+            'title_ai_providers': ('ai_models', 'AI Providers'),
+            'title_prompts': ('prompt_template', 'Prompts'),
+            'title_export_settings': ('export_settings', 'Export Settings'),
+            'title_debug_settings': ('debug_settings', 'Debug Settings'),
+            'title_reset_all_data': ('reset_all_data', 'Reset All Data'),
+            # Section subtitles
+            'subtitle_language': ('language_subtitle', 'Choose your preferred interface language'),
+            'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
+            'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
+            'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
+            'subtitle_debug_settings': ('debug_settings_subtitle', 'Enable debug logging for troubleshooting'),
+            'subtitle_reset_all_data': ('reset_all_data_subtitle', '⚠️ Warning: This will permanently delete all your settings and data'),
+            # Other labels
             'label_language': ('language_label', 'Language'),
             'label_current_ai': ('current_ai', 'Current AI'),
             'label_request_timeout': ('request_timeout_label', 'Request Timeout'),
@@ -2604,7 +2530,7 @@ class ConfigDialog(QWidget):
             'label_random_questions_prompts': ('random_questions_prompts', 'Random Questions Prompts'),
             'label_multi_book_template': ('multi_book_template_label', 'Multi-Book Prompt Template'),
             'label_multi_book_placeholder_hint': ('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'),
-            'label_reset_warning': ('reset_all_data_warning', 'This will delete all API Keys, prompt templates, and local history records. Please proceed with caution.'),
+            'label_debug_hint': ('debug_logging_hint', 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'),
             'label_nvidia_free_info': ('nvidia_free_info', 'New users get 6 months free API access - No credit card required'),
         }
         
@@ -2621,6 +2547,7 @@ class ConfigDialog(QWidget):
         # 更新 CheckBox 文本（使用 ObjectName 映射）
         checkbox_map = {
             'checkbox_enable_default_folder': ('enable_default_export_folder', 'Export to default folder'),
+            'checkbox_enable_debug_logging': ('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)'),
         }
         
         for checkbox in self.findChildren(QCheckBox):
@@ -2899,17 +2826,7 @@ class ConfigDialog(QWidget):
         # 保存语言设置
         prefs['language'] = self.lang_combo.currentData()
         
-        # 保存模板
-        prefs['template'] = self.template_edit.toPlainText().strip()
-        
-        # 保存多书提示词模板
-        prefs['multi_book_template'] = self.multi_book_template_edit.toPlainText().strip()
-        
-        # 保存随机问题提示词
-        current_lang = prefs['language']
-        if 'random_questions' not in prefs:
-            prefs['random_questions'] = {}
-        prefs['random_questions'][current_lang] = self.random_questions_edit.toPlainText().strip()
+        # 注意：提示词模板现在在 Prompts Tab 中管理，不在 General Tab 中保存
         
         # 保存请求超时时间
         if hasattr(self, 'timeout_input'):
@@ -2941,6 +2858,11 @@ class ConfigDialog(QWidget):
                 # 是占位符，保存空字符串
                 prefs['default_export_folder'] = ''
                 logger.info(f"[Export Config Save] 保存空字符串（占位符）")
+        
+        # 保存Debug Logging配置
+        if hasattr(self, 'enable_debug_logging_checkbox'):
+            prefs['enable_debug_logging'] = self.enable_debug_logging_checkbox.isChecked()
+            logger.info(f"[Debug Logging] 保存调试日志设置: {self.enable_debug_logging_checkbox.isChecked()}")
         
         # 保存选中的模型
         prefs['selected_model'] = self.model_combo.currentData()
@@ -2998,22 +2920,14 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'random_questions': copy.deepcopy(prefs.get('random_questions', {})),
             'request_timeout': prefs.get('request_timeout', 60),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
-            'default_export_folder': prefs.get('default_export_folder', '')
+            'default_export_folder': prefs.get('default_export_folder', ''),
+            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
-        # 更新原始文本值（用于变更检测）
-        if hasattr(self, 'template_edit'):
-            self.initial_values['template_raw'] = self.template_edit.toPlainText()
-        if hasattr(self, 'multi_book_template_edit'):
-            self.initial_values['multi_book_template_raw'] = self.multi_book_template_edit.toPlainText()
-        if hasattr(self, 'random_questions_edit'):
-            if 'random_questions_raw' not in self.initial_values:
-                self.initial_values['random_questions_raw'] = {}
-            self.initial_values['random_questions_raw'][current_lang] = self.random_questions_edit.toPlainText()
+        # 注意：提示词模板的原始文本值现在在 Prompts Tab 中管理
         
         # 安全地记录更新后的初始值
         updated_models = safe_log_config(self.initial_values['models'])
@@ -3068,34 +2982,7 @@ class ConfigDialog(QWidget):
             general_changed = True
             logger.debug(f"模型选择已更改: {self.model_combo.currentData()} != {self.initial_values['selected_model']}")
         
-        # 检查模板是否更改（使用原始文本，不 strip，以便检测空格变化）
-        if hasattr(self, 'template_edit'):
-            template_text = self.template_edit.toPlainText()
-            # 保存时会 strip，所以这里也需要比较 strip 后的值
-            # 但为了让用户看到即时反馈，我们比较原始文本
-            if template_text != self.initial_values.get('template_raw', self.initial_values['template']):
-                general_changed = True
-                logger.debug("模板已更改")
-        
-        # 检查多书提示词模板是否更改（使用原始文本）
-        if hasattr(self, 'multi_book_template_edit'):
-            multi_book_template_text = self.multi_book_template_edit.toPlainText()
-            if multi_book_template_text != self.initial_values.get('multi_book_template_raw', self.initial_values.get('multi_book_template', '')):
-                general_changed = True
-                logger.debug("多书提示词模板已更改")
-        
-        # 检查随机问题提示词是否更改（使用原始文本）
-        random_questions_changed = False
-        initial_random_questions = self.initial_values['random_questions'].get(current_lang, '')
-        
-        current_random_questions = ''
-        if hasattr(self, 'random_questions_edit'):
-            current_random_questions = self.random_questions_edit.toPlainText()
-            # 同样使用原始文本比较
-            initial_raw = self.initial_values.get('random_questions_raw', {}).get(current_lang, initial_random_questions)
-            if current_random_questions != initial_raw:
-                random_questions_changed = True
-                logger.debug("随机问题提示词已更改")
+        # 注意：提示词模板检查已移至 Prompts Tab
         
         # 检查请求超时时间是否更改
         timeout_changed = False
@@ -3135,7 +3022,7 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or random_questions_changed or timeout_changed or parallel_ai_changed
+        return general_changed or models_changed or timeout_changed or parallel_ai_changed
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
@@ -3159,18 +3046,7 @@ class ConfigDialog(QWidget):
         if lang_index >= 0:
             self.lang_combo.setCurrentIndex(lang_index)
         
-        # 重置模板
-        self.template_edit.setPlainText(self.initial_values['template'])
-        
-        # 重置随机问题提示词
-        current_lang = self.initial_values['language']
-        random_questions = self.initial_values['random_questions']
-        saved_questions = random_questions.get(current_lang)
-        if saved_questions:
-            default_value = saved_questions
-        else:
-            default_value = get_suggestion_template(current_lang)
-        self.random_questions_edit.setPlainText(default_value)
+        # 注意：提示词模板重置已移至 Prompts Tab
         
         # 重置选中的模型
         model_index = self.model_combo.findData(self.initial_values['selected_model'])

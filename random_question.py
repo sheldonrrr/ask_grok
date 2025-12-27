@@ -78,6 +78,14 @@ class SuggestionWorker(QThread):
                 avoid_repeat = self.i18n.get("avoid_repeat_question", " Also, please make sure the new question is different from this one:").format(self.current_question.strip())
                 prompt += avoid_repeat
             
+            # 应用 persona 和语言指令
+            try:
+                from calibre_plugins.ask_ai_plugin.prompts_widget import apply_prompt_enhancements
+                prompt = apply_prompt_enhancements(prompt)
+                logger.info("已应用 persona 和语言指令到随机问题提示词")
+            except Exception as e:
+                logger.warning(f"应用 persona 和语言指令时出错: {str(e)}")
+            
             # 记录最终生成的提示词
             logger.info(f"生成的完整提示词: {prompt}")
             

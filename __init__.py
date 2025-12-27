@@ -19,7 +19,7 @@ PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 # 这样可以避免与其他 calibre 插件的依赖冲突
 
 # 版本信息 - 硬编码以确保跨平台兼容性
-VERSION = (1, 3, 7) # 版本号推送触发
+VERSION = (1, 3, 8) # 版本号推送触发
 VERSION_STRING = '.'.join(map(str, VERSION))
 PLUGIN_NAME = 'Ask AI Plugin'
 PLUGIN_DESCRIPTION = 'Ask questions about books using multiple AI providers'
@@ -30,7 +30,11 @@ KEYWORDS = 'bookAI readingAI multiAI OpenAI Anthropic Gemini DeepSeek Nvidia Oll
 # 配置日志
 import tempfile
 import os
-from calibre.utils.config import config_dir
+from calibre.utils.config import config_dir, JSONConfig
+
+# 获取插件配置
+prefs = JSONConfig('plugins/ask_ai_plugin')
+enable_debug_logging = prefs.get('enable_debug_logging', False)
 
 # 创建插件日志目录
 log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
@@ -48,7 +52,7 @@ for handler in root_logger.handlers:
         break
 
 # 只有在没有处理器时才添加，避免重复
-if not handlers_exist:
+if not handlers_exist and enable_debug_logging:
     # 配置根日志记录器
     root_logger.setLevel(logging.DEBUG)
     
@@ -80,7 +84,7 @@ class AskAIPlugin(InterfaceActionBase):
     description         = 'Ask questions about books using multiple AI providers'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 3, 7)
+    version             = (1, 3, 8)
     minimum_calibre_version = (6, 0, 0)
     icon                = 'images/ask_ai_plugin.png'
 
