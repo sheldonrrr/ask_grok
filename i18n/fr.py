@@ -78,6 +78,14 @@ class FrenchTranslation(BaseTranslation):
             'language_instruction_label': 'Instruction de langue ajoutée aux prompts :',
             'language_instruction_text': 'Veuillez répondre en {language_name}.',
             
+            # Paramètres de Persona
+            'persona_title': 'Persona',
+            'persona_subtitle': 'Définissez votre contexte de recherche et vos objectifs pour aider l\'IA à fournir des réponses plus pertinentes',
+            'use_persona': 'Utiliser persona',
+            'persona_label': 'Persona',
+            'persona_placeholder': 'En tant que chercheur, je souhaite effectuer des recherches à travers les données de livres.',
+            'persona_hint': 'Plus l\'IA en sait sur votre objectif et votre contexte, meilleure sera la recherche ou la génération.',
+            
             # UI - Boutons et actions
             'ok_button': 'OK',
             'save_button': 'Enregistrer',

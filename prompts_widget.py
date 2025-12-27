@@ -54,6 +54,9 @@ class PromptsWidget(QWidget):
         # 添加语言偏好设置部分
         self.add_language_preference_section(content_layout)
         
+        # 添加 Persona 部分
+        self.add_persona_section(content_layout)
+        
         # 添加提示词模板部分
         self.add_prompts_section(content_layout)
         
@@ -121,6 +124,67 @@ class PromptsWidget(QWidget):
         
         lang_pref_group.setLayout(lang_pref_layout)
         parent_layout.addWidget(lang_pref_group)
+    
+    def add_persona_section(self, parent_layout):
+        """添加 Persona 部分"""
+        from PyQt5.QtWidgets import QCheckBox, QLineEdit
+        
+        # Section Title
+        persona_title = QLabel(self.i18n.get('persona_title', 'Persona'))
+        persona_title.setObjectName('title_persona')
+        persona_title.setStyleSheet(get_section_title_style())
+        parent_layout.addWidget(persona_title)
+        
+        # Subtitle
+        persona_subtitle = QLabel(self.i18n.get('persona_subtitle', 
+            'Define your research background and goals to help AI provide more relevant responses'))
+        persona_subtitle.setObjectName('subtitle_persona')
+        persona_subtitle.setWordWrap(True)
+        persona_subtitle.setStyleSheet(get_subtitle_style())
+        parent_layout.addWidget(persona_subtitle)
+        
+        # 创建 Persona 组
+        persona_group = QGroupBox()
+        persona_group.setStyleSheet(get_groupbox_style())
+        persona_layout = QVBoxLayout()
+        persona_layout.setSpacing(SPACING_SMALL)
+        
+        # 复选框：Use persona
+        self.use_persona_checkbox = QCheckBox(
+            self.i18n.get('use_persona', 'Use persona')
+        )
+        self.use_persona_checkbox.setObjectName('checkbox_use_persona')
+        self.use_persona_checkbox.setChecked(True)  # 默认勾选
+        self.use_persona_checkbox.stateChanged.connect(self.on_persona_checkbox_changed)
+        persona_layout.addWidget(self.use_persona_checkbox)
+        
+        # Persona 输入框
+        self.persona_edit = QLineEdit(self)
+        self.persona_edit.setObjectName('edit_persona')
+        self.persona_edit.setPlaceholderText(
+            self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+        )
+        self.persona_edit.textChanged.connect(self.on_config_changed)
+        self.persona_edit.setMinimumHeight(30)
+        persona_layout.addWidget(self.persona_edit)
+        
+        # 提示信息
+        persona_hint = QLabel(self.i18n.get('persona_hint', 
+            'The more AI knows about your target and background, the better the research or generation.'))
+        persona_hint.setObjectName('label_persona_hint')
+        persona_hint.setWordWrap(True)
+        persona_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
+        persona_layout.addWidget(persona_hint)
+        
+        persona_group.setLayout(persona_layout)
+        parent_layout.addWidget(persona_group)
+    
+    def on_persona_checkbox_changed(self):
+        """Persona 复选框变更时触发"""
+        # 更新输入框的启用状态
+        is_checked = self.use_persona_checkbox.isChecked()
+        self.persona_edit.setEnabled(is_checked)
+        self.on_config_changed()
     
     def add_prompts_section(self, parent_layout):
         """添加提示词模板部分"""
@@ -337,18 +401,28 @@ class PromptsWidget(QWidget):
         return '\n'.join(lines)
     
     def get_final_prompt(self, base_prompt):
-        """获取最终提示词（添加隐藏的语言指令）
+        """获取最终提示词（添加 persona 和隐藏的语言指令）
         
         Args:
             base_prompt: 基础提示词（用户在配置中编辑的内容）
             
         Returns:
-            str: 如果启用语言偏好，返回添加了语言指令的提示词；否则返回原始提示词
+            str: 添加了 persona（开头）和语言指令（结尾）的提示词
         """
+        result = base_prompt
+        
+        # 在开头添加 persona（如果启用）
+        if self.use_persona_checkbox.isChecked():
+            persona_text = self.persona_edit.text().strip()
+            if persona_text:
+                result = persona_text + '\n\n' + result
+        
+        # 在结尾添加语言指令（如果启用）
         if self.use_interface_language_checkbox.isChecked():
             language_instruction = self.get_language_instruction_text()
-            return base_prompt + language_instruction
-        return base_prompt
+            result = result + language_instruction
+        
+        return result
     
     def update_language_instruction_display(self):
         """更新语言指令显示"""
@@ -397,6 +471,16 @@ class PromptsWidget(QWidget):
             self.template_edit.setPlainText(get_default_template(current_lang))
             self.random_questions_edit.setPlainText(get_suggestion_template(current_lang))
             self.multi_book_template_edit.setPlainText(get_multi_book_template(current_lang))
+            
+            # 重置 Persona 设置（默认开启，使用默认文本）
+            self.use_persona_checkbox.setChecked(True)
+            default_persona = self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+            self.persona_edit.setText(default_persona)
+            self.persona_edit.setEnabled(True)
+            
+            # 重置语言偏好设置（默认关闭）
+            self.use_interface_language_checkbox.setChecked(False)
+            self.update_language_instruction_display()
             
             logger.info("提示词已重置为默认值")
             
@@ -460,12 +544,34 @@ class PromptsWidget(QWidget):
         self.use_interface_language_checkbox.setChecked(use_interface_lang)
         self.update_language_instruction_display()
         
+        # 加载 Persona 设置
+        use_persona = prefs.get('use_persona', True)
+        self.use_persona_checkbox.setChecked(use_persona)
+        default_persona = self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+        saved_persona = prefs.get('persona', default_persona)
+        
+        # 检查保存的 persona 是否是任何语言的默认值
+        # 如果是，则使用当前语言的默认值
+        from .i18n import get_translation
+        default_personas = []
+        for lang_code in ['en', 'zh', 'zht', 'de', 'es', 'fr', 'ja', 'ru']:
+            lang_i18n = get_translation(lang_code)
+            default_personas.append(lang_i18n.get('persona_placeholder', ''))
+        
+        # 如果保存的是空字符串或任何语言的默认值，使用当前语言的默认值
+        if not saved_persona or saved_persona in default_personas:
+            saved_persona = default_persona
+        self.persona_edit.setText(saved_persona)
+        self.persona_edit.setEnabled(use_persona)
+        
         # 保存初始值用于变更检测（隐藏提示词系统：直接保存文本框内容）
         self.initial_values = {
             'template': self.template_edit.toPlainText(),
             'random_questions': self.random_questions_edit.toPlainText(),
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
-            'use_interface_language': use_interface_lang
+            'use_interface_language': use_interface_lang,
+            'use_persona': use_persona,
+            'persona': saved_persona
         }
         
     def save_settings(self):
@@ -499,6 +605,10 @@ class PromptsWidget(QWidget):
         # 保存语言偏好设置
         prefs['use_interface_language'] = self.use_interface_language_checkbox.isChecked()
         
+        # 保存 Persona 设置
+        prefs['use_persona'] = self.use_persona_checkbox.isChecked()
+        prefs['persona'] = self.persona_edit.text().strip()
+        
         # 注意：random_questions 不保存，始终使用默认模板
         
         prefs.commit()
@@ -508,7 +618,9 @@ class PromptsWidget(QWidget):
             'template': self.template_edit.toPlainText(),
             'random_questions': self.random_questions_edit.toPlainText(),
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
-            'use_interface_language': self.use_interface_language_checkbox.isChecked()
+            'use_interface_language': self.use_interface_language_checkbox.isChecked(),
+            'use_persona': self.use_persona_checkbox.isChecked(),
+            'persona': self.persona_edit.text().strip()
         }
         
         logger.info("提示词设置已保存")
@@ -529,7 +641,13 @@ class PromptsWidget(QWidget):
         multi_changed = current_multi != self.initial_values.get('multi_book_template', '')
         lang_pref_changed = current_use_lang != self.initial_values.get('use_interface_language', False)
         
-        return template_changed or random_changed or multi_changed or lang_pref_changed
+        # 检查 Persona 变更
+        current_use_persona = self.use_persona_checkbox.isChecked()
+        current_persona = self.persona_edit.text().strip()
+        persona_checkbox_changed = current_use_persona != self.initial_values.get('use_persona', True)
+        persona_text_changed = current_persona != self.initial_values.get('persona', '')
+        
+        return template_changed or random_changed or multi_changed or lang_pref_changed or persona_checkbox_changed or persona_text_changed
         
     def retranslate_ui(self):
         """更新界面语言"""
@@ -538,6 +656,11 @@ class PromptsWidget(QWidget):
             'title_language_preference': ('language_preference_title', 'Language Preference'),
             'subtitle_language_preference': ('language_preference_subtitle', 
                 'Control whether AI responses should match your interface language'),
+            'title_persona': ('persona_title', 'Persona'),
+            'subtitle_persona': ('persona_subtitle', 
+                'Define your research background and goals to help AI provide more relevant responses'),
+            'label_persona_hint': ('persona_hint', 
+                'The more AI knows about your target and background, the better the research or generation.'),
             'title_prompt_templates': ('prompt_templates_title', 'Prompt Templates'),
             'subtitle_prompt_templates': ('prompt_templates_subtitle', 
                 'Customize how book information is sent to AI using dynamic fields like {title}, {author}, {query}'),
@@ -571,6 +694,16 @@ class PromptsWidget(QWidget):
                 self.i18n.get('use_interface_language', 'Always ask AI to respond in current plugin interface language')
             )
         
+        # 更新 Persona 复选框和输入框
+        if hasattr(self, 'use_persona_checkbox'):
+            self.use_persona_checkbox.setText(
+                self.i18n.get('use_persona', 'Use persona')
+            )
+        if hasattr(self, 'persona_edit'):
+            self.persona_edit.setPlaceholderText(
+                self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+            )
+        
         # 更新语言指令显示
         self.update_language_instruction_display()
         
@@ -589,7 +722,9 @@ class PromptsWidget(QWidget):
             'template': self.template_edit.toPlainText(),
             'random_questions': self.random_questions_edit.toPlainText(),
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
-            'use_interface_language': self.use_interface_language_checkbox.isChecked()
+            'use_interface_language': self.use_interface_language_checkbox.isChecked(),
+            'use_persona': self.use_persona_checkbox.isChecked(),
+            'persona': self.persona_edit.text().strip()
         }
         
         # 更新按钮
@@ -602,3 +737,42 @@ class PromptsWidget(QWidget):
             if obj_name in button_map:
                 i18n_key, fallback = button_map[obj_name]
                 button.setText(self.i18n.get(i18n_key, fallback))
+
+
+def apply_prompt_enhancements(base_prompt):
+    """应用 persona 和语言指令到提示词（独立函数，直接从配置读取）
+    
+    Args:
+        base_prompt: 基础提示词
+        
+    Returns:
+        str: 添加了 persona（开头）和语言指令（结尾）的提示词
+    """
+    from .config import get_prefs
+    from .i18n import get_translation, get_all_languages
+    
+    prefs = get_prefs()
+    result = base_prompt
+    
+    # 在开头添加 persona（如果启用）
+    use_persona = prefs.get('use_persona', True)
+    if use_persona:
+        persona_text = prefs.get('persona', '').strip()
+        if persona_text:
+            result = persona_text + '\n\n' + result
+            logger.info(f"已添加 persona 到提示词开头: {persona_text[:50]}...")
+    
+    # 在结尾添加语言指令（如果启用）
+    use_interface_language = prefs.get('use_interface_language', False)
+    if use_interface_language:
+        lang_code = prefs.get('language', 'en')
+        all_languages = get_all_languages()
+        language_name = all_languages.get(lang_code, 'English')
+        
+        i18n = get_translation(lang_code)
+        instruction_template = i18n.get('language_instruction_text', 'Please respond in {language_name}.')
+        language_instruction = '\n\n' + instruction_template.format(language_name=language_name)
+        result = result + language_instruction
+        logger.info(f"已添加语言指令到提示词结尾")
+    
+    return result

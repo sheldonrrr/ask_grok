@@ -78,6 +78,14 @@ class TraditionalChineseTranslation(BaseTranslation):
         'language_instruction_label': '已添加到提示詞的語言指令：',
         'language_instruction_text': '請使用{language_name}回答。',
         
+        # Persona 設定
+        'persona_title': '角色設定',
+        'persona_subtitle': '定義您的研究背景和目標，幫助AI提供更相關的回答',
+        'use_persona': '使用角色設定',
+        'persona_label': '角色設定',
+        'persona_placeholder': '作為研究人員，我希望透過書籍資料進行研究。',
+        'persona_hint': 'AI越了解您的目標和背景，研究或生成的效果就越好。',
+        
         # UI - 按鈕和操作
         'ok_button': '確定',
         'save_button': '儲存',

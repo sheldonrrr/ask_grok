@@ -110,6 +110,14 @@ class AskAIPluginUI(InterfaceAction):
             persist_shortcut=True,
         )
 
+        # 添加分隔符
+        self.menu.addSeparator()
+
+        # 添加 Prompts 菜单项
+        self.prompts_action = QAction(self.i18n.get('prompts_tab', 'Prompts'), self)
+        self.prompts_action.triggered.connect(self.show_prompts)
+        self.menu.addAction(self.prompts_action)
+
         # 注册对话框内快捷键（始终出现在 Preferences -> Shortcuts 中）
         # 注意：实际 QAction 会在 AskDialog 创建时通过 replace_action 绑定到对话框 action 上
         try:
@@ -204,15 +212,33 @@ class AskAIPluginUI(InterfaceAction):
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
-        self.config_action.setText(self.i18n['config_title'])
-        self.ask_action.setText(self.i18n['menu_title'])
-        self.about_action.setText(self.i18n['about'])
-
+        
         # 同步 Ask 菜单项显示的快捷键（跟随用户在 Preferences->Shortcuts 的自定义）
+        # macOS 上需要手动将快捷键文本添加到菜单项中
         try:
-            self.ask_action.setShortcuts(self.menuless_qaction.shortcuts())
+            shortcuts = self.menuless_qaction.shortcuts()
+            self.ask_action.setShortcuts(shortcuts)
+            if shortcuts:
+                shortcut_text = shortcuts[0].toString()
+                self.ask_action.setText(f"{self.i18n['menu_title']}\t{shortcut_text}")
+            else:
+                self.ask_action.setText(self.i18n['menu_title'])
         except Exception:
-            pass
+            self.ask_action.setText(self.i18n['menu_title'])
+        
+        # 更新 Configuration 菜单项（包含快捷键）
+        try:
+            config_shortcuts = self.config_action.shortcuts()
+            if config_shortcuts:
+                shortcut_text = config_shortcuts[0].toString()
+                self.config_action.setText(f"{self.i18n['config_title']}\t{shortcut_text}")
+            else:
+                self.config_action.setText(self.i18n['config_title'])
+        except Exception:
+            self.config_action.setText(self.i18n['config_title'])
+        
+        self.prompts_action.setText(self.i18n.get('prompts_tab', 'Prompts'))
+        self.about_action.setText(self.i18n['about'])
         
     def initialize_api(self):
         try:
@@ -390,18 +416,24 @@ class AskAIPluginUI(InterfaceAction):
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(3)  # 默认显示关于标签页（现在是第4个）
+        dlg.tab_widget.setCurrentIndex(4)  # About 标签页（第5个）
         dlg.exec_()
     
     def show_shortcuts(self):
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(1)  # 默认显示快捷键标签页
+        dlg.tab_widget.setCurrentIndex(2)  # Shortcuts 标签页（第3个）
+        dlg.exec_()
+    
+    def show_prompts(self):
+        """显示 Prompts 配置对话框"""
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(1)  # Prompts 标签页（第2个）
         dlg.exec_()
     
     def show_tutorial(self):
         """显示教程对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(2)  # 默认显示教程标签页（现在是第3个）
+        dlg.tab_widget.setCurrentIndex(3)  # Tutorial 标签页（第4个）
         dlg.exec_()
     
     def config_widget(self):
@@ -1913,9 +1945,9 @@ class AskDialog(QDialog):
             query=question
         )
         
-        # 应用隐藏的语言指令（如果启用）
-        if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'prompts_widget'):
-            prompt = self.config_widget.prompts_widget.get_final_prompt(prompt)
+        # 应用 persona 和语言指令
+        from calibre_plugins.ask_ai_plugin.prompts_widget import apply_prompt_enhancements
+        prompt = apply_prompt_enhancements(prompt)
         
         return prompt
     
@@ -3625,9 +3657,9 @@ class AskDialog(QDialog):
                     self.response_handler.handle_error(self.i18n.get('template_error', 'Template error: {error}').format(error=str(e)))
                     return
                 
-                # 应用隐藏的语言指令（如果启用）
-                if hasattr(self, 'config_widget') and hasattr(self.config_widget, 'prompts_widget'):
-                    prompt = self.config_widget.prompts_widget.get_final_prompt(prompt)
+                # 应用 persona 和语言指令
+                from calibre_plugins.ask_ai_plugin.prompts_widget import apply_prompt_enhancements
+                prompt = apply_prompt_enhancements(prompt)
             
             logger.info(f"最终提示词长度: {len(prompt)}")
             

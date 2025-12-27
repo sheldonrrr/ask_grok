@@ -78,6 +78,14 @@ class JapaneseTranslation(BaseTranslation):
             'language_instruction_label': 'プロンプトに追加された言語指示：',
             'language_instruction_text': '{language_name}で回答してください。',
             
+            # ペルソナ設定
+            'persona_title': 'ペルソナ',
+            'persona_subtitle': '研究の背景と目標を定義して、AIがより関連性の高い回答を提供できるようにします',
+            'use_persona': 'ペルソナを使用',
+            'persona_label': 'ペルソナ',
+            'persona_placeholder': '研究者として、書籍データを通じて研究を行いたいと思います。',
+            'persona_hint': 'AIがあなたの目標と背景についてより多く知るほど、研究や生成の質が向上します。',
+            
             # UI - ボタンとアクション
             'ok_button': 'OK',
             'save_button': '保存',

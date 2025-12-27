@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.5
-Latest updated: December 22, 2025, Ask AI Plugin v1.3.7
+Latest updated: December 27, 2025, Ask AI Plugin v1.3.8
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -137,6 +137,7 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
+- Debug Logging: Enable/disable debug log file (thanks to Comfy.n for feedback)
 
 AI Provider Settings:
 - API Key: Your authentication key
@@ -144,8 +145,10 @@ AI Provider Settings:
 - Model: Select from dropdown or enter custom
 - Enable Streaming: Get responses word-by-word
 
-Template Settings:
+Prompts Tab (separate tab for better management):
+- Persona: Define your research background and goals to help AI provide more relevant responses
 - Customize prompts for single book, multiple books, or random questions
+- Use Interface Language: Ask AI to respond in your plugin language
 
 Export Settings:
 - Set default PDF save location

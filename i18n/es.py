@@ -78,6 +78,14 @@ class SpanishTranslation(BaseTranslation):
             'language_instruction_label': 'Instrucción de idioma agregada a los prompts:',
             'language_instruction_text': 'Por favor responde en {language_name}.',
             
+            # Configuración de Persona
+            'persona_title': 'Persona',
+            'persona_subtitle': 'Define tu contexto de investigación y objetivos para ayudar a la IA a proporcionar respuestas más relevantes',
+            'use_persona': 'Usar persona',
+            'persona_label': 'Persona',
+            'persona_placeholder': 'Como investigador, quiero investigar a través de datos de libros.',
+            'persona_hint': 'Cuanto más sepa la IA sobre tu objetivo y contexto, mejor será la investigación o generación.',
+            
             # UI - Botones y acciones
             'ok_button': 'OK',
             'save_button': 'Guardar',

@@ -74,6 +74,9 @@ calibre-debug -g
 
 # 3. 更新 VERSION_UPDATE_GUIDE.md
 # 在"版本号历史记录"中添加新版本记录
+
+# 4. 新增 docs 中的 CHANGELOG.md 对应当前的版本号
+# 遵循这两段更新日志的格式，之后要手动推送到mobileread.com和GitHub的release页面
 ```
 
 ---

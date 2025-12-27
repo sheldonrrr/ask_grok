@@ -163,6 +163,10 @@ prefs.defaults['default_export_folder'] = ''  # Default export folder path
 prefs.defaults['copy_mode'] = 'response'  # Copy mode: 'response' or 'qa'
 prefs.defaults['export_mode'] = 'current'  # Export mode: 'current' or 'history'
 
+# Persona settings
+prefs.defaults['use_persona'] = True  # Whether to use persona in prompts
+prefs.defaults['persona'] = 'As a researcher, I want to research through book data.'  # User's persona text
+
 def get_prefs(force_reload=False):
     """获取配置
     

@@ -78,6 +78,14 @@ class EnglishTranslation(BaseTranslation):
             'language_instruction_label': 'Language instruction added to prompts:',
             'language_instruction_text': 'Please respond in {language_name}.',
             
+            # Persona settings
+            'persona_title': 'Persona',
+            'persona_subtitle': 'Define your research background and goals to help AI provide more relevant responses',
+            'use_persona': 'Use persona',
+            'persona_label': 'Persona',
+            'persona_placeholder': 'As a researcher, I want to research through book data.',
+            'persona_hint': 'The more AI knows about your target and background, the better the research or generation.',
+            
             # UI - Buttons and actions
             'ok_button': 'OK',
             'save_button': 'Save',

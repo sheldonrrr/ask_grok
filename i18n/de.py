@@ -78,6 +78,14 @@ class GermanTranslation(BaseTranslation):
             'language_instruction_label': 'Zu Prompts hinzugefügte Sprachanweisung:',
             'language_instruction_text': 'Bitte antworten Sie auf {language_name}.',
             
+            # Persona-Einstellungen
+            'persona_title': 'Persona',
+            'persona_subtitle': 'Definieren Sie Ihren Forschungshintergrund und Ihre Ziele, um der KI zu helfen, relevantere Antworten zu geben',
+            'use_persona': 'Persona verwenden',
+            'persona_label': 'Persona',
+            'persona_placeholder': 'Als Forscher möchte ich durch Buchdaten recherchieren.',
+            'persona_hint': 'Je mehr die KI über Ihr Ziel und Ihren Hintergrund weiß, desto besser die Recherche oder Generierung.',
+            
             # UI - Schaltflächen und Aktionen
             'ok_button': 'OK',
             'save_button': 'Speichern',

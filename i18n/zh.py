@@ -78,6 +78,14 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'language_instruction_label': '已添加到提示词的语言指令：',
             'language_instruction_text': '请使用{language_name}回答。',
             
+            # Persona 设置
+            'persona_title': '角色设定',
+            'persona_subtitle': '定义您的研究背景和目标，帮助AI提供更相关的回答',
+            'use_persona': '使用角色设定',
+            'persona_label': '角色设定',
+            'persona_placeholder': '作为研究人员，我希望通过书籍数据进行研究。',
+            'persona_hint': 'AI越了解您的目标和背景，研究或生成的效果就越好。',
+            
             # UI - 按钮和操作
             'ok_button': '确定',
             'save_button': '保存',

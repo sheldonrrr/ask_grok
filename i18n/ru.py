@@ -77,6 +77,14 @@ class RussianTranslation(BaseTranslation):
             'language_instruction_label': 'Языковая инструкция, добавленная к промптам:',
             'language_instruction_text': 'Пожалуйста, ответьте на {language_name}.',
             
+            # Настройки персоны
+            'persona_title': 'Персона',
+            'persona_subtitle': 'Определите ваш исследовательский контекст и цели, чтобы помочь ИИ давать более релевантные ответы',
+            'use_persona': 'Использовать персону',
+            'persona_label': 'Персона',
+            'persona_placeholder': 'Как исследователь, я хочу проводить исследования через данные книг.',
+            'persona_hint': 'Чем больше ИИ знает о вашей цели и контексте, тем лучше будет исследование или генерация.',
+            
             # UI - Кнопки и действия
             'ok_button': 'OK',
             'save_button': 'Сохранить',
