@@ -334,11 +334,33 @@ class PromptsWidget(QWidget):
         """配置变更时触发"""
         self.config_changed.emit()
     
+    def _disable_save_button(self):
+        """禁用保存按钮（在自动保存后调用）"""
+        if hasattr(self, 'parent_dialog') and self.parent_dialog:
+            if hasattr(self.parent_dialog, 'save_button'):
+                self.parent_dialog.save_button.setEnabled(False)
+                logger.debug("保存按钮已禁用（自动保存后）")
+    
     def on_language_preference_changed(self):
         """语言偏好变更时触发"""
         self.update_language_instruction_display()
         # 隐藏提示词系统：不再自动添加到文本框
         self.on_config_changed()
+        
+        # 自动保存语言偏好设置
+        from .config import get_prefs
+        prefs = get_prefs()
+        prefs['use_interface_language'] = self.use_interface_language_checkbox.isChecked()
+        prefs.commit()
+        
+        # 更新初始值，避免误判为有变更
+        if hasattr(self, 'initial_values'):
+            self.initial_values['use_interface_language'] = self.use_interface_language_checkbox.isChecked()
+        
+        # 禁用保存按钮（因为已自动保存）
+        self._disable_save_button()
+        
+        logger.info(f"语言偏好设置已自动保存: {self.use_interface_language_checkbox.isChecked()}")
     
     def get_language_instruction_text(self):
         """获取语言指令文本"""
@@ -485,60 +507,81 @@ class PromptsWidget(QWidget):
             
             logger.info("提示词已重置为默认值")
             
+            # 自动保存重置后的设置
+            self.save_settings()
+            logger.info("重置后的提示词已自动保存")
+            
+            # 禁用保存按钮（因为已自动保存）
+            self._disable_save_button()
+            
+    def _is_default_value_from_any_language(self, saved_value, get_default_func):
+        """检查保存的值是否是任何语言的默认值
+        
+        Args:
+            saved_value: 保存的值
+            get_default_func: 获取默认值的函数，接受 lang_code 参数
+            
+        Returns:
+            bool: 如果是任何语言的默认值返回 True，否则返回 False
+        """
+        # 类型检查：如果不是字符串，视为需要使用默认值
+        if not isinstance(saved_value, str):
+            return True
+            
+        if not saved_value:
+            return True
+            
+        from .i18n import get_all_languages
+        all_languages = get_all_languages()
+        
+        for lang_code in all_languages.keys():
+            default_value = get_default_func(lang_code)
+            if saved_value.strip() == default_value.strip():
+                return True
+        
+        return False
+    
+    def _load_prompt_with_language_fallback(self, saved_value, get_default_func, current_lang):
+        """加载提示词，如果是默认值则使用当前语言的默认值
+        
+        Args:
+            saved_value: 保存的值
+            get_default_func: 获取默认值的函数，接受 lang_code 参数
+            current_lang: 当前语言代码
+            
+        Returns:
+            str: 最终使用的提示词
+        """
+        if self._is_default_value_from_any_language(saved_value, get_default_func):
+            return get_default_func(current_lang)
+        else:
+            return saved_value
+    
     def load_initial_values(self, lang_code):
         """加载初始值"""
         from .config import get_prefs
-        from .i18n import get_all_languages
         prefs = get_prefs()
         
-        # 加载提示词（隐藏提示词系统：不在文本框中显示语言指令）
+        # 加载 Ask 提示词
         saved_template = prefs.get('template', '')
+        final_template = self._load_prompt_with_language_fallback(
+            saved_template, get_default_template, lang_code
+        )
+        self.template_edit.setPlainText(final_template)
         
-        # 检查保存的模板是否是其他语言的默认模板，如果是则替换为当前语言的默认模板
-        if saved_template:
-            is_default_from_other_lang = False
-            all_languages = get_all_languages()
-            for other_lang_code in all_languages.keys():
-                if other_lang_code != lang_code:
-                    other_default = get_default_template(other_lang_code)
-                    if saved_template.strip() == other_default.strip():
-                        is_default_from_other_lang = True
-                        break
-            
-            if is_default_from_other_lang:
-                # 使用当前语言的默认模板
-                self.template_edit.setPlainText(get_default_template(lang_code))
-            else:
-                # 使用保存的自定义模板
-                self.template_edit.setPlainText(saved_template)
-        else:
-            # 没有保存的模板，使用当前语言的默认模板
-            self.template_edit.setPlainText(get_default_template(lang_code))
+        # 加载 Random Questions 提示词
+        saved_random = prefs.get('random_questions', '')
+        final_random = self._load_prompt_with_language_fallback(
+            saved_random, get_suggestion_template, lang_code
+        )
+        self.random_questions_edit.setPlainText(final_random)
         
-        self.random_questions_edit.setPlainText(get_suggestion_template(lang_code))
-        
-        # 加载多书提示词，如果为空则使用默认模板
-        multi_book_template = prefs.get('multi_book_template', '')
-        
-        # 检查保存的多书模板是否是其他语言的默认模板
-        if multi_book_template and multi_book_template.strip():
-            is_default_from_other_lang = False
-            all_languages = get_all_languages()
-            for other_lang_code in all_languages.keys():
-                if other_lang_code != lang_code:
-                    other_default = get_multi_book_template(other_lang_code)
-                    if multi_book_template.strip() == other_default.strip():
-                        is_default_from_other_lang = True
-                        break
-            
-            if is_default_from_other_lang:
-                # 使用当前语言的默认模板
-                multi_book_template = get_multi_book_template(lang_code)
-        else:
-            # 没有保存的模板，使用当前语言的默认模板
-            multi_book_template = get_multi_book_template(lang_code)
-        
-        self.multi_book_template_edit.setPlainText(multi_book_template)
+        # 加载 Multi-Book 提示词
+        saved_multi = prefs.get('multi_book_template', '')
+        final_multi = self._load_prompt_with_language_fallback(
+            saved_multi, get_multi_book_template, lang_code
+        )
+        self.multi_book_template_edit.setPlainText(final_multi)
         
         # 加载语言偏好设置（默认为False）
         use_interface_lang = prefs.get('use_interface_language', False)
@@ -548,21 +591,18 @@ class PromptsWidget(QWidget):
         # 加载 Persona 设置
         use_persona = prefs.get('use_persona', True)
         self.use_persona_checkbox.setChecked(use_persona)
-        default_persona = self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
-        saved_persona = prefs.get('persona', default_persona)
         
-        # 检查保存的 persona 是否是任何语言的默认值
-        # 如果是，则使用当前语言的默认值
-        from .i18n import get_translation
-        default_personas = []
-        for lang_code in ['en', 'zh', 'zht', 'de', 'es', 'fr', 'ja', 'ru']:
-            lang_i18n = get_translation(lang_code)
-            default_personas.append(lang_i18n.get('persona_placeholder', ''))
+        # 定义获取 persona 默认值的函数
+        def get_persona_default(lang):
+            from .i18n import get_translation
+            lang_i18n = get_translation(lang)
+            return lang_i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
         
-        # 如果保存的是空字符串或任何语言的默认值，使用当前语言的默认值
-        if not saved_persona or saved_persona in default_personas:
-            saved_persona = default_persona
-        self.persona_edit.setText(saved_persona)
+        saved_persona = prefs.get('persona', '')
+        final_persona = self._load_prompt_with_language_fallback(
+            saved_persona, get_persona_default, lang_code
+        )
+        self.persona_edit.setText(final_persona)
         self.persona_edit.setEnabled(use_persona)
         
         # 保存初始值用于变更检测（隐藏提示词系统：直接保存文本框内容）
@@ -572,7 +612,7 @@ class PromptsWidget(QWidget):
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': use_interface_lang,
             'use_persona': use_persona,
-            'persona': saved_persona
+            'persona': self.persona_edit.text().strip()
         }
         
     def save_settings(self):
@@ -606,11 +646,31 @@ class PromptsWidget(QWidget):
         # 保存语言偏好设置
         prefs['use_interface_language'] = self.use_interface_language_checkbox.isChecked()
         
+        # 保存 Random Questions 提示词
+        current_random = self.random_questions_edit.toPlainText()
+        default_random = get_suggestion_template(current_lang)
+        
+        if current_random.strip() == default_random.strip():
+            prefs['random_questions'] = ''
+        else:
+            prefs['random_questions'] = current_random
+        
         # 保存 Persona 设置
         prefs['use_persona'] = self.use_persona_checkbox.isChecked()
-        prefs['persona'] = self.persona_edit.text().strip()
+        current_persona = self.persona_edit.text().strip()
         
-        # 注意：random_questions 不保存，始终使用默认模板
+        # 定义获取 persona 默认值的函数
+        def get_persona_default(lang):
+            from .i18n import get_translation
+            lang_i18n = get_translation(lang)
+            return lang_i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+        
+        default_persona = get_persona_default(current_lang)
+        
+        if current_persona == default_persona:
+            prefs['persona'] = ''
+        else:
+            prefs['persona'] = current_persona
         
         prefs.commit()
         
@@ -710,12 +770,40 @@ class PromptsWidget(QWidget):
         
         # 获取当前语言
         current_lang = self.parent_dialog.config_widget.config_dialog.lang_combo.currentData()
+        from .config import get_prefs
+        prefs = get_prefs()
         
-        # 重新加载提示词模板（使用新语言的默认模板）
-        # 隐藏提示词系统：不在文本框中添加语言指令
-        self.template_edit.setPlainText(get_default_template(current_lang))
-        self.random_questions_edit.setPlainText(get_suggestion_template(current_lang))
-        self.multi_book_template_edit.setPlainText(get_multi_book_template(current_lang))
+        # 重新加载提示词模板（保留用户自定义内容）
+        # 如果当前内容是默认模板，则切换到新语言的默认模板
+        # 如果是用户自定义内容，则保留
+        
+        # Ask 提示词
+        current_template = self.template_edit.toPlainText()
+        if self._is_default_value_from_any_language(current_template, get_default_template):
+            self.template_edit.setPlainText(get_default_template(current_lang))
+        
+        # Random Questions 提示词
+        current_random = self.random_questions_edit.toPlainText()
+        if self._is_default_value_from_any_language(current_random, get_suggestion_template):
+            self.random_questions_edit.setPlainText(get_suggestion_template(current_lang))
+        
+        # Multi-Book 提示词
+        current_multi = self.multi_book_template_edit.toPlainText()
+        if self._is_default_value_from_any_language(current_multi, get_multi_book_template):
+            self.multi_book_template_edit.setPlainText(get_multi_book_template(current_lang))
+        
+        # Persona
+        def get_persona_default(lang):
+            from .i18n import get_translation
+            lang_i18n = get_translation(lang)
+            return lang_i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
+        
+        current_persona = self.persona_edit.text().strip()
+        if self._is_default_value_from_any_language(current_persona, get_persona_default):
+            self.persona_edit.setText(get_persona_default(current_lang))
+        
+        # 更新 placeholder
+        self.persona_edit.setPlaceholderText(get_persona_default(current_lang))
         
         # 更新初始值，避免误判为有变更
         # 因为切换语言后加载了新语言的默认模板，需要更新 initial_values

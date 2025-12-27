@@ -10,7 +10,7 @@ ToC of this tutorial:
 - How to Use
 - Keyboard Shortcuts
 - Random Questions
-- Prompts
+- Prompts *(new)*
 - Other Features
 - Configuration
 - Troubleshooting

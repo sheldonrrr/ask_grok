@@ -717,9 +717,9 @@ class TutorialWidget(QWidget):
                 return
             
             # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.5.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
             if not tutorial_data:
-                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.4.md')
+                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.5.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
@@ -973,7 +973,14 @@ class TabDialog(QDialog):
         # 创建标签页
         self.tab_widget = QTabWidget()
         
-        # 连接标签页切换信号
+        # 初始化标签页索引追踪
+        self.last_tab_index = 0
+        self.is_switching_tab = False  # 防止递归调用
+        
+        # 使用 tabBar 的 tabBarClicked 信号来在切换前检查
+        self.tab_widget.tabBar().tabBarClicked.connect(self.on_tab_bar_clicked)
+        
+        # 连接标签页切换信号（用于更新UI状态）
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
         # 创建General页面
@@ -1208,31 +1215,71 @@ class TabDialog(QDialog):
         else:
             super().keyPressEvent(event)
     
+    def on_tab_bar_clicked(self, target_index):
+        """在标签页切换前检查未保存的更改
+        
+        :param target_index: 目标标签页索引
+        """
+        # 防止递归调用
+        if self.is_switching_tab:
+            return
+        
+        current_index = self.tab_widget.currentIndex()
+        
+        # 如果点击的是当前标签页，不需要检查
+        if current_index == target_index:
+            return
+        
+        # 检查当前标签页是否有未保存的更改
+        if current_index == 1:  # Prompts tab
+            if hasattr(self, 'prompts_widget') and self.prompts_widget.check_for_changes():
+                # 创建自定义对话框以支持 i18n
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle(self.i18n.get('unsaved_changes_title', 'Unsaved Changes'))
+                msg_box.setText(self.i18n.get('unsaved_changes_message', 
+                    'You have unsaved changes in the Prompts tab. Do you want to save them?'))
+                msg_box.setIcon(QMessageBox.Question)
+                
+                # 添加自定义按钮（支持 i18n）
+                yes_button = msg_box.addButton(self.i18n.get('yes_button', 'Yes'), QMessageBox.YesRole)
+                no_button = msg_box.addButton(self.i18n.get('no_button', 'No'), QMessageBox.NoRole)
+                cancel_button = msg_box.addButton(self.i18n.get('cancel_button', 'Cancel'), QMessageBox.RejectRole)
+                msg_box.setDefaultButton(yes_button)
+                
+                msg_box.exec_()
+                clicked_button = msg_box.clickedButton()
+                
+                if clicked_button == yes_button:
+                    # 保存更改并切换
+                    self.prompts_widget.save_settings()
+                    self.on_settings_saved()
+                    self.is_switching_tab = True
+                    self.tab_widget.setCurrentIndex(target_index)
+                    self.is_switching_tab = False
+                elif clicked_button == no_button:
+                    # 不保存，直接切换
+                    self.is_switching_tab = True
+                    self.tab_widget.setCurrentIndex(target_index)
+                    self.is_switching_tab = False
+                else:  # cancel_button
+                    # 取消切换，停留在当前标签页
+                    return
+            else:
+                # 没有未保存的更改，直接切换
+                self.is_switching_tab = True
+                self.tab_widget.setCurrentIndex(target_index)
+                self.is_switching_tab = False
+        else:
+            # 其他标签页，直接切换
+            self.is_switching_tab = True
+            self.tab_widget.setCurrentIndex(target_index)
+            self.is_switching_tab = False
+    
     def on_tab_changed(self, index):
-        """处理标签页切换事件
+        """处理标签页切换事件（更新UI状态）
         
         :param index: 当前标签页索引
         """
-        # 检查离开的标签页是否有未保存的更改
-        if hasattr(self, 'last_tab_index') and self.last_tab_index == 1:  # Prompts tab
-            if hasattr(self, 'prompts_widget') and self.prompts_widget.check_for_changes():
-                reply = QMessageBox.question(
-                    self,
-                    self.i18n.get('unsaved_changes_title', 'Unsaved Changes'),
-                    self.i18n.get('unsaved_changes_message', 
-                        'You have unsaved changes in the Prompts tab. Do you want to save them?'),
-                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                    QMessageBox.Yes
-                )
-                
-                if reply == QMessageBox.Yes:
-                    self.prompts_widget.save_settings()
-                    self.on_settings_saved()
-                elif reply == QMessageBox.Cancel:
-                    # 取消切换，返回到 Prompts tab
-                    self.tab_widget.setCurrentIndex(self.last_tab_index)
-                    return
-        
         # 保存当前标签页索引
         self.last_tab_index = index
         
