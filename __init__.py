@@ -19,7 +19,7 @@ PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
 # 这样可以避免与其他 calibre 插件的依赖冲突
 
 # 版本信息 - 硬编码以确保跨平台兼容性
-VERSION = (1, 3, 8) # 版本号推送触发
+VERSION = (1, 3, 9) # 版本号推送触发
 VERSION_STRING = '.'.join(map(str, VERSION))
 PLUGIN_NAME = 'Ask AI Plugin'
 PLUGIN_DESCRIPTION = 'Ask questions about books using multiple AI providers'
@@ -84,7 +84,7 @@ class AskAIPlugin(InterfaceActionBase):
     description         = 'Ask questions about books using multiple AI providers'
     supported_platforms = ['windows', 'osx', 'linux']
     author              = 'Sheldon'
-    version             = (1, 3, 8)
+    version             = (1, 3, 9)
     minimum_calibre_version = (6, 0, 0)
     icon                = 'images/ask_ai_plugin.png'
 

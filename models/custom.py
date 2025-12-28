@@ -42,6 +42,16 @@ class CustomModel(BaseAIModel):
         """
         self._validate_config()
     
+    def requires_auth_token(self) -> bool:
+        """
+        工厂函数：Custom 模型不强制要求 auth token 验证
+        
+        Custom 模型可能是本地服务，API Key 是可选的
+        
+        :return: 始终返回 False
+        """
+        return False
+    
     def validate_token(self) -> bool:
         """
         验证 Custom 模型的配置是否有效

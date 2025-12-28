@@ -387,7 +387,7 @@ class GermanTranslation(BaseTranslation):
             'gemini_geo_restriction': 'Gemini API ist in Ihrer Region nicht verfügbar. Bitte versuchen Sie:\n1. VPN verwenden, um von einer unterstützten Region aus zu verbinden\n2. Andere KI-Anbieter verwenden (OpenAI, Anthropic, DeepSeek usw.)\n3. Google AI Studio für Regionsverfügbarkeit prüfen',
             'load_models_list': 'Modellliste Laden',
             'loading_models_text': 'Modelle werden geladen',
-            'model_test_success': 'Modelltest erfolgreich! Konfiguration gespeichert.',
+            'model_test_success': 'Modelltest erfolgreich!',
             'models_loaded_with_selection': '{count} Modelle erfolgreich geladen.\nAusgewähltes Modell: {model}',
             'ollama_model_not_available': 'Modell "{model}" ist nicht verfügbar. Bitte prüfen:\n1. Ist das Modell gestartet? Ausführen: ollama run {model}\n2. Ist der Modellname korrekt?\n3. Ist das Modell heruntergeladen? Ausführen: ollama pull {model}',
             'ollama_service_not_running': 'Ollama-Dienst läuft nicht. Bitte starten Sie zuerst den Ollama-Dienst.',
@@ -407,4 +407,26 @@ class GermanTranslation(BaseTranslation):
 
 
             'pdf_info_not_available': 'Informationen nicht verfügbar',
+            
+            # Field descriptions
+            'api_key_desc': 'Ihr API-Schlüssel für die Authentifizierung. Halten Sie ihn sicher und teilen Sie ihn nicht.',
+            'base_url_desc': 'Die API-Endpunkt-URL. Verwenden Sie die Standardeinstellung, es sei denn, Sie haben einen benutzerdefinierten Endpunkt.',
+            'model_desc': 'Wählen Sie ein Modell aus der Liste oder verwenden Sie einen benutzerdefinierten Modellnamen.',
+            'streaming_desc': 'Aktivieren Sie Echtzeit-Antwort-Streaming für schnelleres Feedback.',
+            'advanced_section': 'Erweitert',
+            
+            # Provider-specific notices
+            'perplexity_model_notice': 'Hinweis: Perplexity bietet keine öffentliche Modelllisten-API, daher sind die Modelle fest codiert.',
+            'ollama_no_api_key_notice': 'Hinweis: Ollama ist ein lokales Modell und benötigt keinen API-Schlüssel.',
+            'nvidia_free_credits_notice': 'Hinweis: Neue Benutzer erhalten kostenlose API-Credits - keine Kreditkarte erforderlich.',
+            
+            # Model buttons
+            'refresh_model_list': 'Aktualisieren',
+            'testing_text': 'Testen',
+            'refresh_success': 'Modellliste erfolgreich aktualisiert.',
+            'refresh_failed': 'Aktualisierung der Modellliste fehlgeschlagen.',
+            'test_failed': 'Modelltest fehlgeschlagen.',
+            
+            # Tooltip
+            'manage_ai_disabled_tooltip': 'Bitte fügen Sie zuerst einen KI-Anbieter hinzu.',
         }

@@ -384,7 +384,7 @@ class TraditionalChineseTranslation(BaseTranslation):
             'gemini_geo_restriction': 'Gemini API 在您的地區無法使用。請嘗試：\n1. 使用 VPN 從支援的地區連線\n2. 使用其他 AI 提供者（OpenAI、Anthropic、DeepSeek 等）\n3. 檢查 Google AI Studio 的地區可用性',
             'load_models_list': '載入模型清單',
             'loading_models_text': '正在載入模型',
-            'model_test_success': '模型測試成功！設定已儲存。',
+            'model_test_success': '模型測試成功！',
             'models_loaded_with_selection': '成功載入 {count} 個模型。\n已選模型：{model}',
             'ollama_model_not_available': '模型 "{model}" 無法使用。請檢查：\n1. 模型是否已啟動？執行：ollama run {model}\n2. 模型名稱是否正確？\n3. 模型是否已下載？執行：ollama pull {model}',
             'ollama_service_not_running': 'Ollama 服務未執行。請先啟動 Ollama 服務。',
@@ -406,4 +406,26 @@ class TraditionalChineseTranslation(BaseTranslation):
             'switch_to_ai': '切換到 {ai}',
             'keep_current': '保持目前設定',
             'pdf_info_not_available': '資訊不可用',
+            
+            # Field descriptions
+            'api_key_desc': '您的API金鑰用於身份驗證。請妥善保管，不要分享。',
+            'base_url_desc': 'API端點URL。除非您有自訂端點，否則請使用預設值。',
+            'model_desc': '從清單中選擇模型或使用自訂模型名稱。',
+            'streaming_desc': '啟用即時回應串流以獲得更快的回饋。',
+            'advanced_section': '進階',
+            
+            # Provider-specific notices
+            'perplexity_model_notice': '注意：Perplexity 沒有提供公開的模型清單API，因此模型名稱為硬編碼。',
+            'ollama_no_api_key_notice': '注意：Ollama 是本地模型，無需配置API金鑰。',
+            'nvidia_free_credits_notice': '注意：新用戶可獲得免費API額度，無需信用卡。',
+            
+            # Model buttons
+            'refresh_model_list': '重新整理',
+            'testing_text': '測試中',
+            'refresh_success': '模型清單重新整理成功。',
+            'refresh_failed': '重新整理模型清單失敗。',
+            'test_failed': '模型測試失敗。',
+            
+            # Tooltip
+            'manage_ai_disabled_tooltip': '請先新增AI服務商。',
     }

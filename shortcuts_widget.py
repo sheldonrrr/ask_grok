@@ -5,7 +5,7 @@ from calibre_plugins.ask_ai_plugin.config import get_prefs
 from calibre_plugins.ask_ai_plugin.ui_constants import TEXT_COLOR_SECONDARY_STRONG
 import sys
 
-# Shortcut for ask: F3 (all platforms)
+# Shortcut for ask: Ctrl+L (all platforms, including macOS)
 # Shortcut for config: F2 (all platforms)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
@@ -126,7 +126,7 @@ class ShortcutsWidget(QWidget):
         
         # 定义所有快捷键（部分快捷键在不同平台有所不同）
         shortcuts = [
-            (self.i18n.get('menu_ask', 'Ask'), 'F3'),
+            (self.i18n.get('menu_ask', 'Ask'), 'Ctrl+L'),
             (self.i18n.get('config_title', 'Configuration'), 'F2'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
             (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),

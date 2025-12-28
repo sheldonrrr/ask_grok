@@ -388,7 +388,7 @@ class JapaneseTranslation(BaseTranslation):
             'gemini_geo_restriction': 'Gemini APIはお住まいの地域では利用できません。お試しください：\n1. サポートされている地域からVPNを使用して接続する\n2. 他のAIプロバイダーを使用する（OpenAI、Anthropic、DeepSeekなど）\n3. Google AI Studioで地域の利用可能性を確認する',
             'load_models_list': 'モデルリストを読み込む',
             'loading_models_text': 'モデルを読み込んでいます',
-            'model_test_success': 'モデルテストが成功しました！設定が保存されました。',
+            'model_test_success': 'モデルテストが成功しました！',
             'models_loaded_with_selection': '{count}個のモデルが正常に読み込まれました。\n選択されたモデル：{model}',
             'ollama_model_not_available': 'モデル"{model}"は利用できません。確認してください：\n1. モデルは起動していますか？実行：ollama run {model}\n2. モデル名は正しいですか？\n3. モデルはダウンロードされていますか？実行：ollama pull {model}',
             'ollama_service_not_running': 'Ollamaサービスが実行されていません。最初にOllamaサービスを起動してください。',
@@ -408,4 +408,26 @@ class JapaneseTranslation(BaseTranslation):
 
 
             'pdf_info_not_available': '情報なし',
+            
+            # Field descriptions
+            'api_key_desc': '認証用のAPIキー。安全に保管し、共有しないでください。',
+            'base_url_desc': 'APIエンドポイントのURL。カスタムエンドポイントがない限り、デフォルトを使用してください。',
+            'model_desc': 'リストからモデルを選択するか、カスタムモデル名を使用してください。',
+            'streaming_desc': 'リアルタイムレスポンスストリーミングを有効にして、より速いフィードバックを得ます。',
+            'advanced_section': '詳細設定',
+            
+            # Provider-specific notices
+            'perplexity_model_notice': '注意：Perplexityは公開モデルリストAPIを提供していないため、モデルはハードコードされています。',
+            'ollama_no_api_key_notice': '注意：OllamaはローカルモデルでAPIキーは不要です。',
+            'nvidia_free_credits_notice': '注意：新規ユーザーは無料のAPIクレジットを取得できます - クレジットカード不要。',
+            
+            # Model buttons
+            'refresh_model_list': '更新',
+            'testing_text': 'テスト中',
+            'refresh_success': 'モデルリストが正常に更新されました。',
+            'refresh_failed': 'モデルリストの更新に失敗しました。',
+            'test_failed': 'モデルテストが失敗しました。',
+            
+            # Tooltip
+            'manage_ai_disabled_tooltip': '最初にAIプロバイダーを追加してください。',
         }

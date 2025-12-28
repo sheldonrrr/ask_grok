@@ -27,9 +27,11 @@ from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
-    SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
+    SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style
+    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, BG_COLOR_ALTERNATE,
+    get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
+    get_list_widget_style
 )
 
 # 初始化日志
@@ -296,13 +298,18 @@ def get_prefs(force_reload=False):
     # 自动判断并设置 is_configured 字段（用于已有配置的兼容性）
     for model_id, model_config in prefs['models'].items():
         if 'is_configured' not in model_config:
+            # 获取 provider_id（用于判断模型类型）
+            provider_id = model_config.get('provider_id')
+            if not provider_id:
+                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
+            
             # 判断是否已配置
-            if model_id == 'ollama':
-                # Ollama 不需要 API Key
+            if provider_id in ['ollama', 'custom']:
+                # Ollama 和 Custom 不需要 API Key
                 has_auth = True
             else:
                 # 其他模型需要 API Key
-                api_key_field = 'auth_token' if model_id == 'grok' else 'api_key'
+                api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
                 has_auth = bool(model_config.get(api_key_field, '').strip())
             
             # 检查是否有模型名称
@@ -337,18 +344,10 @@ class ModelConfigWidget(QWidget):
         self._is_initializing = False
     
     def setup_ui(self):
-        # 创建主布局
+        # 创建主布局（直接使用 VBoxLayout，更灵活）
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # 创建表单布局
-        model_layout = QFormLayout()
-        model_layout.setFieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
-        model_layout.setHorizontalSpacing(SPACING_MEDIUM)  # 标签和字段间距
-        model_layout.setVerticalSpacing(SPACING_SMALL)     # 行间距
-        model_layout.setLabelAlignment(Qt.AlignRight | Qt.AlignVCenter)  # 标签右对齐
-        model_layout.setFormAlignment(Qt.AlignLeft | Qt.AlignTop)
-        main_layout.addLayout(model_layout)
+        main_layout.setSpacing(SPACING_MEDIUM)
         
         # 计算基础宽度（减少字符数，避免超出窗口宽度）
         font_metrics = QFontMetrics(self.font())
@@ -392,38 +391,37 @@ class ModelConfigWidget(QWidget):
             model_config = get_current_model_config(provider)
         
         if model_config:
-            # Nvidia 特殊提示：免费 API Key 信息
-            if self.model_id == 'nvidia':
-                from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
-                info_label = QLabel(self.i18n.get('nvidia_free_info', 
-                    'New users get 6 months free API access - No credit card required'))
-                info_label.setObjectName('label_nvidia_free_info')
-                info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
-                info_label.setWordWrap(True)
-                main_layout.addWidget(info_label)
+            from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
             
             # API Key/Token 输入框（Ollama 不需要）
             if self.model_id != 'ollama':
+                # API Key 标签
+                api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
+                api_key_label.setObjectName(f'label_api_key_{self.model_id}')
+                main_layout.addWidget(api_key_label)
+                
+                # API Key 输入框
                 self.api_key_edit = QTextEdit(self)
                 self.api_key_edit.setPlainText(self.config.get(api_key_field_name, ''))
                 self.api_key_edit.textChanged.connect(self.on_api_key_changed)
                 self.api_key_edit.setMaximumHeight(62)
-                self.api_key_edit.setMinimumWidth(base_width)  # 基于字体大小设置宽度
-                # 手动创建标签以设置 objectName
-                api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
-                api_key_label.setObjectName(f'label_api_key_{self.model_id}')
-                model_layout.addRow(api_key_label, self.api_key_edit)
+                self.api_key_edit.setMinimumWidth(base_width)
+                main_layout.addWidget(self.api_key_edit)
+                
+                # API Key 说明
+                api_key_desc = QLabel(self.i18n.get('api_key_desc', 'Your API key for authentication. Keep it secure and do not share.'))
+                api_key_desc.setObjectName(f'label_api_key_desc_{self.model_id}')
+                api_key_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+                api_key_desc.setWordWrap(True)
+                main_layout.addWidget(api_key_desc)
             else:
                 # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
                 self.api_key_edit = None
             
-            # 添加分隔线
-            separator = QFrame()
-            separator.setFrameShape(QFrame.HLine)
-            separator.setFrameShadow(QFrame.Plain)
-            separator.setStyleSheet("border-top: 1px dashed palette(mid); margin-top: 15px; margin-bottom: 15px; background: none;")
-            separator.setMinimumHeight(10)
-            main_layout.addWidget(separator)
+            # API Base URL 标签
+            base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+            base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+            main_layout.addWidget(base_url_label)
             
             # API Base URL 输入框
             self.api_base_edit = QLineEdit(self)
@@ -432,22 +430,22 @@ class ModelConfigWidget(QWidget):
             self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
                 default_api_base_url=model_config.default_api_base_url
             ))
-            self.api_base_edit.setMinimumHeight(25)  # 设置最小高度
-            self.api_base_edit.setMinimumWidth(base_width)  # 设置最小宽度
-            # 手动创建标签以设置 objectName
-            base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
-            base_url_label.setObjectName(f'label_base_url_{self.model_id}')
-            model_layout.addRow(base_url_label, self.api_base_edit)
+            self.api_base_edit.setMinimumHeight(25)
+            self.api_base_edit.setMinimumWidth(base_width)
+            main_layout.addWidget(self.api_base_edit)
             
-            # 模型选择区域：下拉框 + 加载按钮
-            model_select_layout = QHBoxLayout()
+            # Base URL 说明
+            base_url_desc = QLabel(self.i18n.get('base_url_desc', 'The API endpoint URL. Use default unless you have a custom endpoint.'))
+            base_url_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
+            base_url_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+            base_url_desc.setWordWrap(True)
+            main_layout.addWidget(base_url_desc)
             
             # 模型下拉框
             self.model_combo = NoScrollComboBox(self)
             self.model_combo.setMinimumWidth(int(base_width * 0.7))
             self.model_combo.setEditable(False)
             self.model_combo.currentTextChanged.connect(self.on_model_combo_changed)
-            model_select_layout.addWidget(self.model_combo)
             
             # 添加占位符选项
             placeholder_text = self.i18n.get('select_model', '-- No Model --')
@@ -490,86 +488,161 @@ class ModelConfigWidget(QWidget):
                 if item:
                     item.setEnabled(False)
             
-            # 添加按钮之间的间距
-            model_select_layout.addSpacing(8)
+            # 模型按钮区域（新行）
+            model_buttons_layout = QHBoxLayout()
+            model_buttons_layout.setSpacing(SPACING_SMALL)
             
-            # 加载模型按钮
-            self.load_models_button = QPushButton(self.i18n.get('load_models_list', 'Load Model List'), self)
-            self.load_models_button.setObjectName(f'button_load_models_{self.model_id}')
-            self.load_models_button.clicked.connect(self.on_load_models_clicked)
-            # 增加按钮宽度以适应不同字体大小（16px、14px等）
-            apply_button_style(self.load_models_button, min_width=200)
-            model_select_layout.addWidget(self.load_models_button)
+            # 刷新模型列表按钮（Perplexity 不显示）
+            self.refresh_models_button = QPushButton(self.i18n.get('refresh_model_list', 'Refresh Model List'), self)
+            self.refresh_models_button.setObjectName(f'button_refresh_models_{self.model_id}')
+            self.refresh_models_button.clicked.connect(self.on_refresh_models_clicked)
+            apply_button_style(self.refresh_models_button, min_width=0)
+            # Perplexity 模型列表是硬编码，不需要刷新按钮
+            if self.model_id != 'perplexity':
+                model_buttons_layout.addWidget(self.refresh_models_button, 1)  # 50% 宽度
+            else:
+                self.refresh_models_button.hide()
             
-            # 初始化加载动画
+            # 测试当前模型按钮
+            self.test_model_button = QPushButton(self.i18n.get('test_current_model', 'Test Current Model'), self)
+            self.test_model_button.setObjectName(f'button_test_model_{self.model_id}')
+            self.test_model_button.clicked.connect(self.on_test_model_clicked)
+            apply_button_style(self.test_model_button, min_width=0)
+            model_buttons_layout.addWidget(self.test_model_button, 1)  # 50% 宽度
+            
+            # 初始化加载动画（用于刷新按钮）
             from .ui_constants import ButtonLoadingAnimation
-            self.load_models_animation = ButtonLoadingAnimation(
-                button=self.load_models_button,
+            self.refresh_models_animation = ButtonLoadingAnimation(
+                button=self.refresh_models_button,
                 loading_text=self.i18n.get('loading_models_text', 'Loading'),
-                original_text=self.i18n.get('load_models_list', 'Load Model List')
+                original_text=self.i18n.get('refresh_model_list', 'Refresh Model List')
             )
             
-            # 初始化按钮状态
-            self.update_load_models_button_state()
+            # 测试按钮动画
+            self.test_model_animation = ButtonLoadingAnimation(
+                button=self.test_model_button,
+                loading_text=self.i18n.get('testing_text', 'Testing'),
+                original_text=self.i18n.get('test_current_model', 'Test Current Model')
+            )
             
-            # 手动创建标签以设置 objectName
+            # 兼容旧代码：保留 load_models_button 引用
+            self.load_models_button = self.refresh_models_button
+            self.load_models_animation = self.refresh_models_animation
+            
+            # 模型标签
             model_label = QLabel(self.i18n.get('model_label', 'Model'))
             model_label.setObjectName(f'label_model_{self.model_id}')
-            model_layout.addRow(model_label, model_select_layout)
+            main_layout.addWidget(model_label)
+            
+            # 模型下拉框
+            main_layout.addWidget(self.model_combo)
+            
+            # 模型按钮区域
+            main_layout.addLayout(model_buttons_layout)
+            
+            # 模型说明
+            model_desc = QLabel(self.i18n.get('model_desc', 'Select a model from the list or use a custom model name.'))
+            model_desc.setObjectName(f'label_model_desc_{self.model_id}')
+            model_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+            model_desc.setWordWrap(True)
+            main_layout.addWidget(model_desc)
             
             # 使用自定义模型名称选项
             self.use_custom_model_checkbox = QCheckBox(self.i18n.get('use_custom_model', 'Use custom model name'))
             self.use_custom_model_checkbox.setObjectName(f'checkbox_use_custom_model_{self.model_id}')
             self.use_custom_model_checkbox.stateChanged.connect(self.on_custom_model_toggled)
-            model_layout.addRow("", self.use_custom_model_checkbox)
+            main_layout.addWidget(self.use_custom_model_checkbox)
             
             # 自定义模型名称输入框（始终显示，初始禁用）
             self.custom_model_input = QLineEdit(self)
             self.custom_model_input.setMinimumWidth(base_width)
-            self.custom_model_input.setMinimumHeight(25)  # 设置最小高度
+            self.custom_model_input.setMinimumHeight(25)
             self.custom_model_input.setPlaceholderText(self.i18n.get('custom_model_placeholder', 'Enter custom model name'))
             self.custom_model_input.textChanged.connect(self.on_config_changed)
-            self.custom_model_input.setEnabled(False)  # 初始禁用（灰色）
-            # 保存这一行的索引
-            self.custom_model_row = model_layout.rowCount()
-            model_layout.addRow("", self.custom_model_input)
+            self.custom_model_input.setEnabled(False)
+            main_layout.addWidget(self.custom_model_input)
             
             # 加载模型配置（填充下拉框或自定义输入）
             self.load_model_config()
-
+            
+            # 添加分隔线（高级区域）
+            separator2 = QFrame()
+            separator2.setFrameShape(QFrame.HLine)
+            separator2.setFrameShadow(QFrame.Plain)
+            separator2.setStyleSheet("border-top: 1px dashed palette(mid); margin-top: 15px; margin-bottom: 15px; background: none;")
+            separator2.setMinimumHeight(10)
+            main_layout.addWidget(separator2)
+            
+            # 高级区域标题
+            advanced_label = QLabel(self.i18n.get('advanced_section', 'Advanced'))
+            advanced_label.setObjectName(f'label_advanced_{self.model_id}')
+            advanced_label.setStyleSheet("font-weight: bold;")
+            main_layout.addWidget(advanced_label)
+            
             # 流式传输选项
             self.enable_streaming_checkbox = QCheckBox(self.i18n.get('model_enable_streaming', 'Enable Streaming'))
             self.enable_streaming_checkbox.setObjectName(f'checkbox_enable_streaming_{self.model_id}')
             self.enable_streaming_checkbox.setChecked(self.config.get('enable_streaming', True))
             self.enable_streaming_checkbox.stateChanged.connect(self.on_config_changed)
-            model_layout.addRow("", self.enable_streaming_checkbox)
+            main_layout.addWidget(self.enable_streaming_checkbox)
             
-            # 添加重置按钮（红色警告样式）
-            reset_button = QPushButton(self.i18n.get('reset_current_ai', 'Reset Current AI to Default'))
-            reset_button.setObjectName(f"reset_button_{self.model_id}")  # 设置明确的objectName
-            reset_button.setProperty('isResetButton', True)  # 添加属性标记
-            reset_button.clicked.connect(self.reset_model_params)
-            reset_button.setToolTip(self.i18n.get('reset_tooltip', 'Reset current AI to default values'))
+            # 流式传输说明
+            streaming_desc = QLabel(self.i18n.get('streaming_desc', 'Enable real-time response streaming for faster feedback.'))
+            streaming_desc.setObjectName(f'label_streaming_desc_{self.model_id}')
+            streaming_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+            streaming_desc.setWordWrap(True)
+            main_layout.addWidget(streaming_desc)
             
-            # 应用红色警告样式（与 Reset All Data 保持一致）
-            reset_button.setStyleSheet("""
-                QPushButton {
-                    background-color: #dc3545;
-                    color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    min-width: 200px;
-                }
-                QPushButton:hover {
-                    background-color: #c82333;
-                }
-                QPushButton:pressed {
-                    background-color: #bd2130;
-                }
-            """)
-            model_layout.addRow("", reset_button)
+            # 服务商特定提示（放在底部）
+            if self.model_id == 'nvidia':
+                notice_label = QLabel(self.i18n.get('nvidia_free_credits_notice', 
+                    'Note: New users get free API credits - No credit card required.'))
+                notice_label.setObjectName('label_nvidia_notice')
+                notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
+                notice_label.setWordWrap(True)
+                main_layout.addWidget(notice_label)
+            elif self.model_id == 'perplexity':
+                notice_label = QLabel(self.i18n.get('perplexity_model_notice', 
+                    'Note: Perplexity does not provide a public model list API, so models are hardcoded.'))
+                notice_label.setObjectName('label_perplexity_notice')
+                notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
+                notice_label.setWordWrap(True)
+                main_layout.addWidget(notice_label)
+            elif self.model_id == 'ollama':
+                notice_label = QLabel(self.i18n.get('ollama_no_api_key_notice', 
+                    'Note: Ollama is a local model that does not require an API key.'))
+                notice_label.setObjectName('label_ollama_notice')
+                notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
+                notice_label.setWordWrap(True)
+                main_layout.addWidget(notice_label)
+            
+            # 设置按钮初始状态
+            self.update_button_states()
+            
+            # 连接信号以更新按钮状态
+            if self.api_key_edit is not None:
+                self.api_key_edit.textChanged.connect(self.update_button_states)
+            self.model_combo.currentTextChanged.connect(self.update_button_states)
+    
+    def update_button_states(self):
+        """更新刷新和测试按钮的启用状态"""
+        # 刷新按钮：需要 API Key（Ollama 除外）
+        if self.model_id == 'ollama':
+            self.refresh_models_button.setEnabled(True)
+        else:
+            # QTextEdit 使用 toPlainText()，QLineEdit 使用 text()
+            if hasattr(self.api_key_edit, 'toPlainText'):
+                api_key = self.api_key_edit.toPlainText().strip()
+            else:
+                api_key = self.api_key_edit.text().strip()
+            self.refresh_models_button.setEnabled(bool(api_key))
+        
+        # 测试按钮：需要选中有效模型
+        current_model = self.model_combo.currentText()
+        placeholder_text = self.i18n.get('select_model', '-- No Model --')
+        hint_text = self.i18n.get('request_model_list', 'Please request model list')
+        is_valid_model = bool(current_model and current_model not in [placeholder_text, hint_text])
+        self.test_model_button.setEnabled(is_valid_model)
     
     def get_config(self):
         """获取当前配置"""
@@ -710,9 +783,6 @@ class ModelConfigWidget(QWidget):
             del cached_models[self.model_id]
             prefs['cached_models'] = cached_models
         
-        # 更新 Load Models 按钮状态
-        self.update_load_models_button_state()
-        
         # 触发配置变更信号
         self.on_config_changed()
     
@@ -722,20 +792,6 @@ class ModelConfigWidget(QWidget):
         if hasattr(self, '_is_initializing') and self._is_initializing:
             return
         self.config_changed.emit()
-    
-    def update_load_models_button_state(self):
-        """更新 Load Models 按钮的启用/禁用状态"""
-        if not hasattr(self, 'load_models_button'):
-            return
-        
-        # Ollama 不需要 API Key，始终可用
-        if self.model_id == 'ollama':
-            self.load_models_button.setEnabled(True)
-            return
-        
-        # 其他 AI 需要检查 API Key
-        api_key = self.get_api_key()
-        self.load_models_button.setEnabled(bool(api_key))
     
     def _is_placeholder_text(self, text):
         """检查文本是否是占位符（基于 i18n key）
@@ -852,8 +908,17 @@ class ModelConfigWidget(QWidget):
         # 4. 没有找到匹配，返回第一个模型
         return 1
     
+    def on_refresh_models_clicked(self):
+        """点击刷新模型列表按钮"""
+        # 直接调用加载模型列表逻辑
+        self._load_models_list()
+    
+    def on_test_model_clicked(self):
+        """点击测试当前模型按钮"""
+        self._test_current_model()
+    
     def on_load_models_clicked(self):
-        """点击加载模型按钮 - 根据状态执行加载或测试"""
+        """点击加载模型按钮 - 根据状态执行加载或测试（兼容旧代码）"""
         import logging
         logger = logging.getLogger(__name__)
 
@@ -868,6 +933,13 @@ class ModelConfigWidget(QWidget):
             return
         
         # 否则执行加载模型列表
+        self._load_models_list()
+    
+    def _load_models_list(self):
+        """加载模型列表的内部方法"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # 1. 验证 API Key（Ollama 不需要）
         if self.model_id != 'ollama':
             api_key = self.get_api_key()
@@ -887,7 +959,7 @@ class ModelConfigWidget(QWidget):
             prefs['cached_models'] = cached_models
         
         # 3. 启动加载动画
-        self.load_models_animation.start()
+        self.refresh_models_animation.start()
         
         # 4. 获取当前配置（从输入框实时获取）
         config = self.get_config()
@@ -903,7 +975,7 @@ class ModelConfigWidget(QWidget):
             success, result = api_client.fetch_available_models(self.model_id, config, skip_verification=True)
             
             # 停止加载动画
-            self.load_models_animation.stop()
+            self.refresh_models_animation.stop()
             
             if success:
                 # 成功：填充下拉框
@@ -946,9 +1018,8 @@ class ModelConfigWidget(QWidget):
                 if hasattr(self, 'use_custom_model_checkbox'):
                     self.use_custom_model_checkbox.setChecked(False)
                 
-                # 标记模型已加载，更新按钮状态
+                # 标记模型已加载
                 self._models_loaded = True
-                self.update_load_models_button_state()
                 
                 # 显示加载成功消息
                 selected_model = self.model_combo.currentText()
@@ -990,25 +1061,6 @@ class ModelConfigWidget(QWidget):
         # 使用 QTimer 延迟执行，避免阻塞
         QTimer.singleShot(100, fetch_models)
     
-    def update_load_models_button_state(self):
-        """更新加载模型按钮的状态和文本"""
-        if self.model_id == 'perplexity':
-            # Perplexity: no model list loading, only test current model
-            self.load_models_button.setText(self.i18n.get('test_current_model', 'Test Current Model'))
-            self.load_models_animation.original_text = self.i18n.get('test_current_model', 'Test Current Model')
-            return
-
-        if self._models_loaded:
-            # 已加载模型，显示"测试当前模型"
-            self.load_models_button.setText(self.i18n.get('test_current_model', 'Test Current Model'))
-            # 更新动画的原始文本
-            self.load_models_animation.original_text = self.i18n.get('test_current_model', 'Test Current Model')
-        else:
-            # 未加载模型，显示"加载模型列表"
-            self.load_models_button.setText(self.i18n.get('load_models_list', 'Load Model List'))
-            # 更新动画的原始文本
-            self.load_models_animation.original_text = self.i18n.get('load_models_list', 'Load Model List')
-    
     def _test_current_model(self):
         """测试当前选中的模型"""
         import logging
@@ -1030,9 +1082,8 @@ class ModelConfigWidget(QWidget):
         config = self.get_config()
         config['model'] = selected_model
         
-        
-        # 启动加载动画
-        self.load_models_animation.start()
+        # 启动测试动画
+        self.test_model_animation.start()
         
         # 使用 QTimer 异步执行，避免阻塞 UI
         def test_model():
@@ -1043,16 +1094,15 @@ class ModelConfigWidget(QWidget):
             # 测试模型
             success, message = api_client.test_model(self.model_id, config, test_model_name=selected_model)
             
-            # 停止加载动画
-            self.load_models_animation.stop()
+            # 停止测试动画
+            self.test_model_animation.stop()
             
             if success:
-                # 测试成功，保存配置
-                self._save_config_after_load()
+                # 测试成功
                 QMessageBox.information(
                     self,
                     self.i18n.get('success', 'Success'),
-                    self.i18n.get('model_test_success', 'Model test successful! Configuration saved.')
+                    self.i18n.get('model_test_success', 'Model test successful!')
                 )
             else:
                 # 测试失败，显示错误
@@ -1576,10 +1626,7 @@ class ModelConfigWidget(QWidget):
                 except Exception:
                     pass
             
-            # 9. 更新 Load Models 按钮状态
-            self.update_load_models_button_state()
-            
-            # 10. 通知父对话框更新模型列表的对钩标记
+            # 9. 通知父对话框更新模型列表的对钩标记
             # 通过发射信号让 ConfigDialog 更新模型名称显示
             config_dialog = None
             parent = self.parent()
@@ -1785,62 +1832,84 @@ class ConfigDialog(QWidget):
         model_layout = QVBoxLayout()
         model_layout.setSpacing(SPACING_MEDIUM)
 
-        # 添加模型选择下拉框
-        model_select_layout = QHBoxLayout()
-        model_select_layout.setSpacing(SPACING_SMALL)
-        current_ai_label = QLabel(self.i18n.get('current_ai', 'Current AI'))
-        current_ai_label.setObjectName('label_current_ai')
-        model_select_layout.addWidget(current_ai_label)
-
+        # ========== 新版 AI 区域：列表概览 + 管理入口 ==========
+        
+        # 空态提示（当没有已配置 AI 时显示）
+        hint_text = self.i18n.get('no_configured_ai_hint', 
+            'No AI configured. Plugin cannot work. Please click "Add AI" to add an AI provider.')
+        self.no_ai_hint_label = QLabel(f"💡 {hint_text}")
+        self.no_ai_hint_label.setObjectName('label_no_ai_hint')
+        self.no_ai_hint_label.setWordWrap(True)
+        self.no_ai_hint_label.setStyleSheet(f"""
+            QLabel {{
+                color: {TEXT_COLOR_PRIMARY};
+                padding: {PADDING_MEDIUM}px;
+                background: {BG_COLOR_ALTERNATE};
+                border-radius: {SPACING_TINY}px;
+            }}
+        """)
+        self.no_ai_hint_label.setVisible(False)  # 默认隐藏，由 refresh_ai_list 控制
+        model_layout.addWidget(self.no_ai_hint_label)
+        
+        # 默认 AI 选择行
+        default_ai_layout = QHBoxLayout()
+        default_ai_layout.setSpacing(SPACING_SMALL)
+        
+        default_ai_label = QLabel(self.i18n.get('default_ai_label', 'Default AI:'))
+        default_ai_label.setObjectName('label_default_ai')
+        default_ai_layout.addWidget(default_ai_label)
+        
+        # 默认 AI 下拉框（只显示已配置的 AI）
         self.model_combo = NoScrollComboBox()
-        # 使用有序列表来定义模型显示顺序（按使用频率和影响力排序）
-        # OpenAI 第一，Custom 最后
-        model_mapping = [
-            (AIProvider.AI_OPENAI, 'openai'),
-            (AIProvider.AI_ANTHROPIC, 'anthropic'),
-            (AIProvider.AI_GEMINI, 'gemini'),
-            (AIProvider.AI_GROK, 'grok'),
-            (AIProvider.AI_DEEPSEEK, 'deepseek'),
-            (AIProvider.AI_NVIDIA, 'nvidia'),
-            (AIProvider.AI_PERPLEXITY, 'perplexity'),
-            (AIProvider.AI_OPENROUTER, 'openrouter'),
-            (AIProvider.AI_OLLAMA, 'ollama'),
-            (AIProvider.AI_CUSTOM, 'custom'),
-        ]
-        # 按照定义的顺序添加到下拉框
-        for provider, model_id in model_mapping:
-            if provider in DEFAULT_MODELS:
-                model_config = DEFAULT_MODELS[provider]
-                self.model_combo.addItem(model_config.display_name, model_id)
-        self.model_combo.currentIndexChanged.connect(self.on_model_changed)
-        model_select_layout.addWidget(self.model_combo)
+        self.model_combo.setObjectName('combo_default_ai')
+        self.model_combo.currentIndexChanged.connect(self.on_default_ai_changed)
+        default_ai_layout.addWidget(self.model_combo)
+        default_ai_layout.addStretch()
         
-        # 不再需要额外的模型名称标签，因为下拉框已经显示了模型名称
+        model_layout.addLayout(default_ai_layout)
         
-        model_layout.addLayout(model_select_layout)
+        # 已配置 AI 列表（简洁显示）
+        from PyQt5.QtWidgets import QListWidget, QListWidgetItem
+        from PyQt5.QtCore import QEvent
+        self.configured_ai_list = QListWidget()
+        self.configured_ai_list.setObjectName('list_configured_ai_summary')
+        self.configured_ai_list.setMaximumHeight(120)
+        self.configured_ai_list.setStyleSheet(get_list_widget_style())
+        self.configured_ai_list.itemDoubleClicked.connect(self._on_ai_list_double_clicked)
         
-        # 默认选择当前选中的模型
-        current_model = get_prefs().get('selected_model', 'grok')
-        index = self.model_combo.findData(current_model)
-        if index >= 0:
-            self.model_combo.setCurrentIndex(index)
+        # 安装事件过滤器，实现鼠标滚动互斥
+        self.configured_ai_list.viewport().installEventFilter(self)
         
-        # 直接使用布局，不使用滚动区域或容器
-        # 这样可以确保全部内容都能正确显示，不会出现二级滚动条
+        model_layout.addWidget(self.configured_ai_list)
         
-        # 创建模型配置布局
-        self.models_layout = QVBoxLayout()
-        # 使用统一的间距规范
-        self.models_layout.setContentsMargins(0, 0, 0, 0)
-        self.models_layout.setSpacing(SPACING_MEDIUM)
+        # AI 操作按钮区域
+        ai_buttons_layout = QHBoxLayout()
+        ai_buttons_layout.setSpacing(SPACING_SMALL)
         
-        # 添加模型配置控件
-        self.setup_model_widgets()
+        # 添加 AI 按钮（使用默认样式）
+        self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
+        self.add_ai_button.setObjectName('button_add_ai')
+        self.add_ai_button.clicked.connect(self._on_add_ai_clicked)
+        ai_buttons_layout.addWidget(self.add_ai_button)
         
-        # 直接将布局添加到模型组布局中
-        model_layout.addLayout(self.models_layout)
+        # 管理已配置 AI 按钮（使用默认样式）
+        self.manage_ai_button = QPushButton(self.i18n.get('manage_configured_ai_button', 'Manage Configured AI'))
+        self.manage_ai_button.setObjectName('button_manage_ai')
+        self.manage_ai_button.clicked.connect(self._on_manage_ai_clicked)
+        ai_buttons_layout.addWidget(self.manage_ai_button)
         
-        # 添加分隔线（在重置按钮和超时设置之间）
+        ai_buttons_layout.addStretch()
+        
+        model_layout.addLayout(ai_buttons_layout)
+        
+        # 初始化 AI 列表显示
+        self.refresh_ai_list()
+        
+        # 保留 model_widgets 字典用于兼容性（但不再在 General 中展开显示）
+        self.model_widgets = {}
+        self.models_layout = QVBoxLayout()  # 保留空布局用于兼容性
+        
+        # 添加分隔线
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Plain)
@@ -2066,25 +2135,9 @@ class ConfigDialog(QWidget):
         reset_layout = QVBoxLayout()
         reset_layout.setSpacing(SPACING_SMALL)
         
-        # 重置按钮
+        # 重置按钮（使用默认样式）
         self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
         self.reset_button.setObjectName('button_reset_all_data')
-        self.reset_button.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c82333;
-            }
-            QPushButton:pressed {
-                background-color: #bd2130;
-            }
-        """)
         self.reset_button.clicked.connect(self.on_reset_all_data)
         reset_layout.addWidget(self.reset_button)
         
@@ -2102,69 +2155,14 @@ class ConfigDialog(QWidget):
         main_layout.addWidget(main_scroll)
 
     def setup_model_widgets(self):
-        """初始化所有模型配置控件"""
-        import logging
-        logger = logging.getLogger(__name__)
+        """初始化所有模型配置控件（兼容性方法，现在为空操作）
         
-        # 确保 models_layout 已经初始化
-        if not hasattr(self, 'models_layout') or self.models_layout is None:
-            # 创建模型配置布局
-            self.models_layout = QVBoxLayout()
-            # 设置合适的边距和间距
-            self.models_layout.setContentsMargins(10, 10, 10, 10)
-            self.models_layout.setSpacing(10)
-        
-        # 在清空控件前，保存所有当前模型的配置
-        current_configs = {}
-        if hasattr(self, 'model_widgets'):
-            for model_id, widget in self.model_widgets.items():
-                try:
-                    current_configs[model_id] = widget.get_config()
-                    pass  # 配置已保存
-                except Exception as e:
-                    logger.error(f"获取模型 {model_id} 配置时出错: {str(e)}")
-                    # 如果控件已被删除，使用初始值或默认值
-                    if hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
-                        current_configs[model_id] = self.initial_values['models'][model_id]
-                        pass  # 使用初始值
-        
-        # 清除当前布局中的所有元素
-        self.clear_layout(self.models_layout)
-        self.model_widgets = {}
-        
-        # 获取当前选中的模型
-        model_id = self.model_combo.currentData()
-        
-        # 获取模型配置的优先级：
-        # 1. 当前会话中用户修改过的配置（存储在current_configs中）
-        # 2. 已保存的配置（存储在prefs中）
-        # 3. 当前会话的初始值（存储在self.initial_values中）
-        model_config = None
-        
-        # 1. 首先检查当前会话中用户修改过的配置
-        if model_id in current_configs:
-            model_config = current_configs[model_id]
-        # 2. 如果没有，从已保存的配置中获取
-        elif get_prefs().get('models', {}).get(model_id):
-            model_config = get_prefs().get('models', {}).get(model_id, {})
-        # 3. 如果还是没有，检查初始值
-        elif hasattr(self, 'initial_values') and 'models' in self.initial_values and model_id in self.initial_values['models']:
-            model_config = self.initial_values['models'].get(model_id, {})
-        # 4. 如果都没有，使用空字典
-        else:
-            model_config = {}
-        
-        # 创建模型配置控件
-        widget = ModelConfigWidget(model_id, model_config, self.i18n)
-        widget.config_changed.connect(self.on_config_changed)
-        # 不设置最小高度，让控件根据内容自动调整大小
-        
-        # 保存控件引用
-        self.model_widgets[model_id] = widget
-        
-        # 添加到布局
-        self.models_layout.addWidget(widget)
-        # 移除addStretch，防止Reset按钮被推到不可见区域
+        注意：模型配置控件现在在 AI Manager 弹窗中创建和管理，
+        此方法保留用于兼容性，但不再执行任何操作。
+        """
+        # 确保 model_widgets 字典存在
+        if not hasattr(self, 'model_widgets'):
+            self.model_widgets = {}
     
     def clear_layout(self, layout):
         """清除布局中的所有元素"""
@@ -2179,98 +2177,226 @@ class ConfigDialog(QWidget):
                 self.clear_layout(item.layout())
                 item.layout().deleteLater()
     
-    def on_model_changed(self, index):
-        """当选择的模型改变时"""
-        import logging
-        logger = logging.getLogger(__name__)
+    def refresh_ai_list(self):
+        """刷新 AI 列表显示（已配置 AI 列表 + 默认 AI 下拉框）"""
+        from PyQt5.QtWidgets import QListWidgetItem, QWidget, QHBoxLayout, QLabel
+        from PyQt5.QtCore import Qt
         
-        # 获取当前选中的模型
-        model_id = self.model_combo.currentData()
+        prefs = get_prefs(force_reload=True)
+        models_config = prefs.get('models', {})
+        selected_model = prefs.get('selected_model', '')
         
-        # 如果选择了占位符（model_id 为 None），立即保存配置
-        # 这样可以清空模型选择，触发关闭时的有效性检查
-        if model_id is None:
-            logger.info("用户选择了占位符，清空模型选择并立即保存")
-            self.save_settings()
+        # AI Provider 显示顺序（用于排序）
+        provider_order = ['openai', 'anthropic', 'gemini', 'grok', 'deepseek', 
+                          'nvidia', 'perplexity', 'openrouter', 'ollama', 'custom']
+        
+        # 收集已配置的 AI（支持新的 config_id 格式：provider_uuid）
+        configured_ais = []
+        for config_id, config in models_config.items():
+            if not config.get('is_configured', False):
+                continue
+            
+            # 获取 provider_id（兼容旧数据）
+            provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
+            
+            # 生成显示名称：Provider + Model
+            provider_name = config.get('display_name', provider_id)
+            model_name = config.get('model', '')
+            if model_name:
+                display_text = f"{provider_name} - {model_name}"
+            else:
+                display_text = provider_name
+            
+            # 排序键
+            try:
+                sort_key = provider_order.index(provider_id)
+            except ValueError:
+                sort_key = 999
+            
+            configured_ais.append((config_id, display_text, sort_key))
+        
+        # 按 provider 排序
+        configured_ais.sort(key=lambda x: x[2])
+        
+        # 检查重复名称，添加序号
+        name_counts = {}
+        for i, (config_id, display_text, sort_key) in enumerate(configured_ais):
+            if display_text in name_counts:
+                name_counts[display_text] += 1
+                new_display_text = f"{display_text} ({name_counts[display_text]})"
+                configured_ais[i] = (config_id, new_display_text, sort_key)
+            else:
+                name_counts[display_text] = 1
+        
+        # 如果有重复，第一个也需要加序号
+        for display_text, count in name_counts.items():
+            if count > 1:
+                for i, (config_id, text, sort_key) in enumerate(configured_ais):
+                    if text == display_text:
+                        configured_ais[i] = (config_id, f"{display_text} (1)", sort_key)
+                        break
+        
+        # 更新空态提示
+        has_configured = len(configured_ais) > 0
+        self.no_ai_hint_label.setVisible(not has_configured)
+        
+        # 更新已配置 AI 列表（简洁显示，不使用自定义 widget）
+        self.configured_ai_list.clear()
+        for config_id, display_text, _ in configured_ais:
+            item = QListWidgetItem(display_text)
+            item.setData(Qt.UserRole, config_id)
+            self.configured_ai_list.addItem(item)
+        
+        # 如果没有已配置 AI，显示提示
+        if not has_configured:
+            hint_item = QListWidgetItem(self.i18n.get('no_configured_ai', 'No AI configured yet'))
+            hint_item.setData(Qt.UserRole, None)
+            hint_item.setFlags(hint_item.flags() & ~Qt.ItemIsSelectable)
+            hint_item.setForeground(Qt.gray)
+            self.configured_ai_list.addItem(hint_item)
+        
+        # 更新管理按钮状态和文本
+        self.manage_ai_button.setEnabled(has_configured)
+        if not has_configured:
+            self.manage_ai_button.setText(self.i18n.get('manage_configured_ai_button', 'Manage Configured AI'))
+            self.manage_ai_button.setToolTip(self.i18n.get('manage_ai_disabled_tooltip', 'Please add an AI provider first.'))
+        else:
+            count = len(configured_ais)
+            button_text = self.i18n.get('manage_configured_ai_button', 'Manage Configured AI') + f' ({count})'
+            self.manage_ai_button.setText(button_text)
+            self.manage_ai_button.setToolTip('')
+        
+        # 更新默认 AI 下拉框
+        self.model_combo.blockSignals(True)
+        self.model_combo.clear()
+        
+        if has_configured:
+            for config_id, display_text, _ in configured_ais:
+                self.model_combo.addItem(display_text, config_id)
+            
+            # 选中当前默认 AI
+            index = self.model_combo.findData(selected_model)
+            if index >= 0:
+                self.model_combo.setCurrentIndex(index)
+            elif self.model_combo.count() > 0:
+                # 如果当前默认 AI 不在已配置列表中，选择第一个
+                self.model_combo.setCurrentIndex(0)
+        else:
+            # 没有已配置 AI，添加占位符
+            self.model_combo.addItem(self.i18n.get('no_configured_ai', 'No AI configured yet'), None)
+        
+        self.model_combo.blockSignals(False)
+        self.model_combo.setEnabled(has_configured)
+    
+    def on_default_ai_changed(self, index):
+        """当默认 AI 选择改变时"""
+        if self._is_initializing:
             return
         
-        # 设置模型组件 - 这里会保存当前模型的配置并加载新选中模型的配置
-        self.setup_model_widgets()
+        model_id = self.model_combo.currentData()
+        if model_id is None:
+            return
         
-        # 模型切换时仅需要更新内容，不需要重新添加布局
-        # setup_model_widgets 已经处理了布局初始化和清除工作
+        # 保存默认 AI 选择
+        prefs = get_prefs()
+        prefs['selected_model'] = model_id
         
-        self.update_model_name_display()
+        # 同步更新 panel_ai_selections 的第一个面板
+        # 这样 Ask 对话框下次打开时会使用新的默认 AI
+        panel_selections = prefs.get('panel_ai_selections', {}) or {}
+        panel_selections['panel_0'] = model_id
+        prefs['panel_ai_selections'] = panel_selections
         
-        # 重置当前模型的加载状态（切换AI服务商时重置按钮）
-        if model_id in self.model_widgets:
-            widget = self.model_widgets[model_id]
-            if hasattr(widget, '_models_loaded'):
-                widget._models_loaded = False
-                widget.update_load_models_button_state()
+        prefs.commit()
         
-        # 切换模型不会自动触发保存按钮的启用，需要用户实际修改配置
-        # 调用on_config_changed检查是否有变更
-        self.on_config_changed()
+        # 更新 initial_values，避免 check_for_changes 仍然检测到变更
+        if hasattr(self, 'initial_values'):
+            self.initial_values['selected_model'] = model_id
+        
+        # 刷新列表以更新星标
+        self.refresh_ai_list()
+        
+        logger.info(f"默认 AI 已自动保存: {model_id}")
+    
+    def eventFilter(self, obj, event):
+        """事件过滤器：处理已配置AI列表的鼠标滚动事件"""
+        from PyQt5.QtCore import QEvent
+        
+        # 只处理已配置AI列表的滚动事件
+        if obj == self.configured_ai_list.viewport() and event.type() == QEvent.Wheel:
+            # 获取列表的滚动条
+            scrollbar = self.configured_ai_list.verticalScrollBar()
+            
+            # 检查是否需要滚动（内容超出可见区域）
+            if scrollbar.maximum() > 0:
+                # 获取滚动增量
+                delta = event.angleDelta().y()
+                
+                # 检查是否到达边界
+                at_top = scrollbar.value() == scrollbar.minimum()
+                at_bottom = scrollbar.value() == scrollbar.maximum()
+                
+                # 如果在边界且继续向边界方向滚动，则传递给父控件
+                if (at_top and delta > 0) or (at_bottom and delta < 0):
+                    return False  # 不拦截，让父控件处理
+                
+                # 否则拦截事件，只在列表内滚动，不传递给父控件
+                # 手动处理滚动
+                scrollbar.setValue(scrollbar.value() - delta // 8)
+                return True  # 拦截事件，不传递给父控件
+            else:
+                # 列表内容未超出，不需要滚动，让父控件处理
+                return False
+        
+        # 其他事件正常传递
+        return super(ConfigDialog, self).eventFilter(obj, event)
+    
+    def _on_ai_list_double_clicked(self, item):
+        """双击 AI 列表项时打开管理弹窗"""
+        model_id = item.data(Qt.UserRole)
+        if model_id is None:
+            return
+        self._on_manage_ai_clicked()
+    
+    def _on_add_ai_clicked(self):
+        """点击添加 AI 按钮时打开弹窗"""
+        from .ai_manager_dialog import AddAIDialog
+        
+        dialog = AddAIDialog(parent=self, i18n=self.i18n)
+        dialog.config_changed.connect(self._on_ai_manager_config_changed)
+        dialog.exec_()
+    
+    def _on_manage_ai_clicked(self):
+        """点击管理 AI 按钮时打开弹窗"""
+        from .ai_manager_dialog import ManageAIDialog
+        
+        dialog = ManageAIDialog(parent=self, i18n=self.i18n)
+        dialog.config_changed.connect(self._on_ai_manager_config_changed)
+        dialog.exec_()
+    
+    def _on_ai_manager_config_changed(self):
+        """当 AI 管理弹窗中的配置变更时"""
+        # 刷新 AI 列表
+        self.refresh_ai_list()
+        
+        # 刷新并行 AI 选择器
+        if hasattr(self, '_update_panel_ai_selectors'):
+            self._update_panel_ai_selectors()
+        
+        # 触发配置变更信号
+        self.config_changed.emit()
+    
+    def on_model_changed(self, index):
+        """当选择的模型改变时（兼容性方法，现在直接调用 on_default_ai_changed）"""
+        self.on_default_ai_changed(index)
     
     def update_model_names(self):
         """更新模型列表显示（包括对钩标记）- 别名方法"""
         self.update_model_name_display()
     
     def update_model_name_display(self):
-        """更新模型下拉框中的模型名称显示，使用当前语言的翻译"""
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        # 保存当前选中的模型ID
-        current_model_id = self.model_combo.currentData()
-        
-        # 暂时阻断信号，防止触发on_model_changed
-        self.model_combo.blockSignals(True)
-        
-        # 清空下拉框
-        self.model_combo.clear()
-        
-        # 使用有序列表来定义模型显示顺序（按使用频率和影响力排序）
-        # OpenAI 第一，Custom 最后
-        model_mapping = [
-            (AIProvider.AI_OPENAI, 'openai'),
-            (AIProvider.AI_ANTHROPIC, 'anthropic'),
-            (AIProvider.AI_GEMINI, 'gemini'),
-            (AIProvider.AI_GROK, 'grok'),
-            (AIProvider.AI_DEEPSEEK, 'deepseek'),
-            (AIProvider.AI_NVIDIA, 'nvidia'),
-            (AIProvider.AI_PERPLEXITY, 'perplexity'),
-            (AIProvider.AI_OPENROUTER, 'openrouter'),
-            (AIProvider.AI_OLLAMA, 'ollama'),
-            (AIProvider.AI_CUSTOM, 'custom'),
-        ]
-        
-        # 获取当前所有模型的配置状态
-        prefs = get_prefs()
-        models_config = prefs.get('models', {})
-        
-        # 按照定义的顺序添加到下拉框，使用翻译后的名称
-        for provider, model_id in model_mapping:
-            if provider in DEFAULT_MODELS:
-                # 获取翻译后的模型名称
-                display_name_key = f"model_display_name_{model_id}"
-                translated_name = self.i18n.get(display_name_key, DEFAULT_MODELS[provider].display_name)
-                
-                # 检查是否已配置，添加对钩标记
-                model_config = models_config.get(model_id, {})
-                if model_config.get('is_configured', False):
-                    translated_name = f"✓ {translated_name}"
-                
-                self.model_combo.addItem(translated_name, model_id)
-        
-        # 恢复之前选中的模型
-        index = self.model_combo.findData(current_model_id)
-        if index >= 0:
-            self.model_combo.setCurrentIndex(index)
-        
-        # 恢复信号连接
-        self.model_combo.blockSignals(False)
+        """更新模型下拉框中的模型名称显示（兼容性方法，现在调用 refresh_ai_list）"""
+        self.refresh_ai_list()
     
     def load_initial_values(self):
         """加载初始值"""
@@ -2677,11 +2803,16 @@ class ConfigDialog(QWidget):
         configured_ais = []
         for model_id, config in models_config.items():
             if config.get('enabled', False):
-                # 检查是否有API Key（Ollama不需要）
+                # 获取 provider_id（用于判断模型类型）
+                provider_id = config.get('provider_id')
+                if not provider_id:
+                    provider_id = model_id.split('_')[0] if '_' in model_id else model_id
+                
+                # 检查是否有API Key（Ollama和Custom不需要）
                 has_key = False
-                if model_id == 'ollama':
+                if provider_id in ['ollama', 'custom']:
                     has_key = True
-                elif model_id == 'grok':
+                elif provider_id == 'grok':
                     has_key = bool(config.get('auth_token', '').strip())
                 else:
                     has_key = bool(config.get('api_key', '').strip())
@@ -2864,20 +2995,13 @@ class ConfigDialog(QWidget):
             prefs['enable_debug_logging'] = self.enable_debug_logging_checkbox.isChecked()
             logger.info(f"[Debug Logging] 保存调试日志设置: {self.enable_debug_logging_checkbox.isChecked()}")
         
-        # 保存选中的模型
-        prefs['selected_model'] = self.model_combo.currentData()
+        # 保存选中的模型（只有当 model_combo 有有效数据时才保存）
+        selected_model = self.model_combo.currentData()
+        if selected_model is not None:
+            prefs['selected_model'] = selected_model
         
-        # 保存所有模型的配置
-        models_config = prefs.get('models', {})
-        
-        # 保存所有模型的配置，而不仅仅是当前选中的模型
-        for model_id, widget in self.model_widgets.items():
-            model_config = widget.get_config()
-            models_config[model_id] = model_config
-            pass  # 模型配置已保存
-        
-        prefs['models'] = models_config
-        # 所有模型配置已保存
+        # 注意：模型配置现在在 AI Manager 弹窗中保存，不在这里处理
+        # model_widgets 字典在新版中为空，保留此注释说明变更
         
         # 更新按钮状态
         #self.save_button.setEnabled(False)
@@ -3053,11 +3177,10 @@ class ConfigDialog(QWidget):
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
         
-        # 更新模型名称显示
+        # 更新模型名称显示（会调用 refresh_ai_list）
         self.update_model_name_display()
         
-        # 重置模型配置
-        self.setup_model_widgets()
+        # 注意：模型配置现在在 AI Manager 弹窗中处理，不再调用 setup_model_widgets
         
         # 重置按钮状态
         #self.save_button.setEnabled(False)

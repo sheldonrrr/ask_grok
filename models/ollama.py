@@ -53,6 +53,14 @@ class OllamaModel(BaseAIModel):
         """
         return self.config.get('api_key', '')
     
+    def requires_auth_token(self) -> bool:
+        """
+        工厂函数：Ollama 本地服务不需要 auth token 验证
+        
+        :return: 始终返回 False
+        """
+        return False
+    
     def validate_token(self) -> bool:
         """
         验证 Ollama 模型的 token

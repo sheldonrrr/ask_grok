@@ -69,10 +69,11 @@ BG_COLOR_BASE = "palette(base)"
 BG_COLOR_ALTERNATE = "palette(alternate-base)"
 
 # ============ 字体系统 ============
-FONT_SIZE_SMALL = 11
-FONT_SIZE_NORMAL = 12
-FONT_SIZE_MEDIUM = 13
-FONT_SIZE_LARGE = 14
+# 使用相对单位 em，支持用户自定义字体大小
+FONT_SIZE_SMALL = '0.9em'
+FONT_SIZE_NORMAL = '1em'
+FONT_SIZE_MEDIUM = '1.08em'
+FONT_SIZE_LARGE = '1.15em'
 
 # ============ GroupBox样式 ============
 def get_groupbox_style(border_style="none"):
@@ -182,6 +183,62 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             padding: {STANDARD_BUTTON_PADDING};
             text-align: center;
             min-width: {min_width}px;
+            min-height: 1.5em;
+        }}
+        QPushButton:hover {{
+            background: palette(mid);
+        }}
+        QPushButton:pressed {{
+            background: palette(dark);
+        }}
+    """
+
+
+# ============ QListWidget 样式 ============
+# 列表项内边距（使用相对单位，支持用户自定义字体大小）
+LIST_ITEM_PADDING_V = '0.5em'   # 垂直内边距（确保小写字母不被遮挡）
+LIST_ITEM_PADDING_H = '0.7em'   # 水平内边距
+
+def get_list_widget_style(with_border_bottom=False):
+    """
+    获取统一的 QListWidget 样式
+    
+    Args:
+        with_border_bottom: 是否显示项目之间的分隔线
+    
+    Returns:
+        str: QListWidget 的 CSS 样式字符串
+    """
+    border_bottom = "border-bottom: 1px solid palette(mid);" if with_border_bottom else ""
+    last_child_border = "border-bottom: none;" if with_border_bottom else ""
+    
+    return f"""
+        QListWidget {{
+            border: 1px solid palette(mid);
+            border-radius: 4px;
+            background: palette(base);
+        }}
+        QListWidget::item {{
+            padding: {LIST_ITEM_PADDING_V} {LIST_ITEM_PADDING_H};
+            border: none;
+            margin: 0;
+            {border_bottom}
+        }}
+        QListWidget::item:last-child {{
+            {last_child_border}
+        }}
+        QListWidget::item:selected {{
+            background: palette(highlight);
+            color: palette(highlighted-text);
+            border: none;
+            margin: 0;
+            padding: {LIST_ITEM_PADDING_V} {LIST_ITEM_PADDING_H};
+        }}
+        QListWidget::item:hover:!selected {{
+            background: palette(alternate-base);
+            border: none;
+            margin: 0;
+            padding: {LIST_ITEM_PADDING_V} {LIST_ITEM_PADDING_H};
         }}
     """
 

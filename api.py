@@ -294,10 +294,17 @@ class APIClient:
                 model_config['language'] = prefs.get('language', 'en')
                 logger.debug(f"Added language to model config: {model_config['language']}")
             
-            # 创建模型实例
+            # 从配置中获取 provider_id，如果没有则从 model_id 中提取
+            # 配置 ID 格式：provider_id 或 provider_id_xxxxx
+            provider_id = model_config.get('provider_id')
+            if not provider_id:
+                # 从 model_id 中提取 provider_id（取第一个下划线之前的部分）
+                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
+            
+            # 创建模型实例（使用 provider_id）
             self._model_name = model_id
-            self._ai_model = AIModelFactory.create_model(model_id, model_config)
-            logger.info(f"已切换到模型: {model_id}")
+            self._ai_model = AIModelFactory.create_model(provider_id, model_config)
+            logger.info(f"已切换到模型: {model_id} (provider: {provider_id})")
             
         except Exception as e:
             logger.error(f"切换模型 {model_id} 时出错: {str(e)}")
@@ -334,11 +341,18 @@ class APIClient:
                     model_config['language'] = prefs.get('language', 'en')
                     logger.debug(f"Added language to model config: {model_config['language']}")
                 
+                # 从配置中获取 provider_id，如果没有则从 selected_model 中提取
+                # 配置 ID 格式：provider_id 或 provider_id_xxxxx
+                provider_id = model_config.get('provider_id')
+                if not provider_id:
+                    # 从 selected_model 中提取 provider_id（取第一个下划线之前的部分）
+                    provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
+                
                 self._model_name = selected_model
-                self._ai_model = AIModelFactory.create_model(selected_model, model_config)
+                self._ai_model = AIModelFactory.create_model(provider_id, model_config)
                 # 安全记录模型配置，隐藏API Key
                 safe_model_config = safe_log_config(model_config)
-                logger.info(f"已加载 AI 模型: {selected_model} ({provider.name}), 配置: {safe_model_config}")
+                logger.info(f"已加载 AI 模型: {selected_model} (provider: {provider_id}), 配置: {safe_model_config}")
             else:
                 logger.warning("未找到有效的 AI 模型配置，将无法发送请求")
                 self._model_name = None
@@ -369,8 +383,16 @@ class APIClient:
         prefs = JSONConfig('plugins/ask_ai_plugin')
         random_questions = prefs.get('random_questions', {})
         
-        # 获取当前语言的随机问题提示词
-        questions = random_questions.get(lang_code, '')
+        # 兼容处理：random_questions 可能是字符串（旧格式）或字典（新格式）
+        if isinstance(random_questions, str):
+            # 旧格式：直接是字符串
+            questions = random_questions
+        elif isinstance(random_questions, dict):
+            # 新格式：按语言分类的字典
+            questions = random_questions.get(lang_code, '')
+        else:
+            questions = ''
+        
         if not questions:
             return ''
         

@@ -53,8 +53,23 @@ class SuggestionWorker(QThread):
             logger.info(f"书籍信息 - 标题: {title}, 作者: {author_str}, 语言: {language}")
             
             # 准备提示词 - 从配置中获取用户自定义的随机问题提示词
-            lang_code = get_prefs()['language']
-            template = self.api.get_random_question_prompt(lang_code)
+            try:
+                lang_code = get_prefs()['language']
+                logger.info(f"获取到语言代码: {lang_code}")
+            except Exception as e:
+                error_msg = f"获取语言配置时出错: {str(e)}"
+                logger.error(error_msg, exc_info=True)
+                self.error_occurred.emit(error_msg)
+                return
+            
+            try:
+                template = self.api.get_random_question_prompt(lang_code)
+                logger.info(f"获取随机问题模板: {'有配置' if template else '无配置'}")
+            except Exception as e:
+                error_msg = f"获取随机问题模板时出错: {str(e)}"
+                logger.error(error_msg, exc_info=True)
+                self.error_occurred.emit(error_msg)
+                return
             
             # 如果用户没有配置，则使用默认模板
             if not template:
@@ -416,19 +431,22 @@ class SuggestionHandler(QObject):
             logger.warning("已有随机问题请求在进行中，忽略新请求")
             return
         
-        # 检查当前选中的模型（优先使用调用方传入的 model_id）
+        # 使用统一的 auth_validator 模块进行验证
+        from calibre_plugins.ask_ai_plugin.auth_validator import validate_single_model
         from calibre_plugins.ask_ai_plugin.config import get_prefs
+        
         prefs = get_prefs()
         selected_model = model_id or prefs.get('selected_model', 'grok')
         
-        # 如果是Custom模型，不需要检查API Key
-        if selected_model == 'custom':
-            pass  # Custom模型不需要API Key
-        else:
-            # 对于其他模型，检查 auth token
-            if not self.suggest_button.window()._check_auth_token():
-                logger.error("Auth token检查失败，随机问题生成失败。")
-                return
+        # 统一验证模型的 auth token
+        is_valid, error_msg = validate_single_model(
+            selected_model,
+            show_dialog_callback=self.suggest_button.window()._show_ai_service_required_dialog
+        )
+        
+        if not is_valid:
+            logger.error(f"Auth token检查失败: {error_msg}")
+            return
 
         # 保存原始状态
         self._original_button_text = self.suggest_button.text()

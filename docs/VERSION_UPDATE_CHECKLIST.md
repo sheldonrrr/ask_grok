@@ -65,18 +65,30 @@ calibre-debug -g
 ### 第四步：更新文档
 
 ```bash
-# 1. 更新教程文档版本号
-# tutorial/tutorial_v0.3_for_Ask_AI_Plugin_v1.3.3.md Line 2
-# Latest updated: November 25, 2025, Ask AI Plugin vX.Y.Z
+# 1. 创建新版本教程文档
+# 复制最新的 tutorial 文件并更新版本号
+# 例如：cp tutorial/tutorial_v0.6.md tutorial/tutorial_v0.7.md
+# 更新新文件中的版本号和日期
 
-# 2. 更新本文档（VERSION_UPDATE_CHECKLIST.md）
+# 2. 🔴 更新 tutorial 加载逻辑（2 个位置）- 重要！
+# tutorial_viewer.py Line ~198-200
+# ui.py Line ~721-723
+# 将两处的 tutorial 加载逻辑更新为最新两个版本
+# 例如：tutorial_v0.7.md -> tutorial_v0.6.md
+# 注意：只保留最新两个版本的回退逻辑，删除更旧的版本
+
+# 3. 删除过旧的 tutorial 文件
+# 只保留最新两个版本的 tutorial 文件
+# 例如：删除 tutorial_v0.5.md（如果存在）
+
+# 4. 更新本文档（VERSION_UPDATE_CHECKLIST.md）
 # 将上面第 1 步中的日期和版本号同步更新
 
-# 3. 更新 VERSION_UPDATE_GUIDE.md
+# 5. 更新 VERSION_UPDATE_GUIDE.md
 # 在"版本号历史记录"中添加新版本记录
 
-# 4. 新增 docs 中的 CHANGELOG.md 对应当前的版本号
-# 遵循这两段更新日志的格式，之后要手动推送到mobileread.com和GitHub的release页面
+# 6. 新增 docs 中的 CHANGELOG_VX.Y.Z_EN.md 对应当前的版本号
+# 遵循之前 CHANGELOG 的格式，之后要手动推送到 mobileread.com 和 GitHub 的 release 页面
 ```
 
 ---
