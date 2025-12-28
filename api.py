@@ -368,41 +368,35 @@ class APIClient:
             self._ai_model = None
     
     def get_random_question_prompt(self, lang_code: str = 'en') -> str:
-        """获取随机问题提示词
+        """获取随机问题提示词模板
+        
+        v1.3.9 变更：random_questions 从 dict 改为 string 类型
+        - v1.3.8（旧版本）：dict 类型 {"en": [...], "zh": [...]}
+        - v1.3.9（新版本）：string 类型（提示词模板）
         
         Args:
-            lang_code: 语言代码，用于获取相应语言的随机问题提示词
+            lang_code: 语言代码，用于获取默认模板时使用
             
         Returns:
-            str: 随机选择的一个问题提示词，如果没有配置则返回空字符串
+            str: 随机问题提示词模板，如果没有配置则返回空字符串
         """
         from calibre.utils.config import JSONConfig
-        import random
+        from .i18n import get_suggestion_template
         
         # 获取当前配置
         prefs = JSONConfig('plugins/ask_ai_plugin')
-        random_questions = prefs.get('random_questions', {})
+        random_questions = prefs.get('random_questions', '')
         
-        # 兼容处理：random_questions 可能是字符串（旧格式）或字典（新格式）
-        if isinstance(random_questions, str):
-            # 旧格式：直接是字符串
-            questions = random_questions
-        elif isinstance(random_questions, dict):
-            # 新格式：按语言分类的字典
-            questions = random_questions.get(lang_code, '')
+        # v1.3.9 兼容性处理
+        if isinstance(random_questions, dict):
+            # 旧版本格式（v1.3.8）：dict 类型，忽略并使用默认模板
+            logger.info("[Migration] random_questions is dict type, returning empty to use default template")
+            return ''
+        elif isinstance(random_questions, str):
+            # 新版本格式（v1.3.9）：string 类型（提示词模板）
+            return random_questions.strip()
         else:
-            questions = ''
-        
-        if not questions:
             return ''
-        
-        # 按行分割并过滤空行
-        question_list = [q.strip() for q in questions.split('\n') if q.strip()]
-        if not question_list:
-            return ''
-        
-        # 随机选择一个问题提示词
-        return random.choice(question_list)
     
     def random_question(self, prompt: str, lang_code: str = 'en', model_id: str = None) -> str:
         """生成随机问题

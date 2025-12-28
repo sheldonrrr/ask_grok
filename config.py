@@ -154,7 +154,7 @@ prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
-prefs.defaults['random_questions'] = {}
+prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (prompt template)
 prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
@@ -168,6 +168,9 @@ prefs.defaults['export_mode'] = 'current'  # Export mode: 'current' or 'history'
 # Persona settings
 prefs.defaults['use_persona'] = True  # Whether to use persona in prompts
 prefs.defaults['persona'] = 'As a researcher, I want to research through book data.'  # User's persona text
+
+# Language preference settings (v1.3.9)
+prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond in interface language
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -317,6 +320,25 @@ def get_prefs(force_reload=False):
             
             # 设置 is_configured 标志
             model_config['is_configured'] = has_auth and has_model
+    
+    # ========== v1.3.9 兼容性迁移 ==========
+    
+    # 1. 迁移 random_questions (dict -> string)
+    # v1.3.8 使用 dict 格式: {"en": [...], "zh": [...]}
+    # v1.3.9 使用 string 格式: 提示词模板
+    random_questions = prefs.get('random_questions', '')
+    if isinstance(random_questions, dict):
+        # 旧版本格式，重置为空字符串（将使用默认模板）
+        prefs['random_questions'] = ''
+        logger.info("[Migration v1.3.9] random_questions: dict -> string (reset to default template)")
+        prefs.commit()
+    
+    # 2. 确保 use_interface_language 存在
+    if 'use_interface_language' not in prefs:
+        prefs['use_interface_language'] = False
+        logger.info("[Migration v1.3.9] Added use_interface_language = False")
+    
+    # ========== 迁移结束 ==========
     
     return prefs
 

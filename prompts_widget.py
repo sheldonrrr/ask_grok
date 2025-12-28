@@ -552,6 +552,11 @@ class PromptsWidget(QWidget):
         Returns:
             str: 最终使用的提示词
         """
+        # v1.3.9 兼容性处理：如果 saved_value 是 dict 类型（旧版本格式），使用默认模板
+        if isinstance(saved_value, dict):
+            logger.info(f"[Migration] Detected dict type for prompt, using default template for {current_lang}")
+            return get_default_func(current_lang)
+        
         if self._is_default_value_from_any_language(saved_value, get_default_func):
             return get_default_func(current_lang)
         else:
