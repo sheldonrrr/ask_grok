@@ -177,6 +177,42 @@ class AddAIDialog(QDialog):
         
         main_layout.addLayout(button_layout)
     
+    def retranslate_ui(self):
+        """更新界面文字（语言切换时调用）"""
+        self.setWindowTitle(self.i18n.get('add_ai_title', 'Add AI Provider'))
+        
+        # 更新左侧标题
+        for label in self.findChildren(QLabel):
+            if label.styleSheet() and 'font-weight: bold' in label.styleSheet():
+                # 这是标题标签
+                if label.parent() == self.findChild(QWidget):  # 左侧标题
+                    label.setText(self.i18n.get('select_provider', 'Select AI Provider'))
+                    break
+        
+        # 更新配置面板标题
+        if hasattr(self, 'config_title'):
+            # 保持当前显示的 provider 名称
+            current_text = self.config_title.text()
+            if ' ' in current_text:
+                provider_name = current_text.split(' ')[0]
+                self.config_title.setText(f"{provider_name} {self.i18n.get('configuration', 'Configuration')}")
+            else:
+                self.config_title.setText(self.i18n.get('configuration', 'Configuration'))
+        
+        # 更新按钮文本
+        if hasattr(self, 'add_button'):
+            self.add_button.setText(self.i18n.get('add_ai_button', 'Add'))
+        
+        # 更新空态提示
+        for widget in self.findChildren(QWidget):
+            if isinstance(widget, QWidget) and widget.layout():
+                for i in range(widget.layout().count()):
+                    item = widget.layout().itemAt(i)
+                    if item and isinstance(item.widget(), QLabel):
+                        label = item.widget()
+                        if 'Select a provider' in label.text() or '从列表中选择' in label.text():
+                            label.setText(self.i18n.get('select_provider_hint', 'Select a provider from the list'))
+    
     def load_provider_list(self):
         """加载 Provider 列表"""
         self.provider_list.clear()
@@ -229,7 +265,8 @@ class AddAIDialog(QDialog):
         self.config_container.setWidget(self.model_widget)
         
         # 更新标题
-        self.config_title.setText(f"{default_config.display_name} {self.i18n.get('configuration', 'Configuration')}")
+        config_text = self.i18n.get('configuration', 'Configuration')
+        self.config_title.setText(f"{default_config.display_name} {config_text}")
         
         # 启用添加按钮
         self.add_button.setEnabled(True)
@@ -424,6 +461,44 @@ class ManageAIDialog(QDialog):
         
         main_layout.addLayout(bottom_layout)
     
+    def retranslate_ui(self):
+        """更新界面文字（语言切换时调用）"""
+        self.setWindowTitle(self.i18n.get('manage_ai_title', 'Manage Configured AI'))
+        
+        # 更新左侧标题
+        for label in self.findChildren(QLabel):
+            if label.styleSheet() and 'font-weight: bold' in label.styleSheet():
+                # 这是标题标签
+                if label.parent() == self.findChild(QWidget):  # 左侧标题
+                    label.setText(self.i18n.get('configured_ai_list', 'Configured AI'))
+                    break
+        
+        # 更新配置面板标题
+        if hasattr(self, 'config_title'):
+            # 保持当前显示的 provider 名称
+            current_text = self.config_title.text()
+            if ' ' in current_text:
+                provider_name = current_text.split(' ')[0]
+                self.config_title.setText(f"{provider_name} {self.i18n.get('configuration', 'Configuration')}")
+            else:
+                self.config_title.setText(self.i18n.get('configuration', 'Configuration'))
+        
+        # 更新按钮文本
+        if hasattr(self, 'save_button'):
+            self.save_button.setText(self.i18n.get('save_ai_config', 'Save'))
+        if hasattr(self, 'delete_button'):
+            self.delete_button.setText(self.i18n.get('delete_ai', 'Delete'))
+        
+        # 更新空态提示
+        for widget in self.findChildren(QWidget):
+            if isinstance(widget, QWidget) and widget.layout():
+                for i in range(widget.layout().count()):
+                    item = widget.layout().itemAt(i)
+                    if item and isinstance(item.widget(), QLabel):
+                        label = item.widget()
+                        if 'Select an AI' in label.text() or '从列表中选择' in label.text():
+                            label.setText(self.i18n.get('select_ai_to_edit', 'Select an AI from the list to edit'))
+    
     def load_configured_list(self):
         """加载已配置的 AI 列表"""
         self.config_list.clear()
@@ -565,7 +640,8 @@ class ManageAIDialog(QDialog):
         
         # 更新标题
         provider_name = config.get('display_name', provider_id)
-        self.config_title.setText(f"{provider_name} {self.i18n.get('configuration', 'Configuration')}")
+        config_text = self.i18n.get('configuration', 'Configuration')
+        self.config_title.setText(f"{provider_name} {config_text}")
         
         # 更新按钮状态
         self.save_button.setEnabled(True)

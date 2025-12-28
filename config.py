@@ -2384,29 +2384,47 @@ class ConfigDialog(QWidget):
         """点击添加 AI 按钮时打开弹窗"""
         from .ai_manager_dialog import AddAIDialog
         
-        dialog = AddAIDialog(parent=self, i18n=self.i18n)
+        dialog = AddAIDialog(self)
         dialog.config_changed.connect(self._on_ai_manager_config_changed)
+        
+        # 连接语言切换信号
+        if hasattr(self, 'language_changed'):
+            self.language_changed.connect(lambda lang: self._update_dialog_language(dialog, lang))
+        
         dialog.exec_()
     
     def _on_manage_ai_clicked(self):
         """点击管理 AI 按钮时打开弹窗"""
         from .ai_manager_dialog import ManageAIDialog
         
-        dialog = ManageAIDialog(parent=self, i18n=self.i18n)
+        dialog = ManageAIDialog(self)
         dialog.config_changed.connect(self._on_ai_manager_config_changed)
+        
+        # 连接语言切换信号
+        if hasattr(self, 'language_changed'):
+            self.language_changed.connect(lambda lang: self._update_dialog_language(dialog, lang))
+        
         dialog.exec_()
     
+    def _update_dialog_language(self, dialog, lang_code):
+        """更新弹窗的语言"""
+        from .i18n import get_translation
+        
+        # 更新弹窗的 i18n
+        dialog.i18n = get_translation(lang_code)
+        
+        # 调用弹窗的 retranslate_ui 方法
+        if hasattr(dialog, 'retranslate_ui'):
+            dialog.retranslate_ui()
+    
     def _on_ai_manager_config_changed(self):
-        """当 AI 管理弹窗中的配置变更时"""
-        # 刷新 AI 列表
-        self.refresh_ai_list()
+        """AI Manager 配置变更时的回调"""
+        # 重新加载配置
+        self.load_initial_values()
         
-        # 刷新并行 AI 选择器
-        if hasattr(self, '_update_panel_ai_selectors'):
-            self._update_panel_ai_selectors()
-        
-        # 触发配置变更信号
-        self.config_changed.emit()
+        # 更新 UI
+        self.update_configured_ai_list()
+        self.update_model_name_display()
     
     def on_model_changed(self, index):
         """当选择的模型改变时（兼容性方法，现在直接调用 on_default_ai_changed）"""
@@ -2709,6 +2727,8 @@ class ConfigDialog(QWidget):
         button_map = {
             'button_browse_folder': ('browse_folder', 'Browse...'),
             'button_reset_all_data': ('reset_all_data', 'Reset All Data'),
+            'button_add_ai': ('add_ai_button', 'Add AI'),
+            'button_manage_ai': ('manage_configured_ai_button', 'Manage Configured AI'),
         }
         
         for button in self.findChildren(QPushButton):
@@ -2731,6 +2751,19 @@ class ConfigDialog(QWidget):
                 reset_tooltip = self.i18n.get('reset_tooltip', 'Reset current AI to default values')
                 button.setText(reset_text)
                 button.setToolTip(reset_tooltip)
+        
+        # 更新管理AI按钮的文本（需要包含数量）
+        if hasattr(self, 'manage_ai_button'):
+            # 获取已配置AI的数量
+            prefs = get_prefs()
+            models_config = prefs.get('models', {})
+            configured_count = sum(1 for config in models_config.values() if config.get('is_configured', False))
+            
+            if configured_count > 0:
+                button_text = self.i18n.get('manage_configured_ai_button', 'Manage Configured AI') + f' ({configured_count})'
+                self.manage_ai_button.setText(button_text)
+            else:
+                self.manage_ai_button.setText(self.i18n.get('manage_configured_ai_button', 'Manage Configured AI'))
         
         # 更新模型配置控件
         if hasattr(self, 'model_widgets'):
