@@ -89,7 +89,7 @@ Done!
 1. Select a book or multiple books in calibre
 2. Open Ask dialog:
    - Click Ask AI Plugin button in toolbar, or
-   - Use the global shortcut (default: F3)
+   - Use the global shortcut (default: Ctrl+L)
 3. Type your question
 4. Click Send (or use Ctrl+Enter / Cmd+Enter)
 
@@ -112,7 +112,7 @@ How to customize:
 4. Edit the shortcuts you want
 
 Common shortcuts (defaults):
-- Ask AI: Ask (global): F3
+- Ask AI: Ask (global): Ctrl+L
 - Ask AI: Open Configuration: F2
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
 - Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)

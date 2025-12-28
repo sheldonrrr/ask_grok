@@ -49,8 +49,9 @@ def get_suggestion_template_from_ui(lang_code):
 
 class AskAIPluginUI(InterfaceAction):
     name = 'Ask AI Plugin'
-    # 所有平台统一使用F3，避免Qt键盘映射冲突
-    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'F3')
+    # 使用 Ctrl+L 作为默认快捷键，所有平台统一
+    # 避免与 Calibre 的 F3 (Move to next match) 冲突
+    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'Ctrl+L')
     action_shortcut_name = 'Ask AI: Ask'
     action_type = 'global'
     
@@ -717,9 +718,9 @@ class TutorialWidget(QWidget):
                 return
             
             # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.7.md')
             if not tutorial_data:
-                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.5.md')
+                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
@@ -1447,12 +1448,18 @@ class TabDialog(QDialog):
                 continue
             
             # 检查是否有有效配置
-            if ai_id == 'ollama':
+            # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
+            provider_id = config.get('provider_id')
+            if not provider_id:
+                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            
+            if provider_id == 'ollama':
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
             else:
-                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                # 根据 provider_id 判断字段名（Grok 使用 auth_token，其他使用 api_key）
+                token_field = 'auth_token' if provider_id == 'grok' else 'api_key'
                 has_token = bool(config.get(token_field, '').strip())
                 if not has_token:
                     continue
@@ -2874,14 +2881,19 @@ class AskDialog(QDialog):
                 continue
             
             # 检查是否有API Key（Ollama除外，它是本地服务）
-            if ai_id == 'ollama':
+            # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
+            provider_id = config.get('provider_id')
+            if not provider_id:
+                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            
+            if provider_id == 'ollama':
                 # Ollama特殊处理：需要有api_base_url和model
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
             else:
-                # 其他AI必须有token
-                token_field = 'auth_token' if ai_id == 'grok' else 'api_key'
+                # 其他AI必须有token（根据 provider_id 判断字段名）
+                token_field = 'auth_token' if provider_id == 'grok' else 'api_key'
                 has_token = bool(config.get(token_field, '').strip())
                 if not has_token:
                     continue
@@ -3007,22 +3019,12 @@ class AskDialog(QDialog):
         # 为每个面板设置默认AI
         for i, panel in enumerate(self.response_panels):
             panel_key = f"panel_{i}"
-
-            # 始终优先：第一个面板使用当前配置中的默认AI
-            # 说明：
-            # - 用户在 Config 里切换默认 AI 的意图应覆盖历史记忆（panel_ai_selections）
-            # - 否则会出现“Config 已改默认 AI，但 Ask 仍使用上次记忆”的体验不一致
-            if i == 0:
-                if any(ai_id == default_ai for ai_id, _ in configured_ais):
-                    index = panel.ai_switcher.findData(default_ai)
-                    if index >= 0:
-                        panel.ai_switcher.setCurrentIndex(index)
-                        saved_selections[panel_key] = default_ai
-                        logger.info(f"面板 {i} 使用配置中的默认AI: {default_ai}")
-                        continue
-                # 如果默认AI不在已配置列表中，则继续走通用逻辑
             
-            # 1. 优先使用记忆的选择
+            # 1. 优先使用记忆的选择（包括第一个面板）
+            # 说明：
+            # - 用户在 Ask 对话框中切换 AI 时，会同步更新 selected_model
+            # - 因此 panel_ai_selections 和 selected_model 应该保持一致
+            # - 优先使用 panel_ai_selections 可以记住用户的选择
             if panel_key in saved_selections:
                 saved_ai_id = saved_selections[panel_key]
                 # 检查这个AI是否还存在且可用
@@ -3033,7 +3035,19 @@ class AskDialog(QDialog):
                         logger.info(f"面板 {i} 恢复上次选择: {saved_ai_id}")
                         continue
             
-            # 2. 如果没有记忆或记忆的AI不可用，按顺序分配
+            # 2. 如果没有记忆或记忆的AI不可用
+            # 第一个面板使用 default_ai，其他面板按顺序分配
+            if i == 0:
+                # 第一个面板使用配置中的默认 AI
+                if any(ai_id == default_ai for ai_id, _ in configured_ais):
+                    index = panel.ai_switcher.findData(default_ai)
+                    if index >= 0:
+                        panel.ai_switcher.setCurrentIndex(index)
+                        saved_selections[panel_key] = default_ai
+                        logger.info(f"面板 {i} 使用默认AI: {default_ai}")
+                        continue
+            
+            # 其他面板按顺序分配
             if i < len(configured_ais):
                 ai_id, _ = configured_ais[i]
                 index = panel.ai_switcher.findData(ai_id)
@@ -3219,10 +3233,15 @@ class AskDialog(QDialog):
             panel.api._switch_to_model(new_ai_id)
             logger.info(f"[面板AI切换] 面板{panel_index}: {new_ai_id}")
         
-        # 如果是第一个面板切换 AI，同步更新 API 使用的模型
+        # 如果是第一个面板切换 AI，同步更新 API 使用的模型和默认 AI 配置
         # 这样随机问题和发送请求都会使用面板选中的 AI
         if panel_index == 0 and new_ai_id:
             self._switch_api_to_panel_ai(new_ai_id)
+            # 同步更新配置中的默认 AI（selected_model）
+            prefs = get_prefs()
+            prefs['selected_model'] = new_ai_id
+            prefs.commit()
+            logger.info(f"[面板AI切换] 已同步更新默认 AI: {new_ai_id}")
         
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
@@ -3520,14 +3539,24 @@ class AskDialog(QDialog):
         
         # 随机问题只使用第一个AI（不并行），并显式使用其当前选中的模型
         model_id = None
+        panel_api = None
         if hasattr(self, 'response_panels') and self.response_panels:
             # 确保第一个面板有选中的AI
             first_panel = self.response_panels[0]
             model_id = first_panel.get_selected_ai()
+            panel_api = first_panel.api  # 获取面板的 API 实例
             if not model_id:
                 logger.warning("第一个面板没有选中AI，无法生成随机问题")
                 self._show_ai_service_required_dialog()
                 return
+        
+        # 如果没有面板API，使用全局API
+        if not panel_api:
+            panel_api = self.api
+        
+        # 临时更新 suggestion_handler 的 API 实例
+        self.suggestion_handler.api = panel_api
+        logger.info(f"随机问题使用面板 API 实例，模型: {model_id}")
         
         # 检查是否有历史数据
         if self._has_history_data():
@@ -3568,13 +3597,19 @@ class AskDialog(QDialog):
         models_config = prefs.get('models', {})
         model_config = models_config.get(selected_model, {})
         
-        # 获取token字段名，不同模型可能使用不同的字段名
-        token_field = 'auth_token' if selected_model == 'grok' else 'api_key'
-        token = model_config.get(token_field, '')
+        # 获取 provider_id（从 config 中获取，或从 selected_model 中提取）
+        provider_id = model_config.get('provider_id')
+        if not provider_id:
+            # 向后兼容：从 selected_model 中提取 provider_id
+            provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
         
-        # 如果是Ollama模型，不强制要求API Key（本地服务）
-        if selected_model == 'ollama':
+        # 如果是Ollama或Custom模型，不强制要求API Key（本地服务）
+        if provider_id in ['ollama', 'custom']:
             return True
+        
+        # 获取token字段名，根据 provider_id 判断
+        token_field = 'auth_token' if provider_id == 'grok' else 'api_key'
+        token = model_config.get(token_field, '')
             
         if not token or not token.strip():
             # 显示友好的提示对话框

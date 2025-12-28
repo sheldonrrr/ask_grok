@@ -541,24 +541,35 @@ class ResponsePanel(QWidget):
         separator = "────"
         content_parts = []
         
-        # 1. 书籍元数据
-        if include_metadata and hasattr(self.parent_dialog, 'book_metadata') and self.parent_dialog.book_metadata:
-            book_metadata = self.parent_dialog.book_metadata
+        # 1. 书籍元数据（支持多书模式）
+        if include_metadata and hasattr(self.parent_dialog, 'books_metadata') and self.parent_dialog.books_metadata:
+            books_metadata = self.parent_dialog.books_metadata
+            is_multi_book = len(books_metadata) > 1
+            
             content_parts.append(self.i18n.get('pdf_book_metadata', '书籍元数据'))
             content_parts.append(separator)
             
-            if book_metadata.get('title'):
-                content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
-            if book_metadata.get('authors'):
-                authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
-                content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
-            if book_metadata.get('publisher'):
-                content_parts.append(f"{self.i18n.get('metadata_publisher', 'Publisher')}: {book_metadata['publisher']}")
-            if book_metadata.get('pubdate'):
-                content_parts.append(f"{self.i18n.get('metadata_pubdate', 'Publication Date')}: {book_metadata['pubdate']}")
-            if book_metadata.get('languages'):
-                langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
-                content_parts.append(f"{self.i18n.get('metadata_language', 'Languages')}: {langs}")
+            for idx, book_metadata in enumerate(books_metadata, 1):
+                # 多书模式时添加书籍序号
+                if is_multi_book:
+                    content_parts.append(f"[{self.i18n.get('book', 'Book')} {idx}]")
+                
+                if book_metadata.get('title'):
+                    content_parts.append(f"{self.i18n.get('metadata_title', 'Title')}: {book_metadata['title']}")
+                if book_metadata.get('authors'):
+                    authors = ', '.join(book_metadata['authors']) if isinstance(book_metadata['authors'], list) else str(book_metadata['authors'])
+                    content_parts.append(f"{self.i18n.get('metadata_authors', 'Authors')}: {authors}")
+                if book_metadata.get('publisher'):
+                    content_parts.append(f"{self.i18n.get('metadata_publisher', 'Publisher')}: {book_metadata['publisher']}")
+                if book_metadata.get('pubdate'):
+                    content_parts.append(f"{self.i18n.get('metadata_pubdate', 'Publication Date')}: {book_metadata['pubdate']}")
+                if book_metadata.get('languages'):
+                    langs = ', '.join(book_metadata['languages']) if isinstance(book_metadata['languages'], list) else str(book_metadata['languages'])
+                    content_parts.append(f"{self.i18n.get('metadata_language', 'Languages')}: {langs}")
+                
+                # 多书模式时在每本书之间添加空行
+                if is_multi_book and idx < len(books_metadata):
+                    content_parts.append("")
             
             content_parts.append("")
             content_parts.append("")

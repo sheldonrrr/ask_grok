@@ -195,9 +195,9 @@ def open_tutorial_in_browser():
             return False
         
         # Read tutorial using plugin's get_resources method
-        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
+        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.7.md')
         if not tutorial_data:
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.5.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
         
         if not tutorial_data:
             logger.error("Failed to read tutorial")

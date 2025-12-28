@@ -331,6 +331,16 @@ class BaseAIModel(ABC):
         """
         pass
     
+    def requires_auth_token(self) -> bool:
+        """
+        工厂函数：判断模型是否需要 auth token 验证
+        
+        某些模型（如 Ollama 本地服务）不需要 API Key，子类可以重写此方法返回 False
+        
+        :return: 如果需要 auth token 则返回 True，否则返回 False
+        """
+        return True
+    
     def validate_token(self) -> bool:
         """
         验证模型配置中的 token 是否有效
@@ -338,6 +348,10 @@ class BaseAIModel(ABC):
         :return: 如果 token 有效则返回 True
         :raises ValueError: 当 token 无效时抛出异常
         """
+        # 如果模型不需要 auth token，直接返回 True
+        if not self.requires_auth_token():
+            return True
+        
         # 基本验证：检查 token 是否存在
         token = self.get_token()
         if not token or not token.strip():

@@ -342,7 +342,7 @@ class DanishTranslation(BaseTranslation):
             'gemini_geo_restriction': 'Gemini API er ikke tilgængelig i din region. Prøv venligst:\n1. Brug en VPN til at forbinde fra en understøttet region\n2. Brug andre AI-udbydere (OpenAI, Anthropic, DeepSeek osv.)\n3. Tjek Google AI Studio for regional tilgængelighed',
             'load_models_list': 'Indlæs Modelliste',
             'loading_models_text': 'Indlæser modeller',
-            'model_test_success': 'Modeltest vellykket! Konfiguration gemt.',
+            'model_test_success': 'Modeltest vellykket!',
             'models_loaded_with_selection': 'Indlæste {count} modeller med succes.\nValgt model: {model}',
             'ollama_model_not_available': 'Model "{model}" er ikke tilgængelig. Tjek venligst:\n1. Er modellen startet? Kør: ollama run {model}\n2. Er modelnavnet korrekt?\n3. Er modellen downloadet? Kør: ollama pull {model}',
             'ollama_service_not_running': 'Ollama-tjeneste kører ikke. Start venligst Ollama-tjenesten først.',

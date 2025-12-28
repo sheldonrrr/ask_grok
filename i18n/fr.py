@@ -241,6 +241,41 @@ class FrenchTranslation(BaseTranslation):
             'auth_token_required_message': 'Veuillez définir une clé API valide dans la Configuration du Plugin.',
             'open_configuration': 'Ouvrir la Configuration',
             'cancel': 'Annuler',
+            
+            # AI Manager Dialog
+            'ai_manager_title': 'Gérer les Fournisseurs d\'IA',
+            'add_ai_title': 'Ajouter un Fournisseur d\'IA',
+            'manage_ai_title': 'Gérer l\'IA Configurée',
+            'configured_ai_list': 'IA Configurée',
+            'available_ai_list': 'Disponible à Ajouter',
+            'ai_config_panel': 'Configuration',
+            'select_ai_to_configure': 'Sélectionnez une IA dans la liste pour configurer',
+            'select_provider': 'Sélectionner le Fournisseur d\'IA',
+            'select_provider_hint': 'Sélectionnez un fournisseur dans la liste',
+            'select_ai_to_edit': 'Sélectionnez une IA dans la liste pour modifier',
+            'set_as_default': 'Définir par Défaut',
+            'save_ai_config': 'Enregistrer',
+            'remove_ai_config': 'Supprimer',
+            'delete_ai': 'Supprimer',
+            'close_button': 'Fermer',
+            'add_ai_button': 'Ajouter IA',
+            'edit_ai_button': 'Modifier IA',
+            'manage_configured_ai_button': 'Gérer l\'IA Configurée',
+            'manage_ai_button': 'Gérer IA',
+            'no_configured_ai': 'Aucune IA configurée pour le moment',
+            'no_configured_ai_hint': 'Aucune IA configurée. Le plugin ne peut pas fonctionner. Veuillez cliquer sur "Ajouter IA" pour ajouter un fournisseur d\'IA.',
+            'default_ai_label': 'IA par Défaut:',
+            'default_ai_tag': 'Par Défaut',
+            'ai_not_configured_cannot_set_default': 'Cette IA n\'est pas encore configurée. Veuillez d\'abord enregistrer la configuration.',
+            'ai_set_as_default_success': '{name} a été défini comme IA par défaut.',
+            'ai_config_saved_success': 'Configuration de {name} enregistrée avec succès.',
+            'confirm_remove_title': 'Confirmer la Suppression',
+            'confirm_remove_ai': 'Êtes-vous sûr de vouloir supprimer {name}? Cela effacera la clé API et réinitialisera la configuration.',
+            'confirm_delete_title': 'Confirmer la Suppression',
+            'confirm_delete_ai': 'Êtes-vous sûr de vouloir supprimer {name}?',
+            'api_key_required': 'La clé API est requise.',
+            'success': 'Succès',
+            'configuration': 'Configuration',
             'yes_button': 'Oui',
             'no_button': 'Non',
             'cancel_button': 'Annuler',
@@ -387,7 +422,7 @@ class FrenchTranslation(BaseTranslation):
             'gemini_geo_restriction': 'L\'API Gemini n\'est pas disponible dans votre région. Veuillez essayer:\n1. Utiliser un VPN pour se connecter depuis une région prise en charge\n2. Utiliser d\'autres fournisseurs d\'IA (OpenAI, Anthropic, DeepSeek, etc.)\n3. Vérifier Google AI Studio pour la disponibilité régionale',
             'load_models_list': 'Charger la Liste des Modèles',
             'loading_models_text': 'Chargement des modèles',
-            'model_test_success': 'Test du modèle réussi! Configuration enregistrée.',
+            'model_test_success': 'Test du modèle réussi!',
             'models_loaded_with_selection': '{count} modèles chargés avec succès.\nModèle sélectionné: {model}',
             'ollama_model_not_available': 'Le modèle "{model}" n\'est pas disponible. Veuillez vérifier:\n1. Le modèle est-il démarré? Exécutez: ollama run {model}\n2. Le nom du modèle est-il correct?\n3. Le modèle est-il téléchargé? Exécutez: ollama pull {model}',
             'ollama_service_not_running': 'Le service Ollama n\'est pas en cours d\'exécution. Veuillez d\'abord démarrer le service Ollama.',
@@ -407,4 +442,26 @@ class FrenchTranslation(BaseTranslation):
 
 
             'pdf_info_not_available': 'Information non disponible',
+            
+            # Field descriptions
+            'api_key_desc': 'Votre clé API pour l\'authentification. Gardez-la en sécurité et ne la partagez pas.',
+            'base_url_desc': 'L\'URL du point de terminaison de l\'API. Utilisez la valeur par défaut sauf si vous avez un point de terminaison personnalisé.',
+            'model_desc': 'Sélectionnez un modèle dans la liste ou utilisez un nom de modèle personnalisé.',
+            'streaming_desc': 'Activez la diffusion de réponses en temps réel pour un retour plus rapide.',
+            'advanced_section': 'Avancé',
+            
+            # Provider-specific notices
+            'perplexity_model_notice': 'Remarque: Perplexity ne fournit pas d\'API publique de liste de modèles, les modèles sont donc codés en dur.',
+            'ollama_no_api_key_notice': 'Remarque: Ollama est un modèle local qui ne nécessite pas de clé API.',
+            'nvidia_free_credits_notice': 'Remarque: Les nouveaux utilisateurs obtiennent des crédits API gratuits - aucune carte de crédit requise.',
+            
+            # Model buttons
+            'refresh_model_list': 'Actualiser',
+            'testing_text': 'Test',
+            'refresh_success': 'Liste de modèles actualisée avec succès.',
+            'refresh_failed': 'Échec de l\'actualisation de la liste de modèles.',
+            'test_failed': 'Test du modèle échoué.',
+            
+            # Tooltip
+            'manage_ai_disabled_tooltip': 'Veuillez d\'abord ajouter un fournisseur d\'IA.',
         }

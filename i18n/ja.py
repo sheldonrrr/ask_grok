@@ -240,6 +240,41 @@ class JapaneseTranslation(BaseTranslation):
             'auth_token_required_message': 'プラグイン設定で有効なAPIキーを設定してください。',
             'open_configuration': '設定を開く',
             'cancel': 'キャンセル',
+            
+            # AI Manager Dialog
+            'ai_manager_title': 'AIプロバイダーを管理',
+            'add_ai_title': 'AIプロバイダーを追加',
+            'manage_ai_title': '設定済みAIを管理',
+            'configured_ai_list': '設定済みAI',
+            'available_ai_list': '追加可能',
+            'ai_config_panel': '設定',
+            'select_ai_to_configure': 'リストからAIを選択して設定してください',
+            'select_provider': 'AIプロバイダーを選択',
+            'select_provider_hint': 'リストからプロバイダーを選択してください',
+            'select_ai_to_edit': 'リストからAIを選択して編集してください',
+            'set_as_default': 'デフォルトに設定',
+            'save_ai_config': '保存',
+            'remove_ai_config': '削除',
+            'delete_ai': '削除',
+            'close_button': '閉じる',
+            'add_ai_button': 'AIを追加',
+            'edit_ai_button': 'AIを編集',
+            'manage_configured_ai_button': '設定済みAIを管理',
+            'manage_ai_button': 'AIを管理',
+            'no_configured_ai': 'まだAIが設定されていません',
+            'no_configured_ai_hint': 'AIが設定されていません。プラグインは動作しません。「AIを追加」をクリックしてAIプロバイダーを追加してください。',
+            'default_ai_label': 'デフォルトAI:',
+            'default_ai_tag': 'デフォルト',
+            'ai_not_configured_cannot_set_default': 'このAIはまだ設定されていません。まず設定を保存してください。',
+            'ai_set_as_default_success': '{name} がデフォルトAIに設定されました。',
+            'ai_config_saved_success': '{name} の設定が正常に保存されました。',
+            'confirm_remove_title': '削除の確認',
+            'confirm_remove_ai': '{name} を削除してもよろしいですか？APIキーがクリアされ、設定がリセットされます。',
+            'confirm_delete_title': '削除の確認',
+            'confirm_delete_ai': '{name} を削除してもよろしいですか？',
+            'api_key_required': 'APIキーは必須です。',
+            'success': '成功',
+            'configuration': '設定',
             'yes_button': 'はい',
             'no_button': 'いいえ',
             'cancel_button': 'キャンセル',
@@ -388,7 +423,7 @@ class JapaneseTranslation(BaseTranslation):
             'gemini_geo_restriction': 'Gemini APIはお住まいの地域では利用できません。お試しください：\n1. サポートされている地域からVPNを使用して接続する\n2. 他のAIプロバイダーを使用する（OpenAI、Anthropic、DeepSeekなど）\n3. Google AI Studioで地域の利用可能性を確認する',
             'load_models_list': 'モデルリストを読み込む',
             'loading_models_text': 'モデルを読み込んでいます',
-            'model_test_success': 'モデルテストが成功しました！設定が保存されました。',
+            'model_test_success': 'モデルテストが成功しました！',
             'models_loaded_with_selection': '{count}個のモデルが正常に読み込まれました。\n選択されたモデル：{model}',
             'ollama_model_not_available': 'モデル"{model}"は利用できません。確認してください：\n1. モデルは起動していますか？実行：ollama run {model}\n2. モデル名は正しいですか？\n3. モデルはダウンロードされていますか？実行：ollama pull {model}',
             'ollama_service_not_running': 'Ollamaサービスが実行されていません。最初にOllamaサービスを起動してください。',
@@ -408,4 +443,26 @@ class JapaneseTranslation(BaseTranslation):
 
 
             'pdf_info_not_available': '情報なし',
+            
+            # Field descriptions
+            'api_key_desc': '認証用のAPIキー。安全に保管し、共有しないでください。',
+            'base_url_desc': 'APIエンドポイントのURL。カスタムエンドポイントがない限り、デフォルトを使用してください。',
+            'model_desc': 'リストからモデルを選択するか、カスタムモデル名を使用してください。',
+            'streaming_desc': 'リアルタイムレスポンスストリーミングを有効にして、より速いフィードバックを得ます。',
+            'advanced_section': '詳細設定',
+            
+            # Provider-specific notices
+            'perplexity_model_notice': '注意：Perplexityは公開モデルリストAPIを提供していないため、モデルはハードコードされています。',
+            'ollama_no_api_key_notice': '注意：OllamaはローカルモデルでAPIキーは不要です。',
+            'nvidia_free_credits_notice': '注意：新規ユーザーは無料のAPIクレジットを取得できます - クレジットカード不要。',
+            
+            # Model buttons
+            'refresh_model_list': '更新',
+            'testing_text': 'テスト中',
+            'refresh_success': 'モデルリストが正常に更新されました。',
+            'refresh_failed': 'モデルリストの更新に失敗しました。',
+            'test_failed': 'モデルテストが失敗しました。',
+            
+            # Tooltip
+            'manage_ai_disabled_tooltip': '最初にAIプロバイダーを追加してください。',
         }

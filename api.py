@@ -294,10 +294,17 @@ class APIClient:
                 model_config['language'] = prefs.get('language', 'en')
                 logger.debug(f"Added language to model config: {model_config['language']}")
             
-            # 创建模型实例
+            # 从配置中获取 provider_id，如果没有则从 model_id 中提取
+            # 配置 ID 格式：provider_id 或 provider_id_xxxxx
+            provider_id = model_config.get('provider_id')
+            if not provider_id:
+                # 从 model_id 中提取 provider_id（取第一个下划线之前的部分）
+                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
+            
+            # 创建模型实例（使用 provider_id）
             self._model_name = model_id
-            self._ai_model = AIModelFactory.create_model(model_id, model_config)
-            logger.info(f"已切换到模型: {model_id}")
+            self._ai_model = AIModelFactory.create_model(provider_id, model_config)
+            logger.info(f"已切换到模型: {model_id} (provider: {provider_id})")
             
         except Exception as e:
             logger.error(f"切换模型 {model_id} 时出错: {str(e)}")
@@ -334,11 +341,18 @@ class APIClient:
                     model_config['language'] = prefs.get('language', 'en')
                     logger.debug(f"Added language to model config: {model_config['language']}")
                 
+                # 从配置中获取 provider_id，如果没有则从 selected_model 中提取
+                # 配置 ID 格式：provider_id 或 provider_id_xxxxx
+                provider_id = model_config.get('provider_id')
+                if not provider_id:
+                    # 从 selected_model 中提取 provider_id（取第一个下划线之前的部分）
+                    provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
+                
                 self._model_name = selected_model
-                self._ai_model = AIModelFactory.create_model(selected_model, model_config)
+                self._ai_model = AIModelFactory.create_model(provider_id, model_config)
                 # 安全记录模型配置，隐藏API Key
                 safe_model_config = safe_log_config(model_config)
-                logger.info(f"已加载 AI 模型: {selected_model} ({provider.name}), 配置: {safe_model_config}")
+                logger.info(f"已加载 AI 模型: {selected_model} (provider: {provider_id}), 配置: {safe_model_config}")
             else:
                 logger.warning("未找到有效的 AI 模型配置，将无法发送请求")
                 self._model_name = None
@@ -354,33 +368,35 @@ class APIClient:
             self._ai_model = None
     
     def get_random_question_prompt(self, lang_code: str = 'en') -> str:
-        """获取随机问题提示词
+        """获取随机问题提示词模板
+        
+        v1.3.9 变更：random_questions 从 dict 改为 string 类型
+        - v1.3.8（旧版本）：dict 类型 {"en": [...], "zh": [...]}
+        - v1.3.9（新版本）：string 类型（提示词模板）
         
         Args:
-            lang_code: 语言代码，用于获取相应语言的随机问题提示词
+            lang_code: 语言代码，用于获取默认模板时使用
             
         Returns:
-            str: 随机选择的一个问题提示词，如果没有配置则返回空字符串
+            str: 随机问题提示词模板，如果没有配置则返回空字符串
         """
         from calibre.utils.config import JSONConfig
-        import random
+        from .i18n import get_suggestion_template
         
         # 获取当前配置
         prefs = JSONConfig('plugins/ask_ai_plugin')
-        random_questions = prefs.get('random_questions', {})
+        random_questions = prefs.get('random_questions', '')
         
-        # 获取当前语言的随机问题提示词
-        questions = random_questions.get(lang_code, '')
-        if not questions:
+        # v1.3.9 兼容性处理
+        if isinstance(random_questions, dict):
+            # 旧版本格式（v1.3.8）：dict 类型，忽略并使用默认模板
+            logger.info("[Migration] random_questions is dict type, returning empty to use default template")
             return ''
-        
-        # 按行分割并过滤空行
-        question_list = [q.strip() for q in questions.split('\n') if q.strip()]
-        if not question_list:
+        elif isinstance(random_questions, str):
+            # 新版本格式（v1.3.9）：string 类型（提示词模板）
+            return random_questions.strip()
+        else:
             return ''
-        
-        # 随机选择一个问题提示词
-        return random.choice(question_list)
     
     def random_question(self, prompt: str, lang_code: str = 'en', model_id: str = None) -> str:
         """生成随机问题

@@ -1,6 +1,6 @@
 
-# Ask AI Plugin User Manual v0.5
-Latest updated: December 27, 2025, Ask AI Plugin v1.3.8
+# Ask AI Plugin User Manual v0.7
+Latest updated: December 28, 2025, Ask AI Plugin v1.3.9
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -10,6 +10,7 @@ ToC of this tutorial:
 - How to Use
 - Keyboard Shortcuts
 - Random Questions
+- Prompts
 - Other Features
 - Configuration
 - Troubleshooting
@@ -59,7 +60,7 @@ Option 4: Ollama (Local, No Internet)
 Method 1 (Recommended):
 1. Open calibre
 2. Go to Preferences -> Plugins -> Get new plugins
-3. Search for "Ask AI Plugin" (Author: Sheldon)
+3. Search for "Ask AI" (Author: Sheldon)
 4. Click Install
 5. Restart calibre
 
@@ -88,7 +89,7 @@ Done!
 1. Select a book or multiple books in calibre
 2. Open Ask dialog:
    - Click Ask AI Plugin button in toolbar, or
-   - Use the global shortcut (default: F3)
+   - Use the global shortcut (default: Ctrl+L)
 3. Type your question
 4. Click Send (or use Ctrl+Enter / Cmd+Enter)
 
@@ -111,7 +112,7 @@ How to customize:
 4. Edit the shortcuts you want
 
 Common shortcuts (defaults):
-- Ask AI: Ask (global): F3
+- Ask AI: Ask (global): Ctrl+L
 - Ask AI: Open Configuration: F2
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
 - Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
@@ -123,7 +124,48 @@ Note: If you customized shortcuts in calibre, your custom settings take preceden
 1. Click Random Question button (or Ctrl+R / Cmd+R)
 2. AI suggests a question
 
-Customize prompts in Configuration -> Edit Random Question Prompts
+Customize prompts in Configuration -> Prompts Tab -> Random Question Prompts
+
+## Prompts
+
+The Prompts Tab (accessible via toolbar menu or Configuration) lets you customize how the plugin communicates with AI.
+
+### Persona
+
+Define your research background and goals. This text is prepended to every prompt sent to AI.
+
+Example personas:
+- "As a literature professor, I focus on narrative techniques and literary analysis."
+- "I'm researching 19th century European history, especially political movements."
+- "As a student, I want simple explanations suitable for beginners."
+
+The more specific your persona, the more relevant AI responses will be.
+
+Tips:
+- Include your field of study or profession
+- Mention your expertise level (beginner, expert, etc.)
+- Describe what aspects you care about most
+
+### Prompt Templates
+
+Three customizable templates:
+
+1. **Single Book Prompt**: Used when asking about one book
+   - Available variables: {title}, {author}, {publisher}, {pubyear}, {language}, {series}, {query}
+
+2. **Multi-Book Prompt**: Used when asking about multiple selected books
+   - Available variables: {books_metadata}, {query}
+
+3. **Random Question Prompt**: Used when generating random questions
+   - Available variables: {title}, {author}, {language}
+
+### Use Interface Language
+
+When enabled, the plugin adds an instruction asking AI to respond in your current plugin language. Useful if you want responses in a specific language regardless of the book's language.
+
+### Reset to Default
+
+Click "Reset Prompts to Default" to restore all prompts and settings to their original values.
 
 ## Other Features
 
@@ -176,6 +218,7 @@ Ollama Not Working:
 What is sent to AI:
 - Book metadata (title, author, publisher, date, language)
 - Your questions
+- Your persona (if enabled)
 - Prompts if you customize them
 
 NOT sent:
@@ -195,6 +238,8 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 1. First ask: "Is this book in your training data?" If AI says no, it can't help much.
 2. Use parallel panels to compare different AIs.
 3. Be specific in questions for better answers.
+4. Set up a detailed persona for more relevant responses.
+5. Use Perplexity for research questions that need citations.
 
 ## Getting Help
 
