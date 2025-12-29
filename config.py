@@ -2423,7 +2423,7 @@ class ConfigDialog(QWidget):
         self.load_initial_values()
         
         # 更新 UI
-        self.update_configured_ai_list()
+        self.refresh_ai_list()
         self.update_model_name_display()
     
     def on_model_changed(self, index):
