@@ -17,6 +17,7 @@ class AIProvider(Enum):
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
     AI_NVIDIA = auto()    # Nvidia AI (Free tier available)
+    AI_NVIDIA_FREE = auto() # Nvidia AI (Free proxy)
     AI_OPENROUTER = auto() # OpenRouter (Model aggregator)
     AI_PERPLEXITY = auto() # Perplexity (Sonar)
     AI_OLLAMA = auto()    # Ollama (Local models)
@@ -118,11 +119,18 @@ DEFAULT_MODELS = {
         api_key_label="API Key (Optional):",
         default_api_base_url="http://localhost:11434",
         default_model_name="llama3"
+    ),
+    AIProvider.AI_NVIDIA_FREE: ModelConfig(
+        provider=AIProvider.AI_NVIDIA_FREE,
+        display_name="Nvidia AI（免费）",
+        api_key_label="API Key (Not Required):",
+        default_api_base_url="https://nvidia-proxy.your-subdomain.workers.dev",
+        default_model_name="meta/llama-3.3-70b-instruct"
     )
 }
 
-# 默认 AI 提供商
-DEFAULT_PROVIDER = AIProvider.AI_GROK
+# 默认 AI 提供商（使用免费通道）
+DEFAULT_PROVIDER = AIProvider.AI_NVIDIA_FREE
 
 class BaseTranslation:
     """所有语言翻译的基类"""

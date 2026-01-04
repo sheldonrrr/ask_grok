@@ -17,6 +17,7 @@ from .models.custom import CustomModel
 from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
 from .models.nvidia import NvidiaModel
+from .models.nvidia_free import NvidiaFreeModel
 from .models.openrouter import OpenRouterModel
 from .models.perplexity import PerplexityModel
 from .models.ollama import OllamaModel
@@ -61,12 +62,13 @@ CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
 NVIDIA_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA)
+NVIDIA_FREE_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA_FREE)
 OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
 # 默认配置
-prefs.defaults['selected_model'] = 'grok'  # 当前选中的模型
+prefs.defaults['selected_model'] = 'nvidia_free'  # 当前选中的模型（默认使用免费通道）
 prefs.defaults['models'] = {
     'grok': {
         'auth_token': '',
@@ -146,6 +148,16 @@ prefs.defaults['models'] = {
         'display_name': OLLAMA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
+    },
+    'nvidia_free': {
+        'api_key': 'free-tier',  # 免费通道不需要真实 API Key
+        'proxy_url': NVIDIA_FREE_CONFIG.default_api_base_url,
+        'api_base_url': NVIDIA_FREE_CONFIG.default_api_base_url,
+        'model': NVIDIA_FREE_CONFIG.default_model_name,
+        'display_name': NVIDIA_FREE_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': True,  # 默认启用免费通道
+        'provider_id': 'nvidia_free'
     }
 }
 prefs.defaults['template'] = get_default_template('en')
@@ -411,12 +423,37 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
+            model_config = get_current_model_config(provider)
         
         if model_config:
             from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
             
-            # API Key/Token 输入框（Ollama 不需要）
-            if self.model_id != 'ollama':
+            # API Key/Token 输入框（Ollama 和 nvidia_free 不需要）
+            if self.model_id == 'nvidia_free':
+                # Nvidia 免费通道：显示纯文字提示
+                api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
+                api_key_label.setObjectName(f'label_api_key_{self.model_id}')
+                main_layout.addWidget(api_key_label)
+                
+                # 纯文字提示（不可编辑）
+                api_key_info = QLabel(self.i18n.get('nvidia_free_api_key_info', '将会从服务器获取'))
+                api_key_info.setObjectName(f'label_api_key_info_{self.model_id}')
+                api_key_info.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 8px; background-color: #f5f5f5; border-radius: 4px;")
+                api_key_info.setMinimumHeight(40)
+                main_layout.addWidget(api_key_info)
+                
+                # 免费通道说明
+                free_desc = QLabel(self.i18n.get('nvidia_free_desc', '此服务由开发者维护，保持免费，但可能不太稳定。如需更稳定的服务，请配置自己的 Nvidia API Key。'))
+                free_desc.setObjectName(f'label_free_desc_{self.model_id}')
+                free_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+                free_desc.setWordWrap(True)
+                main_layout.addWidget(free_desc)
+                
+                # 创建空的占位符以保持代码兼容性
+                self.api_key_edit = None
+            elif self.model_id != 'ollama':
                 # API Key 标签
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
@@ -648,16 +685,18 @@ class ModelConfigWidget(QWidget):
     
     def update_button_states(self):
         """更新刷新和测试按钮的启用状态"""
-        # 刷新按钮：需要 API Key（Ollama 除外）
-        if self.model_id == 'ollama':
+        # 刷新按钮：需要 API Key（Ollama 和 nvidia_free 除外）
+        if self.model_id in ['ollama', 'nvidia_free']:
             self.refresh_models_button.setEnabled(True)
-        else:
+        elif self.api_key_edit is not None:
             # QTextEdit 使用 toPlainText()，QLineEdit 使用 text()
             if hasattr(self.api_key_edit, 'toPlainText'):
                 api_key = self.api_key_edit.toPlainText().strip()
             else:
                 api_key = self.api_key_edit.text().strip()
             self.refresh_models_button.setEnabled(bool(api_key))
+        else:
+            self.refresh_models_button.setEnabled(False)
         
         # 测试按钮：需要选中有效模型
         current_model = self.model_combo.currentText()
@@ -731,6 +770,13 @@ class ModelConfigWidget(QWidget):
             # Ollama 不需要 API Key
             config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
             config['display_name'] = 'Ollama (Local)'  # 设置固定的显示名称
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
+            # Nvidia 免费通道不需要用户提供 API Key
+            config['api_key'] = 'free-tier'
+            config['proxy_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
+            config['display_name'] = 'Nvidia AI（免费）'  # 设置固定的显示名称
+            config['provider_id'] = 'nvidia_free'
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
@@ -962,8 +1008,8 @@ class ModelConfigWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 1. 验证 API Key（Ollama 不需要）
-        if self.model_id != 'ollama':
+        # 1. 验证 API Key（Ollama 和 nvidia_free 不需要）
+        if self.model_id not in ['ollama', 'nvidia_free']:
             api_key = self.get_api_key()
             if not api_key:
                 QMessageBox.warning(
