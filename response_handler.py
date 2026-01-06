@@ -979,21 +979,25 @@ class ResponseHandler(QObject):
                         
                         # 从API对象提取模型信息
                         if api_obj:
-                            # 根据 ai_id 获取正确的 Provider 名称
-                            from calibre_plugins.ask_ai_plugin.api import APIClient
-                            from calibre_plugins.ask_ai_plugin.models.base import DEFAULT_MODELS
-                            
-                            # 从 ai_id 中提取 provider_id（取第一个下划线之前的部分）
-                            provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
-                            
-                            # 获取对应的 AIProvider 枚举值
-                            ai_provider = APIClient._MODEL_TO_PROVIDER.get(provider_id)
-                            
-                            # 从 DEFAULT_MODELS 获取正确的显示名称
-                            if ai_provider and ai_provider in DEFAULT_MODELS:
-                                provider_display_name = DEFAULT_MODELS[ai_provider].display_name
+                            # 优先使用模型实例的 get_provider_name() 方法（支持 i18n）
+                            if hasattr(api_obj, 'current_model') and api_obj.current_model:
+                                provider_display_name = api_obj.current_model.get_provider_name()
                             else:
-                                provider_display_name = provider_id.capitalize()
+                                # 回退：根据 ai_id 获取 Provider 名称
+                                from calibre_plugins.ask_ai_plugin.api import APIClient
+                                from calibre_plugins.ask_ai_plugin.models.base import DEFAULT_MODELS
+                                
+                                # 从 ai_id 中提取 provider_id（取第一个下划线之前的部分）
+                                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+                                
+                                # 获取对应的 AIProvider 枚举值
+                                ai_provider = APIClient._MODEL_TO_PROVIDER.get(provider_id)
+                                
+                                # 从 DEFAULT_MODELS 获取正确的显示名称
+                                if ai_provider and ai_provider in DEFAULT_MODELS:
+                                    provider_display_name = DEFAULT_MODELS[ai_provider].display_name
+                                else:
+                                    provider_display_name = provider_id.capitalize()
                             
                             model_info = {
                                 'provider_name': provider_display_name,

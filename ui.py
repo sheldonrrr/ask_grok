@@ -2909,7 +2909,13 @@ class AskDialog(QDialog):
                 if not has_token:
                     continue
             
-            display_name = config.get('display_name', ai_id)
+            # 对于 nvidia_free，动态生成当前语言的显示名称
+            if provider_id == 'nvidia_free' or ai_id == 'nvidia_free':
+                free_text = self.i18n.get('free', 'Free')
+                display_name = f"Nvidia AI ({free_text})"
+            else:
+                display_name = config.get('display_name', ai_id)
+            
             model_name = config.get('model', 'unknown')
             full_display = f"{display_name} - {model_name}"
             configured_ais.append((ai_id, full_display))
