@@ -3262,6 +3262,7 @@ class AskDialog(QDialog):
             logger.info(f"用户已配置其他 AI: {configured_ais}，跳过 Nvidia Free 首次使用提醒")
             # 标记为已显示，避免后续再检查
             prefs['nvidia_free_first_use_shown'] = True
+            prefs.commit()  # 立即保存，避免重复检查
             return
         
         def show_reminder():
@@ -3276,6 +3277,7 @@ class AskDialog(QDialog):
             
             # 标记为已显示
             prefs['nvidia_free_first_use_shown'] = True
+            prefs.commit()  # 立即保存，避免重复显示
             logger.info("已显示 Nvidia Free 首次使用提醒")
         
         # 延迟 300ms 后显示提醒（在 AI 不匹配对话框之后）
