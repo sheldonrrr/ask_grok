@@ -282,7 +282,7 @@ class EnglishTranslation(BaseTranslation):
             'template_error': 'Template error',
             'no_model_configured': 'No AI model configured. Please configure an AI model in settings.',
             'no_ai_configured_title': 'No AI Configured',
-            'no_ai_configured_message': 'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\nRecommended for Beginners:\n• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n• Ollama - Run AI models locally on your computer (completely free and private)\n\nWould you like to open the plugin configuration to set up an AI provider now?',
+            'no_ai_configured_message': 'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\nGood News: This plugin now has a FREE tier (Nvidia AI Free) that you can use immediately without any configuration!\n\nOther Recommended Options:\n• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n• Ollama - Run AI models locally on your computer (completely free and private)\n\nWould you like to open the plugin configuration to set up an AI provider now?',
             'open_settings': 'Plugin Configuration',
             'ask_anyway': 'Ask Anyway',
             'later': 'Later',
@@ -440,6 +440,23 @@ class EnglishTranslation(BaseTranslation):
             'perplexity_model_notice': 'Note: Perplexity does not provide a public model list API, so models are hardcoded.',
             'ollama_no_api_key_notice': 'Note: Ollama is a local model that does not require an API key.',
             'nvidia_free_credits_notice': 'Note: New users get free API credits - No credit card required.',
+            
+            # Nvidia Free error messages
+            'free_tier_rate_limit': 'Free tier rate limit exceeded. Please try again later or configure your own Nvidia API Key.',
+            'free_tier_unavailable': 'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.',
+            'free_tier_server_error': 'Free tier server error. Please try again later.',
+            'free_tier_error': 'Free tier error',
+            
+            # Nvidia Free provider info
+            'free': 'Free',
+            'nvidia_free_provider_name': 'Nvidia AI (Free)',
+            'nvidia_free_display_name': 'Nvidia AI (Free)',
+            'nvidia_free_api_key_info': 'Will be obtained from server',
+            'nvidia_free_desc': 'This service is maintained by the developer and kept free, but may be less stable. For more stable service, please configure your own Nvidia API Key.',
+            
+            # Nvidia Free first use reminder
+            'nvidia_free_first_use_title': 'Welcome to Ask AI Plugin',
+            'nvidia_free_first_use_message': 'Now you can just ask without any configuration! The developer maintains a free tier for you, but it may not be very stable. Enjoy!\n\nYou can configure your own AI providers in the settings for better stability.',
             
             # Model buttons
             'refresh_model_list': 'Refresh',

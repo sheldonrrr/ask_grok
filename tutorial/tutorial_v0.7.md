@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.7
-Latest updated: December 28, 2025, Ask AI Plugin v1.3.9
+Latest updated: January 6, 2026, Ask AI Plugin v1.4.0
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -34,7 +34,13 @@ Good news: You don't need to pay. Free options are available below.
 
 ## Free API Key Options
 
-Option 1: Nvidia (Recommended)
+**Default Option: Nvidia AI Free (No Setup Required)**
+- Cost: Completely FREE
+- Setup: None! Works immediately after plugin installation
+- Limit: Shared free tier (may be less stable during peak times)
+- Note: This is a free service maintained by the plugin developer. For better stability and higher limits, consider the options below.
+
+Option 1: Nvidia (Recommended for Stability)
 - Cost: Free
 - Limit: 40 requests per minute
 - Setup: Visit https://build.nvidia.com/ and sign up

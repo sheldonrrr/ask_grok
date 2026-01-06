@@ -279,7 +279,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'template_error': '模板错误',
             'no_model_configured': '未配置AI模型。请在设置中配置AI模型。',
             'no_ai_configured_title': '未配置AI',
-            'no_ai_configured_message': '欢迎使用！要开始对书籍提问，您需要先配置一个AI提供商。\n\n推荐新手选择：\n• Nvidia AI - 只需手机号即可获取半年免费API访问权限（无需绑定信用卡）\n• Ollama - 在您的电脑上本地运行AI模型（完全免费且隐私）\n\n是否现在打开插件配置来设置AI提供商？',
+            'no_ai_configured_message': '欢迎使用！要开始对书籍提问，您需要先配置一个AI提供商。\n\n好消息：本插件现在提供免费通道（Nvidia AI Free），您可以立即使用，无需任何配置！\n\n其他推荐选择：\n• Nvidia AI - 只需手机号即可获取半年免费API访问权限（无需绑定信用卡）\n• Ollama - 在您的电脑上本地运行AI模型（完全免费且隐私）\n\n是否现在打开插件配置来设置AI提供商？',
             'open_settings': '插件配置',
             'ask_anyway': '仍要询问',
             'later': '稍后',
@@ -436,6 +436,23 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'perplexity_model_notice': '注意：Perplexity 没有提供公开的模型列表接口，因此模型名称为硬编码。',
             'ollama_no_api_key_notice': '注意：Ollama 是本地模型，无需配置 API Key。',
             'nvidia_free_credits_notice': '注意：新用户可获得免费 API 额度，无需信用卡。',
+            
+            # Nvidia Free 错误消息
+            'free_tier_rate_limit': '免费通道请求频率超限。请稍后再试或配置自己的 Nvidia API Key。',
+            'free_tier_unavailable': '免费通道暂时不可用。请稍后再试或配置自己的 Nvidia API Key。',
+            'free_tier_server_error': '免费通道服务器错误。请稍后再试。',
+            'free_tier_error': '免费通道错误',
+            
+            # Nvidia Free 服务商信息
+            'free': '免费',
+            'nvidia_free_provider_name': 'Nvidia AI（免费）',
+            'nvidia_free_display_name': 'Nvidia AI（免费）',
+            'nvidia_free_api_key_info': '将会从服务器获取',
+            'nvidia_free_desc': '此服务由开发者维护，保持免费，但可能不太稳定。如需更稳定的服务，请配置自己的 Nvidia API Key。',
+            
+            # Nvidia Free 首次使用提醒
+            'nvidia_free_first_use_title': '欢迎使用 Ask AI 插件',
+            'nvidia_free_first_use_message': '现在您无需任何配置就可以直接提问！开发者为您维护了一个免费通道，但可能不太稳定。尽情使用吧！\n\n您可以在设置中配置自己的 AI 服务商以获得更稳定的服务。',
             
             # 模型按钮
             'refresh_model_list': '刷新',

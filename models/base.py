@@ -122,9 +122,9 @@ DEFAULT_MODELS = {
     ),
     AIProvider.AI_NVIDIA_FREE: ModelConfig(
         provider=AIProvider.AI_NVIDIA_FREE,
-        display_name="Nvidia AI（免费）",
+        display_name="Nvidia AI (Free)",
         api_key_label="API Key (Not Required):",
-        default_api_base_url="https://nvidia-proxy.your-subdomain.workers.dev",
+        default_api_base_url="https://nvidia-proxy.boy-liushaopeng.workers.dev",
         default_model_name="meta/llama-3.3-70b-instruct"
     )
 }

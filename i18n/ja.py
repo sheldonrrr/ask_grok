@@ -301,7 +301,7 @@ class JapaneseTranslation(BaseTranslation):
             'template_error': 'テンプレートエラー',
             'no_model_configured': 'AIモデルが設定されていません。設定でAIモデルを設定してください。',
             'no_ai_configured_title': 'AIが設定されていません',
-            'no_ai_configured_message': 'ようこそ！本について質問を始めるには、まずAIプロバイダーを設定する必要があります。\n\n初心者におすすめ：\n• Nvidia AI - 電話番号だけで6ヶ月間の無料APIアクセスを取得（クレジットカード不要）\n• Ollama - コンピューターでローカルにAIモデルを実行（完全に無料でプライベート）\n\n今すぐプラグイン設定を開いてAIプロバイダーを設定しますか？',
+            'no_ai_configured_message': 'ようこそ！書籍について質問を始めるには、まずAIプロバイダーを設定する必要があります。\n\n朗報：このプラグインには無料プラン（Nvidia AI Free）があり、設定なしですぐに使用できます！\n\nその他のおすすめオプション：\n• Nvidia AI - 電話番号だけで6ヶ月間の無料APIアクセスを取得（クレジットカード不要）\n• Ollama - コンピューター上でローカルにAIモデルを実行（完全無料でプライベート）\n\n今すぐプラグイン設定を開いてAIプロバイダーをセットアップしますか？',
             'open_settings': 'プラグイン設定',
             'ask_anyway': 'とにかく質問する',
             'later': '後で',
@@ -455,6 +455,23 @@ class JapaneseTranslation(BaseTranslation):
             'perplexity_model_notice': '注意：Perplexityは公開モデルリストAPIを提供していないため、モデルはハードコードされています。',
             'ollama_no_api_key_notice': '注意：OllamaはローカルモデルでAPIキーは不要です。',
             'nvidia_free_credits_notice': '注意：新規ユーザーは無料のAPIクレジットを取得できます - クレジットカード不要。',
+            
+            # Nvidia Free エラーメッセージ
+            'free_tier_rate_limit': '無料プランのレート制限を超えました。しばらくしてから再試行するか、独自のNvidia APIキーを設定してください。',
+            'free_tier_unavailable': '無料プランは一時的に利用できません。しばらくしてから再試行するか、独自のNvidia APIキーを設定してください。',
+            'free_tier_server_error': '無料プランのサーバーエラーが発生しました。しばらくしてから再試行してください。',
+            'free_tier_error': '無料プランエラー',
+            
+            # Nvidia Free プロバイダー情報
+            'free': '無料',
+            'nvidia_free_provider_name': 'Nvidia AI（無料）',
+            'nvidia_free_display_name': 'Nvidia AI（無料）',
+            'nvidia_free_api_key_info': 'サーバーから取得されます',
+            'nvidia_free_desc': 'このサービスは開発者によって維持され、無料で提供されていますが、安定性が低い場合があります。より安定したサービスが必要な場合は、独自のNvidia APIキーを設定してください。',
+            
+            # Nvidia Free 初回使用リマインダー
+            'nvidia_free_first_use_title': 'Ask AI プラグインへようこそ',
+            'nvidia_free_first_use_message': '設定なしですぐに質問できます！開発者が無料プランを維持していますが、あまり安定していない可能性があります。お楽しみください！\n\nより安定したサービスを利用するには、設定で独自のAIプロバイダーを設定できます。',
             
             # Model buttons
             'refresh_model_list': '更新',

@@ -268,7 +268,7 @@ class GermanTranslation(BaseTranslation):
             'template_error': 'Vorlagenfehler',
             'no_model_configured': 'Kein KI-Modell konfiguriert. Bitte konfigurieren Sie ein KI-Modell in den Einstellungen.',
             'no_ai_configured_title': 'Keine KI konfiguriert',
-            'no_ai_configured_message': 'Willkommen! Um Fragen zu Ihren Büchern zu stellen, müssen Sie zuerst einen KI-Anbieter konfigurieren.\n\nEmpfohlen für Anfänger:\n• Nvidia AI - 6 Monate KOSTENLOSER API-Zugang mit nur Ihrer Telefonnummer (keine Kreditkarte erforderlich)\n• Ollama - KI-Modelle lokal auf Ihrem Computer ausführen (völlig kostenlos und privat)\n\nMöchten Sie jetzt die Plugin-Konfiguration öffnen, um einen KI-Anbieter einzurichten?',
+            'no_ai_configured_message': 'Willkommen! Um Fragen zu Ihren Büchern zu stellen, müssen Sie zuerst einen KI-Anbieter konfigurieren.\n\nGute Nachricht: Dieses Plugin bietet jetzt einen KOSTENLOSEN Zugang (Nvidia AI Free), den Sie sofort ohne Konfiguration nutzen können!\n\nWeitere empfohlene Optionen:\n• Nvidia AI - 6 Monate KOSTENLOSER API-Zugang mit nur Ihrer Telefonnummer (keine Kreditkarte erforderlich)\n• Ollama - KI-Modelle lokal auf Ihrem Computer ausführen (völlig kostenlos und privat)\n\nMöchten Sie jetzt die Plugin-Konfiguration öffnen, um einen KI-Anbieter einzurichten?',
             'open_settings': 'Plugin-Konfiguration',
             'ask_anyway': 'Trotzdem fragen',
             'later': 'Später',
@@ -419,6 +419,23 @@ class GermanTranslation(BaseTranslation):
             'perplexity_model_notice': 'Hinweis: Perplexity bietet keine öffentliche Modelllisten-API, daher sind die Modelle fest codiert.',
             'ollama_no_api_key_notice': 'Hinweis: Ollama ist ein lokales Modell und benötigt keinen API-Schlüssel.',
             'nvidia_free_credits_notice': 'Hinweis: Neue Benutzer erhalten kostenlose API-Credits - keine Kreditkarte erforderlich.',
+            
+            # Nvidia Free Fehlermeldungen
+            'free_tier_rate_limit': 'Ratenlimit für kostenlosen Zugang überschritten. Bitte versuchen Sie es später erneut oder konfigurieren Sie Ihren eigenen Nvidia API-Schlüssel.',
+            'free_tier_unavailable': 'Kostenloser Zugang ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut oder konfigurieren Sie Ihren eigenen Nvidia API-Schlüssel.',
+            'free_tier_server_error': 'Serverfehler beim kostenlosen Zugang. Bitte versuchen Sie es später erneut.',
+            'free_tier_error': 'Fehler beim kostenlosen Zugang',
+            
+            # Nvidia Free Anbieterinformationen
+            'free': 'Kostenlos',
+            'nvidia_free_provider_name': 'Nvidia AI (Kostenlos)',
+            'nvidia_free_display_name': 'Nvidia AI (Kostenlos)',
+            'nvidia_free_api_key_info': 'Wird vom Server abgerufen',
+            'nvidia_free_desc': 'Dieser Dienst wird vom Entwickler gepflegt und bleibt kostenlos, kann aber weniger stabil sein. Für einen stabileren Dienst konfigurieren Sie bitte Ihren eigenen Nvidia API-Schlüssel.',
+            
+            # Nvidia Free Erstnutzungserinnerung
+            'nvidia_free_first_use_title': 'Willkommen beim Ask AI Plugin',
+            'nvidia_free_first_use_message': 'Sie können jetzt ohne Konfiguration Fragen stellen! Der Entwickler stellt Ihnen einen kostenlosen Zugang zur Verfügung, der jedoch möglicherweise nicht sehr stabil ist. Viel Spaß!\n\nSie können in den Einstellungen Ihre eigenen KI-Anbieter konfigurieren, um eine bessere Stabilität zu erzielen.',
             
             # Model buttons
             'refresh_model_list': 'Aktualisieren',

@@ -12,14 +12,15 @@ from .nvidia import NvidiaModel
 from .base import format_http_error
 from ..i18n import get_translation
 from ..device_fingerprint import DeviceFingerprint
+from ..env_config import EnvironmentConfig
 
 
 class NvidiaFreeModel(NvidiaModel):
     """
     Nvidia 免费代理模型实现
     通过 Cloudflare Worker 代理访问 Nvidia API
+    支持本地测试环境和生产环境切换
     """
-    DEFAULT_PROXY_URL = "https://nvidia-proxy.your-subdomain.workers.dev"
     
     def __init__(self, config: Dict[str, Any]):
         """
@@ -32,7 +33,7 @@ class NvidiaFreeModel(NvidiaModel):
         if 'proxy_url' in config and config['proxy_url']:
             config['api_base_url'] = config['proxy_url']
         else:
-            config['api_base_url'] = self.DEFAULT_PROXY_URL
+            config['api_base_url'] = EnvironmentConfig.get_nvidia_free_proxy_url()
         
         config['api_key'] = 'free-tier'
         
@@ -41,7 +42,8 @@ class NvidiaFreeModel(NvidiaModel):
         
         super(NvidiaModel, self).__init__(config)
         
-        self.logger.info("使用 Nvidia 免费代理模式")
+        env_desc = EnvironmentConfig.get_nvidia_free_description()
+        self.logger.info(f"使用 Nvidia 免费代理模式 ({env_desc}): {config['api_base_url']}")
     
     def _validate_config(self):
         """
@@ -49,7 +51,7 @@ class NvidiaFreeModel(NvidiaModel):
         免费模式不需要 API Key
         """
         if not self.config.get('api_base_url'):
-            self.config['api_base_url'] = self.DEFAULT_PROXY_URL
+            self.config['api_base_url'] = EnvironmentConfig.get_nvidia_free_proxy_url()
         
         if not self.config.get('model'):
             self.config['model'] = self.DEFAULT_MODEL
@@ -228,23 +230,74 @@ class NvidiaFreeModel(NvidiaModel):
         return format_http_error(error, self.config.get('language', 'en'))
     
     def get_provider_name(self) -> str:
-        """获取提供商名称"""
-        return "Nvidia AI（免费）"
+        """获取提供商名称，支持动态 i18n"""
+        translations = get_translation(self.config.get('language', 'en'))
+        free_text = translations.get('free', 'Free')
+        return f"Nvidia AI ({free_text})"
     
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
         """获取默认配置"""
+        from .nvidia import NvidiaModel
         return {
-            "proxy_url": cls.DEFAULT_PROXY_URL,
+            "proxy_url": EnvironmentConfig.get_nvidia_free_proxy_url(),
             "api_key": "free-tier",
-            "model": cls.DEFAULT_MODEL,
+            "model": NvidiaModel.DEFAULT_MODEL,
             "enable_streaming": True,
         }
     
     def fetch_available_models(self, skip_verification=False):
         """
-        免费通道不支持获取模型列表
-        返回预定义的模型列表
+        从免费代理服务器获取可用模型列表
+        使用 /api/models 端点
+        """
+        try:
+            api_url = f"{self.config['api_base_url']}/api/models"
+            headers = self.prepare_headers()
+            
+            self.logger.debug(f"从免费代理获取模型列表: {api_url}")
+            
+            # 检测是否使用代理，如果使用代理则禁用 SSL 验证以避免证书问题
+            import os
+            proxies = {
+                'http': os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy'),
+                'https': os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+            }
+            has_proxy = any(proxies.values())
+            
+            # 如果有代理，禁用 SSL 验证；否则启用
+            verify_ssl = not has_proxy
+            if has_proxy:
+                self.logger.info(f"Detected proxy environment, disabling SSL verification for model list fetch")
+            
+            response = requests.get(api_url, headers=headers, timeout=15, verify=verify_ssl)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            # 解析响应 - 假设返回格式类似 OpenAI: {"data": [{"id": "model-name"}, ...]}
+            if 'data' in data and isinstance(data['data'], list):
+                models = [model.get('id', model.get('name', '')) for model in data['data'] if model.get('id') or model.get('name')]
+                self.logger.info(f"成功从免费代理获取 {len(models)} 个模型")
+                return sorted(models)
+            elif isinstance(data, list):
+                # 如果直接返回模型列表
+                models = [model if isinstance(model, str) else model.get('id', model.get('name', '')) for model in data]
+                models = [m for m in models if m]  # 过滤空值
+                self.logger.info(f"成功从免费代理获取 {len(models)} 个模型")
+                return sorted(models)
+            else:
+                self.logger.warning("模型列表响应格式不符合预期，使用预定义列表")
+                return self._get_fallback_models()
+                
+        except Exception as e:
+            self.logger.error(f"从免费代理获取模型列表失败: {str(e)}")
+            self.logger.info("使用预定义模型列表作为后备")
+            return self._get_fallback_models()
+    
+    def _get_fallback_models(self):
+        """
+        获取后备模型列表（当 API 请求失败时使用）
         """
         return [
             "meta/llama-3.3-70b-instruct",
@@ -254,20 +307,82 @@ class NvidiaFreeModel(NvidiaModel):
     
     def verify_api_key_with_test_request(self):
         """
-        免费通道不需要验证 API Key
-        但可以测试代理服务器是否可用
+        Test free proxy server availability using /api/health endpoint
+        This allows users to check if the service is currently stable
         """
+        translations = get_translation(self.config.get('language', 'en'))
+        
         try:
             api_url = f"{self.config['api_base_url']}/api/health"
-            response = requests.get(api_url, timeout=10, verify=True)
+            self.logger.info(f"Testing free proxy server health: {api_url}")
+            
+            # 检测是否使用代理，如果使用代理则禁用 SSL 验证以避免证书问题
+            import os
+            proxies = {
+                'http': os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy'),
+                'https': os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+            }
+            has_proxy = any(proxies.values())
+            
+            # 如果有代理，禁用 SSL 验证；否则启用
+            verify_ssl = not has_proxy
+            if has_proxy:
+                self.logger.info(f"Detected proxy environment, disabling SSL verification for health check")
+            
+            response = requests.get(api_url, timeout=10, verify=verify_ssl)
             
             if response.status_code == 200:
-                self.logger.info("免费代理服务器连接正常")
-                return True
+                try:
+                    data = response.json()
+                    status = data.get('status', 'unknown')
+                    service = data.get('service', 'nvidia-proxy')
+                    version = data.get('version', 'unknown')
+                    
+                    if status == 'ok':
+                        self.logger.info(f"Free proxy server is healthy - Service: {service}, Version: {version}")
+                        return True
+                    else:
+                        raise Exception(translations.get('free_tier_unavailable', 
+                            'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.'))
+                except json.JSONDecodeError:
+                    self.logger.warning("Health check returned 200 but invalid JSON")
+                    return True
             else:
-                translations = get_translation(self.config.get('language', 'en'))
-                raise Exception(translations.get('free_tier_unavailable', 
-                    '免费通道暂时不可用'))
+                error_msg = translations.get('free_tier_unavailable', 
+                    'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.')
+                raise Exception(f"{error_msg} (Status: {response.status_code})")
+                
+        except requests.exceptions.Timeout:
+            error_msg = translations.get('free_tier_server_error', 
+                'Free tier server error. Please try again later.')
+            self.logger.error(f"Free proxy server timeout: {api_url}")
+            raise Exception(f"{error_msg} (Timeout)")
+            
+        except requests.exceptions.SSLError as e:
+            # SSL 错误的特殊处理
+            error_msg = translations.get('free_tier_unavailable', 
+                'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.')
+            self.logger.error(f"Free proxy server SSL error: {str(e)}")
+            
+            # 检查是否是代理导致的 SSL 问题
+            import os
+            if os.environ.get('HTTP_PROXY') or os.environ.get('HTTPS_PROXY') or \
+               os.environ.get('http_proxy') or os.environ.get('https_proxy'):
+                raise Exception(f"{error_msg} (SSL error - proxy may be interfering with connection)")
+            else:
+                raise Exception(f"{error_msg} (SSL error)")
+            
+        except requests.exceptions.ConnectionError as e:
+            error_msg = translations.get('free_tier_unavailable', 
+                'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.')
+            self.logger.error(f"Free proxy server connection failed: {str(e)}")
+            raise Exception(f"{error_msg} (Connection failed)")
+            
         except Exception as e:
-            self.logger.error(f"免费代理服务器连接失败: {str(e)}")
-            raise
+            if "Free tier" not in str(e):
+                error_msg = translations.get('free_tier_server_error', 
+                    'Free tier server error. Please try again later.')
+                self.logger.error(f"Free proxy server test failed: {str(e)}")
+                raise Exception(f"{error_msg}: {str(e)}")
+            else:
+                raise
