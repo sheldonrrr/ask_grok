@@ -301,7 +301,7 @@ class FrenchTranslation(BaseTranslation):
             'template_error': 'Erreur de modèle',
             'no_model_configured': 'Aucun modèle d\'IA configuré. Veuillez configurer un modèle d\'IA dans les paramètres.',
             'no_ai_configured_title': 'Aucune IA configurée',
-            'no_ai_configured_message': 'Bienvenue! Pour commencer à poser des questions sur vos livres, vous devez d\'abord configurer un fournisseur d\'IA.\n\nRecommandé pour les débutants:\n• Nvidia AI - Obtenez 6 mois d\'accès API GRATUIT avec juste votre numéro de téléphone (aucune carte de crédit requise)\n• Ollama - Exécutez des modèles d\'IA localement sur votre ordinateur (totalement gratuit et privé)\n\nSouhaitez-vous ouvrir la configuration du plugin pour configurer un fournisseur d\'IA maintenant?',
+            'no_ai_configured_message': 'Bienvenue ! Pour commencer à poser des questions sur vos livres, vous devez d\'abord configurer un fournisseur d\'IA.\n\nBonne nouvelle : Ce plugin propose maintenant un niveau GRATUIT (Nvidia AI Free) que vous pouvez utiliser immédiatement sans aucune configuration !\n\nAutres options recommandées :\n• Nvidia AI - Obtenez 6 mois d\'accès API GRATUIT avec juste votre numéro de téléphone (aucune carte de crédit requise)\n• Ollama - Exécutez des modèles d\'IA localement sur votre ordinateur (complètement gratuit et privé)\n\nSouhaitez-vous ouvrir la configuration du plugin pour configurer un fournisseur d\'IA maintenant ?',
             'open_settings': 'Configuration du Plugin',
             'ask_anyway': 'Demander Quand Même',
             'later': 'Plus Tard',
@@ -454,6 +454,23 @@ class FrenchTranslation(BaseTranslation):
             'perplexity_model_notice': 'Remarque: Perplexity ne fournit pas d\'API publique de liste de modèles, les modèles sont donc codés en dur.',
             'ollama_no_api_key_notice': 'Remarque: Ollama est un modèle local qui ne nécessite pas de clé API.',
             'nvidia_free_credits_notice': 'Remarque: Les nouveaux utilisateurs obtiennent des crédits API gratuits - aucune carte de crédit requise.',
+            
+            # Messages d'erreur Nvidia Free
+            'free_tier_rate_limit': 'Limite de taux d\'accès gratuit dépassée. Veuillez réessayer plus tard ou configurer votre propre clé API Nvidia.',
+            'free_tier_unavailable': 'L\'accès gratuit est temporairement indisponible. Veuillez réessayer plus tard ou configurer votre propre clé API Nvidia.',
+            'free_tier_server_error': 'Erreur du serveur d\'accès gratuit. Veuillez réessayer plus tard.',
+            'free_tier_error': 'Erreur d\'accès gratuit',
+            
+            # Informations sur le fournisseur Nvidia Free
+            'free': 'Gratuit',
+            'nvidia_free_provider_name': 'Nvidia AI (Gratuit)',
+            'nvidia_free_display_name': 'Nvidia AI (Gratuit)',
+            'nvidia_free_api_key_info': 'Sera obtenu depuis le serveur',
+            'nvidia_free_desc': 'Ce service est maintenu par le développeur et reste gratuit, mais peut être moins stable. Pour un service plus stable, veuillez configurer votre propre clé API Nvidia.',
+            
+            # Rappel de première utilisation Nvidia Free
+            'nvidia_free_first_use_title': 'Bienvenue dans le plugin Ask AI',
+            'nvidia_free_first_use_message': 'Vous pouvez maintenant poser des questions sans aucune configuration ! Le développeur maintient un niveau gratuit pour vous, mais il peut ne pas être très stable. Profitez-en !\n\nVous pouvez configurer vos propres fournisseurs d\'IA dans les paramètres pour une meilleure stabilité.',
             
             # Model buttons
             'refresh_model_list': 'Actualiser',

@@ -17,10 +17,12 @@ from .models.custom import CustomModel
 from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
 from .models.nvidia import NvidiaModel
+from .models.nvidia_free import NvidiaFreeModel
 from .models.openrouter import OpenRouterModel
 from .models.perplexity import PerplexityModel
 from .models.ollama import OllamaModel
 from calibre.utils.config import JSONConfig
+from .env_config import EnvironmentConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
 from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
@@ -61,12 +63,13 @@ CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
 NVIDIA_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA)
+NVIDIA_FREE_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA_FREE)
 OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
 # 默认配置
-prefs.defaults['selected_model'] = 'grok'  # 当前选中的模型
+prefs.defaults['selected_model'] = 'nvidia_free'  # 当前选中的模型（默认使用免费通道）
 prefs.defaults['models'] = {
     'grok': {
         'auth_token': '',
@@ -146,6 +149,16 @@ prefs.defaults['models'] = {
         'display_name': OLLAMA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
+    },
+    'nvidia_free': {
+        'api_key': 'free-tier',  # 免费通道不需要真实 API Key
+        'proxy_url': EnvironmentConfig.get_nvidia_free_proxy_url(),
+        'api_base_url': EnvironmentConfig.get_nvidia_free_proxy_url(),
+        'model': NVIDIA_FREE_CONFIG.default_model_name,
+        'display_name': NVIDIA_FREE_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': True,  # 默认启用免费通道
+        'provider_id': 'nvidia_free'
     }
 }
 prefs.defaults['template'] = get_default_template('en')
@@ -158,6 +171,7 @@ prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (
 prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
+prefs.defaults['nvidia_free_first_use_shown'] = False  # Track if first use reminder has been shown
 
 # Export settings
 prefs.defaults['enable_default_export_folder'] = False  # Whether to export to default folder
@@ -230,9 +244,23 @@ def get_prefs(force_reload=False):
     if 'models' not in prefs:
         prefs['models'] = {}
     
-    # 确保 selected_model 键存在
+    # 确保 nvidia_free 配置存在（首次安装时的默认 AI）
+    if 'nvidia_free' not in prefs['models']:
+        prefs['models']['nvidia_free'] = {
+            'api_key': 'free-tier',
+            'proxy_url': EnvironmentConfig.get_nvidia_free_proxy_url(),
+            'api_base_url': EnvironmentConfig.get_nvidia_free_proxy_url(),
+            'model': NVIDIA_FREE_CONFIG.default_model_name,
+            'display_name': NVIDIA_FREE_CONFIG.display_name,
+            'enable_streaming': True,
+            'enabled': True,
+            'provider_id': 'nvidia_free',
+            'is_configured': True  # Nvidia Free 默认已配置
+        }
+    
+    # 确保 selected_model 键存在（默认使用 nvidia_free）
     if 'selected_model' not in prefs:
-        prefs['selected_model'] = 'grok'
+        prefs['selected_model'] = 'nvidia_free'
     
     # 确保 request_timeout 键存在
     if 'request_timeout' not in prefs:
@@ -241,6 +269,15 @@ def get_prefs(force_reload=False):
     # 确保 parallel_ai_count 键存在
     if 'parallel_ai_count' not in prefs:
         prefs['parallel_ai_count'] = 1
+    
+    # 配置迁移：强制更新 nvidia_free 的 proxy_url 为当前环境配置
+    # 这确保环境切换后配置能正确更新
+    if 'nvidia_free' in prefs['models']:
+        current_env_url = EnvironmentConfig.get_nvidia_free_proxy_url()
+        if prefs['models']['nvidia_free'].get('proxy_url') != current_env_url:
+            prefs['models']['nvidia_free']['proxy_url'] = current_env_url
+            prefs['models']['nvidia_free']['api_base_url'] = current_env_url
+            prefs.commit()
     
     # 确保默认模型配置存在
     if 'grok' not in prefs['models']:
@@ -307,8 +344,8 @@ def get_prefs(force_reload=False):
                 provider_id = model_id.split('_')[0] if '_' in model_id else model_id
             
             # 判断是否已配置
-            if provider_id in ['ollama', 'custom']:
-                # Ollama 和 Custom 不需要 API Key
+            if provider_id in ['ollama', 'custom', 'nvidia_free']:
+                # Ollama、Custom 和 Nvidia Free 不需要用户提供 API Key
                 has_auth = True
             else:
                 # 其他模型需要 API Key
@@ -411,12 +448,37 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
+            model_config = get_current_model_config(provider)
         
         if model_config:
             from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
             
-            # API Key/Token 输入框（Ollama 不需要）
-            if self.model_id != 'ollama':
+            # API Key/Token 输入框（Ollama 和 nvidia_free 不需要）
+            if self.model_id == 'nvidia_free':
+                # Nvidia 免费通道：显示纯文字提示
+                api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
+                api_key_label.setObjectName(f'label_api_key_{self.model_id}')
+                main_layout.addWidget(api_key_label)
+                
+                # 纯文字提示（不可编辑）
+                api_key_info = QLabel(self.i18n.get('nvidia_free_api_key_info', 'Will be obtained from server'))
+                api_key_info.setObjectName(f'label_api_key_info_{self.model_id}')
+                api_key_info.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 8px; background-color: #f5f5f5; border-radius: 4px;")
+                api_key_info.setMinimumHeight(40)
+                main_layout.addWidget(api_key_info)
+                
+                # 免费通道说明
+                free_desc = QLabel(self.i18n.get('nvidia_free_desc', 'This service is maintained by the developer and kept free, but may be less stable. For more stable service, please configure your own Nvidia API Key.'))
+                free_desc.setObjectName(f'label_free_desc_{self.model_id}')
+                free_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+                free_desc.setWordWrap(True)
+                main_layout.addWidget(free_desc)
+                
+                # 创建空的占位符以保持代码兼容性
+                self.api_key_edit = None
+            elif self.model_id != 'ollama':
                 # API Key 标签
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
@@ -648,16 +710,18 @@ class ModelConfigWidget(QWidget):
     
     def update_button_states(self):
         """更新刷新和测试按钮的启用状态"""
-        # 刷新按钮：需要 API Key（Ollama 除外）
-        if self.model_id == 'ollama':
+        # 刷新按钮：需要 API Key（Ollama 和 nvidia_free 除外）
+        if self.model_id in ['ollama', 'nvidia_free']:
             self.refresh_models_button.setEnabled(True)
-        else:
+        elif self.api_key_edit is not None:
             # QTextEdit 使用 toPlainText()，QLineEdit 使用 text()
             if hasattr(self.api_key_edit, 'toPlainText'):
                 api_key = self.api_key_edit.toPlainText().strip()
             else:
                 api_key = self.api_key_edit.text().strip()
             self.refresh_models_button.setEnabled(bool(api_key))
+        else:
+            self.refresh_models_button.setEnabled(False)
         
         # 测试按钮：需要选中有效模型
         current_model = self.model_combo.currentText()
@@ -731,6 +795,15 @@ class ModelConfigWidget(QWidget):
             # Ollama 不需要 API Key
             config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
             config['display_name'] = 'Ollama (Local)'  # 设置固定的显示名称
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
+            # Nvidia 免费通道不需要用户提供 API Key
+            config['api_key'] = 'free-tier'
+            config['proxy_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
+            # 动态拼接翻译后的显示名称
+            free_text = self.i18n.get('free', 'Free')
+            config['display_name'] = f"Nvidia AI ({free_text})"
+            config['provider_id'] = 'nvidia_free'
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
@@ -962,8 +1035,8 @@ class ModelConfigWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 1. 验证 API Key（Ollama 不需要）
-        if self.model_id != 'ollama':
+        # 1. 验证 API Key（Ollama 和 nvidia_free 不需要）
+        if self.model_id not in ['ollama', 'nvidia_free']:
             api_key = self.get_api_key()
             if not api_key:
                 QMessageBox.warning(
@@ -1460,11 +1533,16 @@ class ModelConfigWidget(QWidget):
             'openrouter': AIProvider.AI_OPENROUTER,
             'perplexity': AIProvider.AI_PERPLEXITY,
             'ollama': AIProvider.AI_OLLAMA,
+            'nvidia_free': AIProvider.AI_NVIDIA_FREE,
         }
         
         provider = provider_map.get(self.model_id)
         if provider and provider in DEFAULT_MODELS:
             default_name = DEFAULT_MODELS[provider].display_name
+            # 对于 nvidia_free，动态拼接翻译后的名称
+            if self.model_id == 'nvidia_free':
+                free_text = self.i18n.get('free', 'Free')
+                return f"Nvidia AI ({free_text})"
             return self.i18n.get(display_name_key, default_name)
         
         # 回退到 model_id
@@ -2222,7 +2300,13 @@ class ConfigDialog(QWidget):
             provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
             
             # 生成显示名称：Provider + Model
-            provider_name = config.get('display_name', provider_id)
+            # 对于 nvidia_free，动态生成翻译后的名称
+            if provider_id == 'nvidia_free' or config_id == 'nvidia_free':
+                free_text = self.i18n.get('free', 'Free')
+                provider_name = f"Nvidia AI ({free_text})"
+            else:
+                provider_name = config.get('display_name', provider_id)
+            
             model_name = config.get('model', '')
             if model_name:
                 display_text = f"{provider_name} - {model_name}"
@@ -2423,7 +2507,7 @@ class ConfigDialog(QWidget):
         self.load_initial_values()
         
         # 更新 UI
-        self.update_configured_ai_list()
+        self.refresh_ai_list()
         self.update_model_name_display()
     
     def on_model_changed(self, index):

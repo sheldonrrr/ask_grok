@@ -288,49 +288,58 @@ class AskAIPluginUI(InterfaceAction):
             
             # 检查是否有配置的AI模型
             if not self.api or not self.api._ai_model:
-                logger.warning("未配置AI模型，显示友好提示")
-                from PyQt5.QtWidgets import QMessageBox
+                # 检查是否有 nvidia_free 配置
+                prefs = get_prefs()
+                has_nvidia_free = prefs.get('models', {}).get('nvidia_free', {}).get('enabled', False)
                 
-                # 创建自定义消息框
-                msg_box = QMessageBox(self.gui)
-                msg_box.setWindowTitle(self.i18n.get('no_ai_configured_title', 'No AI Configured'))
-                msg_box.setText(self.i18n.get('no_ai_configured_message', 
-                    'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\n'
-                    'Recommended for Beginners:\n'
-                    '• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n'
-                    '• Ollama - Run AI models locally on your computer (completely free and private)\n\n'
-                    'Would you like to open the plugin configuration to set up an AI provider now?'))
-                msg_box.setIcon(QMessageBox.Information)
-                
-                # 添加自定义按钮（按从左到右的顺序）
-                open_settings_btn = msg_box.addButton(
-                    self.i18n.get('open_settings', 'Plugin Configuration'), 
-                    QMessageBox.AcceptRole
-                )
-                ask_anyway_btn = msg_box.addButton(
-                    self.i18n.get('ask_anyway', 'Ask Anyway'), 
-                    QMessageBox.ActionRole
-                )
-                later_btn = msg_box.addButton(
-                    self.i18n.get('later', 'Later'), 
-                    QMessageBox.RejectRole
-                )
-                
-                msg_box.exec_()
-                
-                clicked_btn = msg_box.clickedButton()
-                
-                # 如果用户点击"打开设置"
-                if clicked_btn == open_settings_btn:
-                    self.show_configuration()
-                    return
-                # 如果用户点击"仍要询问"，继续执行，打开询问弹窗
-                elif clicked_btn == ask_anyway_btn:
-                    logger.info("用户选择仍要询问，继续打开询问弹窗")
-                    # 不return，继续执行下面的代码
-                # 如果用户点击"稍后"，直接返回
+                # 如果有 nvidia_free，不显示此提醒（会显示欢迎提醒）
+                if has_nvidia_free:
+                    logger.info("有 Nvidia Free 配置，跳过'未配置AI'提醒")
                 else:
-                    return
+                    logger.warning("未配置AI模型，显示友好提示")
+                    from PyQt5.QtWidgets import QMessageBox
+                    
+                    # 创建自定义消息框
+                    msg_box = QMessageBox(self.gui)
+                    msg_box.setWindowTitle(self.i18n.get('no_ai_configured_title', 'No AI Configured'))
+                    msg_box.setText(self.i18n.get('no_ai_configured_message', 
+                        'Welcome! To start asking questions about your books, you need to configure an AI provider first.\n\n'
+                        'Good News: This plugin now has a FREE tier (Nvidia AI Free) that you can use immediately without any configuration!\n\n'
+                        'Other Recommended Options:\n'
+                        '• Nvidia AI - Get 6 months FREE API access with just your phone number (no credit card required)\n'
+                        '• Ollama - Run AI models locally on your computer (completely free and private)\n\n'
+                        'Would you like to open the plugin configuration to set up an AI provider now?'))
+                    msg_box.setIcon(QMessageBox.Information)
+                    
+                    # 添加自定义按钮（按从左到右的顺序）
+                    open_settings_btn = msg_box.addButton(
+                        self.i18n.get('open_settings', 'Plugin Configuration'), 
+                        QMessageBox.AcceptRole
+                    )
+                    ask_anyway_btn = msg_box.addButton(
+                        self.i18n.get('ask_anyway', 'Ask Anyway'), 
+                        QMessageBox.ActionRole
+                    )
+                    later_btn = msg_box.addButton(
+                        self.i18n.get('later', 'Later'), 
+                        QMessageBox.RejectRole
+                    )
+                    
+                    msg_box.exec_()
+                    
+                    clicked_btn = msg_box.clickedButton()
+                    
+                    # 如果用户点击"打开设置"
+                    if clicked_btn == open_settings_btn:
+                        self.show_configuration()
+                        return
+                    # 如果用户点击"仍要询问"，继续执行，打开询问弹窗
+                    elif clicked_btn == ask_anyway_btn:
+                        logger.info("用户选择仍要询问，继续打开询问弹窗")
+                        # 不return，继续执行下面的代码
+                    # 如果用户点击"稍后"，直接返回
+                    else:
+                        return
             
             # 获取选中的书籍
             rows = self.gui.library_view.selectionModel().selectedRows()
@@ -1756,6 +1765,8 @@ class AskDialog(QDialog):
         # 只有在没有加载历史记录时才检查（新对话），避免与历史记录的AI冲突
         if not has_loaded_history:
             self._check_default_ai_mismatch()
+            # 检查是否需要显示 Nvidia Free 首次使用提醒
+            self._check_nvidia_free_first_use()
 
     def _register_dialog_shortcut(self, action, unique_suffix, shortcut_name, default_keys):
         try:
@@ -2898,7 +2909,13 @@ class AskDialog(QDialog):
                 if not has_token:
                     continue
             
-            display_name = config.get('display_name', ai_id)
+            # 对于 nvidia_free，动态生成当前语言的显示名称
+            if provider_id == 'nvidia_free' or ai_id == 'nvidia_free':
+                free_text = self.i18n.get('free', 'Free')
+                display_name = f"Nvidia AI ({free_text})"
+            else:
+                display_name = config.get('display_name', ai_id)
+            
             model_name = config.get('model', 'unknown')
             full_display = f"{display_name} - {model_name}"
             configured_ais.append((ai_id, full_display))
@@ -3205,6 +3222,72 @@ class AskDialog(QDialog):
             self._update_window_title()
         except Exception as e:
             logger.error(f"切换 API 到面板 AI 失败: {str(e)}")
+    
+    def _check_nvidia_free_first_use(self):
+        """检查是否需要显示 Nvidia Free 首次使用提醒
+        
+        条件：
+        1. 用户从未看过提醒（nvidia_free_first_use_shown = False）
+        2. 当前使用的是 nvidia_free（默认 AI）
+        3. 用户没有配置其他 AI（或者只配置了 nvidia_free）
+        """
+        from PyQt5.QtWidgets import QMessageBox
+        from PyQt5.QtCore import QTimer
+        
+        prefs = get_prefs()
+        
+        # 检查是否已经显示过提醒
+        if prefs.get('nvidia_free_first_use_shown', False):
+            return
+        
+        # 获取当前选中的 AI
+        if not self.response_panels:
+            return
+        
+        first_panel = self.response_panels[0]
+        current_ai_id = first_panel.ai_switcher.currentData()
+        
+        # 只在使用 nvidia_free 时显示提醒
+        if current_ai_id != 'nvidia_free':
+            return
+        
+        # 检查用户是否配置了其他 AI（排除 nvidia_free）
+        models_config = prefs.get('models', {})
+        configured_ais = []
+        for model_id, config in models_config.items():
+            if model_id != 'nvidia_free' and config.get('enabled', False):
+                # 检查是否真正配置了（有 API key 或其他必要配置）
+                if model_id == 'ollama':
+                    # Ollama 不需要 API key，只要启用就算配置了
+                    configured_ais.append(model_id)
+                elif config.get('api_key') or config.get('auth_token'):
+                    configured_ais.append(model_id)
+        
+        # 如果用户已经配置了其他 AI，不显示提醒（说明是老用户）
+        if configured_ais:
+            logger.info(f"用户已配置其他 AI: {configured_ais}，跳过 Nvidia Free 首次使用提醒")
+            # 标记为已显示，避免后续再检查
+            prefs['nvidia_free_first_use_shown'] = True
+            prefs.commit()  # 立即保存，避免重复检查
+            return
+        
+        def show_reminder():
+            """显示首次使用提醒对话框"""
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setWindowTitle(self.i18n.get('nvidia_free_first_use_title', 'Welcome to Ask AI Plugin'))
+            msg_box.setText(self.i18n.get('nvidia_free_first_use_message', 
+                'Now you can just ask without any configuration! The developer maintains a free tier for you, but it may not be very stable. Enjoy!\n\nYou can configure your own AI providers in the settings for better stability.'))
+            msg_box.setStandardButtons(QMessageBox.Ok)
+            msg_box.exec_()
+            
+            # 标记为已显示
+            prefs['nvidia_free_first_use_shown'] = True
+            prefs.commit()  # 立即保存，避免重复显示
+            logger.info("已显示 Nvidia Free 首次使用提醒")
+        
+        # 延迟 300ms 后显示提醒（在 AI 不匹配对话框之后）
+        QTimer.singleShot(300, show_reminder)
     
     def _save_panel_ai_selections(self):
         """保存所有面板的AI选择到配置"""

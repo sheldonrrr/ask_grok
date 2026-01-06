@@ -48,6 +48,7 @@ class APIClient:
         'openai': AIProvider.AI_OPENAI,
         'anthropic': AIProvider.AI_ANTHROPIC,
         'nvidia': AIProvider.AI_NVIDIA,
+        'nvidia_free': AIProvider.AI_NVIDIA_FREE,
         'openrouter': AIProvider.AI_OPENROUTER,
         'perplexity': AIProvider.AI_PERPLEXITY,
         'ollama': AIProvider.AI_OLLAMA

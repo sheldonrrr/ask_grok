@@ -201,3 +201,6 @@ Thumbs.db
 
 # Project specific
 *.zip
+
+# Backend folder (managed in separate repository)
+backend/

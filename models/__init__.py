@@ -12,6 +12,7 @@ from .custom import CustomModel
 from .openai import OpenAIModel
 from .anthropic import AnthropicModel
 from .nvidia import NvidiaModel
+from .nvidia_free import NvidiaFreeModel
 from .openrouter import OpenRouterModel
 from .perplexity import PerplexityModel
 from .ollama import OllamaModel
@@ -24,9 +25,10 @@ AIModelFactory.register_model('custom', CustomModel)
 AIModelFactory.register_model('openai', OpenAIModel)
 AIModelFactory.register_model('anthropic', AnthropicModel)
 AIModelFactory.register_model('nvidia', NvidiaModel)
+AIModelFactory.register_model('nvidia_free', NvidiaFreeModel)
 AIModelFactory.register_model('openrouter', OpenRouterModel)
 AIModelFactory.register_model('perplexity', PerplexityModel)
 AIModelFactory.register_model('ollama', OllamaModel)
 
 # 导出公共接口
-__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'OpenRouterModel', 'PerplexityModel', 'OllamaModel']
+__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'NvidiaFreeModel', 'OpenRouterModel', 'PerplexityModel', 'OllamaModel']
