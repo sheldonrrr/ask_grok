@@ -22,7 +22,19 @@ class FinnishTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'Tietoja kirjasta "{title}": Tekijä: {author}, Kustantaja: {publisher}, Julkaisuvuosi: {pubyear}, kirjan kieli: {language}, Sarja: {series}, Kysymykseni on: {query}'
+        return '''Konteksti: Autat calibre-sovelluksen (http://calibre-ebook.com), tehokkaan e-kirjojen hallintasovelluksen, käyttäjää "Ask AI Plugin" -liitännäisen kautta. Tämä liitännäinen mahdollistaa käyttäjien esittää kysymyksiä calibre-kirjastossaan olevista kirjoista. Huomautus: Tämä liitännäinen voi vastata vain valitun kirjan sisältöä, teemoja tai aiheeseen liittyviä kysymyksiä - se ei voi suoraan muokata kirjan metatietoja tai suorittaa calibre-toimintoja.
+
+Kirjan tiedot:
+Otsikko: "{title}"
+Tekijä: {author}
+Kustantaja: {publisher}
+Julkaisuvuosi: {pubyear}
+Kieli: {language}
+Sarja: {series}
+
+Käyttäjän kysymys: {query}
+
+Anna hyödyllinen vastaus kirjan tietojen ja tietämyksesi perusteella.'''
     
     @property
     def suggestion_template(self) -> str:

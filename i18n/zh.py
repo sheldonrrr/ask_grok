@@ -22,7 +22,19 @@ class SimplifiedChineseTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return '关于书籍 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 语言: {language}, 系列: {series}, 我的问题是: {query}'
+        return '''背景说明：你正在通过"Ask AI Plugin"插件协助 calibre (http://calibre-ebook.com) 电子书管理软件的用户。该插件允许用户针对 calibre 书库中的书籍提问。注意：本插件只能回答关于所选书籍的内容、主题或相关话题的问题，无法直接修改书籍元数据或执行 calibre 操作。
+
+书籍信息：
+书名："{title}"
+作者：{author}
+出版社：{publisher}
+出版年份：{pubyear}
+语言：{language}
+系列：{series}
+
+用户问题：{query}
+
+请基于书籍信息和你的知识提供有帮助的回答。'''
     
     @property
     def suggestion_template(self) -> str:

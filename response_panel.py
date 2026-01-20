@@ -56,6 +56,9 @@ class ResponsePanel(QWidget):
         # 当前问题（用于按钮状态判断）
         self.current_question = ""
         
+        # 存储原始Markdown文本（用于复制Markdown格式）
+        self._original_markdown_text = ""
+        
         self.setup_ui()
         
     def setup_ui(self):
@@ -481,11 +484,26 @@ class ResponsePanel(QWidget):
         return self.response_area.toPlainText()
     
     def _get_clean_text(self):
-        """获取干净的文本内容（无HTML标签和CSS）
+        """获取干净的文本内容（根据copy_format返回不同格式）
         
         Returns:
-            str: 清理后的纯文本
+            str: 根据copy_format设置返回Markdown或纯文本
         """
+        if self.copy_format == 'markdown':
+            # 尝试从ResponseHandler获取原始Markdown文本
+            if self.response_handler and hasattr(self.response_handler, '_response_text'):
+                original_text = self.response_handler._response_text
+                if original_text:
+                    return original_text
+            # 如果没有，尝试从流式响应获取
+            if self.response_handler and hasattr(self.response_handler, '_stream_response'):
+                stream_text = self.response_handler._stream_response
+                if stream_text:
+                    return stream_text
+            # 如果都没有，使用存储的原始文本
+            if self._original_markdown_text:
+                return self._original_markdown_text
+        
         # toPlainText() 已经自动移除所有HTML标签和CSS，返回纯文本
         return self.response_area.toPlainText()
     
@@ -494,8 +512,9 @@ class ResponsePanel(QWidget):
         from PyQt5.QtWidgets import QApplication
         clipboard = QApplication.clipboard()
         
-        # 两种格式都使用纯文本（toPlainText已经移除所有HTML/CSS）
-        # markdown和plain text在当前实现中是相同的，因为AI返回的就是纯文本
+        # 根据copy_format设置返回不同格式的文本
+        # 'markdown': 返回原始Markdown文本（保留**bold**、`code`等格式符号）
+        # 'plain': 返回纯文本（移除所有HTML/CSS和Markdown符号）
         response_text = self._get_clean_text()
         
         if response_text.strip():

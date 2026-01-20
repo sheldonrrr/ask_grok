@@ -782,6 +782,9 @@ class ResponseHandler(QObject):
         if not text:
             self.response_area.setText(self.i18n.get('no_response', 'No response'))
             return
+        
+        # 存储原始Markdown文本（用于复制Markdown格式）
+        self._response_text = text
             
         self._stop_all_timers()  # 停止加载动画
         
