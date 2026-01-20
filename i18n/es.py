@@ -178,6 +178,8 @@ class SpanishTranslation(BaseTranslation):
             'export_history_btn': 'Exportar historial como PDF',
             'copy_mode_response': 'Respuesta',
             'copy_mode_qa': 'P&R',
+            'copy_format_plain': 'Texto plano',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'P&R actual',
             'export_mode_history': 'Historial',
             

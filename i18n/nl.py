@@ -178,6 +178,8 @@ class DutchTranslation(BaseTranslation):
             'export_history_btn': 'Exporteer geschiedenis als PDF',
             'copy_mode_response': 'Antwoord',
             'copy_mode_qa': 'V&A',
+            'copy_format_plain': 'Platte tekst',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Huidige V&A',
             'export_mode_history': 'Geschiedenis',
 

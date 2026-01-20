@@ -112,6 +112,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'export_history_btn': '匯出歷史記錄為PDF',
         'copy_mode_response': '回答',
         'copy_mode_qa': '問答',
+        'copy_format_plain': '純文字',
+        'copy_format_markdown': 'Markdown',
         'export_mode_current': '當前問答',
         'export_mode_history': '歷史記錄',
         

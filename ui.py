@@ -1062,7 +1062,7 @@ class TabDialog(QDialog):
         self.reddit_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
         self.reddit_link.setOpenExternalLinks(True)
         self.reddit_link.setCursor(Qt.PointingHandCursor)
-        self.reddit_link.setText('<a href="https://www.reddit.com/r/AskGrokPlugin/">Reddit</a>')
+        self.reddit_link.setText('<a href="https://www.reddit.com/r/AskAIPlugin_calibre/">Reddit</a>')
         button_layout.addWidget(self.reddit_link)
         button_layout.addSpacing(12)
         

@@ -167,6 +167,7 @@ class ResponsePanel(QWidget):
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         self.copy_mode = prefs.get('copy_mode', 'response')  # 'response' or 'qa'
+        self.copy_format = prefs.get('copy_format', 'plain')  # 'plain' or 'markdown'
         self.export_mode = prefs.get('export_mode', 'current')  # 'current' or 'history'
         parallel_ai_count = prefs.get('parallel_ai_count', 1)
         
@@ -184,6 +185,14 @@ class ResponsePanel(QWidget):
         self.copy_response_action.triggered.connect(lambda: self._switch_copy_mode('response'))
         self.copy_qa_action = copy_menu.addAction(self.i18n.get('copy_mode_qa', 'Q&A'))
         self.copy_qa_action.triggered.connect(lambda: self._switch_copy_mode('qa'))
+        
+        # 添加分隔符和格式选项
+        copy_menu.addSeparator()
+        self.copy_plain_action = copy_menu.addAction(self.i18n.get('copy_format_plain', 'Plain Text'))
+        self.copy_plain_action.triggered.connect(lambda: self._switch_copy_format('plain'))
+        self.copy_markdown_action = copy_menu.addAction(self.i18n.get('copy_format_markdown', 'Markdown'))
+        self.copy_markdown_action.triggered.connect(lambda: self._switch_copy_format('markdown'))
+        
         self.copy_btn.setMenu(copy_menu)
         self._update_copy_menu_checkmarks()
         
@@ -471,11 +480,24 @@ class ResponsePanel(QWidget):
         """
         return self.response_area.toPlainText()
     
+    def _get_clean_text(self):
+        """获取干净的文本内容（无HTML标签和CSS）
+        
+        Returns:
+            str: 清理后的纯文本
+        """
+        # toPlainText() 已经自动移除所有HTML标签和CSS，返回纯文本
+        return self.response_area.toPlainText()
+    
     def copy_response(self):
         """复制响应内容到剪贴板"""
         from PyQt5.QtWidgets import QApplication
         clipboard = QApplication.clipboard()
-        response_text = self.response_area.toPlainText()
+        
+        # 两种格式都使用纯文本（toPlainText已经移除所有HTML/CSS）
+        # markdown和plain text在当前实现中是相同的，因为AI返回的就是纯文本
+        response_text = self._get_clean_text()
+        
         if response_text.strip():
             clipboard.setText(response_text)
             self._show_copy_tooltip(self.copy_btn, self.i18n.get('copied', 'Copied!'))
@@ -491,7 +513,8 @@ class ResponsePanel(QWidget):
         if hasattr(self.parent_dialog, 'input_area') and self.parent_dialog.input_area:
             question = self.parent_dialog.input_area.toPlainText().strip()
         
-        response = self.response_area.toPlainText().strip()
+        # 获取干净的响应文本
+        response = self._get_clean_text()
         
         if not question and not response:
             return
@@ -645,6 +668,16 @@ class ResponsePanel(QWidget):
             ('✓ ' if self.copy_mode == 'qa' else '') + 
             self.i18n.get('copy_mode_qa', 'Q&A')
         )
+        
+        # 更新格式选项的勾选标记
+        self.copy_plain_action.setText(
+            ('✓ ' if self.copy_format == 'plain' else '') + 
+            self.i18n.get('copy_format_plain', 'Plain Text')
+        )
+        self.copy_markdown_action.setText(
+            ('✓ ' if self.copy_format == 'markdown' else '') + 
+            self.i18n.get('copy_format_markdown', 'Markdown')
+        )
     
     def _update_export_menu_checkmarks(self):
         """更新导出菜单的勾选标记"""
@@ -694,6 +727,16 @@ class ResponsePanel(QWidget):
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         prefs['copy_mode'] = mode
+    
+    def _switch_copy_format(self, format_type):
+        """切换复制格式"""
+        self.copy_format = format_type
+        self._update_copy_menu_checkmarks()
+        
+        # 保存到config
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        prefs = get_prefs()
+        prefs['copy_format'] = format_type
     
     def _switch_export_mode(self, mode):
         """切换导出模式"""

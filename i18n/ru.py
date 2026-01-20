@@ -178,6 +178,8 @@ class RussianTranslation(BaseTranslation):
             'export_history_btn': 'Экспорт истории в PDF',
             'copy_mode_response': 'Ответ',
             'copy_mode_qa': 'В&О',
+            'copy_format_plain': 'Простой текст',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Текущий В&О',
             'export_mode_history': 'История',
 

@@ -112,6 +112,8 @@ class JapaneseTranslation(BaseTranslation):
             'export_history_btn': '履歴をPDFにエクスポート',
             'copy_mode_response': '回答',
             'copy_mode_qa': 'Q&A',
+            'copy_format_plain': 'プレーンテキスト',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': '現在のQ&A',
             'export_mode_history': '履歴',
             

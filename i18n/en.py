@@ -178,6 +178,8 @@ class EnglishTranslation(BaseTranslation):
             'export_history_btn': 'Export History as PDF',
             'copy_mode_response': 'Answer',
             'copy_mode_qa': 'Q&A',
+            'copy_format_plain': 'Plain Text',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Current Q&A',
             'export_mode_history': 'History',
             

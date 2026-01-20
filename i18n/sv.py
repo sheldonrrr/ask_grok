@@ -178,6 +178,8 @@ class SwedishTranslation(BaseTranslation):
             'export_history_btn': 'Exportera historik som PDF',
             'copy_mode_response': 'Svar',
             'copy_mode_qa': 'F&S',
+            'copy_format_plain': 'Ren text',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Aktuell F&S',
             'export_mode_history': 'Historik',
 

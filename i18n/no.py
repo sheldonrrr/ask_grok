@@ -178,6 +178,8 @@ class NorwegianTranslation(BaseTranslation):
             'export_history_btn': 'Eksporter historikk som PDF',
             'copy_mode_response': 'Svar',
             'copy_mode_qa': 'S&S',
+            'copy_format_plain': 'Ren tekst',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Gjeldende S&S',
             'export_mode_history': 'Historikk',
 

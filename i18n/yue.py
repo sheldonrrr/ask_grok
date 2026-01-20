@@ -178,6 +178,8 @@ class CantoneseTranslation(BaseTranslation):
             'export_history_btn': '導出歷史紀錄為 PDF', # Export History as PDF
             'copy_mode_response': '答案', # Answer
             'copy_mode_qa': '問答', # Q&A
+            'copy_format_plain': '純文字', # Plain Text
+            'copy_format_markdown': 'Markdown', # Markdown
             'export_mode_current': '目前問答', # Current Q&A
             'export_mode_history': '歷史紀錄', # History
 

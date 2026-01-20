@@ -112,6 +112,8 @@ class FrenchTranslation(BaseTranslation):
             'export_history_btn': 'Exporter l\'Historique en PDF',
             'copy_mode_response': 'Réponse',
             'copy_mode_qa': 'Q&R',
+            'copy_format_plain': 'Texte brut',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Q&R Actuel',
             'export_mode_history': 'Historique',
             

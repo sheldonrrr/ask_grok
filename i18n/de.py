@@ -112,6 +112,8 @@ class GermanTranslation(BaseTranslation):
             'export_history_btn': 'Verlauf als PDF exportieren',
             'copy_mode_response': 'Antwort',
             'copy_mode_qa': 'F&A',
+            'copy_format_plain': 'Klartext',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Aktuelles F&A',
             'export_mode_history': 'Verlauf',
             

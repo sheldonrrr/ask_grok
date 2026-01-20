@@ -174,6 +174,8 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'export_history_btn': '导出历史记录为PDF',
             'copy_mode_response': '回答',
             'copy_mode_qa': '问答',
+            'copy_format_plain': '纯文本',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': '当前问答',
             'export_mode_history': '历史记录',
             

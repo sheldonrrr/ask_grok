@@ -178,6 +178,8 @@ class FinnishTranslation(BaseTranslation):
             'export_history_btn': 'Vie historia PDF-muodossa',
             'copy_mode_response': 'Vastaus',
             'copy_mode_qa': 'K&V',
+            'copy_format_plain': 'Pelkkä teksti',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Nykyinen K&V',
             'export_mode_history': 'Historia',
             
