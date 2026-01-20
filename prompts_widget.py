@@ -530,13 +530,20 @@ class PromptsWidget(QWidget):
             
         if not saved_value:
             return True
-            
+        
+        # 规范化保存的值：去除首尾空白，统一换行符
+        normalized_saved = saved_value.strip().replace('\r\n', '\n').replace('\r', '\n')
+        
         from .i18n import get_all_languages
         all_languages = get_all_languages()
         
         for lang_code in all_languages.keys():
             default_value = get_default_func(lang_code)
-            if saved_value.strip() == default_value.strip():
+            # 规范化默认值：去除首尾空白，统一换行符
+            normalized_default = default_value.strip().replace('\r\n', '\n').replace('\r', '\n')
+            
+            if normalized_saved == normalized_default:
+                logger.debug(f"匹配到语言 {lang_code} 的默认模板")
                 return True
         
         return False

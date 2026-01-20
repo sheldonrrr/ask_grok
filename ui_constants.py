@@ -84,11 +84,12 @@ def get_groupbox_style(border_style="none"):
         border_style: 边框样式 "solid", "dashed" 或 "none"（默认无边框，使用背景色区分）
     """
     if border_style == "none":
-        # 无边框样式，使用浅色背景区分区域
+        # 无边框样式，使用背景色区分区域
+        # 使用 palette(window) 在暗色模式下提供更好的对比度
         return f"""
             QGroupBox {{
                 border: none;
-                background-color: {BG_COLOR_ALTERNATE};
+                background-color: palette(window);
                 border-radius: 6px;
                 padding: {PADDING_LARGE}px;
                 margin-top: 0px;
