@@ -1862,11 +1862,10 @@ class ConfigDialog(QWidget):
         content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
         content_widget.setObjectName("content_container")
         content_layout = QVBoxLayout()
-        # 使用紧凑间距，因为GroupBox已经有虚线框区分了
-        from .ui_constants import SPACING_ASK_COMPACT, SPACING_SMALL
-        content_layout.setSpacing(SPACING_ASK_COMPACT)  # 区域之间使用紧凑间距（4px）
-        # 添加左右边距，为 GroupBox 的 margin 留出空间，避免水平滚动条
-        content_layout.setContentsMargins(SPACING_SMALL, 0, SPACING_SMALL, 0)
+        # 使用统一的Tab布局规范
+        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, get_tab_scroll_area_style
+        content_layout.setSpacing(TAB_CONTENT_SPACING)
+        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
         content_widget.setLayout(content_layout)
         
         # 1. 顶部：语言选择

@@ -22,19 +22,7 @@ class PortugueseTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return '''Contexto: Você está auxiliando um usuário do calibre (http://calibre-ebook.com), um poderoso aplicativo de gerenciamento de e-books, através do plugin "Ask AI Plugin". Este plugin permite que os usuários façam perguntas sobre livros em sua biblioteca calibre. Nota: Este plugin só pode responder perguntas sobre o conteúdo, temas ou tópicos relacionados do livro selecionado - não pode modificar diretamente os metadados do livro nem executar operações do calibre.
-
-Informações do livro:
-Título: "{title}"
-Autor: {author}
-Editora: {publisher}
-Ano de Publicação: {pubyear}
-Idioma: {language}
-Série: {series}
-
-Pergunta do usuário: {query}
-
-Por favor, forneça uma resposta útil com base nas informações do livro e seu conhecimento.'''
+        return 'Contexto: Você está auxiliando um usuário do calibre (http://calibre-ebook.com), um poderoso aplicativo de gerenciamento de e-books, através do plugin "Ask AI Plugin". Este plugin permite que os usuários façam perguntas sobre livros em sua biblioteca calibre. Nota: Este plugin só pode responder perguntas sobre o conteúdo, temas ou tópicos relacionados do livro selecionado - não pode modificar diretamente os metadados do livro nem executar operações do calibre. Informações do livro: Título: "{title}", Autor: {author}, Editora: {publisher}, Ano de Publicação: {pubyear}, Idioma: {language}, Série: {series}. Pergunta do usuário: {query}. Por favor, forneça uma resposta útil com base nas informações do livro e seu conhecimento.'
 
     @property
     def suggestion_template(self) -> str:

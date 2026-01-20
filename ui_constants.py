@@ -165,6 +165,66 @@ FORM_LABEL_WIDTH = 150          # 表单标签宽度
 FORM_SPACING = SPACING_MEDIUM   # 表单项之间的间距
 FORM_MARGIN = MARGIN_MEDIUM     # 表单边距
 
+# ============ Tab 内容布局规范 ============
+# 统一所有配置 Tab 的内边距和间距
+# 两层间距结构：外层（Tab容器边距）+ 内层（滚动区域内容边距）
+TAB_OUTER_MARGIN = SPACING_SMALL        # Tab 外层边距 (8px)
+TAB_CONTENT_MARGIN = SPACING_SMALL      # Tab 内容的上下左右边距 (8px)
+TAB_CONTENT_SPACING = SPACING_ASK_COMPACT  # Tab 内容区域之间的间距 (4px)
+
+def setup_tab_widget_layout(widget):
+    """
+    为 Tab Widget 设置统一的主布局
+    
+    所有配置 Tab 都应该调用此函数来确保布局完全一致。
+    
+    Args:
+        widget: QWidget 实例（Tab 页面）
+    
+    Returns:
+        QVBoxLayout: 已配置好的主布局
+    
+    使用示例:
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            main_layout = setup_tab_widget_layout(self)
+            # 然后添加内容到 main_layout
+    """
+    from PyQt5.QtWidgets import QVBoxLayout
+    
+    layout = QVBoxLayout()
+    layout.setContentsMargins(TAB_OUTER_MARGIN, TAB_OUTER_MARGIN, TAB_OUTER_MARGIN, TAB_OUTER_MARGIN)
+    layout.setSpacing(0)
+    widget.setLayout(layout)
+    return layout
+
+def get_tab_scroll_area_style(object_name="tab_scroll"):
+    """
+    获取统一的 Tab 滚动区域样式
+    
+    Args:
+        object_name: QScrollArea 的 objectName
+    
+    Returns:
+        str: 滚动区域的 CSS 样式字符串
+    """
+    return f"""
+        QScrollArea#{object_name} {{
+            padding: 0px;
+            margin: 0px;
+            border: none;
+        }}
+        QScrollArea#{object_name} > QWidget {{
+            background: transparent;
+        }}
+        QScrollArea#{object_name} QWidget#qt_scrollarea_viewport {{
+            background: transparent;
+            border: none;
+            margin: 0px;
+            padding: 0px;
+        }}
+    """
+
 # ============ 标准按钮样式 ============
 STANDARD_BUTTON_MIN_WIDTH = 120  # 标准按钮最小宽度
 STANDARD_BUTTON_PADDING = "5px 12px"  # 标准按钮内边距

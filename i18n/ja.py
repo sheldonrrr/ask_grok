@@ -22,19 +22,7 @@ class JapaneseTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return '''背景：あなたは「Ask AI Plugin」プラグインを通じて、calibre (http://calibre-ebook.com) という強力な電子書籍管理アプリケーションのユーザーをサポートしています。このプラグインにより、ユーザーは calibre ライブラリ内の書籍について質問できます。注意：このプラグインは、選択された書籍の内容、テーマ、または関連トピックに関する質問にのみ回答でき、書籍のメタデータを直接変更したり、calibre の操作を実行したりすることはできません。
-
-書籍情報：
-タイトル：「{title}」
-著者：{author}
-出版社：{publisher}
-出版年：{pubyear}
-言語：{language}
-シリーズ：{series}
-
-ユーザーの質問：{query}
-
-書籍情報とあなたの知識に基づいて、役立つ回答を提供してください。'''
+        return '背景：あなたは「Ask AI Plugin」プラグインを通じて、calibre (http://calibre-ebook.com) という強力な電子書籍管理アプリケーションのユーザーをサポートしています。このプラグインにより、ユーザーは calibre ライブラリ内の書籍について質問できます。注意：このプラグインは、選択された書籍の内容、テーマ、または関連トピックに関する質問にのみ回答でき、書籍のメタデータを直接変更したり、calibre の操作を実行したりすることはできません。書籍情報：タイトル：「{title}」、著者：{author}、出版社：{publisher}、出版年：{pubyear}、言語：{language}、シリーズ：{series}。ユーザーの質問：{query}。書籍情報とあなたの知識に基づいて、役立つ回答を提供してください。'
     
     @property
     def suggestion_template(self) -> str:

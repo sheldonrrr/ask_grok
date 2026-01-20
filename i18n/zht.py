@@ -22,19 +22,7 @@ class TraditionalChineseTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return '''背景說明：你正在通過「Ask AI Plugin」插件協助 calibre (http://calibre-ebook.com) 電子書管理軟體的用戶。該插件允許用戶針對 calibre 書庫中的書籍提問。注意：本插件只能回答關於所選書籍的內容、主題或相關話題的問題，無法直接修改書籍元數據或執行 calibre 操作。
-
-書籍資訊：
-書名：「{title}」
-作者：{author}
-出版社：{publisher}
-出版年份：{pubyear}
-語言：{language}
-系列：{series}
-
-用戶問題：{query}
-
-請基於書籍資訊和你的知識提供有幫助的回答。'''
+        return '背景說明：你正在通過「Ask AI Plugin」插件協助 calibre (http://calibre-ebook.com) 電子書管理軟體的用戶。該插件允許用戶針對 calibre 書庫中的書籍提問。注意：本插件只能回答關於所選書籍的內容、主題或相關話題的問題，無法直接修改書籍元數據或執行 calibre 操作。書籍資訊：書名：「{title}」，作者：{author}，出版社：{publisher}，出版年份：{pubyear}，語言：{language}，系列：{series}。用戶問題：{query}。請基於書籍資訊和你的知識提供有幫助的回答。'
     
     @property
     def suggestion_template(self) -> str:

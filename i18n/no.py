@@ -22,19 +22,7 @@ class NorwegianTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return '''Kontekst: Du hjelper en bruker av calibre (http://calibre-ebook.com), en kraftig e-bokhåndteringsapplikasjon, gjennom "Ask AI Plugin". Denne plugin-en lar brukere stille spørsmål om bøker i sitt calibre-bibliotek. Merk: Denne plugin-en kan bare svare på spørsmål om den valgte bokens innhold, temaer eller relaterte emner - den kan ikke direkte endre bokmetadata eller utføre calibre-operasjoner.
-
-Bokinformasjon:
-Tittel: "{title}"
-Forfatter: {author}
-Utgiver: {publisher}
-Utgivelsesår: {pubyear}
-Språk: {language}
-Serie: {series}
-
-Brukerens spørsmål: {query}
-
-Vennligst gi et nyttig svar basert på bokinformasjonen og din kunnskap.'''
+        return 'Kontekst: Du hjelper en bruker av calibre (http://calibre-ebook.com), en kraftig e-bokhåndteringsapplikasjon, gjennom "Ask AI Plugin". Denne plugin-en lar brukere stille spørsmål om bøker i sitt calibre-bibliotek. Merk: Denne plugin-en kan bare svare på spørsmål om den valgte bokens innhold, temaer eller relaterte emner - den kan ikke direkte endre bokmetadata eller utføre calibre-operasjoner. Bokinformasjon: Tittel: "{title}", Forfatter: {author}, Utgiver: {publisher}, Utgivelsesår: {pubyear}, Språk: {language}, Serie: {series}. Brukerens spørsmål: {query}. Vennligst gi et nyttig svar basert på bokinformasjonen og din kunnskap.'
 
     @property
     def suggestion_template(self) -> str:

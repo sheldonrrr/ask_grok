@@ -33,22 +33,28 @@ class PromptsWidget(QWidget):
         
     def setup_ui(self):
         """设置UI"""
-        # 创建主布局
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(main_layout)
+        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, setup_tab_widget_layout, get_tab_scroll_area_style
+        
+        # 创建主布局 - 使用统一的 Tab 布局函数
+        main_layout = setup_tab_widget_layout(self)
         
         # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.NoFrame)
         scroll.setObjectName("prompts_scroll")
+        scroll.setStyleSheet(get_tab_scroll_area_style("prompts_scroll"))
+        # 直接设置 viewport 的边距
+        if scroll.viewport():
+            scroll.viewport().setContentsMargins(0, 0, 0, 0)
         
         # 创建内容容器
         content_widget = QWidget()
+        content_widget.setStyleSheet("QWidget#prompts_content_container { background: transparent; border: none; }")
+        content_widget.setObjectName("prompts_content_container")
         content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(SPACING_SMALL, 0, SPACING_SMALL, 0)
-        content_layout.setSpacing(SPACING_ASK_COMPACT)  # 使用紧凑间距匹配General Tab
+        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
+        content_layout.setSpacing(TAB_CONTENT_SPACING)
         content_widget.setLayout(content_layout)
         
         # 添加语言偏好设置部分
@@ -531,18 +537,13 @@ class PromptsWidget(QWidget):
         if not saved_value:
             return True
         
-        # 规范化保存的值：去除首尾空白，统一换行符
-        normalized_saved = saved_value.strip().replace('\r\n', '\n').replace('\r', '\n')
-        
         from .i18n import get_all_languages
         all_languages = get_all_languages()
         
         for lang_code in all_languages.keys():
             default_value = get_default_func(lang_code)
-            # 规范化默认值：去除首尾空白，统一换行符
-            normalized_default = default_value.strip().replace('\r\n', '\n').replace('\r', '\n')
-            
-            if normalized_saved == normalized_default:
+            # 简单比较：所有模板现在都是单行字符串，只需去除首尾空白
+            if saved_value.strip() == default_value.strip():
                 logger.debug(f"匹配到语言 {lang_code} 的默认模板")
                 return True
         

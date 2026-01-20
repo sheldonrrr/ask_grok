@@ -520,9 +520,9 @@ class AskGrokConfigWidget(QWidget):
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         
-        # 创建主布局
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        # 创建主布局 - 使用统一的 Tab 布局函数
+        from .ui_constants import setup_tab_widget_layout
+        layout = setup_tab_widget_layout(self)
         
         # 复用现有的 ConfigDialog
         self.config_dialog = ConfigDialog(self.gui)
@@ -553,15 +553,16 @@ class AboutWidget(QWidget):
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         
-        # 创建主布局
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        # 创建主布局 - 使用统一的 Tab 布局函数
+        from .ui_constants import setup_tab_widget_layout
+        layout = setup_tab_widget_layout(self)
         
         # 创建文本浏览器
-        from PyQt5.QtWidgets import QTextBrowser
+        from PyQt5.QtWidgets import QTextBrowser, QFrame
         self.text_browser = QTextBrowser()
         self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击链接
         self.text_browser.setReadOnly(True)
+        self.text_browser.setFrameShape(QFrame.NoFrame)  # 移除边框，与其他 Tab 保持一致
         layout.addWidget(self.text_browser)
         
         # 加载内容
@@ -648,7 +649,7 @@ class AboutWidget(QWidget):
                 line-height: 1.65; 
                 padding: 20px;
                 color: palette(window-text);
-                background: palette(base);
+                background: transparent;
             }}
             h1 {{ 
                 color: palette(window-text); 
@@ -698,15 +699,16 @@ class TutorialWidget(QWidget):
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
         
-        # 创建主布局
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        # 创建主布局 - 使用统一的 Tab 布局函数
+        from .ui_constants import setup_tab_widget_layout
+        layout = setup_tab_widget_layout(self)
         
         # 创建文本浏览器
-        from PyQt5.QtWidgets import QTextBrowser
+        from PyQt5.QtWidgets import QTextBrowser, QFrame
         self.text_browser = QTextBrowser()
         self.text_browser.setOpenExternalLinks(False)  # 禁用链接点击
         self.text_browser.setReadOnly(True)  # 只读
+        self.text_browser.setFrameShape(QFrame.NoFrame)  # 移除边框，与其他 Tab 保持一致
         layout.addWidget(self.text_browser)
         
         # 加载教程内容
@@ -881,7 +883,7 @@ class TutorialWidget(QWidget):
                 line-height: 1.65; 
                 padding: 20px;
                 color: palette(window-text);
-                background: palette(base);
+                background: transparent;
             }}
             h1 {{ 
                 color: palette(window-text); 
