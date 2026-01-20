@@ -520,8 +520,47 @@ class PromptsWidget(QWidget):
             # 禁用保存按钮（因为已自动保存）
             self._disable_save_button()
             
+    def _is_legacy_default_template(self, saved_value):
+        """检查是否是 v1.4.0 或更早版本的旧默认模板
+        
+        v1.4.0 的默认模板特征：
+        1. 包含所有必需的占位符 ({title}, {author}, {query})
+        2. 长度较短（< 300 字符），因为只是简单列出书籍信息
+        3. 不包含 v1.4.1 新增的详细上下文说明（如 "calibre", "Ask AI Plugin" 等）
+        
+        Args:
+            saved_value: 保存的模板值
+            
+        Returns:
+            bool: 如果是旧版本默认模板返回 True
+        """
+        if not saved_value:
+            return False
+        
+        saved_stripped = saved_value.strip()
+        
+        # 必需的占位符
+        required_placeholders = ['{title}', '{author}', '{query}']
+        has_all_placeholders = all(p in saved_stripped for p in required_placeholders)
+        
+        if not has_all_placeholders:
+            return False
+        
+        # v1.4.0 的模板较短（通常 < 300 字符），v1.4.1 的模板更详细（> 400 字符）
+        is_short_template = len(saved_stripped) < 350
+        
+        # v1.4.1 的模板包含更详细的上下文说明
+        has_new_context = 'calibre' in saved_stripped.lower() or 'ask ai' in saved_stripped.lower()
+        
+        # 如果包含所有占位符、长度较短、且不包含新版本的上下文说明，则认为是旧版本模板
+        if is_short_template and not has_new_context:
+            logger.debug(f"检测到 v1.4.0 旧版本默认模板（长度: {len(saved_stripped)}）")
+            return True
+        
+        return False
+    
     def _is_default_value_from_any_language(self, saved_value, get_default_func):
-        """检查保存的值是否是任何语言的默认值
+        """检查保存的值是否是任何语言的默认值（包括旧版本）
         
         Args:
             saved_value: 保存的值
@@ -536,6 +575,12 @@ class PromptsWidget(QWidget):
             
         if not saved_value:
             return True
+        
+        # 检查是否是 v1.4.0 旧版本的默认模板（仅对 Ask Prompts 模板进行检查）
+        if get_default_func == get_default_template:
+            if self._is_legacy_default_template(saved_value):
+                logger.info("检测到 v1.4.0 旧版本默认模板，将使用新版本默认模板")
+                return True
         
         from .i18n import get_all_languages
         all_languages = get_all_languages()
