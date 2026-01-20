@@ -233,6 +233,9 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
     """
     获取标准按钮样式
     
+    注意：不设置 hover 和 pressed 样式，让 Qt 使用系统默认效果。
+    这样可以确保在所有平台（Linux/macOS/Windows）和主题（浅色/深色）下都正常工作。
+    
     Args:
         min_width: 最小宽度（默认 120px）
     
@@ -245,12 +248,6 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             text-align: center;
             min-width: {min_width}px;
             min-height: 1.5em;
-        }}
-        QPushButton:hover {{
-            background: palette(mid);
-        }}
-        QPushButton:pressed {{
-            background: palette(dark);
         }}
     """
 
