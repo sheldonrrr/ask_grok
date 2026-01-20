@@ -11,6 +11,12 @@
 [*][b]Enhanced Default Prompts[/b] - Improved AI understanding of calibre-related questions with updated prompt templates.
 [/list]
 
+[b]Bug Fixes (v1.4.1)[/b]
+[list]
+[*][b]Configuration Tab Layout[/b] - Standardized padding and margins across all configuration tabs for consistent appearance.
+[*][b]Button Hover Effects[/b] - Fixed incorrect hover states for Random Question and Send buttons across different themes and platforms.
+[/list]
+
 ---
 
 ## GitHub Release Notes (v1.4.1)
@@ -21,3 +27,7 @@
 
 ### Improvements
 - **Enhanced Default Prompts** - Improved AI understanding of calibre-related questions with updated prompt templates.
+
+### Bug Fixes
+- **Configuration Tab Layout** - Standardized padding and margins across all configuration tabs for consistent appearance.
+- **Button Hover Effects** - Fixed incorrect hover states for Random Question and Send buttons across different themes and platforms.
