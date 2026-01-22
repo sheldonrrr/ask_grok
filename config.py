@@ -31,7 +31,7 @@ from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, BG_COLOR_ALTERNATE,
+    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
     get_list_widget_style
 )
@@ -189,7 +189,9 @@ prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond
 # Library Chat settings (v1.4.2 MVP)
 prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature
 prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON string)
-prefs.defaults['library_last_update'] = None  # Last update timestamp
+prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
+prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
+prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -215,26 +217,45 @@ def get_prefs(force_reload=False):
             base = calibre_lang.split('_')[0].lower()
 
             # Map calibre language codes to plugin language codes
-            plugin_lang = None
+            # 支持的语言映射表
+            lang_mapping = {
+                'zh': 'zh',      # Chinese Simplified
+                'en': 'en',      # English
+                'ja': 'ja',      # Japanese
+                'fr': 'fr',      # French
+                'de': 'de',      # German
+                'es': 'es',      # Spanish
+                'ru': 'ru',      # Russian
+                'pt': 'pt',      # Portuguese
+                'nl': 'nl',      # Dutch
+                'sv': 'sv',      # Swedish
+                'no': 'no',      # Norwegian
+                'fi': 'fi',      # Finnish
+                'da': 'da',      # Danish
+                'yue': 'yue',    # Cantonese
+            }
+            
+            plugin_lang = lang_mapping.get(base)
+            
+            # Special handling for Chinese variants
             if base == 'zh':
-                # Prefer Traditional for TW/HK/MO, otherwise Simplified
                 upper = calibre_lang.upper()
                 if '_TW' in upper or '_HK' in upper or '_MO' in upper:
-                    plugin_lang = 'zht'
+                    plugin_lang = 'zht'  # Traditional Chinese
                 else:
-                    plugin_lang = 'zh'
-            elif base == 'en':
-                plugin_lang = 'en'
+                    plugin_lang = 'zh'   # Simplified Chinese
 
             supported = {code for code, _ in SUPPORTED_LANGUAGES}
-            if plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
+            if plugin_lang and plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
                 prefs['language'] = plugin_lang
                 # 同时更新模板为对应语言的默认模板
                 prefs['template'] = get_default_template(plugin_lang)
                 prefs['multi_book_template'] = get_multi_book_template(plugin_lang)
                 prefs.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to inherit Calibre language: {e}")
     
     # 确保模板不为空，如果为空则使用当前语言的默认模板
     # 注意：这个检查必须在语言确定之后执行
@@ -3524,12 +3545,26 @@ class LibraryWidget(QWidget):
         layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
         layout.setSpacing(SPACING_MEDIUM)
         
+        # Privacy alert section
+        privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        privacy_title.setStyleSheet(f"font-weight: bold; font-size: 1.1em; color: {TEXT_COLOR_PRIMARY}; padding: {PADDING_MEDIUM}px 0;")
+        layout.addWidget(privacy_title)
+        
+        privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
+            'AI Search uses book metadata (titles and authors) from your library. '
+            'This information will be sent to the AI provider you have configured to process your search queries.'))
+        privacy_alert.setWordWrap(True)
+        privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
+        layout.addWidget(privacy_alert)
+        
+        layout.addSpacing(SPACING_MEDIUM)
+        
         # AI搜索说明
         info_label = QLabel(self.i18n.get('library_info', 
             'AI Search is always enabled. When you don\'t select any books, '
             'you can search your entire library using natural language.'))
         info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: {PADDING_MEDIUM}px;")
+        info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
         layout.addWidget(info_label)
         
         layout.addSpacing(SPACING_SMALL)
@@ -3547,7 +3582,7 @@ class LibraryWidget(QWidget):
         # 状态标签
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
-        self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: {PADDING_MEDIUM}px;")
+        self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
         layout.addWidget(self.status_label)
         
         # 添加弹性空间
@@ -3559,6 +3594,39 @@ class LibraryWidget(QWidget):
         """加载配置值"""
         # AI搜索现在始终启用，确保配置为True
         self.prefs['library_chat_enabled'] = True
+        
+        # 更新状态显示
+        self.update_status_display()
+    
+    def retranslate_ui(self):
+        """更新界面语言"""
+        # 重新获取当前语言的翻译
+        language = self.prefs.get('language', 'en')
+        self.i18n = get_translation(language)
+        
+        # 更新所有文本
+        # 找到并更新各个label
+        for child in self.findChildren(QLabel):
+            text = child.text()
+            # Privacy title
+            if 'Privacy Notice' in text or '隐私提示' in text:
+                child.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+            # Privacy alert
+            elif 'AI Search uses book metadata' in text or 'AI搜索使用您图书馆中的书籍元数据' in text:
+                child.setText(self.i18n.get('ai_search_privacy_alert', 
+                    'AI Search uses book metadata (titles and authors) from your library. '
+                    'This information will be sent to the AI provider you have configured to process your search queries.'))
+            # Info label
+            elif 'AI Search is always enabled' in text or '始终启用' in text or 'AI搜索' in text:
+                child.setText(self.i18n.get('library_info', 
+                    'AI Search is always enabled. When you don\'t select any books, '
+                    'you can search your entire library using natural language.'))
+        
+        # 更新按钮文本
+        if hasattr(self, 'update_button'):
+            self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
+            self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
+                'Extract book titles and authors from your library'))
         
         # 更新状态显示
         self.update_status_display()

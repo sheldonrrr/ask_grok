@@ -375,7 +375,7 @@ class GermanTranslation(BaseTranslation):
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',
-            'pdf_generated_time': 'Generierte Zeit',
+            'pdf_generated_time': 'Erstellungszeit',
             'discard_changes': 'Änderungen Verwerfen',
             'empty_response': 'Leere Antwort von API erhalten',
             'empty_response_after_filter': 'Antwort ist nach dem Filtern von Think-Tags leer',

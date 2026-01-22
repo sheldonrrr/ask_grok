@@ -97,12 +97,16 @@ def update_library_metadata(db, prefs):
         books = []
         for book_id in book_ids:
             try:
-                mi = db.get_metadata(book_id)
-                books.append({
-                    'id': book_id,
-                    'title': mi.title or 'Unknown',
-                    'authors': ', '.join(mi.authors or ['Unknown'])
-                })
+                # 使用 index_is_id=True 确保正确获取元数据
+                mi = db.get_metadata(book_id, index_is_id=True)
+                if mi:
+                    books.append({
+                        'id': book_id,
+                        'title': mi.title or 'Unknown',
+                        'authors': ', '.join(mi.authors or ['Unknown'])
+                    })
+                else:
+                    logger.warning(f"Book {book_id} metadata is None, skipping")
             except Exception as e:
                 logger.warning(f"Failed to get metadata for book {book_id}: {e}")
                 continue
@@ -159,15 +163,40 @@ def build_library_prompt(user_query, prefs):
     if not cached_metadata:
         return user_query
     
-    prompt = f"""You have access to the user's book library. Here are all the books:
+    # 获取当前语言设置
+    language = prefs.get('language', 'en')
+    
+    # 根据语言选择提示词模板
+    if language == 'zh':
+        prompt = f"""您可以访问用户的图书馆。以下是所有书籍：
+
+{cached_metadata}
+
+用户查询：{user_query}
+
+请找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：
+
+- <a href="calibre://book/书籍ID">书名</a> - 作者名
+
+示例：
+- <a href="calibre://book/123">Python编程</a> - Mark Lutz
+- <a href="calibre://book/456">机器学习实战</a> - Peter Harrington
+
+只返回匹配查询的书籍。最多5个结果。"""
+    else:
+        prompt = f"""You have access to the user's book library. Here are all the books:
 
 {cached_metadata}
 
 User query: {user_query}
 
-Please find matching books and return them in this format:
-- Book Title 1 (ID: 123)
-- Book Title 2 (ID: 456)
+Please find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly):
+
+- <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name
+
+Example:
+- <a href="calibre://book/123">Learning Python</a> - Mark Lutz
+- <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington
 
 Only return books that match the query. Maximum 5 results."""
     

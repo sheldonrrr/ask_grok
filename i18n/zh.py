@@ -502,4 +502,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'library_init_required': '没有图书馆数据无法启用AI搜索。当您准备好使用此功能时，请点击“更新图书馆数据”。',
             'ai_search_welcome_title': '欢迎AI搜索',
             'ai_search_welcome_message': '您没有选择任何书籍，AI搜索已启动！\n\n您现在可以使用自然语言搜索整个图书馆。例如，尝试问：\n• “有没有关于Python的书？”\n• “给我看看阿西莫夫的书”\n• “找找关于机器学习的书”\n\nAI会搜索您的图书馆并推荐相关书籍。',
+            'ai_search_mode_info': '正在搜索您的整个图书馆',
+            'ai_search_privacy_title': '隐私提示',
+            'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',
         }

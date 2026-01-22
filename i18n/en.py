@@ -507,4 +507,7 @@ class EnglishTranslation(BaseTranslation):
             'library_init_required': 'AI Search cannot be enabled without library data. Please click "Update Library Data" when you are ready to use this feature.',
             'ai_search_welcome_title': 'Welcome to AI Search',
             'ai_search_welcome_message': 'You haven\'t selected any books, so AI Search is activated!\n\nYou can now search your entire library using natural language. For example, try asking:\n• "Do you have any books about Python?"\n• "Show me books by Isaac Asimov"\n• "Find books about machine learning"\n\nAI will search through your library and recommend relevant books.',
+            'ai_search_mode_info': 'Searching across your entire library',
+            'ai_search_privacy_title': 'Privacy Notice',
+            'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',
         }

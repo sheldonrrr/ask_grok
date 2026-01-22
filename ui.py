@@ -114,10 +114,17 @@ class AskAIPluginUI(InterfaceAction):
         # 添加分隔符
         self.menu.addSeparator()
 
-        # 添加 AI Search 菜单项 - Killer feature!
-        self.library_action = QAction(self.i18n.get('library_search', 'AI Search'), self)
-        self.library_action.triggered.connect(self.show_library)
-        self.menu.addAction(self.library_action)
+        # 添加 AI Search 菜单项（通过 calibre 快捷键系统注册，允许用户在 Preferences -> Shortcuts 中自定义）
+        self.library_action = self.create_menu_action(
+            self.menu,
+            unique_name='open_ai_search',
+            text=self.i18n.get('library_search', 'AI Search'),
+            shortcut='Ctrl+Shift+L',
+            description=None,
+            triggered=self.show_library,
+            shortcut_name='Ask AI: AI Search',
+            persist_shortcut=True,
+        )
 
         # 添加分隔符
         self.menu.addSeparator()
@@ -355,9 +362,17 @@ class AskAIPluginUI(InterfaceAction):
             logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
             
             if not rows or len(rows) == 0:
-                logger.info("没有选中的书籍，检查AI搜索数据")
-                # 检查是否有AI搜索元数据（AI搜索现在始终启用）
+                logger.info("没有选中的书籍，自动更新AI搜索元数据")
+                # 自动更新图书馆元数据（每次触发AI搜索时）
                 prefs = get_prefs()
+                from .utils import update_library_metadata
+                try:
+                    update_library_metadata(self.gui.current_db, prefs)
+                    logger.info("AI搜索元数据已自动更新")
+                except Exception as e:
+                    logger.warning(f"自动更新元数据失败: {e}")
+                
+                # 检查是否有AI搜索元数据
                 library_metadata = prefs.get('library_cached_metadata', '')
                 
                 if library_metadata:
@@ -433,7 +448,11 @@ class AskAIPluginUI(InterfaceAction):
             # 对话框关闭时清除引用
             d.finished.connect(lambda result: setattr(self, 'ask_dialog', None))
             
-            d.exec_()
+            # 使用 show() 而不是 exec_() 使对话框非阻塞
+            # 这样打开书籍时对话框可以保持打开状态
+            d.show()
+            d.raise_()
+            d.activateWindow()
             
         except Exception as e:
             logger.error(f"show_dialog() 发生异常: {str(e)}", exc_info=True)
@@ -1198,6 +1217,11 @@ class TabDialog(QDialog):
             logger.debug("更新ConfigDialog实例的语言")
             self.config_widget.config_dialog.i18n = self.i18n
             self.config_widget.config_dialog.retranslate_ui()
+        
+        # 更新Search页面（LibraryWidget）
+        if hasattr(self, 'library_widget'):
+            logger.debug("更新Search页面")
+            self.library_widget.retranslate_ui()
         
         # 更新快捷键页面
         logger.debug("更新快捷键页面")
@@ -1995,7 +2019,7 @@ class AskDialog(QDialog):
     def _create_metadata_widget(self):
         """创建可折叠的元数据展示组件"""
         from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
-        from PyQt5.QtGui import QColor
+        from PyQt5.QtGui import QColor, QFont
         from PyQt5.QtCore import Qt
         
         self.metadata_tree = QTreeWidget()
@@ -2006,6 +2030,31 @@ class AskDialog(QDialog):
         self.metadata_tree.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # 禁用水平滚动条，避免横向滚动
         self.metadata_tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        # AI搜索模式：显示特殊提示
+        if not self.books_info:
+            from calibre_plugins.ask_ai_plugin.ui_constants import TEXT_COLOR_SECONDARY
+            
+            ai_search_item = QTreeWidgetItem(self.metadata_tree)
+            ai_search_item.setText(0, f"🔍 {self.i18n.get('library_search', 'AI Search')}")
+            
+            # 设置为粗体和特殊颜色
+            font = QFont()
+            font.setBold(True)
+            ai_search_item.setFont(0, font)
+            ai_search_item.setForeground(0, QColor(0, 120, 215))  # 蓝色
+            
+            # 添加说明子节点 - 使用ui_constants的TEXT_COLOR_SECONDARY
+            info_item = QTreeWidgetItem(ai_search_item)
+            info_item.setText(0, self.i18n.get('ai_search_mode_info', 
+                'Searching across your entire library'))
+            # 使用palette颜色而不是硬编码，支持明暗模式
+            from PyQt5.QtWidgets import QApplication
+            palette = QApplication.palette()
+            info_item.setForeground(0, palette.color(palette.Dark))
+            
+            ai_search_item.setExpanded(True)
+            return self.metadata_tree
         
         for idx, book_meta in enumerate(self.books_metadata):
             # 创建书籍节点
@@ -3532,12 +3581,16 @@ class AskDialog(QDialog):
         # 添加弹性空间，将右侧按钮推到右边
         action_layout.addStretch()
         
-        # 右侧：随机问题按钮
+        # 右侧：随机问题按钮（AI搜索模式下隐藏）
         self.suggest_button = QPushButton(self.i18n['suggest_button'])
         self.suggest_button.clicked.connect(self.generate_suggestion)
         apply_button_style(self.suggest_button, min_width=120)  # 设置固定宽度，与加载状态一致
         self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.suggest_button.setDefault(True)  # 初始设置为默认按钮（高光状态）
+        
+        # AI搜索模式下隐藏随机问题按钮
+        if not self.books_info:
+            self.suggest_button.setVisible(False)
         
         # 创建随机问题动作和快捷键
         self.suggest_action = QAction(self.i18n['suggest_button'], self)
@@ -4249,9 +4302,8 @@ class AskDialog(QDialog):
         from .i18n import get_translation
         self.i18n = get_translation(new_language)
         
-        # 更新窗口标题
-        model_display_name = self.api.model_display_name
-        self.setWindowTitle(f"{self.i18n['menu_title']} [{model_display_name}] - {self.book_info.get('title', '')}")
+        # 更新窗口标题 - 使用统一的方法处理AI搜索模式
+        self._update_window_title()
         
         # 更新发送按钮文本
         if hasattr(self, 'send_button'):
@@ -4279,9 +4331,21 @@ class AskDialog(QDialog):
         import logging
         logger = logging.getLogger(__name__)
         
+        logger.info("="*80)
+        logger.info(f"[ASKDIALOG_CLOSE] closeEvent 被调用")
+        logger.info(f"[ASKDIALOG_CLOSE] books_info 是否为空: {not self.books_info}")
+        
+        # 如果是AI搜索模式（books_info为空），保存当前历史UID以便下次打开时恢复
+        if not self.books_info:
+            prefs = get_prefs()
+            prefs['ai_search_last_history_uid'] = self.current_uid
+            prefs.commit()
+            logger.info(f"[ASKDIALOG_CLOSE] AI搜索模式，保存历史UID: {self.current_uid}")
+        
         # 如果有待发送的随机问题，保存到临时存储
-        if hasattr(self, '_pending_random_question') and self._pending_random_question:
+        if hasattr(self, '_pending_random_question') and self._pending_random_question and self.books_info:
             # 使用书籍ID作为key保存待发送的随机问题和新会话UID
+            # AI搜索模式下books_info为空，不保存随机问题
             book_ids = tuple(sorted([book.id for book in self.books_info]))
             prefs = get_prefs()
             pending_questions = prefs.get('pending_random_questions', {})

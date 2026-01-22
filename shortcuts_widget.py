@@ -110,6 +110,7 @@ class ShortcutsWidget(QWidget):
         shortcuts = [
             (self.i18n.get('menu_ask', 'Ask'), 'Ctrl+L'),
             (self.i18n.get('config_title', 'Configuration'), 'F2'),
+            (self.i18n.get('library_search', 'AI Search'), 'Ctrl+Shift+L'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
             (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
         ]

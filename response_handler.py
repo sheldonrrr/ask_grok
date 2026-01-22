@@ -74,6 +74,7 @@ class MarkdownWorker(QThread):
             text_to_convert, think_blocks = self._process_think_tags(self.text)
             
             # 使用markdown2转换markdown为HTML
+            # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
                 extras=[
@@ -83,7 +84,8 @@ class MarkdownWorker(QThread):
                     'header-ids',
                     'strike',
                     'task_list',
-                    'markdown-in-html'
+                    'markdown-in-html',
+                    'html-classes'
                 ]
             )
             
@@ -113,11 +115,15 @@ class MarkdownWorker(QThread):
                 '*': ['class', 'id', 'style']
             }
             
+            # 允许的URL协议（包括calibre://用于打开书籍）
+            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
+            
             # 清理HTML
             safe_html = bleach.clean(
                 html,
                 tags=allowed_tags,
                 attributes=allowed_attrs,
+                protocols=allowed_protocols,
                 strip=True
             )
             
@@ -496,6 +502,7 @@ class ResponseHandler(QObject):
             text_to_convert, think_blocks = self._process_think_tags_for_stream(self._stream_response)
             
             # 使用markdown2转换完整的累积响应为HTML
+            # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
                 extras=[
@@ -505,7 +512,8 @@ class ResponseHandler(QObject):
                     'header-ids',
                     'strike',
                     'task_list',
-                    'markdown-in-html'
+                    'markdown-in-html',
+                    'html-classes'
                 ]
             )
             
@@ -522,7 +530,8 @@ class ResponseHandler(QObject):
                         'header-ids',
                         'strike',
                         'task_list',
-                        'markdown-in-html'
+                        'markdown-in-html',
+                        'html-classes'
                     ]
                 )
                 
@@ -565,11 +574,15 @@ class ResponseHandler(QObject):
                 '*': ['class', 'id', 'style']
             }
             
+            # 允许的URL协议（包括calibre://用于打开书籍）
+            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
+            
             # 清理HTML
             safe_html = bleach.clean(
                 html,
                 tags=allowed_tags,
                 attributes=allowed_attrs,
+                protocols=allowed_protocols,
                 strip=True
             )
             

@@ -63,12 +63,13 @@ class ResponsePanel(QWidget):
         
     def setup_ui(self):
         """设置UI布局"""
+        # 检查是否为AI搜索模式
+        is_ai_search_mode = hasattr(self.parent_dialog, 'books_info') and not self.parent_dialog.books_info
+        
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
-        # 使用紧凑间距，让AI回复区域更大
-        from calibre_plugins.ask_ai_plugin.ui_constants import SPACING_ASK_COMPACT
-        main_layout.setContentsMargins(0, 0, 0, SPACING_ASK_COMPACT)  # 上边距0，下边距4px
-        main_layout.setSpacing(SPACING_ASK_COMPACT)  # 内部元素间距4px
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(SPACING_SMALL)
         
         # === Header 区域（横向） ===
         # 只有当 show_ai_switcher 为 True 时才显示 header
@@ -112,12 +113,14 @@ class ResponsePanel(QWidget):
         
         # === Response Area（占据主要空间） ===
         self.response_area = QTextBrowser()
-        self.response_area.setOpenExternalLinks(True)
+        self.response_area.setOpenExternalLinks(False)  # 禁用外部链接，使用自定义处理
         self.response_area.setMinimumHeight(200)
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
+        # 连接链接点击信号
+        self.response_area.anchorClicked.connect(self._on_anchor_clicked)
         self.response_area.setStyleSheet("""
             QTextBrowser {
                 border: 1px dashed palette(mid);
@@ -219,13 +222,16 @@ class ResponsePanel(QWidget):
             self.export_btn.setMenu(export_menu)
             self._update_export_menu_checkmarks()
             
-            button_layout.addWidget(self.copy_btn)
-            button_layout.addWidget(self.export_btn)
+            # AI搜索模式下隐藏复制和导出按钮
+            if not is_ai_search_mode:
+                button_layout.addWidget(self.copy_btn)
+                button_layout.addWidget(self.export_btn)
             button_layout.addStretch()
         else:
             # 多AI模式（2个面板）
             # 所有面板都显示复制按钮（左对齐）
-            button_layout.addWidget(self.copy_btn)
+            if not is_ai_search_mode:
+                button_layout.addWidget(self.copy_btn)
             button_layout.addStretch()
             
             # 只有最后一个面板（右侧）显示导出按钮（右对齐）
@@ -251,7 +257,9 @@ class ResponsePanel(QWidget):
                 self.export_btn.setMenu(export_menu)
                 self._update_export_menu_checkmarks()
                 
-                button_layout.addWidget(self.export_btn)
+                # AI搜索模式下隐藏导出按钮
+                if not is_ai_search_mode:
+                    button_layout.addWidget(self.export_btn)
             else:
                 # 非最后一个面板，不创建导出按钮
                 self.export_btn = None
@@ -1405,3 +1413,100 @@ class ResponsePanel(QWidget):
             self.history_info_bar.setParent(None)
             self.history_info_bar.deleteLater()
             self.history_info_bar = None
+    
+    def _on_anchor_clicked(self, url):
+        """处理链接点击事件
+        
+        支持的链接格式：
+        - calibre://book/BOOK_ID - 在Calibre中打开书籍
+        - http://... 或 https://... - 在浏览器中打开外部链接
+        """
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtGui import QDesktopServices
+        
+        url_str = url.toString()
+        logger.info("="*80)
+        logger.info(f"[BOOK_LINK_CLICK] 链接被点击: {url_str}")
+        logger.info(f"[BOOK_LINK_CLICK] 父对话框状态: visible={self.parent_dialog.isVisible()}, modal={self.parent_dialog.isModal()}")
+        logger.info(f"[BOOK_LINK_CLICK] 响应区域内容长度: {len(self.response_area.toPlainText())}")
+        
+        try:
+            if url_str.startswith('calibre://book/'):
+                # 提取书籍ID
+                book_id_str = url_str.replace('calibre://book/', '')
+                book_id = int(book_id_str)
+                logger.info(f"[BOOK_LINK_CLICK] 提取书籍 ID: {book_id}")
+                
+                # 使用Calibre的正确API打开书籍
+                if hasattr(self.parent_dialog, 'gui') and self.parent_dialog.gui:
+                    gui = self.parent_dialog.gui
+                    logger.info(f"[BOOK_LINK_CLICK] GUI 实例可用")
+                    logger.info(f"[BOOK_LINK_CLICK] 当前库视图选择: {gui.library_view.selectionModel().selectedRows()}")
+                    
+                    # 直接使用EbookViewer打开书籍，不改变库视图选择
+                    # 这样可以避免触发show_dialog()，保持AI Search对话框内容
+                    try:
+                        from calibre.gui2.viewer.main import EbookViewer
+                        logger.info(f"[BOOK_LINK_CLICK] 导入 EbookViewer 成功")
+                        
+                        db = gui.current_db
+                        fmt = db.formats(book_id, index_is_id=True)
+                        logger.info(f"[BOOK_LINK_CLICK] 书籍格式: {fmt}")
+                        
+                        if fmt:
+                            fmt = fmt.split(',')[0].lower()
+                            path = db.format_abspath(book_id, fmt, index_is_id=True)
+                            logger.info(f"[BOOK_LINK_CLICK] 书籍路径: {path}")
+                            
+                            if path:
+                                print(f"[BOOK_LINK_CLICK] 准备打开书籍")
+                                print(f"[BOOK_LINK_CLICK] 打开前对话框状态: visible={self.parent_dialog.isVisible()}")
+                                logger.info(f"[BOOK_LINK_CLICK] 准备打开书籍")
+                                logger.info(f"[BOOK_LINK_CLICK] 打开前对话框状态: visible={self.parent_dialog.isVisible()}")
+                                
+                                # 使用Calibre的View action来打开书籍，但通过直接调用view_book方法
+                                # 这样可以避免改变库视图选择，同时避免EbookViewer直接实例化导致的崩溃
+                                if 'View' in gui.iactions:
+                                    view_action = gui.iactions['View']
+                                    # 使用内部方法直接打开书籍，传入book_id
+                                    try:
+                                        # view_book方法需要book_id作为参数
+                                        view_action._view_calibre_books([book_id])
+                                        logger.info(f"[BOOK_LINK_CLICK] 使用View action打开书籍成功")
+                                    except AttributeError:
+                                        # 如果_view_calibre_books不存在，尝试其他方法
+                                        # 临时选中书籍，打开后立即恢复选择
+                                        old_selection = [gui.library_view.model().id(row) for row in gui.library_view.selectionModel().selectedRows()]
+                                        gui.library_view.select_rows([book_id])
+                                        view_action.qaction.trigger()
+                                        # 恢复原来的选择（如果是AI Search模式，原来没有选择）
+                                        if old_selection:
+                                            gui.library_view.select_rows(old_selection)
+                                        else:
+                                            gui.library_view.selectionModel().clear()
+                                        logger.info(f"[BOOK_LINK_CLICK] 使用View action trigger打开书籍成功")
+                                else:
+                                    logger.error(f"[BOOK_LINK_CLICK] View action不可用")
+                                
+                                logger.info(f"[BOOK_LINK_CLICK] 打开后对话框状态: visible={self.parent_dialog.isVisible()}")
+                                logger.info(f"[BOOK_LINK_CLICK] 打开后响应区域内容长度: {len(self.response_area.toPlainText())}")
+                                logger.info(f"[BOOK_LINK_CLICK] 成功打开书籍: {path}")
+                            else:
+                                logger.error(f"[BOOK_LINK_CLICK] 找不到书籍文件路径")
+                        else:
+                            logger.error(f"[BOOK_LINK_CLICK] 书籍 {book_id} 没有可用格式")
+                    except Exception as e:
+                        logger.error(f"[BOOK_LINK_CLICK] 打开书籍失败: {str(e)}", exc_info=True)
+                else:
+                    logger.warning("[BOOK_LINK_CLICK] GUI 实例不可用")
+            elif url_str.startswith('http://') or url_str.startswith('https://'):
+                # 外部链接，在浏览器中打开
+                QDesktopServices.openUrl(url)
+                logger.info(f"在浏览器中打开: {url_str}")
+            else:
+                logger.warning(f"[BOOK_LINK_CLICK] 未知的链接格式: {url_str}")
+        except Exception as e:
+            logger.error(f"[BOOK_LINK_CLICK] 处理链接点击时出错: {str(e)}", exc_info=True)
+        finally:
+            logger.info(f"[BOOK_LINK_CLICK] _on_anchor_clicked 执行完成")
+            logger.info("="*80)
