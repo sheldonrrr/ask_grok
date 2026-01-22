@@ -114,6 +114,14 @@ class AskAIPluginUI(InterfaceAction):
         # 添加分隔符
         self.menu.addSeparator()
 
+        # 添加 AI Search 菜单项 - Killer feature!
+        self.library_action = QAction(self.i18n.get('library_search', 'AI Search'), self)
+        self.library_action.triggered.connect(self.show_library)
+        self.menu.addAction(self.library_action)
+
+        # 添加分隔符
+        self.menu.addSeparator()
+
         # 添加 Prompts 菜单项
         self.prompts_action = QAction(self.i18n.get('prompts_tab', 'Prompts'), self)
         self.prompts_action.triggered.connect(self.show_prompts)
@@ -239,6 +247,7 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(self.i18n['config_title'])
         
         self.prompts_action.setText(self.i18n.get('prompts_tab', 'Prompts'))
+        self.library_action.setText(self.i18n.get('library_search', 'Library Search'))
         self.about_action.setText(self.i18n['about'])
         
     def initialize_api(self):
@@ -346,35 +355,74 @@ class AskAIPluginUI(InterfaceAction):
             logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
             
             if not rows or len(rows) == 0:
-                logger.warning("没有选中的书籍，提示用户选择书籍")
-                # 提示用户选择书籍
-                from PyQt5.QtWidgets import QMessageBox
-                QMessageBox.information(
-                    self.gui,
-                    self.i18n.get('no_book_selected_title', 'No Book Selected'),
-                    self.i18n.get('no_book_selected_message', 'Please select a book before asking questions.')
-                )
-                return
+                logger.info("没有选中的书籍，检查AI搜索数据")
+                # 检查是否有AI搜索元数据（AI搜索现在始终启用）
+                prefs = get_prefs()
+                library_metadata = prefs.get('library_cached_metadata', '')
+                
+                if library_metadata:
+                    # 有数据，显示欢迎消息并继续
+                    logger.info("AI搜索数据存在，显示欢迎消息")
+                    from PyQt5.QtWidgets import QMessageBox
+                    QMessageBox.information(
+                        self.gui,
+                        self.i18n.get('ai_search_welcome_title', 'Welcome to AI Search'),
+                        self.i18n.get('ai_search_welcome_message', 
+                            'You haven\'t selected any books, so AI Search is activated!\n\n'
+                            'You can now search your entire library using natural language. '
+                            'For example, try asking:\n'
+                            '• "Do you have any books about Python?"\n'
+                            '• "Show me books by Isaac Asimov"\n'
+                            '• "Find books about machine learning"\n\n'
+                            'AI will search through your library and recommend relevant books.')
+                    )
+                    # 继续执行，不返回，让对话框打开
+                    books_info = None  # 标记为AI搜索模式
+                else:
+                    # 无数据，提示用户初始化AI搜索
+                    logger.warning("AI搜索无数据，提示用户初始化")
+                    from PyQt5.QtWidgets import QMessageBox
+                    reply = QMessageBox.question(
+                        self.gui,
+                        self.i18n.get('library_init_title', 'Initialize AI Search'),
+                        self.i18n.get('library_init_message', 
+                            'AI Search requires library metadata to work. Would you like to initialize it now?\n\n'
+                            'This will extract book titles and authors from your library.'),
+                        QMessageBox.Yes | QMessageBox.No,
+                        QMessageBox.Yes
+                    )
+                    
+                    if reply == QMessageBox.Yes:
+                        # 打开配置对话框到Search标签页
+                        from .ui import TabDialog
+                        dlg = TabDialog(self.gui)
+                        dlg.tab_widget.setCurrentIndex(1)  # Search tab
+                        dlg.exec_()
+                    return
             
             # 获取书籍信息
-            db = self.gui.current_db
-            logger.info("获取数据库实例成功")
-            
-            # 支持多书选择
-            if len(rows) == 1:
-                # 单书模式（向后兼容）
-                book_id = self.gui.library_view.model().id(rows[0])
-                mi = db.get_metadata(book_id, index_is_id=True)
-                books_info = mi
-                logger.info(f"单书模式: book_id={book_id}, title={mi.title}")
+            if not rows or len(rows) == 0:
+                # AI搜索模式，books_info已在上面设置为None
+                logger.info("AI搜索模式: books_info=None")
             else:
-                # 多书模式
-                books_info = []
-                for row in rows:
-                    book_id = self.gui.library_view.model().id(row)
+                db = self.gui.current_db
+                logger.info("获取数据库实例成功")
+                
+                # 支持多书选择
+                if len(rows) == 1:
+                    # 单书模式（向后兼容）
+                    book_id = self.gui.library_view.model().id(rows[0])
                     mi = db.get_metadata(book_id, index_is_id=True)
-                    books_info.append(mi)
-                logger.info(f"多书模式: 共 {len(books_info)} 本书")
+                    books_info = mi
+                    logger.info(f"单书模式: book_id={book_id}, title={mi.title}")
+                else:
+                    # 多书模式
+                    books_info = []
+                    for row in rows:
+                        book_id = self.gui.library_view.model().id(row)
+                        mi = db.get_metadata(book_id, index_is_id=True)
+                        books_info.append(mi)
+                    logger.info(f"多书模式: 共 {len(books_info)} 本书")
             
             # 显示对话框
             d = AskDialog(self.gui, books_info, self.api)
@@ -426,24 +474,30 @@ class AskAIPluginUI(InterfaceAction):
     def show_about(self):
         """显示关于对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(4)  # About 标签页（第5个）
+        dlg.tab_widget.setCurrentIndex(5)  # About 标签页（第6个）
         dlg.exec_()
     
     def show_shortcuts(self):
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(2)  # Shortcuts 标签页（第3个）
+        dlg.tab_widget.setCurrentIndex(3)  # Shortcuts 标签页（第4个）
         dlg.exec_()
     
     def show_prompts(self):
         """显示 Prompts 配置对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(1)  # Prompts 标签页（第2个）
+        dlg.tab_widget.setCurrentIndex(2)  # Prompts 标签页（第3个）
+        dlg.exec_()
+    
+    def show_library(self):
+        """显示 Search 配置对话框"""
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(1)  # Search 标签页（第2个）
         dlg.exec_()
     
     def show_tutorial(self):
         """显示教程对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(3)  # Tutorial 标签页（第4个）
+        dlg.tab_widget.setCurrentIndex(4)  # Tutorial 标签页（第5个）
         dlg.exec_()
     
     def config_widget(self):
@@ -995,13 +1049,21 @@ class TabDialog(QDialog):
         # 连接标签页切换信号（用于更新UI状态）
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
-        # 创建General页面
+        # 创建General页面 (index 0)
         self.config_widget = AskGrokConfigWidget(self.gui)
         self.tab_widget.addTab(self.config_widget, self.i18n['general_tab'])
         
         # 语言变更信号已在下方连接到config_widget.config_dialog.language_changed
 
-        # 创建Prompts页面
+        # 创建Search页面 (index 1) - Killer feature!
+        from .config import LibraryWidget
+        self.library_widget = LibraryWidget(self, self.gui)
+        self.tab_widget.addTab(self.library_widget, self.i18n.get('library_tab', 'Search'))
+        
+        # 连接Search页面的配置变更信号
+        self.library_widget.config_changed.connect(self.update_save_button_state)
+
+        # 创建Prompts页面 (index 2)
         self.prompts_widget = PromptsWidget(self)
         self.tab_widget.addTab(self.prompts_widget, self.i18n.get('prompts_tab', 'Prompts'))
         
@@ -1012,23 +1074,15 @@ class TabDialog(QDialog):
         current_lang = get_prefs().get('language', 'en')
         self.prompts_widget.load_initial_values(current_lang)
 
-        # 创建快捷键页面
+        # 创建快捷键页面 (index 3)
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
-        # 创建Library页面
-        from .config import LibraryWidget
-        self.library_widget = LibraryWidget(self, self.gui)
-        self.tab_widget.addTab(self.library_widget, self.i18n.get('library_tab', 'Library'))
-        
-        # 连接Library页面的配置变更信号
-        self.library_widget.config_changed.connect(self.update_save_button_state)
-
-        # 创建教程页面
+        # 创建教程页面 (index 4)
         self.tutorial_widget = TutorialWidget()
         self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
         
-        # 创建关于页面
+        # 创建关于页面 (index 5)
         self.about_widget = AboutWidget()
         self.tab_widget.addTab(self.about_widget, self.i18n['about'])
         
@@ -1106,10 +1160,11 @@ class TabDialog(QDialog):
         
         # 更新标签页标题
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
-        self.tab_widget.setTabText(1, self.i18n.get('prompts_tab', 'Prompts'))
-        self.tab_widget.setTabText(2, self.i18n['shortcuts'])
-        self.tab_widget.setTabText(3, self.i18n.get('tutorial', 'Tutorial'))
-        self.tab_widget.setTabText(4, self.i18n['about'])
+        self.tab_widget.setTabText(1, self.i18n.get('library_tab', 'Search'))
+        self.tab_widget.setTabText(2, self.i18n.get('prompts_tab', 'Prompts'))
+        self.tab_widget.setTabText(3, self.i18n['shortcuts'])
+        self.tab_widget.setTabText(4, self.i18n.get('tutorial', 'Tutorial'))
+        self.tab_widget.setTabText(5, self.i18n['about'])
         logger.debug("已更新标签页标题")
         
         # 更新 Prompts Widget 的 i18n
@@ -1648,15 +1703,25 @@ class AskDialog(QDialog):
             raise
         
         # 统一处理为列表
-        if isinstance(books_info, list):
+        # 特殊处理：books_info 为 None 表示 AI 搜索模式
+        if books_info is None:
+            self.books_info = []  # AI搜索模式，无书籍
+            self.is_multi_book = False
+            self.book_info = None
+            self.books_metadata = []
+            self.book_metadata = None
+        elif isinstance(books_info, list):
             self.books_info = books_info  # 多书模式
             self.is_multi_book = len(books_info) > 1
+            self.book_info = self.books_info[0]  # 向后兼容
+            self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+            self.book_metadata = self.books_metadata[0]  # 向后兼容
         else:
             self.books_info = [books_info]  # 单书模式
             self.is_multi_book = False
-        
-        # 向后兼容：保留 self.book_info 指向第一本书
-        self.book_info = self.books_info[0]
+            self.book_info = self.books_info[0]  # 向后兼容
+            self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
+            self.book_metadata = self.books_metadata[0]  # 向后兼容
         
         # 生成或加载 UID
         self._explicit_history_uid = history_uid
@@ -1664,12 +1729,6 @@ class AskDialog(QDialog):
             self.current_uid = history_uid
         else:
             self.current_uid = self._generate_uid()
-        
-        # 准备书籍元数据列表
-        self.books_metadata = [self._extract_metadata(book) for book in self.books_info]
-        
-        # 向后兼容：保留 self.book_metadata
-        self.book_metadata = self.books_metadata[0]
         
         # 初始化处理器
         self.response_handler = ResponseHandler(self)
@@ -1816,8 +1875,12 @@ class AskDialog(QDialog):
         from datetime import datetime
         
         timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        book_ids = sorted([str(book.id) for book in self.books_info])
-        book_ids_str = ','.join(book_ids)
+        # AI搜索模式：books_info 为空列表
+        if self.books_info:
+            book_ids = sorted([str(book.id) for book in self.books_info])
+            book_ids_str = ','.join(book_ids)
+        else:
+            book_ids_str = 'ai_search'  # AI搜索模式标记
         unique_string = f"{timestamp}_{book_ids_str}"
         uid_hash = hashlib.md5(unique_string.encode()).hexdigest()[:12]
         return f"{timestamp}_{uid_hash}"
@@ -1918,7 +1981,10 @@ class AskDialog(QDialog):
     
     def _update_window_title(self):
         """更新窗口标题"""
-        if self.is_multi_book:
+        if not self.books_info:
+            # AI搜索模式
+            title = f"{self.i18n['menu_title']} - {self.i18n.get('library_search', 'AI Search')}"
+        elif self.is_multi_book:
             book_count = len(self.books_info)
             title = f"{self.i18n['menu_title']} - {book_count}{self.i18n.get('books_unit', '本书')}"
         else:
@@ -3867,13 +3933,16 @@ class AskDialog(QDialog):
         
         # 判断是否使用Library Chat（仅在未选择书籍时）
         use_library_chat = False
-        if not self.books_info or (len(self.books_info) == 1 and not self.books_info[0]):
-            # 未选择书籍，检查是否启用Library Chat
-            from .utils import is_library_chat_enabled
+        if not self.books_info:
+            # AI搜索模式（books_info为空列表）
+            # AI搜索现在始终启用，只要有元数据就使用
             prefs = get_prefs()
-            use_library_chat = is_library_chat_enabled(prefs)
-            if use_library_chat:
-                logger.info("未选择书籍且启用Library Chat，将使用图书馆搜索模式")
+            library_metadata = prefs.get('library_cached_metadata', '')
+            if library_metadata:
+                use_library_chat = True
+                logger.info("AI搜索模式，将使用图书馆搜索模式")
+            else:
+                logger.warning("AI搜索模式但无元数据")
         
         # 开始异步请求 - 并行发送到所有面板
         parallel_start_time = time.time()

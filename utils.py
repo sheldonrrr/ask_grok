@@ -87,7 +87,12 @@ def update_library_metadata(db, prefs):
         from datetime import datetime
         
         # 获取所有书籍ID，最多100本
-        book_ids = db.all_book_ids()[:100]
+        # 使用new_api.all_book_ids()获取所有书籍ID
+        try:
+            book_ids = list(db.new_api.all_book_ids())[:100]
+        except AttributeError:
+            # 如果new_api不可用，尝试使用旧API
+            book_ids = list(db.data.search_getting_ids('', db.FIELD_MAP['search']))[:100]
         
         books = []
         for book_id in book_ids:

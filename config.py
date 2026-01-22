@@ -7,7 +7,7 @@ import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
-                            QFrame, QCheckBox, QMessageBox)
+                            QFrame, QCheckBox, QMessageBox, QApplication)
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
@@ -3524,12 +3524,13 @@ class LibraryWidget(QWidget):
         layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
         layout.setSpacing(SPACING_MEDIUM)
         
-        # 启用开关
-        self.enable_checkbox = QCheckBox(self.i18n.get('library_enable', 'Enable Library Chat'))
-        self.enable_checkbox.setToolTip(self.i18n.get('library_enable_tooltip', 
-            'When enabled, you can search your library using AI when no books are selected'))
-        self.enable_checkbox.stateChanged.connect(self.on_config_changed)
-        layout.addWidget(self.enable_checkbox)
+        # AI搜索说明
+        info_label = QLabel(self.i18n.get('library_info', 
+            'AI Search is always enabled. When you don\'t select any books, '
+            'you can search your entire library using natural language.'))
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: {PADDING_MEDIUM}px;")
+        layout.addWidget(info_label)
         
         layout.addSpacing(SPACING_SMALL)
         
@@ -3556,9 +3557,8 @@ class LibraryWidget(QWidget):
     
     def load_values(self):
         """加载配置值"""
-        # 加载启用状态
-        enabled = self.prefs.get('library_chat_enabled', False)
-        self.enable_checkbox.setChecked(enabled)
+        # AI搜索现在始终启用，确保配置为True
+        self.prefs['library_chat_enabled'] = True
         
         # 更新状态显示
         self.update_status_display()
@@ -3632,17 +3632,14 @@ class LibraryWidget(QWidget):
             self.update_button.setEnabled(True)
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
     
-    def on_config_changed(self):
-        """配置变更时触发"""
-        self.config_changed.emit()
     
     def save_settings(self):
         """保存设置"""
-        self.prefs['library_chat_enabled'] = self.enable_checkbox.isChecked()
-        logger.info(f"Library chat enabled: {self.enable_checkbox.isChecked()}")
+        # AI搜索始终启用
+        self.prefs['library_chat_enabled'] = True
+        logger.info("AI Search is always enabled")
     
     def has_changes(self):
         """检查是否有未保存的更改"""
-        current_enabled = self.enable_checkbox.isChecked()
-        saved_enabled = self.prefs.get('library_chat_enabled', False)
-        return current_enabled != saved_enabled
+        # AI搜索没有可配置项，始终返回False
+        return False
