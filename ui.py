@@ -1016,6 +1016,14 @@ class TabDialog(QDialog):
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
+        # 创建Library页面
+        from .config import LibraryWidget
+        self.library_widget = LibraryWidget(self, self.gui)
+        self.tab_widget.addTab(self.library_widget, self.i18n.get('library_tab', 'Library'))
+        
+        # 连接Library页面的配置变更信号
+        self.library_widget.config_changed.connect(self.update_save_button_state)
+
         # 创建教程页面
         self.tutorial_widget = TutorialWidget()
         self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
@@ -1315,6 +1323,10 @@ class TabDialog(QDialog):
             if hasattr(self, 'prompts_widget'):
                 self.prompts_widget.save_settings()
                 self.on_settings_saved()
+        elif current_index == 3:  # Library tab (Shortcuts是index 2)
+            if hasattr(self, 'library_widget'):
+                self.library_widget.save_settings()
+                self.on_settings_saved()
     
     def on_settings_saved(self):
         """处理设置保存成功事件"""
@@ -1343,6 +1355,9 @@ class TabDialog(QDialog):
         elif current_index == 1:  # Prompts tab
             if hasattr(self, 'prompts_widget'):
                 has_changes = self.prompts_widget.check_for_changes()
+        elif current_index == 3:  # Library tab
+            if hasattr(self, 'library_widget'):
+                has_changes = self.library_widget.has_changes()
         
         # 根据是否有变更设置保存按钮状态
         if hasattr(self, 'save_button'):
@@ -3850,6 +3865,16 @@ class AskDialog(QDialog):
         self.send_button.setVisible(False)
         self.stop_button.setVisible(True)
         
+        # 判断是否使用Library Chat（仅在未选择书籍时）
+        use_library_chat = False
+        if not self.books_info or (len(self.books_info) == 1 and not self.books_info[0]):
+            # 未选择书籍，检查是否启用Library Chat
+            from .utils import is_library_chat_enabled
+            prefs = get_prefs()
+            use_library_chat = is_library_chat_enabled(prefs)
+            if use_library_chat:
+                logger.info("未选择书籍且启用Library Chat，将使用图书馆搜索模式")
+        
         # 开始异步请求 - 并行发送到所有面板
         parallel_start_time = time.time()
         try:
@@ -3863,15 +3888,15 @@ class AskDialog(QDialog):
                     if selected_ai:
                         request_time = time.time()
                         elapsed_ms = (request_time - parallel_start_time) * 1000
-                        panel.send_request(prompt, model_id=selected_ai)
+                        panel.send_request(prompt, model_id=selected_ai, use_library_chat=use_library_chat)
                     else:
                         logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")
                 total_time = (time.time() - parallel_start_time) * 1000
                 logger.info(f"所有请求已发出，总耗时: {total_time:.2f}ms，面板数: {len(self.response_panels)}")
             else:
                 # 向后兼容：单面板模式
-                self.response_handler.start_async_request(prompt)
-                logger.info("异步请求已启动（单面板模式）")
+                self.response_handler.start_async_request(prompt, use_library_chat=use_library_chat)
+                logger.info(f"异步请求已启动（单面板模式），use_library_chat={use_library_chat}")
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
             if hasattr(self, 'response_handler'):

@@ -302,12 +302,13 @@ class ResponseHandler(QObject):
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
 
-    def start_async_request(self, prompt, model_id=None):
+    def start_async_request(self, prompt, model_id=None, use_library_chat=False):
         """开始异步请求 API，可以处理普通请求和流式请求
         
         Args:
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
+            use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
         """
         self._request_start_time = time.time()
         
@@ -375,15 +376,15 @@ class ResponseHandler(QObject):
                             self._stream_log_counter += 1
                             self._current_signals.stream_update.emit(chunk)
                     
-                    # 调用API时传入回调函数和model_id
-                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id)
+                    # 调用API时传入回调函数、model_id和use_library_chat
+                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id, use_library_chat=use_library_chat)
                     
                     # 在流式请求完成后，发送完整响应
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(self._stream_response, True)
                 else:
                     # 使用普通请求
-                    response = self.api.ask(prompt, stream=False, model_id=model_id)  # 明确指定不使用流式，并传递model_id
+                    response = self.api.ask(prompt, stream=False, model_id=model_id, use_library_chat=use_library_chat)  # 明确指定不使用流式，并传递model_id和use_library_chat
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(response, True)
                 

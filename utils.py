@@ -73,3 +73,97 @@ def safe_log_config(config, keys_to_mask=None):
             safe_config[key] = safe_log_config(value, keys_to_mask)
     
     return safe_config
+
+def update_library_metadata(db, prefs):
+    """
+    提取图书馆元数据（仅书名和作者名）
+    
+    :param db: Calibre数据库对象
+    :param prefs: 插件配置对象
+    :return: (成功标志, 书籍数量, 错误信息)
+    """
+    try:
+        import json
+        from datetime import datetime
+        
+        # 获取所有书籍ID，最多100本
+        book_ids = db.all_book_ids()[:100]
+        
+        books = []
+        for book_id in book_ids:
+            try:
+                mi = db.get_metadata(book_id)
+                books.append({
+                    'id': book_id,
+                    'title': mi.title or 'Unknown',
+                    'authors': ', '.join(mi.authors or ['Unknown'])
+                })
+            except Exception as e:
+                logger.warning(f"Failed to get metadata for book {book_id}: {e}")
+                continue
+        
+        # 保存为JSON字符串
+        prefs['library_cached_metadata'] = json.dumps(books, ensure_ascii=False)
+        prefs['library_last_update'] = datetime.now().isoformat()
+        
+        logger.info(f"Successfully updated library metadata: {len(books)} books")
+        return True, len(books), None
+        
+    except Exception as e:
+        error_msg = f"Failed to update library metadata: {str(e)}"
+        logger.error(error_msg)
+        return False, 0, error_msg
+
+def get_library_metadata(prefs):
+    """
+    获取缓存的图书馆元数据
+    
+    :param prefs: 插件配置对象
+    :return: 元数据JSON字符串，如果未缓存则返回None
+    """
+    return prefs.get('library_cached_metadata', None)
+
+def get_library_last_update(prefs):
+    """
+    获取图书馆元数据最后更新时间
+    
+    :param prefs: 插件配置对象
+    :return: ISO格式的时间字符串，如果未更新过则返回None
+    """
+    return prefs.get('library_last_update', None)
+
+def is_library_chat_enabled(prefs):
+    """
+    检查是否启用了图书馆对话功能
+    
+    :param prefs: 插件配置对象
+    :return: True/False
+    """
+    return prefs.get('library_chat_enabled', False)
+
+def build_library_prompt(user_query, prefs):
+    """
+    构建包含图书馆元数据的AI提示词
+    
+    :param user_query: 用户查询
+    :param prefs: 插件配置对象
+    :return: 完整的提示词
+    """
+    cached_metadata = get_library_metadata(prefs)
+    
+    if not cached_metadata:
+        return user_query
+    
+    prompt = f"""You have access to the user's book library. Here are all the books:
+
+{cached_metadata}
+
+User query: {user_query}
+
+Please find matching books and return them in this format:
+- Book Title 1 (ID: 123)
+- Book Title 2 (ID: 456)
+
+Only return books that match the query. Maximum 5 results."""
+    
+    return prompt
