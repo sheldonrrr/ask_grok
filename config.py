@@ -186,6 +186,11 @@ prefs.defaults['persona'] = 'As a researcher, I want to research through book da
 # Language preference settings (v1.3.9)
 prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond in interface language
 
+# Library Chat settings (v1.4.2 MVP)
+prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature
+prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON string)
+prefs.defaults['library_last_update'] = None  # Last update timestamp
+
 def get_prefs(force_reload=False):
     """获取配置
     
@@ -3495,3 +3500,149 @@ class ConfigDialog(QWidget):
                     self.i18n.get('error', 'Error'),
                     self.i18n.get('reset_all_data_failed', 'Failed to reset plugin data: {error}').format(error=str(e))
                 )
+
+
+class LibraryWidget(QWidget):
+    """图书馆对话功能配置界面（MVP极简版）"""
+    config_changed = pyqtSignal()
+    
+    def __init__(self, parent=None, gui=None):
+        QWidget.__init__(self, parent)
+        self.gui = gui
+        self.prefs = get_prefs()
+        
+        # 获取当前语言的翻译
+        language = self.prefs.get('language', 'en')
+        self.i18n = get_translation(language)
+        
+        self.setup_ui()
+        self.load_values()
+    
+    def setup_ui(self):
+        """设置UI"""
+        layout = QVBoxLayout()
+        layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
+        layout.setSpacing(SPACING_MEDIUM)
+        
+        # 启用开关
+        self.enable_checkbox = QCheckBox(self.i18n.get('library_enable', 'Enable Library Chat'))
+        self.enable_checkbox.setToolTip(self.i18n.get('library_enable_tooltip', 
+            'When enabled, you can search your library using AI when no books are selected'))
+        self.enable_checkbox.stateChanged.connect(self.on_config_changed)
+        layout.addWidget(self.enable_checkbox)
+        
+        layout.addSpacing(SPACING_SMALL)
+        
+        # 更新按钮
+        self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
+        self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
+            'Extract book titles and authors from your library'))
+        self.update_button.clicked.connect(self.on_update_library)
+        apply_button_style(self.update_button)
+        layout.addWidget(self.update_button)
+        
+        layout.addSpacing(SPACING_SMALL)
+        
+        # 状态标签
+        self.status_label = QLabel()
+        self.status_label.setWordWrap(True)
+        self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; padding: {PADDING_MEDIUM}px;")
+        layout.addWidget(self.status_label)
+        
+        # 添加弹性空间
+        layout.addStretch()
+        
+        self.setLayout(layout)
+    
+    def load_values(self):
+        """加载配置值"""
+        # 加载启用状态
+        enabled = self.prefs.get('library_chat_enabled', False)
+        self.enable_checkbox.setChecked(enabled)
+        
+        # 更新状态显示
+        self.update_status_display()
+    
+    def update_status_display(self):
+        """更新状态显示"""
+        from .utils import get_library_metadata, get_library_last_update
+        import json
+        
+        metadata = get_library_metadata(self.prefs)
+        last_update = get_library_last_update(self.prefs)
+        
+        if metadata and last_update:
+            try:
+                books = json.loads(metadata)
+                book_count = len(books)
+                
+                # 格式化时间显示
+                from datetime import datetime
+                update_time = datetime.fromisoformat(last_update)
+                time_str = update_time.strftime('%Y-%m-%d %H:%M:%S')
+                
+                status_text = self.i18n.get('library_status', 
+                    'Status: {count} books, last update: {time}').format(
+                    count=book_count, time=time_str)
+            except Exception as e:
+                logger.error(f"Failed to parse library metadata: {e}")
+                status_text = self.i18n.get('library_status_error', 'Status: Error loading data')
+        else:
+            status_text = self.i18n.get('library_status_empty', 
+                'Status: No data. Click "Update Library Data" to start.')
+        
+        self.status_label.setText(status_text)
+    
+    def on_update_library(self):
+        """更新图书馆数据"""
+        if not self.gui:
+            QMessageBox.warning(self, 
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('library_no_gui', 'GUI not available'))
+            return
+        
+        from .utils import update_library_metadata
+        
+        # 显示处理中提示
+        self.update_button.setEnabled(False)
+        self.update_button.setText(self.i18n.get('library_updating', 'Updating...'))
+        QApplication.processEvents()
+        
+        try:
+            # 提取元数据
+            db = self.gui.current_db
+            success, book_count, error_msg = update_library_metadata(db, self.prefs)
+            
+            if success:
+                # 更新状态显示
+                self.update_status_display()
+                
+                # 显示成功消息
+                QMessageBox.information(self,
+                    self.i18n.get('success', 'Success'),
+                    self.i18n.get('library_update_success', 
+                        'Successfully updated {count} books').format(count=book_count))
+            else:
+                QMessageBox.warning(self,
+                    self.i18n.get('error', 'Error'),
+                    error_msg or self.i18n.get('library_update_failed', 'Failed to update library data'))
+        
+        finally:
+            # 恢复按钮状态
+            self.update_button.setEnabled(True)
+            self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
+    
+    def on_config_changed(self):
+        """配置变更时触发"""
+        self.config_changed.emit()
+    
+    def save_settings(self):
+        """保存设置"""
+        self.prefs['library_chat_enabled'] = self.enable_checkbox.isChecked()
+        logger.info(f"Library chat enabled: {self.enable_checkbox.isChecked()}")
+    
+    def has_changes(self):
+        """检查是否有未保存的更改"""
+        current_enabled = self.enable_checkbox.isChecked()
+        saved_enabled = self.prefs.get('library_chat_enabled', False)
+        return current_enabled != saved_enabled
