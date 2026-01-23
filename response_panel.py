@@ -114,7 +114,6 @@ class ResponsePanel(QWidget):
         # === Response Area（占据主要空间） ===
         self.response_area = QTextBrowser()
         self.response_area.setOpenExternalLinks(False)  # 禁用外部链接，使用自定义处理
-        self.response_area.setOpenLinks(False)  # 禁用所有链接自动导航，防止点击calibre://链接时清空文档
         self.response_area.setMinimumHeight(200)
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 
@@ -1488,10 +1487,20 @@ class ResponsePanel(QWidget):
                                         logger.info(f"[BOOK_LINK_CLICK] 使用View action trigger打开书籍成功")
                                 else:
                                     logger.error(f"[BOOK_LINK_CLICK] View action不可用")
+                            
+                                # 使用QTimer延迟检查，因为对话框可能在稍后被关闭
+                                from PyQt5.QtCore import QTimer
+                                def check_dialog_state():
+                                    print(f"[BOOK_LINK_CLICK] 打开后对话框状态: visible={self.parent_dialog.isVisible()}")
+                                    print(f"[BOOK_LINK_CLICK] 打开后响应区域内容长度: {len(self.response_area.toPlainText())}")
+                                    print(f"[BOOK_LINK_CLICK] 对话框是否被关闭: {self.parent_dialog.isHidden()}")
+                                    print(f"[BOOK_LINK_CLICK] 成功打开书籍: {path}")
+                                    print("="*80)
                                 
-                                logger.info(f"[BOOK_LINK_CLICK] 打开后对话框状态: visible={self.parent_dialog.isVisible()}")
-                                logger.info(f"[BOOK_LINK_CLICK] 打开后响应区域内容长度: {len(self.response_area.toPlainText())}")
-                                logger.info(f"[BOOK_LINK_CLICK] 成功打开书籍: {path}")
+                                # 立即检查
+                                check_dialog_state()
+                                # 1秒后再检查一次
+                                QTimer.singleShot(1000, check_dialog_state)
                             else:
                                 logger.error(f"[BOOK_LINK_CLICK] 找不到书籍文件路径")
                         else:

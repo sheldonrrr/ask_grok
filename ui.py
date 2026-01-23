@@ -49,9 +49,8 @@ def get_suggestion_template_from_ui(lang_code):
 
 class AskAIPluginUI(InterfaceAction):
     name = 'Ask AI Plugin'
-    # 使用 Ctrl+L 作为默认快捷键，所有平台统一
-    # 避免与 Calibre 的 F3 (Move to next match) 冲突
-    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'Ctrl+L')
+    # 使用 Ctrl+K 作为默认快捷键，所有平台统一
+    action_spec = ('Ask AI Plugin', 'images/ask_ai_plugin.png', 'Ask AI about this book', 'Ctrl+K')
     action_shortcut_name = 'Ask AI: Ask'
     action_type = 'global'
     
@@ -294,9 +293,9 @@ class AskAIPluginUI(InterfaceAction):
         dlg.tab_widget.setCurrentIndex(0)  # 默认显示配置标签页
         dlg.exec_()
     
-    def show_dialog(self):
+    def show_dialog(self, force_ai_search=False):
         logger.info("=" * 50)
-        logger.info("show_dialog() 被调用")
+        logger.info(f"show_dialog() 被调用, force_ai_search={force_ai_search}")
         
         try:
             self.initialize_api()
@@ -358,8 +357,12 @@ class AskAIPluginUI(InterfaceAction):
                         return
             
             # 获取选中的书籍
-            rows = self.gui.library_view.selectionModel().selectedRows()
-            logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
+            if force_ai_search:
+                rows = []
+                logger.info("强制 AI Search 模式")
+            else:
+                rows = self.gui.library_view.selectionModel().selectedRows()
+                logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
             
             if not rows or len(rows) == 0:
                 logger.info("没有选中的书籍，自动更新AI搜索元数据")
@@ -513,10 +516,8 @@ class AskAIPluginUI(InterfaceAction):
         dlg.exec_()
     
     def show_library(self):
-        """显示 Search 配置对话框"""
-        dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(1)  # Search 标签页（第2个）
-        dlg.exec_()
+        """打开 AI Search 对话框"""
+        self.show_dialog(force_ai_search=True)
     
     def show_tutorial(self):
         """显示教程对话框"""
@@ -807,9 +808,9 @@ class TutorialWidget(QWidget):
                 return
             
             # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.7.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.8.md')
             if not tutorial_data:
-                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.6.md')
+                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.7.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
