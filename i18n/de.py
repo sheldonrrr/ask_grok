@@ -469,6 +469,8 @@ class GermanTranslation(BaseTranslation):
             'library_init_required': 'Die KI-Suche kann ohne Bibliotheksdaten nicht aktiviert werden. Bitte klicken Sie auf "Bibliotheksdaten aktualisieren", wenn Sie bereit sind, diese Funktion zu nutzen.',
             'ai_search_welcome_title': 'Willkommen zur KI-Suche',
             'ai_search_welcome_message': 'Sie haben keine Bücher ausgewählt, daher ist die KI-Suche aktiviert!\n\nSie können nun Ihre gesamte Bibliothek mit natürlicher Sprache durchsuchen. Versuchen Sie zum Beispiel zu fragen:\n• "Hast du Bücher über Python?"\n• "Zeig mir Bücher von Isaac Asimov"\n• "Finde Bücher über maschinelles Lernen"\n\nDie KI wird Ihre Bibliothek durchsuchen und relevante Bücher empfehlen.',
+            'ai_search_not_enough_books_title': 'Nicht genügend Bücher',
+            'ai_search_not_enough_books_message': 'Die KI-Suche erfordert mindestens {min_books} Bücher in Ihrer Bibliothek.\n\nIhre aktuelle Bibliothek enthält nur {book_count} Buch/Bücher.\n\nBitte fügen Sie mehr Bücher hinzu, um die KI-Suche zu nutzen.',
             'ai_search_mode_info': 'Suche in der gesamten Bibliothek',
             'ai_search_privacy_title': 'Datenschutzhinweis',
             'ai_search_privacy_alert': 'Die KI-Suche verwendet Buch-Metadaten (Titel und Autoren) aus Ihrer Bibliothek. Diese Informationen werden an den von Ihnen konfigurierten KI-Anbieter gesendet, um Ihre Suchanfragen zu verarbeiten.',

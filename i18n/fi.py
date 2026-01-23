@@ -502,6 +502,8 @@ class FinnishTranslation(BaseTranslation):
             'library_init_required': 'AI-hakua ei voi ottaa käyttöön ilman kirjaston tietoja. Klikkaa "Päivitä kirjaston tiedot", kun olet valmis käyttämään tätä ominaisuutta.',
             'ai_search_welcome_title': 'Tervetuloa AI-hakuun',
             'ai_search_welcome_message': 'Et ole valinnut kirjoja, joten AI-haku on aktivoitu!\n\nVoit nyt hakea koko kirjastostasi luonnollisella kielellä. Kokeile esimerkiksi:\n• "Onko sinulla kirjoja Pythonista?"\n• "Näytä Isaac Asimovin kirjoja"\n• "Etsi kirjoja koneoppimisesta"\n\nAI etsii kirjastostasi ja suosittelee sopivia kirjoja.',
+            'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
+            'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
             'ai_search_mode_info': 'Haetaan koko kirjastosta',
             'ai_search_privacy_title': 'Tietosuojailmoitus',
             'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',

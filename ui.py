@@ -365,7 +365,30 @@ class AskAIPluginUI(InterfaceAction):
                 logger.info(f"获取选中的书籍行数: {len(rows) if rows else 0}")
             
             if not rows or len(rows) == 0:
-                logger.info("没有选中的书籍，自动更新AI搜索元数据")
+                logger.info("没有选中的书籍，检查是否可以使用AI搜索")
+                
+                # 检查图书馆书籍数量是否足够（至少20本）
+                db = self.gui.current_db
+                book_count = db.count()
+                logger.info(f"当前图书馆书籍数量: {book_count}")
+                
+                MIN_BOOKS_FOR_AI_SEARCH = 20
+                if book_count < MIN_BOOKS_FOR_AI_SEARCH:
+                    logger.warning(f"书籍数量不足，需要至少 {MIN_BOOKS_FOR_AI_SEARCH} 本书才能使用AI搜索")
+                    from PyQt5.QtWidgets import QMessageBox
+                    message = self.i18n.get('ai_search_not_enough_books_message', 
+                        'AI Search requires at least {min_books} books in your library.\n\n'
+                        'Your current library has only {book_count} book(s).\n\n'
+                        'Please add more books to your library to use AI Search.')
+                    message = message.format(min_books=MIN_BOOKS_FOR_AI_SEARCH, book_count=book_count)
+                    QMessageBox.information(
+                        self.gui,
+                        self.i18n.get('ai_search_not_enough_books_title', 'Not Enough Books'),
+                        message
+                    )
+                    return
+                
+                logger.info("书籍数量足够，自动更新AI搜索元数据")
                 # 自动更新图书馆元数据（每次触发AI搜索时）
                 prefs = get_prefs()
                 from .utils import update_library_metadata

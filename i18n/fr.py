@@ -487,6 +487,8 @@ class FrenchTranslation(BaseTranslation):
             'library_init_required': 'La recherche IA ne peut pas être activée sans données. Veuillez cliquer sur "Mettre à jour les données" quand vous serez prêt.',
             'ai_search_welcome_title': 'Bienvenue dans la Recherche IA',
             'ai_search_welcome_message': 'Aucun livre sélectionné, la recherche IA est donc activée !\n\nVous pouvez désormais explorer votre bibliothèque en langage naturel. Essayez par exemple :\n• "As-tu des livres sur Python ?"\n• "Montre-moi des livres d\'Isaac Asimov"\n• "Trouve des livres sur le machine learning"\n\nL\'IA parcourra votre collection pour vous recommander les meilleurs titres.',
+            'ai_search_not_enough_books_title': 'Pas assez de livres',
+            'ai_search_not_enough_books_message': 'La recherche IA nécessite au moins {min_books} livres dans votre bibliothèque.\n\nVotre bibliothèque actuelle ne contient que {book_count} livre(s).\n\nVeuillez ajouter plus de livres pour utiliser la recherche IA.',
             'ai_search_mode_info': 'Recherche dans toute la bibliothèque',
             'ai_search_privacy_title': 'Avis de confidentialité',
             'ai_search_privacy_alert': 'La recherche IA utilise les métadonnées (titres et auteurs) de votre bibliothèque. Ces informations seront envoyées au fournisseur d\'IA configuré pour traiter vos requêtes.',

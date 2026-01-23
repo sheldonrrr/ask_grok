@@ -502,6 +502,8 @@ class CantoneseTranslation(BaseTranslation):
             'library_init_required': '冇書庫資料就用唔到 AI 搜尋。準備好嘅話請點擊「更新書庫資料」。',
             'ai_search_welcome_title': '歡迎使用 AI 搜尋',
             'ai_search_welcome_message': '你仲未揀任何書，所以 AI 搜尋已經開咗喇！\n\n你而家可以用自然語言嚟搜尋成個書庫。例如試吓問：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟。',
+            'ai_search_not_enough_books_title': '書唔夠多',
+            'ai_search_not_enough_books_message': 'AI 搜尋需要你個書庫至少有 {min_books} 本書。\n\n你而家個書庫得 {book_count} 本書。\n\n請加多啲書先再用 AI 搜尋。',
             'ai_search_mode_info': '搜尋緊成個書庫',
             'ai_search_privacy_title': '隱私聲明',
             'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',

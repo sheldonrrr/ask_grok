@@ -502,6 +502,8 @@ class SwedishTranslation(BaseTranslation):
             'library_init_required': 'AI-sökning kan inte aktiveras utan biblioteksdata. Klicka på "Uppdatera biblioteksdata" när du är redo.',
             'ai_search_welcome_title': 'Välkommen till AI-sökning',
             'ai_search_welcome_message': 'Du har inte valt några böcker, så AI-sökning är aktiverad!\n\nDu kan nu söka i hela ditt bibliotek med naturligt språk. Prova till exempel att fråga:\n• "Har du några böcker om Python?"\n• "Visa mig böker av Isaac Asimov"\n• "Hitta böcker om maskininlärning"\n\nAI:n kommer att söka i ditt bibliotek och rekommendera relevanta böcker.',
+            'ai_search_not_enough_books_title': 'Inte tillräckligt med böcker',
+            'ai_search_not_enough_books_message': 'AI-sökning kräver minst {min_books} böcker i ditt bibliotek.\n\nDitt nuvarande bibliotek har bara {book_count} bok/böcker.\n\nLägg till fler böcker för att använda AI-sökning.',
             'ai_search_mode_info': 'Söker i hela biblioteket',
             'ai_search_privacy_title': 'Integritetsmeddelande',
             'ai_search_privacy_alert': 'AI-sökning använder bokmetadata (titlar och författare). Denna information skickas till den AI-leverantör du har konfigurerat för att behandla dina sökningar.',

@@ -502,6 +502,8 @@ class SpanishTranslation(BaseTranslation):
             'library_init_required': 'La búsqueda IA no se puede habilitar sin datos de la biblioteca. Haga clic en "Actualizar datos de la biblioteca" cuando esté listo para usar esta función.',
             'ai_search_welcome_title': 'Bienvenido a la búsqueda IA',
             'ai_search_welcome_message': '¡No ha seleccionado ningún libro, por lo que la búsqueda IA está activada!\n\nAhora puede buscar en toda su biblioteca usando lenguaje natural. Por ejemplo, intente preguntar:\n• "¿Tiene libros sobre Python?"\n• "Muéstrame libros de Isaac Asimov"\n• "Encuentra libros sobre aprendizaje automático"\n\nLa IA buscará en su biblioteca y recomendará libros relevantes.',
+            'ai_search_not_enough_books_title': 'No hay suficientes libros',
+            'ai_search_not_enough_books_message': 'La búsqueda IA requiere al menos {min_books} libros en su biblioteca.\n\nSu biblioteca actual solo tiene {book_count} libro(s).\n\nPor favor, agregue más libros para usar la búsqueda IA.',
             'ai_search_mode_info': 'Buscando en toda su biblioteca',
             'ai_search_privacy_title': 'Aviso de Privacidad',
             'ai_search_privacy_alert': 'La Búsqueda IA utiliza metadatos de libros (títulos y autores) de tu biblioteca. Esta información se enviará al proveedor de IA que hayas configurado para procesar tus consultas de búsqueda.',

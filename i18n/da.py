@@ -500,6 +500,8 @@ class DanishTranslation(BaseTranslation):
             'library_init_required': 'AI Søgning kan ikke aktiveres uden biblioteksdata. Klik venligst på "Opdater biblioteksdata", når du er klar til at bruge denne funktion.',
             'ai_search_welcome_title': 'Velkommen til AI Søgning',
             'ai_search_welcome_message': 'Du har ikke valgt nogen bøger, så AI Søgning er aktiveret!\n\nDu kan nu søge i hele dit bibliotek ved hjælp af naturligt sprog. Prøv for eksempel at spørge:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger.',
+            'ai_search_not_enough_books_title': 'Ikke nok bøger',
+            'ai_search_not_enough_books_message': 'AI Søgning kræver mindst {min_books} bøger i dit bibliotek.\n\nDit nuværende bibliotek har kun {book_count} bog/bøger.\n\nTilføj venligst flere bøger for at bruge AI Søgning.',
             'ai_search_mode_info': 'Søger på tværs af hele dit bibliotek',
             'ai_search_privacy_title': 'Meddelelse om beskyttelse af personlige oplysninger',
             'ai_search_privacy_alert': 'AI Søgning bruger bogmetadata (titler og forfattere) fra dit bibliotek. Disse oplysninger vil blive sendt til den AI-udbyder, du har konfigureret til at behandle dine søgeforespørgsler.',
