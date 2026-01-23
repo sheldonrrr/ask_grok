@@ -503,4 +503,12 @@ class PortugueseTranslation(BaseTranslation):
             'ai_search_welcome_title': 'Bem-vindo à pesquisa IA',
             'ai_search_welcome_message': 'Você não selecionou nenhum livro, então a pesquisa IA está ativada!\n\nAgora você pode pesquisar toda a sua biblioteca usando linguagem natural. Por exemplo, tente perguntar:\n• "Você tem livros sobre Python?"\n• "Mostre-me livros de Isaac Asimov"\n• "Encontre livros sobre aprendizado de máquina"\n\nA IA pesquisará sua biblioteca e recomendará livros relevantes.',
             'ai_search_mode_info': 'Pesquisando em toda a sua biblioteca',
+            'ai_search_privacy_title': 'Aviso de Privacidade',
+            'ai_search_privacy_alert': 'A Busca IA utiliza metadados dos livros (títulos e autores). Esta informação será enviada para o fornecedor de IA que configurou para processar as suas pesquisas.',
+            'ai_search_updated_info': '{count} livros atualizados há {time_ago}',
+            'ai_search_books_info': '{count} livros indexados',
+            'days_ago': '{n} dias atrás',
+            'hours_ago': '{n} horas atrás',
+            'minutes_ago': '{n} minutos atrás',
+            'just_now': 'agora mesmo',
         }

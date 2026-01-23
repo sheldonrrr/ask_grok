@@ -510,4 +510,10 @@ class EnglishTranslation(BaseTranslation):
             'ai_search_mode_info': 'Searching across your entire library',
             'ai_search_privacy_title': 'Privacy Notice',
             'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',
+            'ai_search_updated_info': 'Updated {count} books {time_ago}',
+            'ai_search_books_info': '{count} books indexed',
+            'days_ago': '{n} days ago',
+            'hours_ago': '{n} hours ago',
+            'minutes_ago': '{n} minutes ago',
+            'just_now': 'just now',
         }

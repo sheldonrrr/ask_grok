@@ -481,4 +481,34 @@ class CantoneseTranslation(BaseTranslation):
             'pdf_software': '軟件', # Software
             'pdf_generated_time': '生成時間', # Generated Time
             'pdf_info_not_available': '資訊不可用', # Information not available
+
+            #AI搜索V1.4.2
+            'library_tab': '搵書',
+            'library_search': 'AI 搜尋',
+            'library_info': 'AI 搜尋功能一直開住。當你冇揀到任何書嘅時候，你就可以用口語化嘅文字去搜尋成個書庫。',
+            'library_enable': '開啟 AI 搜尋',
+            'library_enable_tooltip': '開咗之後，喺冇揀書嘅情況下可以用 AI 搜尋書庫',
+            'library_update': '更新書庫資料',
+            'library_update_tooltip': '喺書庫度提取書名同作者',
+            'library_updating': '更新緊...',
+            'library_status': '狀態：有 {count} 本書，上次更新：{time}',
+            'library_status_empty': '狀態：冇資料。請點擊「更新書庫資料」開始。',
+            'library_status_error': '狀態：載入資料出錯',
+            'library_update_success': '成功更新咗 {count} 本書',
+            'library_update_failed': '更新書庫資料失敗',
+            'library_no_gui': 'GUI 用唔到',
+            'library_init_title': '初始化 AI 搜尋',
+            'library_init_message': 'AI 搜尋需要書庫嘅 Metadata 先用到。想唔想而家初始化？\n\n呢個動作會喺你個書庫度提取書名同作者。',
+            'library_init_required': '冇書庫資料就用唔到 AI 搜尋。準備好嘅話請點擊「更新書庫資料」。',
+            'ai_search_welcome_title': '歡迎使用 AI 搜尋',
+            'ai_search_welcome_message': '你仲未揀任何書，所以 AI 搜尋已經開咗喇！\n\n你而家可以用自然語言嚟搜尋成個書庫。例如試吓問：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟。',
+            'ai_search_mode_info': '搜尋緊成個書庫',
+            'ai_search_privacy_title': '隱私聲明',
+            'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',
+            'ai_search_updated_info': '{time_ago} 更新咗 {count} 本書',
+            'ai_search_books_info': '已經索引咗 {count} 本書',
+            'days_ago': '{n} 日前',
+            'hours_ago': '{n} 粒鐘前',
+            'minutes_ago': '{n} 分鐘前',
+            'just_now': '剛剛',
         }

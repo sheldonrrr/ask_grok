@@ -223,6 +223,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'metadata_title': '标题',
             'metadata_authors': '作者',
             'metadata_publisher': '出版社',
+            'metadata_pubdate': '出版日期',
             'metadata_pubyear': '出版日期',
             'metadata_language': '语言',
             'metadata_series': '系列',
@@ -505,4 +506,10 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_search_mode_info': '正在搜索您的整个图书馆',
             'ai_search_privacy_title': '隐私提示',
             'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',
+            'ai_search_updated_info': '已更新 {count} 本书，{time_ago}',
+            'ai_search_books_info': '已索引 {count} 本书',
+            'days_ago': '{n} 天前',
+            'hours_ago': '{n} 小时前',
+            'minutes_ago': '{n} 分钟前',
+            'just_now': '刚刚',
         }

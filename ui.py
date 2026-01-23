@@ -376,21 +376,26 @@ class AskAIPluginUI(InterfaceAction):
                 library_metadata = prefs.get('library_cached_metadata', '')
                 
                 if library_metadata:
-                    # 有数据，显示欢迎消息并继续
-                    logger.info("AI搜索数据存在，显示欢迎消息")
-                    from PyQt5.QtWidgets import QMessageBox
-                    QMessageBox.information(
-                        self.gui,
-                        self.i18n.get('ai_search_welcome_title', 'Welcome to AI Search'),
-                        self.i18n.get('ai_search_welcome_message', 
-                            'You haven\'t selected any books, so AI Search is activated!\n\n'
-                            'You can now search your entire library using natural language. '
-                            'For example, try asking:\n'
-                            '• "Do you have any books about Python?"\n'
-                            '• "Show me books by Isaac Asimov"\n'
-                            '• "Find books about machine learning"\n\n'
-                            'AI will search through your library and recommend relevant books.')
-                    )
+                    # 有数据，仅在首次使用时显示欢迎消息
+                    if prefs.get('ai_search_first_time', True):
+                        logger.info("AI搜索首次使用，显示欢迎消息")
+                        from PyQt5.QtWidgets import QMessageBox
+                        QMessageBox.information(
+                            self.gui,
+                            self.i18n.get('ai_search_welcome_title', 'Welcome to AI Search'),
+                            self.i18n.get('ai_search_welcome_message', 
+                                'You haven\'t selected any books, so AI Search is activated!\n\n'
+                                'You can now search your entire library using natural language. '
+                                'For example, try asking:\n'
+                                '• "Do you have any books about Python?"\n'
+                                '• "Show me books by Isaac Asimov"\n'
+                                '• "Find books about machine learning"\n\n'
+                                'AI will search through your library and recommend relevant books.')
+                        )
+                        # 标记为已显示过欢迎消息
+                        prefs['ai_search_first_time'] = False
+                    else:
+                        logger.info("AI搜索非首次使用，跳过欢迎消息")
                     # 继续执行，不返回，让对话框打开
                     books_info = None  # 标记为AI搜索模式
                 else:
@@ -1748,6 +1753,14 @@ class AskDialog(QDialog):
             self.book_metadata = self.books_metadata[0]  # 向后兼容
         
         # 生成或加载 UID
+        # AI Search 模式下，自动加载上次保存的历史UID
+        if not history_uid and not self.books_info:
+            prefs = get_prefs()
+            last_uid = prefs.get('ai_search_last_history_uid')
+            if last_uid:
+                history_uid = last_uid
+                logger.info(f"AI Search mode, using last saved history UID: {last_uid}")
+        
         self._explicit_history_uid = history_uid
         if history_uid:
             self.current_uid = history_uid
@@ -2584,6 +2597,205 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"重建元数据组件失败: {str(e)}")
 
+    def _update_ai_search_info_label(self):
+        """更新 AI Search 模式下的信息标签，显示书籍数量和更新时间"""
+        if not hasattr(self, 'ai_search_info_label'):
+            return
+        
+        try:
+            prefs = get_prefs()
+            library_metadata = prefs.get('library_cached_metadata', '')
+            last_update = prefs.get('library_last_update', '')
+            
+            if library_metadata:
+                import json
+                books = json.loads(library_metadata)
+                book_count = len(books)
+                
+                # 计算时间差
+                if last_update:
+                    from datetime import datetime
+                    try:
+                        update_time = datetime.fromisoformat(last_update)
+                        now = datetime.now()
+                        diff = now - update_time
+                        
+                        # 格式化时间差
+                        if diff.days > 0:
+                            time_ago = self.i18n.get('days_ago', '{n} days ago').format(n=diff.days)
+                        elif diff.seconds >= 3600:
+                            hours = diff.seconds // 3600
+                            time_ago = self.i18n.get('hours_ago', '{n} hours ago').format(n=hours)
+                        elif diff.seconds >= 60:
+                            minutes = diff.seconds // 60
+                            time_ago = self.i18n.get('minutes_ago', '{n} minutes ago').format(n=minutes)
+                        else:
+                            time_ago = self.i18n.get('just_now', 'just now')
+                        
+                        info_text = self.i18n.get('ai_search_updated_info', 
+                            'Updated {count} books {time_ago}').format(count=book_count, time_ago=time_ago)
+                    except Exception:
+                        info_text = self.i18n.get('ai_search_books_info', 
+                            '{count} books indexed').format(count=book_count)
+                else:
+                    info_text = self.i18n.get('ai_search_books_info', 
+                        '{count} books indexed').format(count=book_count)
+                
+                self.ai_search_info_label.setText(f"({info_text})")
+            else:
+                self.ai_search_info_label.setText("")
+        except Exception as e:
+            logger.warning(f"更新 AI Search 信息标签失败: {e}")
+            self.ai_search_info_label.setText("")
+
+    def _load_history_content(self, history):
+        """加载历史记录内容到UI
+        
+        Args:
+            history: 历史记录字典
+            
+        Returns:
+            bool: 如果成功加载返回True
+        """
+        self.input_area.setPlainText(history['question'])
+        
+        # 检查是否有多面板模式
+        if hasattr(self, 'response_panels') and self.response_panels:
+            # 多面板模式：为每个面板加载对应AI的历史响应
+            
+            if 'answers' in history and history['answers']:
+                # 获取历史记录中所有AI的ID（排除'default'）
+                history_ai_ids = [ai_id for ai_id in history['answers'].keys() if ai_id != 'default']
+                
+                # 如果历史记录中没有具体AI ID，只有default，则使用default
+                if not history_ai_ids and 'default' in history['answers']:
+                    history_ai_ids = ['default']
+                
+                # 为每个历史AI响应分配一个面板
+                for idx, ai_id in enumerate(history_ai_ids):
+                    if idx >= len(self.response_panels):
+                        logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
+                        break
+                    
+                    panel = self.response_panels[idx]
+                    answer_data = history['answers'][ai_id]
+                    answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
+                    
+                    # 智能AI切换：检查历史AI是否仍然可用
+                    if ai_id != 'default':
+                        # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
+                        panel.ai_switcher.blockSignals(True)
+                        
+                        # 检查历史AI是否在当前可用的AI列表中
+                        ai_found = False
+                        for i in range(panel.ai_switcher.count()):
+                            if panel.ai_switcher.itemData(i) == ai_id:
+                                panel.ai_switcher.setCurrentIndex(i)
+                                logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
+                                ai_found = True
+                                break
+                        
+                        # 如果历史AI不可用，使用默认AI
+                        if not ai_found:
+                            prefs = get_prefs()
+                            default_ai = prefs.get('selected_model', 'grok')
+                            logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                            
+                            # 尝试切换到默认AI
+                            for i in range(panel.ai_switcher.count()):
+                                if panel.ai_switcher.itemData(i) == default_ai:
+                                    panel.ai_switcher.setCurrentIndex(i)
+                                    logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                    break
+                        
+                        panel.ai_switcher.blockSignals(False)
+                    
+                    # 先设置当前问题
+                    panel.set_current_question(history['question'])
+                    
+                    # 加载历史响应
+                    panel.response_handler._update_ui_from_signal(
+                        answer_text,
+                        is_response=True,
+                        is_history=True
+                    )
+                    logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
+                    
+                    # 更新历史信息标签（只在第一个面板时更新）
+                    if idx == 0:
+                        timestamp = history.get('timestamp', '未知时间')
+                        # 从answer_data中获取model_info（正确的位置）
+                        model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
+                        logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
+                        
+                        # 如果历史记录中没有model_info（旧版本），从面板API获取
+                        if not model_info and hasattr(panel, 'api'):
+                            api_obj = panel.api
+                            model_info = {
+                                'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
+                                'model': getattr(api_obj, 'model', 'Unknown'),
+                                'api_base': getattr(api_obj, 'api_base', '')
+                            }
+                        
+                        self._update_history_info_label(ai_id, timestamp, model_info)
+                    
+                    # 再次更新按钮状态（确保在响应加载后更新）
+                    panel.update_button_states()
+                
+                # 清空未使用的面板
+                logger.info(f"准备清空未使用的面板，范围: {len(history_ai_ids)} 到 {len(self.response_panels)}")
+                for idx in range(len(history_ai_ids), len(self.response_panels)):
+                    panel = self.response_panels[idx]
+                    logger.info(f"准备清空面板 {idx}，panel_index={panel.panel_index}")
+                    panel.response_area.clear()
+                    # 清空后更新按钮状态，禁用复制按钮
+                    logger.info(f"面板 {idx} 已清空，准备更新按钮状态")
+                    panel.update_button_states()
+                    logger.info(f"面板 {idx} 按钮状态已更新")
+                
+                # 统一更新所有面板的AI切换器（实现互斥逻辑）
+                self._update_all_panel_ai_switchers()
+            else:
+                logger.warning("历史记录中没有answers字段")
+        else:
+            # 单面板模式（向后兼容）
+            logger.info("单面板模式，加载历史记录")
+            
+            # 兼容新旧格式：优先使用answers字典，回退到answer字段
+            if 'answers' in history and history['answers']:
+                # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
+                first_ai_id = list(history['answers'].keys())[0]
+                answer_data = history['answers'][first_ai_id]
+                answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
+            elif 'answer' in history:
+                # 旧格式：直接使用answer字段
+                answer_text = history['answer']
+                logger.info("加载旧格式历史记录")
+            else:
+                answer_text = ""
+                logger.warning("历史记录中没有找到答案内容")
+            
+            if answer_text:
+                self.response_handler._update_ui_from_signal(
+                    answer_text, 
+                    is_response=True,
+                    is_history=True
+                )
+        
+        logger.info(f"已加载历史记录，时间: {history.get('timestamp', '未知')}")
+        
+        # 更新导出历史按钮状态
+        if hasattr(self, 'response_panels') and self.response_panels:
+            for panel in self.response_panels:
+                if hasattr(panel, 'update_export_all_button_state'):
+                    panel.update_export_all_button_state()
+        
+        # 刷新历史记录菜单，更新选中状态
+        self._load_related_histories()
+        
+        # 成功加载了历史记录
+        return True
+
     def _load_history(self):
         """加载历史记录 - 智能匹配当前书籍组合
         
@@ -2594,6 +2806,16 @@ class AskDialog(QDialog):
         logger = logging.getLogger(__name__)
         
         try:
+            # AI Search 模式（books_info为空）：直接通过 UID 加载历史记录
+            if not self.books_info and self._explicit_history_uid:
+                logger.info(f"AI Search mode, loading history by UID: {self._explicit_history_uid}")
+                history = self.response_handler.history_manager.get_history_by_uid(self._explicit_history_uid)
+                if history:
+                    return self._load_history_content(history)
+                else:
+                    logger.warning(f"AI Search history not found: {self._explicit_history_uid}")
+                    return False
+            
             # 首先检查是否有待发送的随机问题
             book_ids = tuple(sorted([book.id for book in self.books_info]))
             prefs = get_prefs()
@@ -2662,145 +2884,7 @@ class AskDialog(QDialog):
             
             # 如果找到匹配的历史记录，加载它
             if matched_history:
-                self.input_area.setPlainText(matched_history['question'])
-                
-                # 检查是否有多面板模式
-                if hasattr(self, 'response_panels') and self.response_panels:
-                    # 多面板模式：为每个面板加载对应AI的历史响应
-                    
-                    if 'answers' in matched_history and matched_history['answers']:
-                        # 获取历史记录中所有AI的ID（排除'default'）
-                        history_ai_ids = [ai_id for ai_id in matched_history['answers'].keys() if ai_id != 'default']
-                        
-                        # 如果历史记录中没有具体AI ID，只有default，则使用default
-                        if not history_ai_ids and 'default' in matched_history['answers']:
-                            history_ai_ids = ['default']
-                        
-                        
-                        # 为每个历史AI响应分配一个面板
-                        for idx, ai_id in enumerate(history_ai_ids):
-                            if idx >= len(self.response_panels):
-                                logger.warning(f"历史记录有 {len(history_ai_ids)} 个AI响应，但只有 {len(self.response_panels)} 个面板")
-                                break
-                            
-                            panel = self.response_panels[idx]
-                            answer_data = matched_history['answers'][ai_id]
-                            answer_text = answer_data.get('answer', answer_data) if isinstance(answer_data, dict) else answer_data
-                            
-                            # 智能AI切换：检查历史AI是否仍然可用
-                            if ai_id != 'default':
-                                # 阻止信号触发，避免重复调用_update_all_panel_ai_switchers
-                                panel.ai_switcher.blockSignals(True)
-                                
-                                # 检查历史AI是否在当前可用的AI列表中
-                                ai_found = False
-                                for i in range(panel.ai_switcher.count()):
-                                    if panel.ai_switcher.itemData(i) == ai_id:
-                                        panel.ai_switcher.setCurrentIndex(i)
-                                        logger.info(f"面板 {idx} 切换到历史AI: {ai_id}")
-                                        ai_found = True
-                                        break
-                                
-                                # 如果历史AI不可用，使用默认AI
-                                if not ai_found:
-                                    prefs = get_prefs()
-                                    default_ai = prefs.get('selected_model', 'grok')
-                                    logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
-                                    
-                                    # 尝试切换到默认AI
-                                    for i in range(panel.ai_switcher.count()):
-                                        if panel.ai_switcher.itemData(i) == default_ai:
-                                            panel.ai_switcher.setCurrentIndex(i)
-                                            logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
-                                            break
-                                
-                                panel.ai_switcher.blockSignals(False)
-                            
-                            # 先设置当前问题
-                            panel.set_current_question(matched_history['question'])
-                            
-                            # 加载历史响应
-                            panel.response_handler._update_ui_from_signal(
-                                answer_text,
-                                is_response=True,
-                                is_history=True
-                            )
-                            logger.info(f"为面板 {idx} 加载AI {ai_id} 的历史响应（长度: {len(answer_text)}）")
-                            
-                            # 更新历史信息标签（只在第一个面板时更新）
-                            if idx == 0:
-                                timestamp = matched_history.get('timestamp', '未知时间')
-                                # 从answer_data中获取model_info（正确的位置）
-                                model_info = answer_data.get('model_info', None) if isinstance(answer_data, dict) else None
-                                logger.info(f"[加载历史] AI={ai_id}, model_info={'存在' if model_info else '不存在'}")
-                                
-                                # 如果历史记录中没有model_info（旧版本），从面板API获取
-                                if not model_info and hasattr(panel, 'api'):
-                                    api_obj = panel.api
-                                    model_info = {
-                                        'provider_name': getattr(api_obj, 'provider_name', 'Unknown'),
-                                        'model': getattr(api_obj, 'model', 'Unknown'),
-                                        'api_base': getattr(api_obj, 'api_base', '')
-                                    }
-                                
-                                self._update_history_info_label(ai_id, timestamp, model_info)
-                            
-                            # 再次更新按钮状态（确保在响应加载后更新）
-                            panel.update_button_states()
-                        
-                        # 清空未使用的面板
-                        logger.info(f"准备清空未使用的面板，范围: {len(history_ai_ids)} 到 {len(self.response_panels)}")
-                        for idx in range(len(history_ai_ids), len(self.response_panels)):
-                            panel = self.response_panels[idx]
-                            logger.info(f"准备清空面板 {idx}，panel_index={panel.panel_index}")
-                            panel.response_area.clear()
-                            # 清空后更新按钮状态，禁用复制按钮
-                            logger.info(f"面板 {idx} 已清空，准备更新按钮状态")
-                            panel.update_button_states()
-                            logger.info(f"面板 {idx} 按钮状态已更新")
-                        
-                        # 统一更新所有面板的AI切换器（实现互斥逻辑）
-                        self._update_all_panel_ai_switchers()
-                    else:
-                        logger.warning("历史记录中没有answers字段")
-                else:
-                    # 单面板模式（向后兼容）
-                    logger.info("单面板模式，加载历史记录")
-                    
-                    # 兼容新旧格式：优先使用answers字典，回退到answer字段
-                    if 'answers' in matched_history and matched_history['answers']:
-                        # 新格式：从answers字典中获取第一个响应（通常是'default'或第一个AI的响应）
-                        first_ai_id = list(matched_history['answers'].keys())[0]
-                        answer_data = matched_history['answers'][first_ai_id]
-                        answer_text = answer_data['answer'] if isinstance(answer_data, dict) else answer_data
-                    elif 'answer' in matched_history:
-                        # 旧格式：直接使用answer字段
-                        answer_text = matched_history['answer']
-                        logger.info("加载旧格式历史记录")
-                    else:
-                        answer_text = ""
-                        logger.warning("历史记录中没有找到答案内容")
-                    
-                    if answer_text:
-                        self.response_handler._update_ui_from_signal(
-                            answer_text, 
-                            is_response=True,
-                            is_history=True
-                        )
-                
-                logger.info(f"已加载历史记录，时间: {matched_history.get('timestamp', '未知')}")
-                
-                # 更新导出历史按钮状态
-                if hasattr(self, 'response_panels') and self.response_panels:
-                    for panel in self.response_panels:
-                        if hasattr(panel, 'update_export_all_button_state'):
-                            panel.update_export_all_button_state()
-                
-                # 刷新历史记录菜单，更新选中状态
-                self._load_related_histories()
-                
-                # 成功加载了历史记录
-                return True
+                return self._load_history_content(matched_history)
             else:
                 logger.info("没有找到匹配的历史记录（书籍组合不同），显示新对话")
                 
@@ -2826,6 +2910,16 @@ class AskDialog(QDialog):
         prefs = get_prefs()
         prefs['ask_dialog_width'] = self.width()
         prefs['ask_dialog_height'] = self.height()
+        
+        # AI Search 模式下，保存当前 UID 以便下次打开时恢复历史
+        if not self.books_info and self.current_uid:
+            # 检查是否有实际的历史记录（有问答内容）
+            history = self.response_handler.history_manager.get_history_by_uid(self.current_uid)
+            if history and history.get('answers'):
+                prefs['ai_search_last_history_uid'] = self.current_uid
+                logger.info(f"AI Search mode, saved history UID: {self.current_uid}")
+            else:
+                logger.info(f"AI Search mode, no history to save (UID: {self.current_uid})")
         
         # 清理资源
         if hasattr(self.response_handler, 'cleanup'):
@@ -3527,13 +3621,19 @@ class AskDialog(QDialog):
         title_label.setStyleSheet(f"font-weight: bold; font-size: {FONT_SIZE_LARGE}pt;")
         top_bar.addWidget(title_label)
         
-        # 书籍信息标签（仅在多书模式下显示）
+        # 书籍信息标签（多书模式或 AI Search 模式）
         if self.is_multi_book:
             book_count = len(self.books_info)
             books_info_text = f"({book_count}{self.i18n.get('books_unit', '本书')})"
             self.books_info_label = QLabel(books_info_text)
             self.books_info_label.setStyleSheet("color: palette(dark); font-size: 0.9em; margin-left: 8px;")
             top_bar.addWidget(self.books_info_label)
+        elif not self.books_info:
+            # AI Search 模式：显示书籍数量和更新时间
+            self.ai_search_info_label = QLabel()
+            self.ai_search_info_label.setStyleSheet("color: palette(dark); font-size: 0.9em; margin-left: 8px;")
+            self._update_ai_search_info_label()
+            top_bar.addWidget(self.ai_search_info_label)
         
         top_bar.addStretch()
         

@@ -973,7 +973,14 @@ class ResponseHandler(QObject):
                         question = self.input_area.toPlainText() if self.input_area else ''
                         
                         # 确定模式
-                        mode = 'multi' if parent_dialog.is_multi_book else 'single'
+                        # AI Search 模式：books_info 为空
+                        if not parent_dialog.books_info:
+                            mode = 'ai_search'
+                            # 使用特殊的 books_metadata 标记
+                            books_metadata_to_save = [{'id': 'ai_search', 'title': 'AI Search', 'deleted': False}]
+                        else:
+                            mode = 'multi' if parent_dialog.is_multi_book else 'single'
+                            books_metadata_to_save = parent_dialog.books_metadata
                         
                         # 使用新的保存方法，传递AI标识符和模型信息
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
@@ -1026,7 +1033,7 @@ class ResponseHandler(QObject):
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
                             mode,
-                            parent_dialog.books_metadata,
+                            books_metadata_to_save,
                             question,
                             text,
                             ai_id=ai_id,
