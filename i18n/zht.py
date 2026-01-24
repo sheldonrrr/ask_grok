@@ -503,7 +503,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'library_init_message': 'AI 搜尋需要書庫元數據才能運作。是否立即進行初始化？\n\n這將會從您的書庫中提取書名與作者。',
         'library_init_required': '若無書庫資料則無法啟用 AI 搜尋。請在準備就緒時點擊「更新書庫資料」。',
         'ai_search_welcome_title': '歡迎使用 AI 搜尋',
-        'ai_search_welcome_message': '您尚未選取任何書籍，因此 AI 搜尋已自動啟用！\n\n您現在可以用自然語言搜尋整個書庫。例如，試著詢問：\n• 「你有關於 Python 的書嗎？」\n• 「幫我找艾西莫夫寫的書」\n• 「尋找關於機器學習的書」\n\nAI 會搜尋您的書庫並推薦相關書籍。',
+        'ai_search_welcome_message': 'AI 搜尋已啟動！\n\n觸發方式：\n• 快捷鍵（可在設定中自訂）\n• 工具選單 → AI 搜尋\n• 不選取任何書籍時開啟 Ask 對話框\n\n您可以用自然語言搜尋整個書庫。例如：\n• 「你有關於 Python 的書嗎？」\n• 「幫我找艾西莫夫寫的書」\n• 「尋找關於機器學習的書」\n\nAI 會搜尋您的書庫並推薦相關書籍，點擊書名即可直接開啟閱讀。',
         'ai_search_not_enough_books_title': '書籍數量不足',
         'ai_search_not_enough_books_message': 'AI 搜尋需要您的書庫中至少有 {min_books} 本書。\n\n您目前的書庫只有 {book_count} 本書。\n\n請新增更多書籍後再使用 AI 搜尋。',
         'ai_search_mode_info': '正在搜尋整個書庫',

@@ -161,6 +161,14 @@ class ResponsePanel(QWidget):
                 padding: 8px 12px;
                 text-align: left;
             }
+            a {
+                color: #0066cc;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            a:hover {
+                color: #0044aa;
+            }
         """)
         
         main_layout.addWidget(self.response_area, stretch=1)  # stretch=1 让它占据剩余空间

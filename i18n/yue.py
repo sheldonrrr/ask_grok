@@ -501,7 +501,7 @@ class CantoneseTranslation(BaseTranslation):
             'library_init_message': 'AI 搜尋需要書庫嘅 Metadata 先用到。想唔想而家初始化？\n\n呢個動作會喺你個書庫度提取書名同作者。',
             'library_init_required': '冇書庫資料就用唔到 AI 搜尋。準備好嘅話請點擊「更新書庫資料」。',
             'ai_search_welcome_title': '歡迎使用 AI 搜尋',
-            'ai_search_welcome_message': '你仲未揀任何書，所以 AI 搜尋已經開咗喇！\n\n你而家可以用自然語言嚟搜尋成個書庫。例如試吓問：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟。',
+            'ai_search_welcome_message': 'AI 搜尋已經開咗喇！\n\n觸發方式：\n• 快捷鍵（可以喺設定度自訂）\n• 工具選單 → AI 搜尋\n• 唔揀任何書嘅時候開 Ask 對話框\n\n你可以用自然語言嚟搜尋成個書庫。例如：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟，撳書名就可以直接開嚟睇。',
             'ai_search_not_enough_books_title': '書唔夠多',
             'ai_search_not_enough_books_message': 'AI 搜尋需要你個書庫至少有 {min_books} 本書。\n\n你而家個書庫得 {book_count} 本書。\n\n請加多啲書先再用 AI 搜尋。',
             'ai_search_mode_info': '搜尋緊成個書庫',

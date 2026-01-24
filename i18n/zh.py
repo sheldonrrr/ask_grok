@@ -502,7 +502,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'library_init_message': 'AI搜索需要图书馆元数据才能工作。是否现在初始化？\n\n这将从您的图书馆中提取书名和作者信息。',
             'library_init_required': '没有图书馆数据无法启用AI搜索。当您准备好使用此功能时，请点击“更新图书馆数据”。',
             'ai_search_welcome_title': '欢迎AI搜索',
-            'ai_search_welcome_message': '您没有选择任何书籍，AI搜索已启动！\n\n您现在可以使用自然语言搜索整个图书馆。例如，尝试问：\n• “有没有关于Python的书？”\n• “给我看看阿西莫夫的书”\n• “找找关于机器学习的书”\n\nAI会搜索您的图书馆并推荐相关书籍。',
+            'ai_search_welcome_message': 'AI搜索已启动！\n\n触发方式：\n• 快捷键（可在设置中自定义）\n• 工具菜单 → AI搜索\n• 不选择任何书籍时打开Ask对话框\n\n您可以使用自然语言搜索整个图书馆。例如：\n• "有没有关于Python的书？"\n• "给我看看阿西莫夫的书"\n• "找找关于机器学习的书"\n\nAI会搜索您的图书馆并推荐相关书籍，点击书名即可直接打开阅读。',
             'ai_search_not_enough_books_title': '书籍数量不足',
             'ai_search_not_enough_books_message': 'AI搜索需要您的图书馆中至少有 {min_books} 本书。\n\n您当前的图书馆只有 {book_count} 本书。\n\n请添加更多书籍后再使用AI搜索。',
             'ai_search_mode_info': '正在搜索您的整个图书馆',

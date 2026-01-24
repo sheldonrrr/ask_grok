@@ -499,7 +499,7 @@ class DanishTranslation(BaseTranslation):
             'library_init_message': 'AI Søgning kræver biblioteksmetadata for at fungere. Vil du initialisere det nu?\n\nDette vil udtrække bogtitler og forfattere fra dit bibliotek.',
             'library_init_required': 'AI Søgning kan ikke aktiveres uden biblioteksdata. Klik venligst på "Opdater biblioteksdata", når du er klar til at bruge denne funktion.',
             'ai_search_welcome_title': 'Velkommen til AI Søgning',
-            'ai_search_welcome_message': 'Du har ikke valgt nogen bøger, så AI Søgning er aktiveret!\n\nDu kan nu søge i hele dit bibliotek ved hjælp af naturligt sprog. Prøv for eksempel at spørge:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger.',
+            'ai_search_welcome_message': 'AI Søgning er aktiveret!\n\nSådan aktiveres:\n• Tastaturgenvej (kan tilpasses i indstillinger)\n• Værktøjsmenu → AI Søgning\n• Åbn Ask-dialog uden at vælge bøger\n\nDu kan søge i hele dit bibliotek med naturligt sprog. For eksempel:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger. Klik på bogtitler for at åbne dem direkte.',
             'ai_search_not_enough_books_title': 'Ikke nok bøger',
             'ai_search_not_enough_books_message': 'AI Søgning kræver mindst {min_books} bøger i dit bibliotek.\n\nDit nuværende bibliotek har kun {book_count} bog/bøger.\n\nTilføj venligst flere bøger for at bruge AI Søgning.',
             'ai_search_mode_info': 'Søger på tværs af hele dit bibliotek',

@@ -530,7 +530,7 @@ class JapaneseTranslation(BaseTranslation):
             'library_init_message': 'AI検索を利用するにはライブラリのメタデータが必要です。今すぐ初期化しますか？\n\nこれにより、ライブラリから本のタイトルと著者名が抽出されます。',
             'library_init_required': 'ライブラリデータなしでAI検索を有効にすることはできません。準備ができたら「ライブラリデータの更新」をクリックしてください。',
             'ai_search_welcome_title': 'AI検索へようこそ',
-            'ai_search_welcome_message': '本が選択されていないため、AI検索が有効になりました！\n\n自然言語でライブラリ全体を検索できます。例:\n• 「Pythonに関する本はありますか？」\n• 「アイザック・アシモフの本を見せて」\n• 「機械学習についての本を探して」\n\nAIがライブラリ内を検索し、関連する本を推薦します。',
+            'ai_search_welcome_message': 'AI検索が有効になりました！\n\n起動方法：\n• キーボードショートカット（設定でカスタマイズ可能）\n• ツールメニュー → AI検索\n• 本を選択せずにAskダイアログを開く\n\n自然言語でライブラリ全体を検索できます。例：\n• 「Pythonに関する本はありますか？」\n• 「アイザック・アシモフの本を見せて」\n• 「機械学習についての本を探して」\n\nAIがライブラリ内を検索し、関連する本を推薦します。本のタイトルをクリックすると直接開けます。',
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',

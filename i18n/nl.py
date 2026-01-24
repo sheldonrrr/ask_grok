@@ -501,7 +501,7 @@ class DutchTranslation(BaseTranslation):
             'library_init_message': 'AI Zoeken heeft metadata van de bibliotheek nodig om te werken. Wilt u dit nu initialiseren?\n\nDit extraheert boektitels en auteurs uit uw bibliotheek.',
             'library_init_required': 'AI Zoeken kan niet worden ingeschakeld zonder bibliotheekgegevens. Klik op "Bibliotheekgegevens bijwerken" wanneer u klaar bent.',
             'ai_search_welcome_title': 'Welkom bij AI Zoeken',
-            'ai_search_welcome_message': 'U heeft geen boeken geselecteerd, dus AI Zoeken is geactiveerd!\n\nU kunt nu uw hele bibliotheek doorzoeken in natuurlijke taal. Probeer bijvoorbeeld:\n• "Heb je boeken over Python?"\n• "Toon me boeken van Isaac Asimov"\n• "Vind boeken over machine learning"\n\nDe AI doorzoekt uw bibliotheek en raadt relevante boeken aan.',
+            'ai_search_welcome_message': 'AI Zoeken is geactiveerd!\n\nManieren om te activeren:\n• Sneltoets (aanpasbaar in instellingen)\n• Menu Extra → AI Zoeken\n• Ask-dialoog openen zonder boeken te selecteren\n\nU kunt uw hele bibliotheek doorzoeken in natuurlijke taal. Bijvoorbeeld:\n• "Heb je boeken over Python?"\n• "Toon me boeken van Isaac Asimov"\n• "Vind boeken over machine learning"\n\nDe AI doorzoekt uw bibliotheek en raadt relevante boeken aan. Klik op boektitels om ze direct te openen.',
             'ai_search_not_enough_books_title': 'Niet genoeg boeken',
             'ai_search_not_enough_books_message': 'AI Zoeken vereist minimaal {min_books} boeken in uw bibliotheek.\n\nUw huidige bibliotheek heeft slechts {book_count} boek(en).\n\nVoeg meer boeken toe om AI Zoeken te gebruiken.',
             'ai_search_mode_info': 'Zoeken door uw hele bibliotheek',

@@ -501,7 +501,7 @@ class FinnishTranslation(BaseTranslation):
             'library_init_message': 'AI-haku vaatii kirjaston metatiedot toimiakseen. Haluatko alustaa ne nyt?\n\nTämä hakee kirjojen nimet ja kirjailijat kirjastostasi.',
             'library_init_required': 'AI-hakua ei voi ottaa käyttöön ilman kirjaston tietoja. Klikkaa "Päivitä kirjaston tiedot", kun olet valmis käyttämään tätä ominaisuutta.',
             'ai_search_welcome_title': 'Tervetuloa AI-hakuun',
-            'ai_search_welcome_message': 'Et ole valinnut kirjoja, joten AI-haku on aktivoitu!\n\nVoit nyt hakea koko kirjastostasi luonnollisella kielellä. Kokeile esimerkiksi:\n• "Onko sinulla kirjoja Pythonista?"\n• "Näytä Isaac Asimovin kirjoja"\n• "Etsi kirjoja koneoppimisesta"\n\nAI etsii kirjastostasi ja suosittelee sopivia kirjoja.',
+            'ai_search_welcome_message': 'AI-haku on aktivoitu!\n\nAktivointitavat:\n• Pikanäppäin (muokattavissa asetuksissa)\n• Työkalut-valikko → AI-haku\n• Avaa Ask-dialogi valitsematta kirjoja\n\nVoit hakea koko kirjastostasi luonnollisella kielellä. Esimerkiksi:\n• "Onko sinulla kirjoja Pythonista?"\n• "Näytä Isaac Asimovin kirjoja"\n• "Etsi kirjoja koneoppimisesta"\n\nAI etsii kirjastostasi ja suosittelee sopivia kirjoja. Napsauta kirjan nimeä avataksesi sen suoraan.',
             'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
             'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
             'ai_search_mode_info': 'Haetaan koko kirjastosta',
