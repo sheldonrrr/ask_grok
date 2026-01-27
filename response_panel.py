@@ -1433,15 +1433,21 @@ class ResponsePanel(QWidget):
         from PyQt5.QtGui import QDesktopServices
         
         url_str = url.toString()
+        
+        # Windows compatibility: normalize backslashes to forward slashes
+        # On Windows, QUrl might convert forward slashes to backslashes in some cases
+        url_str = url_str.replace('\\', '/')
+        
         logger.info("="*80)
         logger.info(f"[BOOK_LINK_CLICK] 链接被点击: {url_str}")
         logger.info(f"[BOOK_LINK_CLICK] 父对话框状态: visible={self.parent_dialog.isVisible()}, modal={self.parent_dialog.isModal()}")
         logger.info(f"[BOOK_LINK_CLICK] 响应区域内容长度: {len(self.response_area.toPlainText())}")
         
         try:
-            if url_str.startswith('calibre://book/'):
-                # 提取书籍ID
-                book_id_str = url_str.replace('calibre://book/', '')
+            # Windows compatibility: also check for backslash variants
+            if url_str.startswith('calibre://book/') or url_str.startswith('calibre:/book/'):
+                # 提取书籍ID - handle both double and single slash variants
+                book_id_str = url_str.replace('calibre://book/', '').replace('calibre:/book/', '')
                 book_id = int(book_id_str)
                 logger.info(f"[BOOK_LINK_CLICK] 提取书籍 ID: {book_id}")
                 
