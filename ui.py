@@ -133,6 +133,30 @@ class AskAIPluginUI(InterfaceAction):
         self.prompts_action.triggered.connect(self.show_prompts)
         self.menu.addAction(self.prompts_action)
 
+        # 添加分隔符
+        self.menu.addSeparator()
+
+        # 添加 Shortcuts 菜单项
+        self.shortcuts_action = QAction(self.i18n.get('shortcuts', 'Shortcuts'), self)
+        self.shortcuts_action.triggered.connect(self.show_shortcuts)
+        self.menu.addAction(self.shortcuts_action)
+
+        # 添加分隔符
+        self.menu.addSeparator()
+
+        # 添加 Statistics 菜单项
+        self.stat_action = QAction(self.i18n.get('stat_tab', 'Stat'), self)
+        self.stat_action.triggered.connect(self.show_statistics)
+        self.menu.addAction(self.stat_action)
+
+        # 添加分隔符
+        self.menu.addSeparator()
+
+        # 添加 Tutorial 菜单项
+        self.tutorial_action = QAction(self.i18n.get('tutorial', 'Tutorial'), self)
+        self.tutorial_action.triggered.connect(self.show_tutorial)
+        self.menu.addAction(self.tutorial_action)
+
         # 注册对话框内快捷键（始终出现在 Preferences -> Shortcuts 中）
         # 注意：实际 QAction 会在 AskDialog 创建时通过 replace_action 绑定到对话框 action 上
         try:
@@ -191,30 +215,6 @@ class AskAIPluginUI(InterfaceAction):
         except Exception:
             pass
         
-        #添加分隔符
-        self.menu.addSeparator()
-
-        #添加快捷键菜单项
-        self.shortcuts_action = QAction(self.i18n['shortcuts'], self)
-        self.shortcuts_action.triggered.connect(self.show_shortcuts)
-        self.menu.addAction(self.shortcuts_action)      
-
-        # 添加分隔符
-        self.menu.addSeparator()
-        
-        # 添加教程菜单项
-        self.tutorial_action = QAction(self.i18n.get('tutorial', 'Tutorial'), self)
-        self.tutorial_action.triggered.connect(self.show_tutorial)
-        self.menu.addAction(self.tutorial_action)
-        
-        # 添加分隔符
-        self.menu.addSeparator()
-        
-        # 添加关于菜单项
-        self.about_action = QAction(self.i18n['about'], self)
-        self.about_action.triggered.connect(self.show_about)
-        self.menu.addAction(self.about_action)
-        
         # 设置菜单更新事件
         self.menu.aboutToShow.connect(self.about_to_show_menu)
         
@@ -254,7 +254,6 @@ class AskAIPluginUI(InterfaceAction):
         
         self.prompts_action.setText(self.i18n.get('prompts_tab', 'Prompts'))
         self.library_action.setText(self.i18n.get('library_search', 'Library Search'))
-        self.about_action.setText(self.i18n['about'])
         
     def initialize_api(self):
         try:
@@ -521,12 +520,6 @@ class AskAIPluginUI(InterfaceAction):
             prefs['show_deprecation_notice'] = False
             logger.info("Deprecation notice disabled by user")
     
-    def show_about(self):
-        """显示关于对话框"""
-        dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(5)  # About 标签页（第6个）
-        dlg.exec_()
-    
     def show_shortcuts(self):
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(3)  # Shortcuts 标签页（第4个）
@@ -542,10 +535,16 @@ class AskAIPluginUI(InterfaceAction):
         """打开 AI Search 对话框"""
         self.show_dialog(force_ai_search=True)
     
+    def show_statistics(self):
+        """显示 Statistics 统计对话框"""
+        dlg = TabDialog(self.gui)
+        dlg.tab_widget.setCurrentIndex(4)  # Statistics 标签页（第5个）
+        dlg.exec_()
+    
     def show_tutorial(self):
         """显示教程对话框"""
         dlg = TabDialog(self.gui)
-        dlg.tab_widget.setCurrentIndex(4)  # Tutorial 标签页（第5个）
+        dlg.tab_widget.setCurrentIndex(5)  # Tutorial 标签页（第6个，现在是最后一个）
         dlg.exec_()
     
     def config_widget(self):
@@ -582,7 +581,6 @@ class AskAIPluginUI(InterfaceAction):
                 'config': self.config_action.text(),
                 'shortcuts': self.shortcuts_action.text(),
                 'tutorial': self.tutorial_action.text(),
-                'about': self.about_action.text()
             }
             
             # 如果没有指定语言，从配置中读取
@@ -598,7 +596,6 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts'])
             self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
-            self.about_action.setText(self.i18n['about'])
             
         except Exception as e:
             # 发生错误时恢复原始状态
@@ -607,7 +604,6 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
             self.tutorial_action.setText(original_texts['tutorial'])
-            self.about_action.setText(original_texts['about'])
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
@@ -1126,13 +1122,14 @@ class TabDialog(QDialog):
         self.shortcuts_widget = ShortcutsWidget(self)
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
-        # 创建教程页面 (index 4)
+        # 创建统计页面 (index 4)
+        from .statistics_widget import StatisticsWidget
+        self.statistics_widget = StatisticsWidget(self)
+        self.tab_widget.addTab(self.statistics_widget, self.i18n.get('stat_tab', 'Stat'))
+
+        # 创建教程页面 (index 5)
         self.tutorial_widget = TutorialWidget()
         self.tab_widget.addTab(self.tutorial_widget, self.i18n.get('tutorial', 'Tutorial'))
-        
-        # 创建关于页面 (index 5)
-        self.about_widget = AboutWidget()
-        self.tab_widget.addTab(self.about_widget, self.i18n['about'])
         
         # 创建主布局
         layout = QVBoxLayout()
@@ -1167,6 +1164,26 @@ class TabDialog(QDialog):
         
         # 添加弹性空间，使按钮分别位于左右两侧
         button_layout.addStretch()
+
+        # 添加 Online Tutorial 链接
+        self.online_tutorial_link = QLabel()
+        self.online_tutorial_link.setTextFormat(Qt.RichText)
+        self.online_tutorial_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.online_tutorial_link.setOpenExternalLinks(True)
+        self.online_tutorial_link.setCursor(Qt.PointingHandCursor)
+        self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
+        button_layout.addWidget(self.online_tutorial_link)
+        button_layout.addSpacing(12)
+
+        # 添加 About 链接
+        self.about_link = QLabel()
+        self.about_link.setTextFormat(Qt.RichText)
+        self.about_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.about_link.setOpenExternalLinks(True)
+        self.about_link.setCursor(Qt.PointingHandCursor)
+        self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
+        button_layout.addWidget(self.about_link)
+        button_layout.addSpacing(12)
 
         # 添加 Reddit 链接（关闭按钮左侧）
         self.reddit_link = QLabel()
@@ -1206,14 +1223,21 @@ class TabDialog(QDialog):
         self.setWindowTitle(self.i18n['config_title'])
         logger.debug(f"更新窗口标题为: {self.i18n['config_title']}")
         
-        # 更新标签页标题
+        # 更新标签页标题 (6 tabs: General, Search, Prompts, Shortcuts, Stat, Tutorial)
         self.tab_widget.setTabText(0, self.i18n['general_tab'])
         self.tab_widget.setTabText(1, self.i18n.get('library_tab', 'Search'))
         self.tab_widget.setTabText(2, self.i18n.get('prompts_tab', 'Prompts'))
         self.tab_widget.setTabText(3, self.i18n['shortcuts'])
-        self.tab_widget.setTabText(4, self.i18n.get('tutorial', 'Tutorial'))
-        self.tab_widget.setTabText(5, self.i18n['about'])
+        self.tab_widget.setTabText(4, self.i18n.get('stat_tab', 'Stat'))
+        self.tab_widget.setTabText(5, self.i18n.get('tutorial', 'Tutorial'))
         logger.debug("已更新标签页标题")
+        
+        # 更新底部链接文本
+        if hasattr(self, 'online_tutorial_link'):
+            self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
+        if hasattr(self, 'about_link'):
+            self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
+        logger.debug("已更新底部链接文本")
         
         # 更新 Prompts Widget 的 i18n
         if hasattr(self, 'prompts_widget'):
@@ -1256,9 +1280,10 @@ class TabDialog(QDialog):
         logger.debug("更新快捷键页面")
         self.shortcuts_widget.update_shortcuts()
         
-        # 更新关于页面
-        logger.debug("更新关于页面")
-        self.about_widget.update_content()
+        # 更新统计页面
+        if hasattr(self, 'statistics_widget'):
+            logger.debug("更新统计页面")
+            self.statistics_widget.update_language(new_language)
         
         # 通知主界面更新菜单，直接传递新语言参数
         if plugin_instance:
@@ -1418,6 +1443,10 @@ class TabDialog(QDialog):
             # 如果切换到 General 或 Prompts 标签页，更新保存按钮状态
             if index == 0 or index == 1:
                 self.update_save_button_state()
+        
+        # 如果切换到 Statistics 标签页（索引为4），刷新统计数据
+        if index == 4 and hasattr(self, 'statistics_widget'):
+            self.statistics_widget.refresh_stats()
     
     def on_save_clicked(self):
         """处理保存按钮点击事件"""

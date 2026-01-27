@@ -148,9 +148,9 @@ class TraditionalChineseTranslation(BaseTranslation):
         'no_question': '無問題',
         'saved': '已儲存',
         'close_button': '關閉',
-        'open_local_tutorial': '打開本地教學',
-        'tutorial_open_failed': '打開教學失敗',
-        'tutorial': '教學',
+        'open_local_tutorial': '打開本地教程',
+        'tutorial_open_failed': '打開教程失敗',
+        'tutorial': '教程',
 
         'model_display_name_perplexity': 'Perplexity',
         
@@ -515,4 +515,22 @@ class TraditionalChineseTranslation(BaseTranslation):
         'hours_ago': '{n} 小時前',
         'minutes_ago': '{n} 分鐘前',
         'just_now': '剛才',
+        
+        # 統計標籤頁 (v1.4.3)
+        'stat_tab': '統計',
+        'stat_overview': '概覽',
+        'stat_days_unit': '天',
+        'stat_start_at': '開始於 {date}',
+        'stat_replies_unit': '次',
+        'stat_books_unit': '本書',
+        'stat_no_books': '在搜尋頁更新',
+        'stat_trends': '趨勢',
+        'stat_curious_index': '本週好奇指數',
+        'stat_daily_avg': '日均 {n} 次',
+        'stat_sample_data': '*這是示例資料',
+        'stat_heatmap': '熱力圖',
+        'stat_data_not_enough': '資料不足',
+        
+        # 連結 (v1.4.3)
+        'online_tutorial': '線上教程',
         }

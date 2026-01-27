@@ -514,4 +514,22 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'hours_ago': '{n} 小时前',
             'minutes_ago': '{n} 分钟前',
             'just_now': '刚刚',
+            
+            # 统计标签页 (v1.4.3)
+            'stat_tab': '统计',
+            'stat_overview': '概览',
+            'stat_days_unit': '天',
+            'stat_start_at': '开始于 {date}',
+            'stat_replies_unit': '次',
+            'stat_books_unit': '本书',
+            'stat_no_books': '在搜索页更新',
+            'stat_trends': '趋势',
+            'stat_curious_index': '本周好奇指数',
+            'stat_daily_avg': '日均 {n} 次',
+            'stat_sample_data': '*这是示例数据',
+            'stat_heatmap': '热力图',
+            'stat_data_not_enough': '数据不足',
+            
+            # 链接 (v1.4.3)
+            'online_tutorial': '在线教程',
         }

@@ -518,4 +518,22 @@ class EnglishTranslation(BaseTranslation):
             'hours_ago': '{n} hours ago',
             'minutes_ago': '{n} minutes ago',
             'just_now': 'just now',
+            
+            # Statistics tab (v1.4.3)
+            'stat_tab': 'Stat',
+            'stat_overview': 'Overview',
+            'stat_days_unit': 'days',
+            'stat_start_at': 'Start at {date}',
+            'stat_replies_unit': 'times',
+            'stat_books_unit': 'books',
+            'stat_no_books': 'Update in Search tab',
+            'stat_trends': 'Trends',
+            'stat_curious_index': 'Curious Index this week',
+            'stat_daily_avg': 'Daily average {n} times',
+            'stat_sample_data': '*This is sample data',
+            'stat_heatmap': 'Heatmap',
+            'stat_data_not_enough': 'Data is not enough',
+            
+            # Links (v1.4.3)
+            'online_tutorial': 'Online Tutorial',
         }

@@ -1040,6 +1040,15 @@ class ResponseHandler(QObject):
                             model_info=model_info
                         )
                         
+                        # 增加AI回复统计计数
+                        try:
+                            from .statistics_widget import increment_ai_reply_count
+                            from .config import get_prefs
+                            prefs = get_prefs()
+                            increment_ai_reply_count(prefs)
+                        except Exception as stat_error:
+                            logger.warning(f"Failed to increment AI reply count: {stat_error}")
+                        
                         # 更新历史信息标签（显示新的时间戳）
                         if hasattr(parent_dialog, '_update_history_info_label'):
                             from datetime import datetime

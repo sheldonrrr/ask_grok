@@ -115,6 +115,13 @@ def update_library_metadata(db, prefs):
         prefs['library_cached_metadata'] = json.dumps(books, ensure_ascii=False)
         prefs['library_last_update'] = datetime.now().isoformat()
         
+        # 更新统计页面的书籍数量
+        try:
+            from .statistics_widget import update_book_count
+            update_book_count(prefs, len(books))
+        except Exception as stat_error:
+            logger.warning(f"Failed to update book count in statistics: {stat_error}")
+        
         logger.info(f"Successfully updated library metadata: {len(books)} books")
         return True, len(books), None
         

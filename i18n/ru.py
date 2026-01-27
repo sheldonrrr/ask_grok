@@ -513,4 +513,22 @@ class RussianTranslation(BaseTranslation):
             'hours_ago': '{n} час. назад',
             'minutes_ago': '{n} мин. назад',
             'just_now': 'только что',
+            
+            # Statistics tab (v1.4.3)
+            'stat_tab': 'Статистика',
+            'stat_overview': 'Обзор',
+            'stat_days_unit': 'дней',
+            'stat_start_at': 'Начало {date}',
+            'stat_replies_unit': 'раз',
+            'stat_books_unit': 'книг',
+            'stat_no_books': 'Обновить во вкладке Поиск',
+            'stat_trends': 'Тренды',
+            'stat_curious_index': 'Индекс любопытства на этой неделе',
+            'stat_daily_avg': 'В среднем {n} раз в день',
+            'stat_sample_data': '*Это примерные данные',
+            'stat_heatmap': 'Тепловая карта',
+            'stat_data_not_enough': 'Недостаточно данных',
+            
+            # Links (v1.4.3)
+            'online_tutorial': 'Онлайн-руководство',
         }

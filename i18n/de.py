@@ -480,4 +480,22 @@ class GermanTranslation(BaseTranslation):
             'hours_ago': '{n} Stunden',
             'minutes_ago': '{n} Minuten',
             'just_now': 'gerade eben',
+            
+            # Statistics tab (v1.4.3)
+            'stat_tab': 'Statistik',
+            'stat_overview': 'Übersicht',
+            'stat_days_unit': 'Tage',
+            'stat_start_at': 'Start am {date}',
+            'stat_replies_unit': 'Mal',
+            'stat_books_unit': 'Bücher',
+            'stat_no_books': 'Im Suche-Tab aktualisieren',
+            'stat_trends': 'Trends',
+            'stat_curious_index': 'Neugier-Index diese Woche',
+            'stat_daily_avg': 'Tagesdurchschnitt {n} Mal',
+            'stat_sample_data': '*Dies sind Beispieldaten',
+            'stat_heatmap': 'Heatmap',
+            'stat_data_not_enough': 'Nicht genügend Daten',
+            
+            # Links (v1.4.3)
+            'online_tutorial': 'Online-Tutorial',
         }

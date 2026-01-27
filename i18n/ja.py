@@ -542,4 +542,22 @@ class JapaneseTranslation(BaseTranslation):
             'hours_ago': '{n} 時間前',
             'minutes_ago': '{n} 分前',
             'just_now': 'たった今',
+            
+            # Statistics tab (v1.4.3)
+            'stat_tab': '統計',
+            'stat_overview': '概要',
+            'stat_days_unit': '日',
+            'stat_start_at': '{date}から開始',
+            'stat_replies_unit': '回',
+            'stat_books_unit': '冊',
+            'stat_no_books': '検索タブで更新',
+            'stat_trends': 'トレンド',
+            'stat_curious_index': '今週の好奇心指数',
+            'stat_daily_avg': '1日平均 {n} 回',
+            'stat_sample_data': '*これはサンプルデータです',
+            'stat_heatmap': 'ヒートマップ',
+            'stat_data_not_enough': 'データが不足しています',
+            
+            # Links (v1.4.3)
+            'online_tutorial': 'オンラインチュートリアル',
         }

@@ -513,4 +513,22 @@ class SpanishTranslation(BaseTranslation):
             'hours_ago': '{n} horas',
             'minutes_ago': '{n} minutos',
             'just_now': 'ahora mismo',
+            
+            # Statistics tab (v1.4.3)
+            'stat_tab': 'Estadísticas',
+            'stat_overview': 'Resumen',
+            'stat_days_unit': 'días',
+            'stat_start_at': 'Inicio el {date}',
+            'stat_replies_unit': 'veces',
+            'stat_books_unit': 'libros',
+            'stat_no_books': 'Actualizar en la pestaña Búsqueda',
+            'stat_trends': 'Tendencias',
+            'stat_curious_index': 'Índice de curiosidad esta semana',
+            'stat_daily_avg': 'Promedio diario {n} veces',
+            'stat_sample_data': '*Estos son datos de ejemplo',
+            'stat_heatmap': 'Mapa de calor',
+            'stat_data_not_enough': 'Datos insuficientes',
+            
+            # Links (v1.4.3)
+            'online_tutorial': 'Tutorial en línea',
         }
