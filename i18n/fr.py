@@ -22,7 +22,7 @@ class FrenchTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'À propos du livre "{title}": Auteur: {author}, Éditeur: {publisher}, Année de publication: {pubyear}, livre en language: {language}, Série: {series}, Ma question est: {query}'
+        return 'Contexte : Vous assistez un utilisateur de calibre (http://calibre-ebook.com), une puissante application de gestion de livres électroniques, via le plugin "Ask AI Plugin". Ce plugin permet aux utilisateurs de poser des questions sur les livres de leur bibliothèque calibre. Remarque : Ce plugin ne peut répondre qu\'aux questions sur le contenu, les thèmes ou les sujets connexes du livre sélectionné - il ne peut pas modifier directement les métadonnées du livre ni effectuer des opérations calibre. Informations sur le livre : Titre : "{title}", Auteur : {author}, Éditeur : {publisher}, Année de publication : {pubyear}, Langue : {language}, Série : {series}. Question de l\'utilisateur : {query}. Veuillez fournir une réponse utile basée sur les informations du livre et vos connaissances.'
     
     @property
     def suggestion_template(self) -> str:
@@ -112,6 +112,8 @@ class FrenchTranslation(BaseTranslation):
             'export_history_btn': 'Exporter l\'Historique en PDF',
             'copy_mode_response': 'Réponse',
             'copy_mode_qa': 'Q&R',
+            'copy_format_plain': 'Texte brut',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Q&R Actuel',
             'export_mode_history': 'Historique',
             
@@ -398,23 +400,6 @@ class FrenchTranslation(BaseTranslation):
             'pdf_book_metadata': 'MÉTADONNÉES DU LIVRE',
             'pdf_question': 'QUESTION',
             'pdf_answer': 'RÉPONSE',
-            'pdf_ai_model_info': 'INFORMATIONS SUR LE MODÈLE D\'IA',
-            'pdf_generated_by': 'GÉNÉRÉ PAR',
-            'pdf_provider': 'Fournisseur',
-            'pdf_model': 'Modèle',
-            'pdf_api_base_url': 'URL de base de l\'API',
-            'pdf_panel': 'Panneau',
-            'pdf_plugin': 'Plugin',
-            'pdf_github': 'GitHub',
-            'pdf_generated_time': 'Heure de génération',
-            'default_ai_mismatch_title': 'IA par Défaut Modifiée',
-            'default_ai_mismatch_message': 'L\'IA par défaut dans la configuration a été changée en "{default_ai}",\nmais la boîte de dialogue actuelle utilise "{current_ai}".\n\nVoulez-vous passer à la nouvelle IA par défaut?',
-            'discard_changes': 'Annuler les Modifications',
-            'empty_response': 'Réponse vide reçue de l\'API',
-            'empty_response_after_filter': 'La réponse est vide après filtrage des balises think',
-            'error_401': 'Échec de l\'authentification de la clé API. Veuillez vérifier: la clé API est correcte, le compte a un solde suffisant, la clé API n\'a pas expiré.',
-            'error_403': 'Accès refusé. Veuillez vérifier: la clé API a des permissions suffisantes, pas de restrictions d\'accès régionales.',
-            'error_404': 'Point de terminaison API introuvable. Veuillez vérifier si la configuration de l\'URL de base de l\'API est correcte.',
             'error_429': 'Trop de requêtes, limite de débit atteinte. Veuillez réessayer plus tard.',
             'error_5xx': 'Erreur serveur. Veuillez réessayer plus tard ou vérifier l\'état du fournisseur de services.',
             'error_network': 'Échec de la connexion réseau. Veuillez vérifier la connexion réseau, les paramètres du proxy ou la configuration du pare-feu.',
@@ -481,4 +466,36 @@ class FrenchTranslation(BaseTranslation):
             
             # Tooltip
             'manage_ai_disabled_tooltip': 'Veuillez d\'abord ajouter un fournisseur d\'IA.',
+
+            #AI Search v1.4.2
+            'library_tab': 'Rechercher',
+            'library_search': 'Recherche IA',
+            'library_info': 'La recherche IA est toujours activée. Lorsque vous ne sélectionnez aucun livre, vous pouvez effectuer une recherche dans toute votre bibliothèque en langage naturel.',
+            'library_enable': 'Activer la recherche IA',
+            'library_enable_tooltip': 'Une fois activée, vous pouvez effectuer des recherches dans votre bibliothèque à l\'aide de l\'IA quand aucun livre n\'est sélectionné',
+            'library_update': 'Mettre à jour les données',
+            'library_update_tooltip': 'Extraire les titres et auteurs de votre bibliothèque',
+            'library_updating': 'Mise à jour...',
+            'library_status': 'Statut : {count} livres, dernière mise à jour : {time}',
+            'library_status_empty': 'Statut : Aucune donnée. Cliquez sur "Mettre à jour les données" pour commencer.',
+            'library_status_error': 'Statut : Erreur lors du chargement des données',
+            'library_update_success': '{count} livres mis à jour avec succès',
+            'library_update_failed': 'Échec de la mise à jour des données',
+            'library_no_gui': 'Interface graphique non disponible',
+            'library_init_title': 'Initialiser la recherche IA',
+            'library_init_message': 'La recherche IA nécessite les métadonnées de la bibliothèque. Souhaitez-vous l\'initialiser maintenant ?\n\nCela extraira les titres et les auteurs de vos livres.',
+            'library_init_required': 'La recherche IA ne peut pas être activée sans données. Veuillez cliquer sur "Mettre à jour les données" quand vous serez prêt.',
+            'ai_search_welcome_title': 'Bienvenue dans la Recherche IA',
+            'ai_search_welcome_message': 'La recherche IA est activée !\n\nComment déclencher :\n• Raccourci clavier (personnalisable dans les paramètres)\n• Menu Outils → Recherche IA\n• Ouvrir le dialogue Ask sans sélectionner de livres\n\nVous pouvez rechercher dans toute votre bibliothèque en langage naturel. Par exemple :\n• "Avez-vous des livres sur Python ?"\n• "Montrez-moi les livres d\'Isaac Asimov"\n• "Trouvez des livres sur l\'apprentissage automatique"\n\nL\'IA recherchera et recommandera des livres pertinents. Cliquez sur les titres pour les ouvrir directement.',
+            'ai_search_not_enough_books_title': 'Pas assez de livres',
+            'ai_search_not_enough_books_message': 'La recherche IA nécessite au moins {min_books} livres dans votre bibliothèque.\n\nVotre bibliothèque actuelle ne contient que {book_count} livre(s).\n\nVeuillez ajouter plus de livres pour utiliser la recherche IA.',
+            'ai_search_mode_info': 'Recherche dans toute la bibliothèque',
+            'ai_search_privacy_title': 'Avis de confidentialité',
+            'ai_search_privacy_alert': 'La recherche IA utilise les métadonnées (titres et auteurs) de votre bibliothèque. Ces informations seront envoyées au fournisseur d\'IA configuré pour traiter vos requêtes.',
+            'ai_search_updated_info': '{count} livres mis à jour il y a {time_ago}',
+            'ai_search_books_info': '{count} livres indexés',
+            'days_ago': '{n} jours',
+            'hours_ago': '{n} heures',
+            'minutes_ago': '{n} minutes',
+            'just_now': 'à l\'instant',
         }

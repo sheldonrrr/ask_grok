@@ -73,3 +73,131 @@ def safe_log_config(config, keys_to_mask=None):
             safe_config[key] = safe_log_config(value, keys_to_mask)
     
     return safe_config
+
+def update_library_metadata(db, prefs):
+    """
+    提取图书馆元数据（仅书名和作者名）
+    
+    :param db: Calibre数据库对象
+    :param prefs: 插件配置对象
+    :return: (成功标志, 书籍数量, 错误信息)
+    """
+    try:
+        import json
+        from datetime import datetime
+        
+        # 获取所有书籍ID，最多100本
+        # 使用new_api.all_book_ids()获取所有书籍ID
+        try:
+            book_ids = list(db.new_api.all_book_ids())[:100]
+        except AttributeError:
+            # 如果new_api不可用，尝试使用旧API
+            book_ids = list(db.data.search_getting_ids('', db.FIELD_MAP['search']))[:100]
+        
+        books = []
+        for book_id in book_ids:
+            try:
+                # 使用 index_is_id=True 确保正确获取元数据
+                mi = db.get_metadata(book_id, index_is_id=True)
+                if mi:
+                    books.append({
+                        'id': book_id,
+                        'title': mi.title or 'Unknown',
+                        'authors': ', '.join(mi.authors or ['Unknown'])
+                    })
+                else:
+                    logger.warning(f"Book {book_id} metadata is None, skipping")
+            except Exception as e:
+                logger.warning(f"Failed to get metadata for book {book_id}: {e}")
+                continue
+        
+        # 保存为JSON字符串
+        prefs['library_cached_metadata'] = json.dumps(books, ensure_ascii=False)
+        prefs['library_last_update'] = datetime.now().isoformat()
+        
+        logger.info(f"Successfully updated library metadata: {len(books)} books")
+        return True, len(books), None
+        
+    except Exception as e:
+        error_msg = f"Failed to update library metadata: {str(e)}"
+        logger.error(error_msg)
+        return False, 0, error_msg
+
+def get_library_metadata(prefs):
+    """
+    获取缓存的图书馆元数据
+    
+    :param prefs: 插件配置对象
+    :return: 元数据JSON字符串，如果未缓存则返回None
+    """
+    return prefs.get('library_cached_metadata', None)
+
+def get_library_last_update(prefs):
+    """
+    获取图书馆元数据最后更新时间
+    
+    :param prefs: 插件配置对象
+    :return: ISO格式的时间字符串，如果未更新过则返回None
+    """
+    return prefs.get('library_last_update', None)
+
+def is_library_chat_enabled(prefs):
+    """
+    检查是否启用了图书馆对话功能
+    
+    :param prefs: 插件配置对象
+    :return: True/False
+    """
+    return prefs.get('library_chat_enabled', False)
+
+def build_library_prompt(user_query, prefs):
+    """
+    构建包含图书馆元数据的AI提示词
+    
+    :param user_query: 用户查询
+    :param prefs: 插件配置对象
+    :return: 完整的提示词
+    """
+    cached_metadata = get_library_metadata(prefs)
+    
+    if not cached_metadata:
+        return user_query
+    
+    # 获取当前语言设置
+    language = prefs.get('language', 'en')
+    
+    # 根据语言选择提示词模板
+    if language == 'zh':
+        prompt = f"""您可以访问用户的图书馆。以下是所有书籍：
+
+{cached_metadata}
+
+用户查询：{user_query}
+
+请找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：
+
+- <a href="calibre://book/书籍ID">书名</a> - 作者名
+
+示例：
+- <a href="calibre://book/123">Python编程</a> - Mark Lutz
+- <a href="calibre://book/456">机器学习实战</a> - Peter Harrington
+
+只返回匹配查询的书籍。最多5个结果。"""
+    else:
+        prompt = f"""You have access to the user's book library. Here are all the books:
+
+{cached_metadata}
+
+User query: {user_query}
+
+Please find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly):
+
+- <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name
+
+Example:
+- <a href="calibre://book/123">Learning Python</a> - Mark Lutz
+- <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington
+
+Only return books that match the query. Maximum 5 results."""
+    
+    return prompt

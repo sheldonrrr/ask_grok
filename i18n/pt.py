@@ -22,7 +22,7 @@ class PortugueseTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return 'Sobre o livro "{title}": Autor: {author}, Editora: {publisher}, Ano de Publicação: {pubyear}, livro no idioma: {language}, Série: {series}, Minha pergunta é: {query}'
+        return 'Contexto: Você está auxiliando um usuário do calibre (http://calibre-ebook.com), um poderoso aplicativo de gerenciamento de e-books, através do plugin "Ask AI Plugin". Este plugin permite que os usuários façam perguntas sobre livros em sua biblioteca calibre. Nota: Este plugin só pode responder perguntas sobre o conteúdo, temas ou tópicos relacionados do livro selecionado - não pode modificar diretamente os metadados do livro nem executar operações do calibre. Informações do livro: Título: "{title}", Autor: {author}, Editora: {publisher}, Ano de Publicação: {pubyear}, Idioma: {language}, Série: {series}. Pergunta do usuário: {query}. Por favor, forneça uma resposta útil com base nas informações do livro e seu conhecimento.'
 
     @property
     def suggestion_template(self) -> str:
@@ -178,6 +178,8 @@ class PortugueseTranslation(BaseTranslation):
             'export_history_btn': 'Exportar Histórico como PDF',
             'copy_mode_response': 'Resposta',
             'copy_mode_qa': 'P&R',
+            'copy_format_plain': 'Texto simples',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'P&R Atual',
             'export_mode_history': 'Histórico',
 
@@ -477,6 +479,38 @@ class PortugueseTranslation(BaseTranslation):
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',
-            'pdf_generated_time': 'Hora de Geração',
+            'pdf_generated_time': 'Hora de geração',
             'pdf_info_not_available': 'Informação não disponível',
+            
+            # Library Chat feature (v1.4.2)
+            'library_tab': 'Pesquisa',
+            'library_search': 'Pesquisa IA',
+            'library_info': 'A pesquisa IA está sempre ativada. Quando você não seleciona nenhum livro, pode pesquisar toda a sua biblioteca usando linguagem natural.',
+            'library_enable': 'Ativar pesquisa IA',
+            'library_enable_tooltip': 'Quando ativado, você pode pesquisar sua biblioteca usando IA quando nenhum livro está selecionado',
+            'library_update': 'Atualizar dados da biblioteca',
+            'library_update_tooltip': 'Extrair títulos e autores de livros da sua biblioteca',
+            'library_updating': 'Atualizando...',
+            'library_status': 'Status: {count} livros, última atualização: {time}',
+            'library_status_empty': 'Status: Sem dados. Clique em "Atualizar dados da biblioteca" para começar.',
+            'library_status_error': 'Status: Erro ao carregar dados',
+            'library_update_success': '{count} livros atualizados com sucesso',
+            'library_update_failed': 'Falha ao atualizar dados da biblioteca',
+            'library_no_gui': 'GUI não disponível',
+            'library_init_title': 'Inicializar pesquisa IA',
+            'library_init_message': 'A pesquisa IA requer metadados da biblioteca para funcionar. Deseja inicializar agora?\n\nIsso extrairá títulos e autores de livros da sua biblioteca.',
+            'library_init_required': 'A pesquisa IA não pode ser ativada sem dados da biblioteca. Por favor, clique em "Atualizar dados da biblioteca" quando estiver pronto para usar este recurso.',
+            'ai_search_welcome_title': 'Bem-vindo à pesquisa IA',
+            'ai_search_welcome_message': 'A pesquisa IA está ativada!\n\nComo ativar:\n• Atalho de teclado (personalizável nas configurações)\n• Menu Ferramentas → Pesquisa IA\n• Abrir diálogo Ask sem selecionar livros\n\nVocê pode pesquisar toda a sua biblioteca usando linguagem natural. Por exemplo:\n• "Você tem livros sobre Python?"\n• "Mostre-me livros de Isaac Asimov"\n• "Encontre livros sobre aprendizado de máquina"\n\nA IA pesquisará sua biblioteca e recomendará livros relevantes. Clique nos títulos para abri-los diretamente.',
+            'ai_search_not_enough_books_title': 'Livros insuficientes',
+            'ai_search_not_enough_books_message': 'A pesquisa IA requer pelo menos {min_books} livros na sua biblioteca.\n\nSua biblioteca atual tem apenas {book_count} livro(s).\n\nPor favor, adicione mais livros para usar a pesquisa IA.',
+            'ai_search_mode_info': 'Pesquisando em toda a sua biblioteca',
+            'ai_search_privacy_title': 'Aviso de Privacidade',
+            'ai_search_privacy_alert': 'A Busca IA utiliza metadados dos livros (títulos e autores). Esta informação será enviada para o fornecedor de IA que configurou para processar as suas pesquisas.',
+            'ai_search_updated_info': '{count} livros atualizados há {time_ago}',
+            'ai_search_books_info': '{count} livros indexados',
+            'days_ago': '{n} dias atrás',
+            'hours_ago': '{n} horas atrás',
+            'minutes_ago': '{n} minutos atrás',
+            'just_now': 'agora mesmo',
         }

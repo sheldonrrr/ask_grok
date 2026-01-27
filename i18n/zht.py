@@ -22,7 +22,7 @@ class TraditionalChineseTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return '關於書籍 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 語言: {language}, 系列: {series}, 我的問題是: {query}'
+        return '背景說明：你正在通過「Ask AI Plugin」插件協助 calibre (http://calibre-ebook.com) 電子書管理軟體的用戶。該插件允許用戶針對 calibre 書庫中的書籍提問。注意：本插件只能回答關於所選書籍的內容、主題或相關話題的問題，無法直接修改書籍元數據或執行 calibre 操作。書籍資訊：書名：「{title}」，作者：{author}，出版社：{publisher}，出版年份：{pubyear}，語言：{language}，系列：{series}。用戶問題：{query}。請基於書籍資訊和你的知識提供有幫助的回答。'
     
     @property
     def suggestion_template(self) -> str:
@@ -112,6 +112,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'export_history_btn': '匯出歷史記錄為PDF',
         'copy_mode_response': '回答',
         'copy_mode_qa': '問答',
+        'copy_format_plain': '純文字',
+        'copy_format_markdown': 'Markdown',
         'export_mode_current': '當前問答',
         'export_mode_history': '歷史記錄',
         
@@ -481,4 +483,36 @@ class TraditionalChineseTranslation(BaseTranslation):
         
         # Tooltip
         'manage_ai_disabled_tooltip': '請先新增AI服務商。',
+
+        #AI Search v1.4.2
+        'library_tab': '搜尋',
+        'library_search': 'AI 搜尋',
+        'library_info': 'AI 搜尋功能始終保持啟用。當您未選取任何書籍時，即可使用自然語言搜尋整個書庫。',
+        'library_enable': '啟用 AI 搜尋',
+        'library_enable_tooltip': '啟用後，在未選取書籍的情況下可以使用 AI 搜尋書庫',
+        'library_update': '更新書庫資料',
+        'library_update_tooltip': '從書庫中提取書名與作者',
+        'library_updating': '更新中...',
+        'library_status': '狀態：共有 {count} 本書，上次更新時間：{time}',
+        'library_status_empty': '狀態：尚無資料。請點擊「更新書庫資料」開始。',
+        'library_status_error': '狀態：載入資料出錯',
+        'library_update_success': '成功更新 {count} 本書籍',
+        'library_update_failed': '更新書庫資料失敗',
+        'library_no_gui': '圖形介面無法使用',
+        'library_init_title': '初始化 AI 搜尋',
+        'library_init_message': 'AI 搜尋需要書庫元數據才能運作。是否立即進行初始化？\n\n這將會從您的書庫中提取書名與作者。',
+        'library_init_required': '若無書庫資料則無法啟用 AI 搜尋。請在準備就緒時點擊「更新書庫資料」。',
+        'ai_search_welcome_title': '歡迎使用 AI 搜尋',
+        'ai_search_welcome_message': 'AI 搜尋已啟動！\n\n觸發方式：\n• 快捷鍵（可在設定中自訂）\n• 工具選單 → AI 搜尋\n• 不選取任何書籍時開啟 Ask 對話框\n\n您可以用自然語言搜尋整個書庫。例如：\n• 「你有關於 Python 的書嗎？」\n• 「幫我找艾西莫夫寫的書」\n• 「尋找關於機器學習的書」\n\nAI 會搜尋您的書庫並推薦相關書籍，點擊書名即可直接開啟閱讀。',
+        'ai_search_not_enough_books_title': '書籍數量不足',
+        'ai_search_not_enough_books_message': 'AI 搜尋需要您的書庫中至少有 {min_books} 本書。\n\n您目前的書庫只有 {book_count} 本書。\n\n請新增更多書籍後再使用 AI 搜尋。',
+        'ai_search_mode_info': '正在搜尋整個書庫',
+        'ai_search_privacy_title': '隱私權聲明',
+        'ai_search_privacy_alert': 'AI 搜尋會使用您書庫中的書籍元數據（書名與作者）。這些資訊將傳送至您設定的 AI 供應商，以處理您的搜尋請求。',
+        'ai_search_updated_info': '{time_ago} 更新了 {count} 本書籍',
+        'ai_search_books_info': '已索引 {count} 本書籍',
+        'days_ago': '{n} 天前',
+        'hours_ago': '{n} 小時前',
+        'minutes_ago': '{n} 分鐘前',
+        'just_now': '剛才',
         }

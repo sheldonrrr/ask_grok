@@ -22,7 +22,7 @@ class DanishTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesår: {pubyear}, bog i language: {language}, Serie: {series}, Mit spørgsmål er: {query}'
+        return 'Kontekst: Du hjælper en bruger af calibre (http://calibre-ebook.com), en kraftfuld e-bogshåndteringsapplikation, gennem "Ask AI Plugin". Dette plugin giver brugerne mulighed for at stille spørgsmål om bøger i deres calibre-bibliotek. Bemærk: Dette plugin kan kun besvare spørgsmål om den valgte bogs indhold, emner eller relaterede emner - det kan ikke direkte ændre bogmetadata eller udføre calibre-operationer. Boginformation: Titel: "{title}", Forfatter: {author}, Forlag: {publisher}, Udgivelsesår: {pubyear}, Sprog: {language}, Serie: {series}. Brugerens spørgsmål: {query}. Giv venligst et nyttigt svar baseret på boginformationen og din viden.'
 
     @property
     def suggestion_template(self) -> str:
@@ -178,6 +178,8 @@ class DanishTranslation(BaseTranslation):
             'export_history_btn': 'Eksportér historik som PDF',
             'copy_mode_response': 'Svar',
             'copy_mode_qa': 'S&S',
+            'copy_format_plain': 'Ren tekst',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Nuværende S&S',
             'export_mode_history': 'Historik',
 
@@ -477,4 +479,36 @@ class DanishTranslation(BaseTranslation):
             'pdf_software': 'Software',
             'pdf_generated_time': 'Genereringstid',
             'pdf_info_not_available': 'Information ikke tilgængelig',
+
+            # AI Search Version 1.4.2
+            'library_tab': 'Søg',
+            'library_search': 'AI Søgning',
+            'library_info': 'AI Søgning er altid aktiveret. Når du ikke vælger nogen bøger, kan du søge i hele dit bibliotek ved hjælp af naturligt sprog.',
+            'library_enable': 'Aktiver AI Søgning',
+            'library_enable_tooltip': 'Når aktiveret, kan du søge i dit bibliotek ved hjælp af AI, når ingen bøger er valgt',
+            'library_update': 'Opdater biblioteksdata',
+            'library_update_tooltip': 'Udtræk bogtitler og forfattere fra dit bibliotek',
+            'library_updating': 'Opdaterer...',
+            'library_status': 'Status: {count} bøger, sidste opdatering: {time}',
+            'library_status_empty': 'Status: Ingen data. Klik på "Opdater biblioteksdata" for at starte.',
+            'library_status_error': 'Status: Fejl ved indlæsning af data',
+            'library_update_success': 'Opdateret {count} bøger med succes',
+            'library_update_failed': 'Kunne ikke opdatere biblioteksdata',
+            'library_no_gui': 'GUI ikke tilgængelig',
+            'library_init_title': 'Initialiser AI Søgning',
+            'library_init_message': 'AI Søgning kræver biblioteksmetadata for at fungere. Vil du initialisere det nu?\n\nDette vil udtrække bogtitler og forfattere fra dit bibliotek.',
+            'library_init_required': 'AI Søgning kan ikke aktiveres uden biblioteksdata. Klik venligst på "Opdater biblioteksdata", når du er klar til at bruge denne funktion.',
+            'ai_search_welcome_title': 'Velkommen til AI Søgning',
+            'ai_search_welcome_message': 'AI Søgning er aktiveret!\n\nSådan aktiveres:\n• Tastaturgenvej (kan tilpasses i indstillinger)\n• Værktøjsmenu → AI Søgning\n• Åbn Ask-dialog uden at vælge bøger\n\nDu kan søge i hele dit bibliotek med naturligt sprog. For eksempel:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger. Klik på bogtitler for at åbne dem direkte.',
+            'ai_search_not_enough_books_title': 'Ikke nok bøger',
+            'ai_search_not_enough_books_message': 'AI Søgning kræver mindst {min_books} bøger i dit bibliotek.\n\nDit nuværende bibliotek har kun {book_count} bog/bøger.\n\nTilføj venligst flere bøger for at bruge AI Søgning.',
+            'ai_search_mode_info': 'Søger på tværs af hele dit bibliotek',
+            'ai_search_privacy_title': 'Meddelelse om beskyttelse af personlige oplysninger',
+            'ai_search_privacy_alert': 'AI Søgning bruger bogmetadata (titler og forfattere) fra dit bibliotek. Disse oplysninger vil blive sendt til den AI-udbyder, du har konfigureret til at behandle dine søgeforespørgsler.',
+            'ai_search_updated_info': 'Opdateret {count} bøger {time_ago}',
+            'ai_search_books_info': '{count} bøger indekseret',
+            'days_ago': '{n} dage siden',
+            'hours_ago': '{n} timer siden',
+            'minutes_ago': '{n} minutter siden',
+            'just_now': 'lige nu',
         }

@@ -22,7 +22,7 @@ class SwedishTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return 'Om boken "{title}": Författare: {author}, Förlag: {publisher}, Utgivningsår: {pubyear}, bok på språk: {language}, Serie: {series}, Min fråga är: {query}'
+        return 'Kontext: Du hjälper en användare av calibre (http://calibre-ebook.com), en kraftfull e-bokshanteringsapplikation, genom "Ask AI Plugin". Detta plugin låter användare ställa frågor om böcker i sitt calibre-bibliotek. Observera: Detta plugin kan bara svara på frågor om den valda bokens innehåll, teman eller relaterade ämnen - det kan inte direkt ändra bokmetadata eller utföra calibre-operationer. Bokinformation: Titel: "{title}", Författare: {author}, Förlag: {publisher}, Utgivningsår: {pubyear}, Språk: {language}, Serie: {series}. Användarens fråga: {query}. Vänligen ge ett användbart svar baserat på bokinformationen och din kunskap.'
 
     @property
     def suggestion_template(self) -> str:
@@ -178,6 +178,8 @@ class SwedishTranslation(BaseTranslation):
             'export_history_btn': 'Exportera historik som PDF',
             'copy_mode_response': 'Svar',
             'copy_mode_qa': 'F&S',
+            'copy_format_plain': 'Ren text',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Aktuell F&S',
             'export_mode_history': 'Historik',
 
@@ -479,4 +481,36 @@ class SwedishTranslation(BaseTranslation):
             'pdf_software': 'Programvara',
             'pdf_generated_time': 'Genererad tid',
             'pdf_info_not_available': 'Information inte tillgänglig',
+
+            #AI Search v1.4.2
+            'library_tab': 'Sök',
+            'library_search': 'AI-sökning',
+            'library_info': 'AI-sökning är alltid aktiverad. När du inte väljer några böcker kan du söka i hela ditt bibliotek med naturligt språk.',
+            'library_enable': 'Aktivera AI-sökning',
+            'library_enable_tooltip': 'När aktiverad kan du söka i ditt bibliotek med AI när inga böcker är markerade',
+            'library_update': 'Uppdatera biblioteksdata',
+            'library_update_tooltip': 'Extrahera boktitlar och författare från ditt bibliotek',
+            'library_updating': 'Uppdaterar...',
+            'library_status': 'Status: {count} böcker, senaste uppdatering: {time}',
+            'library_status_empty': 'Status: Ingen data. Klicka på "Uppdatera biblioteksdata" för att starta.',
+            'library_status_error': 'Status: Fel vid inläsning av data',
+            'library_update_success': 'Uppdaterade {count} böcker',
+            'library_update_failed': 'Misslyckades med att uppdatera biblioteksdata',
+            'library_no_gui': 'GUI inte tillgängligt',
+            'library_init_title': 'Initialisera AI-sökning',
+            'library_init_message': 'AI-sökning kräver metadata från biblioteket för att fungera. Vill du initialisera det nu?\n\nDetta kommer att extrahera boktitlar och författare från ditt bibliotek.',
+            'library_init_required': 'AI-sökning kan inte aktiveras utan biblioteksdata. Klicka på "Uppdatera biblioteksdata" när du är redo.',
+            'ai_search_welcome_title': 'Välkommen till AI-sökning',
+            'ai_search_welcome_message': 'AI-sökning är aktiverad!\n\nSå här aktiverar du:\n• Kortkommando (anpassningsbart i inställningar)\n• Verktygsmenyn → AI-sökning\n• Öppna Ask-dialogen utan att välja böcker\n\nDu kan söka i hela ditt bibliotek med naturligt språk. Till exempel:\n• "Har du några böcker om Python?"\n• "Visa mig böcker av Isaac Asimov"\n• "Hitta böcker om maskininlärning"\n\nAI:n söker i ditt bibliotek och rekommenderar relevanta böcker. Klicka på boktitlar för att öppna dem direkt.',
+            'ai_search_not_enough_books_title': 'Inte tillräckligt med böcker',
+            'ai_search_not_enough_books_message': 'AI-sökning kräver minst {min_books} böcker i ditt bibliotek.\n\nDitt nuvarande bibliotek har bara {book_count} bok/böcker.\n\nLägg till fler böcker för att använda AI-sökning.',
+            'ai_search_mode_info': 'Söker i hela biblioteket',
+            'ai_search_privacy_title': 'Integritetsmeddelande',
+            'ai_search_privacy_alert': 'AI-sökning använder bokmetadata (titlar och författare). Denna information skickas till den AI-leverantör du har konfigurerat för att behandla dina sökningar.',
+            'ai_search_updated_info': 'Uppdaterade {count} böcker {time_ago}',
+            'ai_search_books_info': '{count} böcker indexerade',
+            'days_ago': 'för {n} dagar sedan',
+            'hours_ago': 'för {n} timmar sedan',
+            'minutes_ago': 'för {n} minuter sedan',
+            'just_now': 'just nu',
         }

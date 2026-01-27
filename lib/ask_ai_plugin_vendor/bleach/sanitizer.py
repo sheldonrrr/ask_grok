@@ -35,7 +35,7 @@ ALLOWED_ATTRIBUTES = {
 }
 
 #: List of allowed protocols
-ALLOWED_PROTOCOLS = frozenset(("http", "https", "mailto"))
+ALLOWED_PROTOCOLS = frozenset(("http", "https", "mailto", "calibre"))
 
 #: Invisible characters--0 to and including 31 except 9 (tab), 10 (lf), and 13 (cr)
 INVISIBLE_CHARACTERS = "".join(

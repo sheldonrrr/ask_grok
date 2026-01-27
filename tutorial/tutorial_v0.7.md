@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.7
-Latest updated: January 6, 2026, Ask AI Plugin v1.4.0
+Latest updated: January 20, 2026, Ask AI Plugin v1.4.1
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys

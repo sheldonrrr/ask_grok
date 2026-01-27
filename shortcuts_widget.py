@@ -5,7 +5,7 @@ from calibre_plugins.ask_ai_plugin.config import get_prefs
 from calibre_plugins.ask_ai_plugin.ui_constants import TEXT_COLOR_SECONDARY_STRONG
 import sys
 
-# Shortcut for ask: Ctrl+L (all platforms, including macOS)
+# Shortcut for ask: Ctrl+K (all platforms, including macOS)
 # Shortcut for config: F2 (all platforms)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
 # Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
@@ -26,57 +26,39 @@ class ShortcutsWidget(QWidget):
         
     def init_ui(self):
         """初始化界面"""
-        # 创建主布局
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        self.setLayout(main_layout)
-
-        self.note_label = QLabel()
-        self.note_label.setWordWrap(True)
-        self.note_label.setStyleSheet(f"QLabel {{ color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 0.95em; }}")
-        self.note_label.setText(self.i18n.get(
-            'shortcuts_note',
-            "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\n"
-            "This page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence."
-        ))
-        main_layout.addWidget(self.note_label)
+        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, setup_tab_widget_layout, get_tab_scroll_area_style, SPACING_SMALL, TEXT_COLOR_SECONDARY_STRONG
+        
+        # 创建主布局 - 使用统一的 Tab 布局函数
+        main_layout = setup_tab_widget_layout(self)
         
         # 创建滚动区域以支持内容过多时滚动
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.NoFrame)
         scroll_area.setObjectName("shortcuts_scroll")
-        # 去除滚动区域的边框和内边距
-        # 使用 ID 选择器确保只影响这个特定的 QScrollArea
-        style = """
-            QScrollArea#shortcuts_scroll {
-                padding: 0px;
-                margin: 0px;
-                border: none;
-            }
-            QScrollArea#shortcuts_scroll > QWidget {
-                background: transparent;
-            }
-            QScrollArea#shortcuts_scroll QWidget#qt_scrollarea_viewport {
-                background: transparent;
-                border: none;
-                margin: 0px;
-                padding: 0px;
-            }
-        """
-        scroll_area.setStyleSheet(style)
+        scroll_area.setStyleSheet(get_tab_scroll_area_style("shortcuts_scroll"))
         # 直接设置 viewport 的边距
         if scroll_area.viewport():
             scroll_area.viewport().setContentsMargins(0, 0, 0, 0)
         
         # 创建内容容器
         content_widget = QWidget()
-        # 只为这个特定的 widget 设置样式，不影响子控件
         content_widget.setStyleSheet("QWidget#shortcuts_container { background: transparent; border: none; }")
         content_widget.setObjectName("shortcuts_container")
         content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(15)
-        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setSpacing(TAB_CONTENT_SPACING)
+        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
+        
+        # 添加说明标签
+        self.note_label = QLabel()
+        self.note_label.setWordWrap(True)
+        self.note_label.setStyleSheet(f"QLabel {{ color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 0.95em; padding: {SPACING_SMALL}px 0; }}")
+        self.note_label.setText(self.i18n.get(
+            'shortcuts_note',
+            "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\n"
+            "This page shows the default/example shortcuts. If you changed them in Shortcuts, calibre settings take precedence."
+        ))
+        content_layout.addWidget(self.note_label)
         
         # 创建单个快捷键组 - 使用虚线边框而不是内阴影
         shortcuts_group = QGroupBox()
@@ -88,12 +70,12 @@ class ShortcutsWidget(QWidget):
         self.shortcuts_group = shortcuts_group
         self.shortcuts_layout = shortcuts_layout
         
+        # 添加弹性空间
+        content_layout.addStretch()
+        
         # 设置滚动区域的内容
         scroll_area.setWidget(content_widget)
         main_layout.addWidget(scroll_area)
-        
-        # 添加弹性空间
-        main_layout.addStretch()
         
         self.update_shortcuts()
         
@@ -126,8 +108,9 @@ class ShortcutsWidget(QWidget):
         
         # 定义所有快捷键（部分快捷键在不同平台有所不同）
         shortcuts = [
-            (self.i18n.get('menu_ask', 'Ask'), 'Ctrl+L'),
+            (self.i18n.get('menu_ask', 'Ask'), 'Ctrl+K'),
             (self.i18n.get('config_title', 'Configuration'), 'F2'),
+            (self.i18n.get('library_search', 'AI Search'), 'Ctrl+Shift+L'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
             (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
         ]

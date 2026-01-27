@@ -695,6 +695,7 @@ allowed_protocols = frozenset((
     'rtsp',
     'afs',
     'data',
+    'calibre',
 ))
 
 allowed_content_types = frozenset((

@@ -22,7 +22,7 @@ class EnglishTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'About the book "{title}": Author: {author}, Publisher: {publisher}, Publication Year: {pubyear}, book in language: {language}, Series: {series}, My question is: {query}'
+        return 'Context: You are assisting a user of calibre (http://calibre-ebook.com), a powerful e-book management application, through the "Ask AI Plugin". This plugin allows users to ask questions about books in their calibre library. Note: This plugin can only answer questions about the selected book\'s content, themes, or related topics - it cannot directly modify book metadata or perform calibre operations. Book Information: Title: "{title}", Author: {author}, Publisher: {publisher}, Publication Year: {pubyear}, Language: {language}, Series: {series}. User Question: {query}. Please provide a helpful answer based on the book information and your knowledge.'
     
     @property
     def suggestion_template(self) -> str:
@@ -178,6 +178,8 @@ class EnglishTranslation(BaseTranslation):
             'export_history_btn': 'Export History as PDF',
             'copy_mode_response': 'Answer',
             'copy_mode_qa': 'Q&A',
+            'copy_format_plain': 'Plain Text',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Current Q&A',
             'export_mode_history': 'History',
             
@@ -484,4 +486,36 @@ class EnglishTranslation(BaseTranslation):
             'pdf_software': 'Software',
             'pdf_generated_time': 'Generated Time',
             'pdf_info_not_available': 'Information not available',
+            
+            # Library Chat feature (v1.4.2)
+            'library_tab': 'Search',
+            'library_search': 'AI Search',
+            'library_info': 'AI Search is always enabled. When you don\'t select any books, you can search your entire library using natural language.',
+            'library_enable': 'Enable AI Search',
+            'library_enable_tooltip': 'When enabled, you can search your library using AI when no books are selected',
+            'library_update': 'Update Library Data',
+            'library_update_tooltip': 'Extract book titles and authors from your library',
+            'library_updating': 'Updating...',
+            'library_status': 'Status: {count} books, last update: {time}',
+            'library_status_empty': 'Status: No data. Click "Update Library Data" to start.',
+            'library_status_error': 'Status: Error loading data',
+            'library_update_success': 'Successfully updated {count} books',
+            'library_update_failed': 'Failed to update library data',
+            'library_no_gui': 'GUI not available',
+            'library_init_title': 'Initialize AI Search',
+            'library_init_message': 'AI Search requires library metadata to work. Would you like to initialize it now?\n\nThis will extract book titles and authors from your library.',
+            'library_init_required': 'AI Search cannot be enabled without library data. Please click "Update Library Data" when you are ready to use this feature.',
+            'ai_search_welcome_title': 'Welcome to AI Search',
+            'ai_search_welcome_message': 'AI Search is activated!\n\nHow to trigger:\n• Keyboard shortcut (customizable in settings)\n• Tools menu → AI Search\n• Open Ask dialog without selecting any books\n\nYou can search your entire library using natural language. For example:\n• "Do you have any books about Python?"\n• "Show me books by Isaac Asimov"\n• "Find books about machine learning"\n\nAI will search through your library and recommend relevant books. Click book titles to open them directly.',
+            'ai_search_not_enough_books_title': 'Not Enough Books',
+            'ai_search_not_enough_books_message': 'AI Search requires at least {min_books} books in your library.\n\nYour current library has only {book_count} book(s).\n\nPlease add more books to your library to use AI Search.',
+            'ai_search_mode_info': 'Searching across your entire library',
+            'ai_search_privacy_title': 'Privacy Notice',
+            'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',
+            'ai_search_updated_info': 'Updated {count} books {time_ago}',
+            'ai_search_books_info': '{count} books indexed',
+            'days_ago': '{n} days ago',
+            'hours_ago': '{n} hours ago',
+            'minutes_ago': '{n} minutes ago',
+            'just_now': 'just now',
         }
