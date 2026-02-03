@@ -253,7 +253,17 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(self.i18n['config_title'])
         
         self.prompts_action.setText(self.i18n.get('prompts_tab', 'Prompts'))
-        self.library_action.setText(self.i18n.get('library_search', 'Library Search'))
+        
+        # 更新 AI Search 菜单项（包含快捷键）- macOS 需要手动添加快捷键文本
+        try:
+            library_shortcuts = self.library_action.shortcuts()
+            if library_shortcuts:
+                shortcut_text = library_shortcuts[0].toString()
+                self.library_action.setText(f"{self.i18n.get('library_search', 'AI Search')}\t{shortcut_text}")
+            else:
+                self.library_action.setText(self.i18n.get('library_search', 'AI Search'))
+        except Exception:
+            self.library_action.setText(self.i18n.get('library_search', 'AI Search'))
         
     def initialize_api(self):
         try:

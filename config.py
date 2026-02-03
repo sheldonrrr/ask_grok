@@ -2247,7 +2247,7 @@ class ConfigDialog(QWidget):
         
         # Subtitle（外部，红色警告）
         reset_subtitle = QLabel(self.i18n.get('reset_all_data_subtitle', 
-            '⚠️ Warning: This will permanently delete all your settings and data'))
+            'Warning: This will permanently delete all your settings and data'))
         reset_subtitle.setObjectName('subtitle_reset_all_data')
         reset_subtitle.setWordWrap(True)
         reset_subtitle.setStyleSheet("color: #dc3545; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
@@ -2793,7 +2793,7 @@ class ConfigDialog(QWidget):
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
             'subtitle_debug_settings': ('debug_settings_subtitle', 'Enable debug logging for troubleshooting'),
-            'subtitle_reset_all_data': ('reset_all_data_subtitle', '⚠️ Warning: This will permanently delete all your settings and data'),
+            'subtitle_reset_all_data': ('reset_all_data_subtitle', 'Warning: This will permanently delete all your settings and data'),
             # Other labels
             'label_language': ('language_label', 'Language'),
             'label_current_ai': ('current_ai', 'Current AI'),

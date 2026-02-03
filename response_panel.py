@@ -114,6 +114,7 @@ class ResponsePanel(QWidget):
         # === Response Area（占据主要空间） ===
         self.response_area = QTextBrowser()
         self.response_area.setOpenExternalLinks(False)  # 禁用外部链接，使用自定义处理
+        self.response_area.setOpenLinks(False)  # 禁止QTextBrowser自动导航，防止内容被清除
         self.response_area.setMinimumHeight(200)
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 

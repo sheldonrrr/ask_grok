@@ -56,7 +56,7 @@ class RussianTranslation(BaseTranslation):
             'prompts_subtitle': 'Настройте способ отправки вопросов в ИИ',
             'export_settings_subtitle': 'Установите папку по умолчанию для экспорта PDF',
             'debug_settings_subtitle': 'Включить отладочное логирование для устранения неполадок',
-            'reset_all_data_subtitle': '⚠️ Внимание: Это навсегда удалит все ваши настройки и данные',
+            'reset_all_data_subtitle': 'Внимание: Это навсегда удалит все ваши настройки и данные',
 
             # Prompts tab
             'language_preference_title': 'Языковые предпочтения',

@@ -56,7 +56,7 @@ class DutchTranslation(BaseTranslation):
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
             'debug_settings_subtitle': 'Schakel debug-logging in voor probleemoplossing',
-            'reset_all_data_subtitle': '⚠️ Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
+            'reset_all_data_subtitle': 'Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
 
             # Prompts tab
             'language_preference_title': 'Taalvoorkeur',

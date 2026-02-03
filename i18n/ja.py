@@ -56,7 +56,7 @@ class JapaneseTranslation(BaseTranslation):
             'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
             'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
             'debug_settings_subtitle': 'トラブルシューティングのためにデバッグログを有効化',
-            'reset_all_data_subtitle': '⚠️ 警告：すべての設定とデータが完全に削除されます',
+            'reset_all_data_subtitle': '警告：すべての設定とデータが完全に削除されます',
             
             # プロンプトタブ
             'language_preference_title': '言語設定',

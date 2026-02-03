@@ -56,7 +56,7 @@ class CantoneseTranslation(BaseTranslation):
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
             'debug_settings_subtitle': '啟用偵錯日誌嚟排查問題', # Enable debug logging for troubleshooting
-            'reset_all_data_subtitle': '⚠️ 警告：呢個操作會永久刪除你所有嘅設定同資料', # ⚠️ Warning: This will permanently delete all your settings and data
+            'reset_all_data_subtitle': '警告：呢個操作會永久刪除你所有嘅設定同資料', # Warning: This will permanently delete all your settings and data
 
             # Prompts tab
             'language_preference_title': '語言偏好', # Language Preference

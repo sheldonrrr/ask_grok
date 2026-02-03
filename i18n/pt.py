@@ -56,7 +56,7 @@ class PortugueseTranslation(BaseTranslation):
             'prompts_subtitle': 'Personalize como as perguntas são enviadas à IA',
             'export_settings_subtitle': 'Defina a pasta padrão para exportar PDFs',
             'debug_settings_subtitle': 'Ativar o registro de depuração para solucionar problemas',
-            'reset_all_data_subtitle': '⚠️ Aviso: Isso excluirá permanentemente todas as suas configurações e dados',
+            'reset_all_data_subtitle': 'Aviso: Isso excluirá permanentemente todas as suas configurações e dados',
 
             # Prompts tab
             'language_preference_title': 'Preferência de idioma',

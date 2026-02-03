@@ -56,7 +56,7 @@ class FinnishTranslation(BaseTranslation):
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
             'debug_settings_subtitle': 'Ota käyttöön debug-lokikirjaus vianmääritystä varten',
-            'reset_all_data_subtitle': '⚠️ Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
+            'reset_all_data_subtitle': 'Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
             
             # Prompts tab
             'language_preference_title': 'Kieliasetukset',

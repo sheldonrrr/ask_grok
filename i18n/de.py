@@ -56,7 +56,7 @@ class GermanTranslation(BaseTranslation):
             'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
             'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
             'debug_settings_subtitle': 'Debug-Protokollierung zur Fehlerbehebung aktivieren',
-            'reset_all_data_subtitle': '⚠️ Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
+            'reset_all_data_subtitle': 'Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
             
             # Prompts-Tab
             'language_preference_title': 'Sprachpräferenz',

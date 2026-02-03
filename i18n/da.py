@@ -56,7 +56,7 @@ class DanishTranslation(BaseTranslation):
             'prompts_subtitle': 'Tilpas, hvordan spørgsmål sendes til AI',
             'export_settings_subtitle': 'Indstil standardmappe for eksport af PDF\'er',
             'debug_settings_subtitle': 'Aktivér fejlfindingslogning til fejlfinding',
-            'reset_all_data_subtitle': '⚠️ Advarsel: Dette vil permanent slette alle dine indstillinger og data',
+            'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine indstillinger og data',
 
             # Prompts tab
             'language_preference_title': 'Sprogpræference',

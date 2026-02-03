@@ -56,7 +56,7 @@ class FrenchTranslation(BaseTranslation):
             'prompts_subtitle': 'Personnalisez la façon dont les questions sont envoyées à l\'IA',
             'export_settings_subtitle': 'Définissez le dossier par défaut pour l\'export de PDF',
             'debug_settings_subtitle': 'Activez la journalisation de débogage pour le dépannage',
-            'reset_all_data_subtitle': '⚠️ Attention : Cela supprimera définitivement tous vos paramètres et données',
+            'reset_all_data_subtitle': 'Attention : Cela supprimera définitivement tous vos paramètres et données',
             
             # Onglet Prompts
             'language_preference_title': 'Préférence de Langue',

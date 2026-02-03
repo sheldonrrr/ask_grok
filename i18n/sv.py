@@ -56,7 +56,7 @@ class SwedishTranslation(BaseTranslation):
             'prompts_subtitle': 'Anpassa hur frågor skickas till AI',
             'export_settings_subtitle': 'Ställ in standardmapp för export av PDF-filer',
             'debug_settings_subtitle': 'Aktivera felloggning för felsökning',
-            'reset_all_data_subtitle': '⚠️ Varning: Detta kommer permanent att radera alla dina inställningar och data',
+            'reset_all_data_subtitle': 'Varning: Detta kommer permanent att radera alla dina inställningar och data',
 
             # Prompts tab
             'language_preference_title': 'Språkpreferens',

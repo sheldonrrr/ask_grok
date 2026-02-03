@@ -56,7 +56,7 @@ class NorwegianTranslation(BaseTranslation):
             'prompts_subtitle': 'Tilpass hvordan spørsmål sendes til AI',
             'export_settings_subtitle': 'Angi standardmappe for eksport av PDF-filer',
             'debug_settings_subtitle': 'Aktiver feilsøkingslogging for feilsøking',
-            'reset_all_data_subtitle': '⚠️ Advarsel: Dette vil permanent slette alle dine innstillinger og data',
+            'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine innstillinger og data',
 
             # Prompts tab
             'language_preference_title': 'Språkpreferanse',

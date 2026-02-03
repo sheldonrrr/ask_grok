@@ -83,19 +83,25 @@ def get_book_response(book_count, language='en'):
             return 'Unbelievable!'
 
 
-def get_month_comment(total_times, language='en'):
-    """Get comment for monthly heatmap based on total times."""
+def get_month_comment(total_times, language='en', i18n=None):
+    """Get comment for monthly heatmap based on total times.
+    
+    When total_times < 10, returns sample data text from i18n.
+    Otherwise returns a comment based on the total times.
+    """
+    if total_times < 10:
+        # Use i18n for sample data text
+        if i18n:
+            return i18n.get('stat_sample_data', '*This is sample data')
+        return '*This is sample data'
+    
     if language.startswith('zh'):
-        if total_times < 10:
-            return '*这是示例数据'
-        elif total_times < 50:
+        if total_times < 50:
             return '轻松愉快'
         else:
             return '充实的一个月，对吧？'
     else:
-        if total_times < 10:
-            return '*This is sample data'
-        elif total_times < 50:
+        if total_times < 50:
             return 'It was easy.'
         else:
             return 'A fulfilling month, right?'
@@ -791,7 +797,7 @@ class StatisticsWidget(QWidget):
         self.heatmap_subtitle.setText(f"{month:02d}/{today:02d}")
         
         # Update heatmap comment
-        comment = get_month_comment(total_month, self.language)
+        comment = get_month_comment(total_month, self.language, self.i18n)
         self.heatmap_comment.setText(comment)
     
     def update_language(self, language):

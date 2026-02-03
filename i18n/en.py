@@ -56,7 +56,7 @@ class EnglishTranslation(BaseTranslation):
             'prompts_subtitle': 'Customize how questions are sent to AI',
             'export_settings_subtitle': 'Set default folder for exporting PDFs',
             'debug_settings_subtitle': 'Enable debug logging for troubleshooting',
-            'reset_all_data_subtitle': '⚠️ Warning: This will permanently delete all your settings and data',
+            'reset_all_data_subtitle': 'Warning: This will permanently delete all your settings and data',
             
             # Prompts tab
             'language_preference_title': 'Language Preference',

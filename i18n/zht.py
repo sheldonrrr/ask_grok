@@ -56,7 +56,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'prompts_subtitle': '自定義向AI發送問題的方式',
         'export_settings_subtitle': '設定匯出PDF的預設資料夾',
         'debug_settings_subtitle': '啟用除錯日誌以排查問題',
-        'reset_all_data_subtitle': '⚠️ 警告：這將永久刪除所有設定和資料',
+        'reset_all_data_subtitle': '警告：這將永久刪除所有設定和資料',
         
         # Prompts tab
         'language_preference_title': '語言偏好',
