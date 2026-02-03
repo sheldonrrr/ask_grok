@@ -305,6 +305,29 @@ def get_prefs(force_reload=False):
             prefs['models']['nvidia_free']['api_base_url'] = current_env_url
             prefs.commit()
     
+    # 配置迁移：删除已废弃的 openrouter_free 配置（旧版本遗留数据）
+    # 同时删除任何包含 'openrouter' 且 model 为 ':free' 或包含 'free' 的旧配置
+    models_to_remove = []
+    for config_id, config in prefs['models'].items():
+        if not isinstance(config, dict):
+            continue
+        # 检查是否是废弃的 openrouter free 配置
+        if 'openrouter_free' in config_id:
+            models_to_remove.append(config_id)
+        elif config_id.startswith('openrouter') and config.get('model', '').lower().endswith(':free'):
+            models_to_remove.append(config_id)
+        elif config.get('provider_id') == 'openrouter_free':
+            models_to_remove.append(config_id)
+    
+    for config_id in models_to_remove:
+        del prefs['models'][config_id]
+        # 如果当前选中的是被删除的模型，切换到 nvidia_free
+        if prefs.get('selected_model') == config_id:
+            prefs['selected_model'] = 'nvidia_free'
+    
+    if models_to_remove:
+        prefs.commit()
+    
     # 确保默认模型配置存在
     if 'grok' not in prefs['models']:
         prefs['models']['grok'] = {
