@@ -591,6 +591,7 @@ class AskAIPluginUI(InterfaceAction):
                 'config': self.config_action.text(),
                 'shortcuts': self.shortcuts_action.text(),
                 'tutorial': self.tutorial_action.text(),
+                'stat': self.stat_action.text(),
             }
             
             # 如果没有指定语言，从配置中读取
@@ -606,6 +607,7 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts'])
             self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
+            self.stat_action.setText(self.i18n.get('stat_tab', 'Stat'))
             
         except Exception as e:
             # 发生错误时恢复原始状态
@@ -614,6 +616,7 @@ class AskAIPluginUI(InterfaceAction):
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
             self.tutorial_action.setText(original_texts['tutorial'])
+            self.stat_action.setText(original_texts['stat'])
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
@@ -1816,13 +1819,22 @@ class AskDialog(QDialog):
             self.book_metadata = self.books_metadata[0]  # 向后兼容
         
         # 生成或加载 UID
-        # AI Search 模式下，自动加载上次保存的历史UID
+        # AI Search 模式下，自动加载上次保存的历史UID，如果没有则加载最新的历史记录
         if not history_uid and not self.books_info:
             prefs = get_prefs()
             last_uid = prefs.get('ai_search_last_history_uid')
             if last_uid:
                 history_uid = last_uid
                 logger.info(f"AI Search mode, using last saved history UID: {last_uid}")
+            else:
+                # 没有保存的UID时，尝试加载最新的AI Search历史记录
+                from history_manager import HistoryManager
+                temp_history_manager = HistoryManager()
+                ai_search_histories = temp_history_manager.get_ai_search_histories()
+                if ai_search_histories:
+                    # get_ai_search_histories() 返回按时间倒序排列的列表，第一个是最新的
+                    history_uid = ai_search_histories[0]['uid']
+                    logger.info(f"AI Search mode, loading newest history UID: {history_uid}")
         
         self._explicit_history_uid = history_uid
         if history_uid:
