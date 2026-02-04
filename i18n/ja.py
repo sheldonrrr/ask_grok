@@ -435,6 +435,7 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             
             'default_ai_mismatch_title': 'デフォルトAIが変更されました',
             'default_ai_mismatch_message': '設定のデフォルトAIが"{default_ai}"に変更されましたが、\n現在のダイアログは"{current_ai}"を使用しています。\n\n新しいデフォルトAIに切り替えますか？',
@@ -534,6 +535,7 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             'ai_search_privacy_title': 'プライバシーに関するお知らせ',
             'ai_search_privacy_alert': 'AI検索はライブラリの本のメタデータ（タイトルと著者）を使用します。この情報は、検索クエリを処理するために設定されたAIプロバイダーに送信されます。',
             'ai_search_updated_info': '{time_ago}に {count} 冊の本を更新',

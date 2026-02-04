@@ -198,8 +198,8 @@ class APIClient:
                 
                 prefs = get_prefs()
                 if is_library_chat_enabled(prefs):
-                    # 使用build_library_prompt包装用户查询
-                    prompt = build_library_prompt(prompt, prefs)
+                    # 使用build_library_prompt包装用户查询，传入i18n支持多语言
+                    prompt = build_library_prompt(prompt, prefs, self.i18n)
                     logger.info("Library Chat enabled, injected library metadata into prompt")
             
             # 准备请求参数

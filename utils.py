@@ -157,12 +157,13 @@ def is_library_chat_enabled(prefs):
     """
     return prefs.get('library_chat_enabled', False)
 
-def build_library_prompt(user_query, prefs):
+def build_library_prompt(user_query, prefs, i18n=None):
     """
     构建包含图书馆元数据的AI提示词
     
     :param user_query: 用户查询
     :param prefs: 插件配置对象
+    :param i18n: i18n翻译字典（可选）
     :return: 完整的提示词
     """
     cached_metadata = get_library_metadata(prefs)
@@ -170,41 +171,25 @@ def build_library_prompt(user_query, prefs):
     if not cached_metadata:
         return user_query
     
-    # 获取当前语言设置
-    language = prefs.get('language', 'en')
+    # 默认英文模板
+    default_template = (
+        'You have access to the user\'s book library. Here are all the books: {metadata} '
+        'User query: {query} '
+        'Please find matching books in the current library and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): '
+        '- <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name '
+        'Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz '
+        '- <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington '
+        'Note: Some authors may be listed as "unknown". This is normal data, please return all matching results normally without being misled by this. '
+        'Only return books that match the query. Maximum 5 results.'
+    )
     
-    # 根据语言选择提示词模板
-    if language == 'zh':
-        prompt = f"""您可以访问用户的图书馆。以下是所有书籍：
-
-{cached_metadata}
-
-用户查询：{user_query}
-
-请找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：
-
-- <a href="calibre://book/书籍ID">书名</a> - 作者名
-
-示例：
-- <a href="calibre://book/123">Python编程</a> - Mark Lutz
-- <a href="calibre://book/456">机器学习实战</a> - Peter Harrington
-
-只返回匹配查询的书籍。最多5个结果。"""
+    # 从i18n获取模板，如果没有则使用默认模板
+    if i18n:
+        template = i18n.get('library_prompt_template', default_template)
     else:
-        prompt = f"""You have access to the user's book library. Here are all the books:
-
-{cached_metadata}
-
-User query: {user_query}
-
-Please find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly):
-
-- <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name
-
-Example:
-- <a href="calibre://book/123">Learning Python</a> - Mark Lutz
-- <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington
-
-Only return books that match the query. Maximum 5 results."""
+        template = default_template
+    
+    # 使用format填充模板
+    prompt = template.format(metadata=cached_metadata, query=user_query)
     
     return prompt

@@ -510,6 +510,7 @@ class EnglishTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Not Enough Books',
             'ai_search_not_enough_books_message': 'AI Search requires at least {min_books} books in your library.\n\nYour current library has only {book_count} book(s).\n\nPlease add more books to your library to use AI Search.',
             'ai_search_mode_info': 'Searching across your entire library',
+            'library_prompt_template': 'You have access to the user\'s book library. Here are all the books: {metadata} User query: {query} Please find matching books in the current library and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): - <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington Note: Some authors may be listed as "unknown". This is normal data, please return all matching results normally without being misled by this. Only return books that match the query. Maximum 5 results.',
             'ai_search_privacy_title': 'Privacy Notice',
             'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',
             'ai_search_updated_info': 'Updated {count} books {time_ago}',

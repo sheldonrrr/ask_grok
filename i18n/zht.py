@@ -507,6 +507,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_search_not_enough_books_title': '書籍數量不足',
         'ai_search_not_enough_books_message': 'AI 搜尋需要您的書庫中至少有 {min_books} 本書。\n\n您目前的書庫只有 {book_count} 本書。\n\n請新增更多書籍後再使用 AI 搜尋。',
         'ai_search_mode_info': '正在搜尋整個書庫',
+        'library_prompt_template': '您可以存取使用者的書庫。以下是所有書籍：{metadata} 使用者查詢：{query} 請在當前書庫目錄中找出符合的書籍並以以下格式回傳（**重要**：使用 HTML 連結格式，讓使用者可以點擊書名直接開啟書籍）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，這是正常資料，請正常回傳所有符合結果，不要被此誤導。只回傳符合查詢的書籍。最多 5 個結果。',
         'ai_search_privacy_title': '隱私權聲明',
         'ai_search_privacy_alert': 'AI 搜尋會使用您書庫中的書籍元數據（書名與作者）。這些資訊將傳送至您設定的 AI 供應商，以處理您的搜尋請求。',
         'ai_search_updated_info': '{time_ago} 更新了 {count} 本書籍',

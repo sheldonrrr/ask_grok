@@ -1458,12 +1458,9 @@ class ResponsePanel(QWidget):
                     logger.info(f"[BOOK_LINK_CLICK] GUI 实例可用")
                     logger.info(f"[BOOK_LINK_CLICK] 当前库视图选择: {gui.library_view.selectionModel().selectedRows()}")
                     
-                    # 直接使用EbookViewer打开书籍，不改变库视图选择
+                    # 使用Calibre的View action打开书籍，不改变库视图选择
                     # 这样可以避免触发show_dialog()，保持AI Search对话框内容
                     try:
-                        from calibre.gui2.viewer.main import EbookViewer
-                        logger.info(f"[BOOK_LINK_CLICK] 导入 EbookViewer 成功")
-                        
                         db = gui.current_db
                         fmt = db.formats(book_id, index_is_id=True)
                         logger.info(f"[BOOK_LINK_CLICK] 书籍格式: {fmt}")

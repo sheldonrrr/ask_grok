@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.8
-Latest updated: January 23, 2026, Ask AI Plugin v1.4.2
+Latest updated: Feb 04, 2026, Ask AI Plugin v1.4.2
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -125,7 +125,7 @@ AI Search lets you search your entire library using natural language, without se
    - "Find books about machine learning"
    - "What science fiction books do I have?"
 
-3. AI will search through your library metadata and recommend relevant books
+3. AI will search through your library metadata and recommend relevant books, and you can open the book in response by clicking the book title.
 
 ### Features
 

@@ -505,6 +505,7 @@ class FinnishTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
             'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
             'ai_search_mode_info': 'Haetaan koko kirjastosta',
+            'library_prompt_template': 'Sinulla on pääsy käyttäjän kirjakirjastoon. Tässä ovat kaikki kirjat: {metadata} Käyttäjän kysely: {query} Etsi vastaavat kirjat nykyisestä kirjastosta ja palauta ne tässä muodossa (**TÄRKEÄÄ**: Käytä HTML-linkkimuotoa, jotta käyttäjät voivat napsauttaa kirjojen nimiä avatakseen ne suoraan): - <a href="calibre://book/BOOK_ID">Kirjan nimi</a> - Kirjailijan nimi Esimerkki: - <a href="calibre://book/123">Opi Python</a> - Mark Lutz - <a href="calibre://book/456">Koneoppiminen käytännössä</a> - Peter Harrington Huomautus: Jotkut kirjailijat voivat olla merkitty "unknown". Tämä on normaalia dataa, palauta kaikki vastaavat tulokset normaalisti. Palauta vain kyselyä vastaavat kirjat. Enintään 5 tulosta.',
             'ai_search_privacy_title': 'Tietosuojailmoitus',
             'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',
             'ai_search_updated_info': 'Päivitetty {count} kirjaa {time_ago}',

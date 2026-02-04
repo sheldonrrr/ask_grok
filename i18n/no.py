@@ -505,6 +505,7 @@ class NorwegianTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Ikke nok bøker',
             'ai_search_not_enough_books_message': 'AI-søk krever minst {min_books} bøker i biblioteket ditt.\n\nDitt nåværende bibliotek har bare {book_count} bok/bøker.\n\nVennligst legg til flere bøker for å bruke AI-søk.',
             'ai_search_mode_info': 'Søker i hele biblioteket',
+            'library_prompt_template': 'Du har tilgang til brukerens bokbibliotek. Her er alle bøkene: {metadata} Brukerforespørsel: {query} Vennligst finn matchende bøker i det nåværende biblioteket og returner dem i dette formatet (**VIKTIG**: Bruk HTML-lenkformat slik at brukere kan klikke på boktitler for å åpne dem direkte): - <a href="calibre://book/BOOK_ID">Boktittel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Merk: Noen forfattere kan være oppført som "unknown". Dette er normale data, vennligst returner alle matchende resultater normalt. Returner kun bøker som matcher forespørselen. Maksimalt 5 resultater.',
             'ai_search_privacy_title': 'Personvernerklæring',
             'ai_search_privacy_alert': 'AI-søk bruker bokmetadata (titler og forfattere). Denne informasjonen sendes til AI-leverandøren du har konfigurert for å behandle søkene dine.',
             'ai_search_updated_info': 'Oppdaterte {count} bøker {time_ago}',

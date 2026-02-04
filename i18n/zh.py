@@ -506,6 +506,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '书籍数量不足',
             'ai_search_not_enough_books_message': 'AI搜索需要您的图书馆中至少有 {min_books} 本书。\n\n您当前的图书馆只有 {book_count} 本书。\n\n请添加更多书籍后再使用AI搜索。',
             'ai_search_mode_info': '正在搜索您的整个图书馆',
+            'library_prompt_template': '您可以访问用户的图书馆。以下是所有书籍：{metadata} 用户查询：{query} 请在当前书库目录中找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：- <a href="calibre://book/书籍ID">书名</a> - 作者名 示例：- <a href="calibre://book/123">Python编程</a> - Mark Lutz - <a href="calibre://book/456">机器学习实战</a> - Peter Harrington 注意：部分作者信息可能显示为"unknown"，这是正常数据，请正常返回所有匹配结果，不要被此误导。只返回匹配查询的书籍。最多5个结果。',
             'ai_search_privacy_title': '隐私提示',
             'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',
             'ai_search_updated_info': '已更新 {count} 本书，{time_ago}',

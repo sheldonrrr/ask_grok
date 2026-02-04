@@ -1185,7 +1185,8 @@ class TabDialog(QDialog):
         self.online_tutorial_link.setOpenExternalLinks(True)
         self.online_tutorial_link.setCursor(Qt.PointingHandCursor)
         self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
-        button_layout.addWidget(self.online_tutorial_link)
+        self.online_tutorial_link.setAlignment(Qt.AlignVCenter)
+        button_layout.addWidget(self.online_tutorial_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
         # 添加 About 链接
@@ -1195,7 +1196,8 @@ class TabDialog(QDialog):
         self.about_link.setOpenExternalLinks(True)
         self.about_link.setCursor(Qt.PointingHandCursor)
         self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
-        button_layout.addWidget(self.about_link)
+        self.about_link.setAlignment(Qt.AlignVCenter)
+        button_layout.addWidget(self.about_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
         # 添加 Reddit 链接（关闭按钮左侧）
@@ -1205,7 +1207,8 @@ class TabDialog(QDialog):
         self.reddit_link.setOpenExternalLinks(True)
         self.reddit_link.setCursor(Qt.PointingHandCursor)
         self.reddit_link.setText('<a href="https://www.reddit.com/r/AskAIPlugin_calibre/">Reddit</a>')
-        button_layout.addWidget(self.reddit_link)
+        self.reddit_link.setAlignment(Qt.AlignVCenter)
+        button_layout.addWidget(self.reddit_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
         
         # 添加Close按钮（右侧）
