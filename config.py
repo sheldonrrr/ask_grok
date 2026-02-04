@@ -1919,17 +1919,10 @@ class ConfigDialog(QWidget):
         
         # 1. 顶部：语言选择
         # Section Title（外部）- 第一个 section，顶部间距较小
+        from .ui_constants import get_first_section_title_style
         lang_title = QLabel(self.i18n.get('language_settings', 'Language'))
         lang_title.setObjectName('title_language')
-        first_section_style = f"""
-            font-weight: bold;
-            font-size: 1.08em;
-            color: palette(text);
-            text-transform: uppercase;
-            padding: 0;
-            margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
-        """
-        lang_title.setStyleSheet(first_section_style)
+        lang_title.setStyleSheet(get_first_section_title_style())
         content_layout.addWidget(lang_title)
         
         # Subtitle（外部）
@@ -3564,31 +3557,45 @@ class LibraryWidget(QWidget):
     
     def setup_ui(self):
         """设置UI"""
-        layout = QVBoxLayout()
-        layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
-        layout.setSpacing(SPACING_MEDIUM)
+        from .ui_constants import (setup_tab_widget_layout, TAB_CONTENT_MARGIN, 
+                                   TAB_CONTENT_SPACING, get_first_section_title_style)
         
-        # Privacy alert section
-        privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
-        privacy_title.setStyleSheet(f"font-weight: bold; font-size: 1.1em; color: {TEXT_COLOR_PRIMARY}; padding: {PADDING_MEDIUM}px 0;")
-        layout.addWidget(privacy_title)
+        # 使用统一的 Tab 布局
+        main_layout = setup_tab_widget_layout(self)
         
-        privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
+        # 创建滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        # 内容容器
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, 
+                                  TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
+        layout.setSpacing(TAB_CONTENT_SPACING)
+        
+        # Privacy alert section - 使用统一的第一个 section 标题样式
+        self.privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        self.privacy_title.setStyleSheet(get_first_section_title_style())
+        layout.addWidget(self.privacy_title)
+        
+        self.privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
             'AI Search uses book metadata (titles and authors) from your library. '
             'This information will be sent to the AI provider you have configured to process your search queries.'))
-        privacy_alert.setWordWrap(True)
-        privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
-        layout.addWidget(privacy_alert)
+        self.privacy_alert.setWordWrap(True)
+        self.privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
+        layout.addWidget(self.privacy_alert)
         
         layout.addSpacing(SPACING_MEDIUM)
         
         # AI搜索说明
-        info_label = QLabel(self.i18n.get('library_info', 
+        self.info_label = QLabel(self.i18n.get('library_info', 
             'AI Search is always enabled. When you don\'t select any books, '
             'you can search your entire library using natural language.'))
-        info_label.setWordWrap(True)
-        info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        layout.addWidget(info_label)
+        self.info_label.setWordWrap(True)
+        self.info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        layout.addWidget(self.info_label)
         
         layout.addSpacing(SPACING_SMALL)
         
@@ -3611,7 +3618,8 @@ class LibraryWidget(QWidget):
         # 添加弹性空间
         layout.addStretch()
         
-        self.setLayout(layout)
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
     
     def load_values(self):
         """加载配置值"""
@@ -3627,23 +3635,19 @@ class LibraryWidget(QWidget):
         language = self.prefs.get('language', 'en')
         self.i18n = get_translation(language)
         
-        # 更新所有文本
-        # 找到并更新各个label
-        for child in self.findChildren(QLabel):
-            text = child.text()
-            # Privacy title
-            if 'Privacy Notice' in text or '隐私提示' in text:
-                child.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
-            # Privacy alert
-            elif 'AI Search uses book metadata' in text or 'AI搜索使用您图书馆中的书籍元数据' in text:
-                child.setText(self.i18n.get('ai_search_privacy_alert', 
-                    'AI Search uses book metadata (titles and authors) from your library. '
-                    'This information will be sent to the AI provider you have configured to process your search queries.'))
-            # Info label
-            elif 'AI Search is always enabled' in text or '始终启用' in text or 'AI搜索' in text:
-                child.setText(self.i18n.get('library_info', 
-                    'AI Search is always enabled. When you don\'t select any books, '
-                    'you can search your entire library using natural language.'))
+        # 更新所有文本 - 使用实例变量直接更新
+        if hasattr(self, 'privacy_title'):
+            self.privacy_title.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        
+        if hasattr(self, 'privacy_alert'):
+            self.privacy_alert.setText(self.i18n.get('ai_search_privacy_alert', 
+                'AI Search uses book metadata (titles and authors) from your library. '
+                'This information will be sent to the AI provider you have configured to process your search queries.'))
+        
+        if hasattr(self, 'info_label'):
+            self.info_label.setText(self.i18n.get('library_info', 
+                'AI Search is always enabled. When you don\'t select any books, '
+                'you can search your entire library using natural language.'))
         
         # 更新按钮文本
         if hasattr(self, 'update_button'):

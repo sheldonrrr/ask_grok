@@ -133,9 +133,18 @@ def get_section_title_style():
         font-weight: bold;
         font-size: 1.08em;
         color: {TEXT_COLOR_PRIMARY};
-        text-transform: uppercase;
         padding: 0;
         margin: {SPACING_LARGE}px 0 {SPACING_SMALL}px 0;
+    """
+
+def get_first_section_title_style():
+    """获取第一个section title样式（顶部间距较小，与其他Tab保持一致）"""
+    return f"""
+        font-weight: bold;
+        font-size: 1.08em;
+        color: {TEXT_COLOR_PRIMARY};
+        padding: 0;
+        margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
     """
 
 # ============ Subtitle样式 ============

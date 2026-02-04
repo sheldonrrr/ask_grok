@@ -19,7 +19,7 @@ from PyQt5.QtGui import QFont, QPainter, QColor, QPen, QBrush, QPainterPath
 
 from .config import get_prefs
 from .models.base import get_translation
-from .ui_constants import (TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, 
+from .ui_constants import (TEXT_COLOR_PRIMARY, 
                            SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
                            get_section_title_style, get_subtitle_style)
 
@@ -31,80 +31,53 @@ CHART_MAX_WIDTH = 800  # Maximum width in pixels
 CHART_MIN_WIDTH = 500  # Minimum width in pixels
 
 
-def get_user_title(reply_count, language='en'):
+def get_user_title(reply_count, i18n=None):
     """Get user title based on AI reply count."""
-    if language.startswith('zh'):
-        if reply_count <= 20:
-            return '好奇心人士'
-        elif reply_count <= 50:
-            return '书籍探索者'
-        elif reply_count <= 100:
-            return '知识渴求者'
-        elif reply_count <= 200:
-            return '学习热情者'
-        else:
-            return '智慧追寻者'
+    if i18n is None:
+        i18n = {}
+    
+    if reply_count <= 20:
+        return i18n.get('stat_title_curious', 'Curious Explorer')
+    elif reply_count <= 50:
+        return i18n.get('stat_title_explorer', 'Book Explorer')
+    elif reply_count <= 100:
+        return i18n.get('stat_title_seeker', 'Knowledge Seeker')
+    elif reply_count <= 200:
+        return i18n.get('stat_title_enthusiast', 'Learning Enthusiast')
     else:
-        if reply_count <= 20:
-            return 'Curious Explorer'
-        elif reply_count <= 50:
-            return 'Book Explorer'
-        elif reply_count <= 100:
-            return 'Knowledge Seeker'
-        elif reply_count <= 200:
-            return 'Learning Enthusiast'
-        else:
-            return 'Wisdom Pursuer'
+        return i18n.get('stat_title_pursuer', 'Wisdom Pursuer')
 
 
-def get_book_response(book_count, language='en'):
+def get_book_response(book_count, i18n=None):
     """Get response text based on book collection count."""
-    if language.startswith('zh'):
-        if book_count <= 50:
-            return '真不错！'
-        elif book_count <= 200:
-            return '很不错啊！'
-        elif book_count <= 500:
-            return '材料丰富！'
-        elif book_count <= 1000:
-            return '哇，厉害！'
-        else:
-            return '太棒了！'
+    if i18n is None:
+        i18n = {}
+    
+    if book_count <= 50:
+        return i18n.get('stat_books_impressive', "That's impressive!")
+    elif book_count <= 200:
+        return i18n.get('stat_books_collection', 'Quite a collection!')
+    elif book_count <= 500:
+        return i18n.get('stat_books_variety', 'Great variety!')
+    elif book_count <= 1000:
+        return i18n.get('stat_books_awesome', "Wow, that's awesome!")
     else:
-        if book_count <= 50:
-            return "That's impressive!"
-        elif book_count <= 200:
-            return 'Quite a collection!'
-        elif book_count <= 500:
-            return 'Great variety!'
-        elif book_count <= 1000:
-            return "Wow, that's awesome!"
-        else:
-            return 'Unbelievable!'
+        return i18n.get('stat_books_unbelievable', 'Unbelievable!')
 
 
-def get_month_comment(total_times, language='en', i18n=None):
+def get_month_comment(total_times, i18n=None):
     """Get comment for monthly heatmap based on total times.
     
-    When total_times < 10, returns sample data text from i18n.
-    Otherwise returns a comment based on the total times.
+    Returns a comment based on the total times this month.
+    Sample data handling is done separately via subtitle.
     """
-    if total_times < 10:
-        # Use i18n for sample data text
-        if i18n:
-            return i18n.get('stat_sample_data', '*This is sample data')
-        return '*This is sample data'
+    if i18n is None:
+        i18n = {}
     
-    if language.startswith('zh'):
-        if total_times < 50:
-            return '轻松愉快'
-        else:
-            return '充实的一个月，对吧？'
+    if total_times < 50:
+        return i18n.get('stat_month_easy', 'It was easy.')
     else:
-        if total_times < 50:
-            return 'It was easy.'
-        else:
-            return 'A fulfilling month, right?'
+        return i18n.get('stat_month_fulfilling', 'A fulfilling month, right?')
 
 
 def format_number_display(number):
@@ -120,22 +93,23 @@ def init_statistics(prefs):
     """Initialize statistics if not present."""
     changed = False
     
-    # Initialize first use date
+    # Check if we need to sync from history (first time or not yet synced)
+    stats_synced_from_history = prefs.get('stat_synced_from_history', False)
+    
+    if not stats_synced_from_history:
+        # Sync statistics from history records for old users
+        changed = sync_stats_from_history(prefs) or changed
+        prefs['stat_synced_from_history'] = True
+        changed = True
+    
+    # Initialize first use date (fallback if no history)
     if not prefs.get('stat_first_use_date'):
         prefs['stat_first_use_date'] = datetime.now().strftime('%Y-%m-%d')
         changed = True
     
-    # Initialize AI reply count
+    # Initialize AI reply count (fallback if no history)
     if prefs.get('stat_ai_reply_count') is None:
-        # Try to get initial count from history
-        try:
-            from .history_manager import HistoryManager
-            history_manager = HistoryManager()
-            initial_count = len(history_manager.histories)
-            prefs['stat_ai_reply_count'] = initial_count
-        except Exception as e:
-            logger.warning(f"Failed to get history count for stats init: {e}")
-            prefs['stat_ai_reply_count'] = 0
+        prefs['stat_ai_reply_count'] = 0
         changed = True
     
     # Initialize book count (will be updated when AI Search updates library)
@@ -149,6 +123,120 @@ def init_statistics(prefs):
         changed = True
     
     return changed
+
+
+def sync_stats_from_history(prefs):
+    """Sync statistics from history records for old users.
+    
+    This function:
+    1. Finds the oldest history record date and uses it as first use date
+    2. Counts all history records as request count
+    3. Syncs daily counts from history timestamps
+    
+    Returns:
+        bool: True if any changes were made
+    """
+    changed = False
+    
+    try:
+        from .history_manager import HistoryManager
+        history_manager = HistoryManager()
+        histories = history_manager.histories
+        
+        if not histories:
+            logger.info("No history records found for stats sync")
+            return False
+        
+        # Find oldest date and count records
+        oldest_date = None
+        daily_counts = {}
+        
+        for uid, history in histories.items():
+            timestamp_str = history.get('timestamp', '')
+            if not timestamp_str:
+                continue
+            
+            try:
+                # Parse timestamp (format: '%Y-%m-%d %H:%M:%S')
+                timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+                date_str = timestamp.strftime('%Y-%m-%d')
+                
+                # Track oldest date
+                if oldest_date is None or timestamp < oldest_date:
+                    oldest_date = timestamp
+                
+                # Count daily requests
+                daily_counts[date_str] = daily_counts.get(date_str, 0) + 1
+                
+            except Exception as e:
+                logger.warning(f"Failed to parse history timestamp: {timestamp_str}, error: {e}")
+                continue
+        
+        # Update first use date if we found an older date
+        if oldest_date:
+            oldest_date_str = oldest_date.strftime('%Y-%m-%d')
+            current_first_use = prefs.get('stat_first_use_date')
+            
+            if not current_first_use:
+                prefs['stat_first_use_date'] = oldest_date_str
+                changed = True
+                logger.info(f"Set first use date from history: {oldest_date_str}")
+            else:
+                # Compare and use the older one
+                try:
+                    current_date = datetime.strptime(current_first_use, '%Y-%m-%d')
+                    if oldest_date < current_date:
+                        prefs['stat_first_use_date'] = oldest_date_str
+                        changed = True
+                        logger.info(f"Updated first use date from history: {oldest_date_str} (was {current_first_use})")
+                except:
+                    pass
+        
+        # Update request count
+        history_count = len(histories)
+        current_count = prefs.get('stat_ai_reply_count', 0)
+        if history_count > current_count:
+            prefs['stat_ai_reply_count'] = history_count
+            changed = True
+            logger.info(f"Updated request count from history: {history_count} (was {current_count})")
+        
+        # Merge daily counts with existing data
+        if daily_counts:
+            try:
+                existing_daily = json.loads(prefs.get('stat_daily_counts', '{}'))
+            except:
+                existing_daily = {}
+            
+            # Merge: use max of existing and history counts for each day
+            for date_str, count in daily_counts.items():
+                existing_count = existing_daily.get(date_str, 0)
+                if count > existing_count:
+                    existing_daily[date_str] = count
+            
+            prefs['stat_daily_counts'] = json.dumps(existing_daily)
+            changed = True
+            logger.info(f"Synced daily counts from history: {len(daily_counts)} days")
+        
+        return changed
+        
+    except Exception as e:
+        logger.error(f"Failed to sync stats from history: {e}")
+        return False
+
+
+def refresh_stats_on_dialog_open(prefs):
+    """Refresh statistics when config dialog opens.
+    
+    This recalculates the days count based on current date.
+    Called each time the config dialog is opened.
+    """
+    # The days count is calculated dynamically in refresh_stats()
+    # based on stat_first_use_date, so we just need to ensure
+    # the first use date is set correctly.
+    # 
+    # Note: We don't reduce the first use date even if oldest
+    # history record changes (user may delete old records).
+    pass
 
 
 def increment_ai_reply_count(prefs):
@@ -238,7 +326,7 @@ def generate_sample_monthly_data(num_days, today):
 
 
 class StatCard(QWidget):
-    """A card widget displaying a single statistic with number on top."""
+    """A card widget displaying a single statistic with top label, number, and subtitle."""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -246,6 +334,12 @@ class StatCard(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(12, 8, 12, 8)
         self.layout.setSpacing(2)
+        
+        # Top label (above number)
+        self.top_label = QLabel()
+        self.top_label.setAlignment(Qt.AlignCenter)
+        self.top_label.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
+        self.layout.addWidget(self.top_label)
         
         # Number + unit in one line
         number_line = QHBoxLayout()
@@ -267,17 +361,23 @@ class StatCard(QWidget):
         number_line.addWidget(self.unit_label)
         number_line.addStretch()
         
-        # Subtitle label
+        self.layout.addLayout(number_line)
+        
+        # Subtitle label (below number)
         self.subtitle_label = QLabel()
         self.subtitle_label.setAlignment(Qt.AlignCenter)
-        self.subtitle_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-size: 0.8em;")
+        self.subtitle_label.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.8em; opacity: 0.8;")
         self.subtitle_label.setWordWrap(True)
-        
-        self.layout.addLayout(number_line)
         self.layout.addWidget(self.subtitle_label)
     
-    def set_data(self, number, unit, subtitle=''):
+    def set_data(self, number, unit, subtitle='', top_label=''):
         """Set the card data."""
+        self.top_label.setText(top_label)
+        if not top_label:
+            self.top_label.hide()
+        else:
+            self.top_label.show()
+        
         self.number_label.setText(str(number))
         self.unit_label.setText(unit)
         self.subtitle_label.setText(subtitle)
@@ -555,7 +655,9 @@ class StatisticsWidget(QWidget):
     
     def setup_ui(self):
         """Setup the UI layout."""
-        from .ui_constants import setup_tab_widget_layout, TAB_CONTENT_MARGIN
+        from .ui_constants import (setup_tab_widget_layout, TAB_CONTENT_MARGIN, 
+                                   TAB_CONTENT_SPACING, get_first_section_title_style,
+                                   get_section_title_style)
         
         main_layout = setup_tab_widget_layout(self)
         
@@ -570,12 +672,22 @@ class StatisticsWidget(QWidget):
         content_layout = QVBoxLayout(content)
         content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, 
                                           TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        content_layout.setSpacing(SPACING_MEDIUM)
+        content_layout.setSpacing(TAB_CONTENT_SPACING)
         
         # ========== Section 1: Overview ==========
+        # Header with title and subtitle - 使用统一的第一个 section 标题样式
+        overview_header = QVBoxLayout()
+        overview_header.setSpacing(2)
+        
         self.overview_title = QLabel(self.i18n.get('stat_overview', 'Overview'))
-        self.overview_title.setStyleSheet(f"font-weight: bold; font-size: 1.1em; color: {TEXT_COLOR_PRIMARY};")
-        content_layout.addWidget(self.overview_title)
+        self.overview_title.setStyleSheet(get_first_section_title_style())
+        overview_header.addWidget(self.overview_title)
+        
+        self.overview_subtitle = QLabel(self.i18n.get('stat_overview_subtitle', 'Statistics of AI inquiry calls'))
+        self.overview_subtitle.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
+        overview_header.addWidget(self.overview_subtitle)
+        
+        content_layout.addLayout(overview_header)
         
         # Overview container with background - centered, 70% width, max-width
         overview_container_wrapper = QHBoxLayout()
@@ -628,11 +740,11 @@ class StatisticsWidget(QWidget):
         trends_left.setSpacing(2)
         
         self.trends_title = QLabel(self.i18n.get('stat_trends', 'Trends'))
-        self.trends_title.setStyleSheet(f"font-weight: bold; font-size: 1.1em; color: {TEXT_COLOR_PRIMARY};")
+        self.trends_title.setStyleSheet(get_section_title_style())
         trends_left.addWidget(self.trends_title)
         
         self.trends_subtitle = QLabel(self.i18n.get('stat_curious_index', 'Curious Index this week'))
-        self.trends_subtitle.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-size: 0.85em;")
+        self.trends_subtitle.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
         trends_left.addWidget(self.trends_subtitle)
         
         trends_header.addLayout(trends_left)
@@ -640,7 +752,7 @@ class StatisticsWidget(QWidget):
         
         # Right side: daily average - align with title
         self.trends_avg_label = QLabel()
-        self.trends_avg_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-size: 0.85em;")
+        self.trends_avg_label.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
         self.trends_avg_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
         trends_header.addWidget(self.trends_avg_label, 0, Qt.AlignBottom)
         
@@ -675,11 +787,11 @@ class StatisticsWidget(QWidget):
         heatmap_left.setSpacing(2)
         
         self.heatmap_title = QLabel(self.i18n.get('stat_heatmap', 'Heatmap'))
-        self.heatmap_title.setStyleSheet(f"font-weight: bold; font-size: 1.1em; color: {TEXT_COLOR_PRIMARY};")
+        self.heatmap_title.setStyleSheet(get_section_title_style())
         heatmap_left.addWidget(self.heatmap_title)
         
         self.heatmap_subtitle = QLabel()
-        self.heatmap_subtitle.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-size: 0.85em;")
+        self.heatmap_subtitle.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
         heatmap_left.addWidget(self.heatmap_subtitle)
         
         heatmap_header.addLayout(heatmap_left)
@@ -687,7 +799,7 @@ class StatisticsWidget(QWidget):
         
         # Right side: comment - align with title
         self.heatmap_comment = QLabel()
-        self.heatmap_comment.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY}; font-size: 0.85em;")
+        self.heatmap_comment.setStyleSheet(f"color: {TEXT_COLOR_PRIMARY}; font-size: 0.85em; opacity: 0.8;")
         self.heatmap_comment.setAlignment(Qt.AlignRight | Qt.AlignBottom)
         heatmap_header.addWidget(self.heatmap_comment, 0, Qt.AlignBottom)
         
@@ -725,6 +837,11 @@ class StatisticsWidget(QWidget):
         sample_tooltip = self.i18n.get('stat_data_not_enough', 'Data is not enough')
         
         # ========== Overview Cards ==========
+        # Get top labels
+        days_label = self.i18n.get('stat_days_label', 'Started')
+        replies_label = self.i18n.get('stat_replies_label', 'Ask AI')
+        books_label = self.i18n.get('stat_books_label', 'Library')
+        
         # Card 1: Days using plugin
         first_use_date_str = prefs.get('stat_first_use_date')
         if first_use_date_str:
@@ -735,26 +852,26 @@ class StatisticsWidget(QWidget):
                 formatted_date = first_use_date.strftime('%m.%d.%Y')
                 
                 days_unit = self.i18n.get('stat_days_unit', 'days')
-                self.days_card.set_data(days, days_unit, formatted_date)
+                self.days_card.set_data(days, days_unit, formatted_date, days_label)
             except Exception as e:
                 logger.error(f"Error parsing first use date: {e}")
-                self.days_card.set_data(1, self.i18n.get('stat_days_unit', 'days'), '')
+                self.days_card.set_data(1, self.i18n.get('stat_days_unit', 'days'), '', days_label)
         else:
-            self.days_card.set_data(1, self.i18n.get('stat_days_unit', 'days'), '')
+            self.days_card.set_data(1, self.i18n.get('stat_days_unit', 'days'), '', days_label)
         
         # Card 2: AI Reply count
         reply_count = prefs.get('stat_ai_reply_count', 0)
         reply_display = format_number_display(reply_count) if reply_count > 200 else str(reply_count)
         replies_unit = self.i18n.get('stat_replies_unit', 'times')
-        user_title = get_user_title(reply_count, self.language)
-        self.replies_card.set_data(reply_display, replies_unit, user_title)
+        user_title = get_user_title(reply_count, self.i18n)
+        self.replies_card.set_data(reply_display, replies_unit, user_title, replies_label)
         
         # Card 3: Book collection
         book_count = prefs.get('stat_book_count', 0)
         book_display = format_number_display(book_count)
         books_unit = self.i18n.get('stat_books_unit', 'books')
-        book_response = get_book_response(book_count, self.language) if book_count > 0 else self.i18n.get('stat_no_books', 'Update in Search tab')
-        self.books_card.set_data(book_display, books_unit, book_response)
+        book_response = get_book_response(book_count, self.i18n) if book_count > 0 else self.i18n.get('stat_no_books', 'Update in Search tab')
+        self.books_card.set_data(book_display, books_unit, book_response, books_label)
         
         # ========== Weekly Trends ==========
         weekly_data = get_weekly_data(prefs)
@@ -766,39 +883,57 @@ class StatisticsWidget(QWidget):
         else:
             day_labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         
-        # Check if we need sample data
-        is_sample_week = total_week < 10
+        # Check if we need sample data (threshold is 20 total requests)
+        total_reply_count = prefs.get('stat_ai_reply_count', 0)
+        is_sample_week = total_reply_count < 20
+        
+        # Update trends subtitle with sample data note if needed
+        trends_subtitle_base = self.i18n.get('stat_curious_index', 'AI inquiries distribution this week')
         if is_sample_week:
+            sample_note = self.i18n.get('stat_sample_data', 'Sample data shown. Will switch to real data after 20+ requests')
+            self.trends_subtitle.setText(f"{trends_subtitle_base}（{sample_note}）")
             # Use sample data for display
             display_data = generate_sample_weekly_data()
             self.weekly_chart.set_data(display_data, day_labels, is_sample=True, sample_tooltip=sample_tooltip)
-            self.trends_avg_label.setText(self.i18n.get('stat_sample_data', '*This is sample data'))
-        else:
+            self.trends_avg_label.setText('')
+        elif total_week == 0:
+            # Total >= 20 but no data this week
+            no_data_note = self.i18n.get('stat_no_data_week', 'No data this week')
+            self.trends_subtitle.setText(f"{trends_subtitle_base}（{no_data_note}）")
             self.weekly_chart.set_data(weekly_data, day_labels, is_sample=False)
-            avg = total_week / 7
-            avg_text = self.i18n.get('stat_daily_avg', 'Daily average {n} times').format(n=f"{avg:.1f}")
-            self.trends_avg_label.setText(avg_text)
+            self.trends_avg_label.setText('')
+        else:
+            self.trends_subtitle.setText(trends_subtitle_base)
+            self.weekly_chart.set_data(weekly_data, day_labels, is_sample=False)
+            self.trends_avg_label.setText('')
         
         # ========== Monthly Heatmap ==========
         monthly_data, year, month, today = get_monthly_data(prefs)
         total_month = sum(monthly_data.values())
         _, num_days = calendar.monthrange(year, month)
         
-        # Check if we need sample data
-        is_sample_month = total_month < 10
+        # Check if we need sample data (use same threshold as weekly: 20 total requests)
+        is_sample_month = total_reply_count < 20
+        
+        # Update heatmap subtitle with sample data note if needed
+        heatmap_subtitle_base = self.i18n.get('stat_heatmap_subtitle', 'AI inquiries distribution this month')
         if is_sample_month:
+            sample_note = self.i18n.get('stat_sample_data', 'Sample data shown. Will switch to real data after 20+ requests')
+            self.heatmap_subtitle.setText(f"{heatmap_subtitle_base}（{sample_note}）")
             # Use sample data for display
             display_data = generate_sample_monthly_data(num_days, today)
             self.monthly_heatmap.set_data(display_data, year, month, today, is_sample=True, sample_tooltip=sample_tooltip)
-        else:
+            self.heatmap_comment.setText('')
+        elif total_month == 0:
+            # Total >= 20 but no data this month
+            no_data_note = self.i18n.get('stat_no_data_month', 'No data this month')
+            self.heatmap_subtitle.setText(f"{heatmap_subtitle_base}（{no_data_note}）")
             self.monthly_heatmap.set_data(monthly_data, year, month, today, is_sample=False)
-        
-        # Update heatmap subtitle (current date)
-        self.heatmap_subtitle.setText(f"{month:02d}/{today:02d}")
-        
-        # Update heatmap comment
-        comment = get_month_comment(total_month, self.language, self.i18n)
-        self.heatmap_comment.setText(comment)
+            self.heatmap_comment.setText('')
+        else:
+            self.heatmap_subtitle.setText(heatmap_subtitle_base)
+            self.monthly_heatmap.set_data(monthly_data, year, month, today, is_sample=False)
+            self.heatmap_comment.setText('')
     
     def update_language(self, language):
         """Update the widget language."""
@@ -807,9 +942,9 @@ class StatisticsWidget(QWidget):
         
         # Update section titles
         self.overview_title.setText(self.i18n.get('stat_overview', 'Overview'))
+        self.overview_subtitle.setText(self.i18n.get('stat_overview_subtitle', 'Statistics of AI inquiry calls'))
         self.trends_title.setText(self.i18n.get('stat_trends', 'Trends'))
-        self.trends_subtitle.setText(self.i18n.get('stat_curious_index', 'Curious Index this week'))
         self.heatmap_title.setText(self.i18n.get('stat_heatmap', 'Heatmap'))
         
-        # Refresh stats data (this updates cards, chart labels, etc.)
+        # Refresh stats data (this updates cards, chart labels, subtitles, etc.)
         self.refresh_stats()

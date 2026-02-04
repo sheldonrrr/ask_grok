@@ -514,4 +514,43 @@ class SwedishTranslation(BaseTranslation):
             'hours_ago': 'för {n} timmar sedan',
             'minutes_ago': 'för {n} minuter sedan',
             'just_now': 'just nu',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistik',
+            'stat_overview': 'Översikt',
+            'stat_overview_subtitle': 'Statistik över AI-förfrågningar',
+            'stat_days_unit': 'dagar',
+            'stat_days_label': 'Startad',
+            'stat_start_at': 'Start {date}',
+            'stat_replies_unit': 'gånger',
+            'stat_replies_label': 'Fråga AI',
+            'stat_books_unit': 'böcker',
+            'stat_books_label': 'Bibliotek',
+            'stat_no_books': 'Uppdatera i Sök-fliken',
+            'stat_trends': 'Trender',
+            'stat_curious_index': 'AI-förfrågningar fördelning denna vecka',
+            'stat_daily_avg': 'Dagligt genomsnitt {n} gånger',
+            'stat_sample_data': 'Exempeldata visas. Växlar till riktig data efter 20+ förfrågningar',
+            'stat_heatmap': 'Värmekarta',
+            'stat_heatmap_subtitle': 'AI-förfrågningar fördelning denna månad',
+            'stat_no_data_week': 'Ingen data denna vecka',
+            'stat_no_data_month': 'Ingen data denna månad',
+            'stat_data_not_enough': 'Inte tillräckligt med data',
+            
+            # Statistik användartitlar (baserat på antal förfrågningar)
+            'stat_title_curious': 'Bläddrar',
+            'stat_title_explorer': 'Bokjägare',
+            'stat_title_seeker': 'Ivrig läsare',
+            'stat_title_enthusiast': 'Bibliofil',
+            'stat_title_pursuer': 'Bokmal',
+            
+            # Statistik biblioteksomdömen (baserat på samlingsstorlek, historiska referenser)
+            'stat_books_impressive': 'Privat läsrum',
+            'stat_books_collection': 'Lärdas arbetsrum',
+            'stat_books_variety': 'Uppsala universitetsbibliotek',
+            'stat_books_awesome': 'Kungliga biblioteket',
+            'stat_books_unbelievable': 'Biblioteket i Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online handledning',
         }

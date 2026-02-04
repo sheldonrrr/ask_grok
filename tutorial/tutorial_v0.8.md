@@ -114,18 +114,20 @@ AI Search lets you search your entire library using natural language, without se
 
 ### How to Use AI Search
 
-1. Open AI Search:
-   - Click "AI Search" in the plugin menu, or
-   - Use the shortcut Ctrl+Shift+L, or
-   - Simply open the Ask dialog without selecting any books
+**Open AI Search**:
+- Click "AI Search" in the plugin menu, or
+- Use the shortcut Ctrl+Shift+L, or
+- Simply open the Ask dialog without selecting any books
 
-2. Ask questions about your library:
-   - "Do you have any books about Python programming?"
-   - "Show me books by Isaac Asimov"
-   - "Find books about machine learning"
-   - "What science fiction books do I have?"
+**Ask questions about your library**:
+- "Do you have any books about Python programming?"
+- "Show me books by Isaac Asimov"
+- "Find books about machine learning"
+- "What science fiction books do I have?"
 
-3. AI will search through your library metadata and recommend relevant books, and you can open the book in response by clicking the book title.
+**Open the book in response**
+
+AI will search through your library metadata and recommend relevant books, and you can open the book in response by clicking the book title.
 
 ### Features
 

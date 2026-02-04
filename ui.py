@@ -1136,7 +1136,9 @@ class TabDialog(QDialog):
         self.tab_widget.addTab(self.shortcuts_widget, self.i18n['shortcuts'])
 
         # 创建统计页面 (index 4)
-        from .statistics_widget import StatisticsWidget
+        from .statistics_widget import StatisticsWidget, init_statistics
+        # 初始化统计数据（从历史记录同步）
+        init_statistics(prefs)
         self.statistics_widget = StatisticsWidget(self)
         self.tab_widget.addTab(self.statistics_widget, self.i18n.get('stat_tab', 'Stat'))
 
@@ -1186,6 +1188,7 @@ class TabDialog(QDialog):
         self.online_tutorial_link.setCursor(Qt.PointingHandCursor)
         self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
         self.online_tutorial_link.setAlignment(Qt.AlignVCenter)
+        self.online_tutorial_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         button_layout.addWidget(self.online_tutorial_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
@@ -1197,6 +1200,7 @@ class TabDialog(QDialog):
         self.about_link.setCursor(Qt.PointingHandCursor)
         self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
         self.about_link.setAlignment(Qt.AlignVCenter)
+        self.about_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         button_layout.addWidget(self.about_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
@@ -1208,6 +1212,7 @@ class TabDialog(QDialog):
         self.reddit_link.setCursor(Qt.PointingHandCursor)
         self.reddit_link.setText('<a href="https://www.reddit.com/r/AskAIPlugin_calibre/">Reddit</a>')
         self.reddit_link.setAlignment(Qt.AlignVCenter)
+        self.reddit_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         button_layout.addWidget(self.reddit_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
         

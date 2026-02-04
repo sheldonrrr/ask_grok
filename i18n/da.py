@@ -512,4 +512,43 @@ class DanishTranslation(BaseTranslation):
             'hours_ago': '{n} timer siden',
             'minutes_ago': '{n} minutter siden',
             'just_now': 'lige nu',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistik',
+            'stat_overview': 'Oversigt',
+            'stat_overview_subtitle': 'Statistik over AI-forespørgsler',
+            'stat_days_unit': 'dage',
+            'stat_days_label': 'Startet',
+            'stat_start_at': 'Start {date}',
+            'stat_replies_unit': 'gange',
+            'stat_replies_label': 'Spørg AI',
+            'stat_books_unit': 'bøger',
+            'stat_books_label': 'Bibliotek',
+            'stat_no_books': 'Opdater i Søg-fanen',
+            'stat_trends': 'Tendenser',
+            'stat_curious_index': 'AI-forespørgsler fordeling denne uge',
+            'stat_daily_avg': 'Dagligt gennemsnit {n} gange',
+            'stat_sample_data': 'Eksempeldata vist. Skifter til rigtige data efter 20+ forespørgsler',
+            'stat_heatmap': 'Varmekort',
+            'stat_heatmap_subtitle': 'AI-forespørgsler fordeling denne måned',
+            'stat_no_data_week': 'Ingen data denne uge',
+            'stat_no_data_month': 'Ingen data denne måned',
+            'stat_data_not_enough': 'Ikke nok data',
+            
+            # Statistik brugertitler (baseret på antal forespørgsler)
+            'stat_title_curious': 'Bladrer',
+            'stat_title_explorer': 'Bogjæger',
+            'stat_title_seeker': 'Ivrig læser',
+            'stat_title_enthusiast': 'Bibliofil',
+            'stat_title_pursuer': 'Bogorm',
+            
+            # Statistik biblioteksvurderinger (baseret på samlingsstørrelse, historiske referencer)
+            'stat_books_impressive': 'Privat læseværelse',
+            'stat_books_collection': 'Lærdes studie',
+            'stat_books_variety': 'Det Kongelige Bibliotek',
+            'stat_books_awesome': 'British Library',
+            'stat_books_unbelievable': 'Biblioteket i Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online vejledning',
         }

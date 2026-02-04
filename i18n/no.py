@@ -514,4 +514,43 @@ class NorwegianTranslation(BaseTranslation):
             'hours_ago': '{n} timer siden',
             'minutes_ago': '{n} minutter siden',
             'just_now': 'akkurat nå',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistikk',
+            'stat_overview': 'Oversikt',
+            'stat_overview_subtitle': 'Statistikk over AI-forespørsler',
+            'stat_days_unit': 'dager',
+            'stat_days_label': 'Startet',
+            'stat_start_at': 'Start {date}',
+            'stat_replies_unit': 'ganger',
+            'stat_replies_label': 'Spør AI',
+            'stat_books_unit': 'bøker',
+            'stat_books_label': 'Bibliotek',
+            'stat_no_books': 'Oppdater i Søk-fanen',
+            'stat_trends': 'Trender',
+            'stat_curious_index': 'AI-forespørsler fordeling denne uken',
+            'stat_daily_avg': 'Daglig gjennomsnitt {n} ganger',
+            'stat_sample_data': 'Eksempeldata vises. Bytter til ekte data etter 20+ forespørsler',
+            'stat_heatmap': 'Varmekart',
+            'stat_heatmap_subtitle': 'AI-forespørsler fordeling denne måneden',
+            'stat_no_data_week': 'Ingen data denne uken',
+            'stat_no_data_month': 'Ingen data denne måneden',
+            'stat_data_not_enough': 'Ikke nok data',
+            
+            # Statistikk brukertitler (basert på antall forespørsler)
+            'stat_title_curious': 'Bladrer',
+            'stat_title_explorer': 'Bokjeger',
+            'stat_title_seeker': 'Ivrig leser',
+            'stat_title_enthusiast': 'Bibliofil',
+            'stat_title_pursuer': 'Bokorm',
+            
+            # Statistikk biblioteksvurderinger (basert på samlingsstørrelse, historiske referanser)
+            'stat_books_impressive': 'Privat leserom',
+            'stat_books_collection': 'Lærdes arbeidsrom',
+            'stat_books_variety': 'Nasjonalbiblioteket',
+            'stat_books_awesome': 'Det Kongelige Bibliotek',
+            'stat_books_unbelievable': 'Biblioteket i Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online veiledning',
         }

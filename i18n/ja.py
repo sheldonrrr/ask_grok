@@ -545,21 +545,42 @@ class JapaneseTranslation(BaseTranslation):
             'minutes_ago': '{n} 分前',
             'just_now': 'たった今',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': '統計',
             'stat_overview': '概要',
+            'stat_overview_subtitle': 'AI問い合わせ回数の統計',
             'stat_days_unit': '日',
+            'stat_days_label': '利用開始',
             'stat_start_at': '{date}から開始',
             'stat_replies_unit': '回',
+            'stat_replies_label': 'AI問い合わせ',
             'stat_books_unit': '冊',
+            'stat_books_label': '蔵書数',
             'stat_no_books': '検索タブで更新',
             'stat_trends': 'トレンド',
-            'stat_curious_index': '今週の好奇心指数',
+            'stat_curious_index': '今週のAI問い合わせ回数分布',
             'stat_daily_avg': '1日平均 {n} 回',
-            'stat_sample_data': '*これはサンプルデータです',
+            'stat_sample_data': 'サンプルデータを表示中。20回以上のリクエスト後に実データに切り替わります',
             'stat_heatmap': 'ヒートマップ',
+            'stat_heatmap_subtitle': '今月のAI問い合わせ回数分布',
+            'stat_no_data_week': '今週のデータはありません',
+            'stat_no_data_month': '今月のデータはありません',
             'stat_data_not_enough': 'データが不足しています',
             
-            # Links (v1.4.3)
+            # 統計ユーザー称号（問い合わせ回数に基づく）
+            'stat_title_curious': '本めくり',
+            'stat_title_explorer': '書籍探し',
+            'stat_title_seeker': '読書家',
+            'stat_title_enthusiast': '蔵書家',
+            'stat_title_pursuer': '本の虫',
+            
+            # 統計書庫評価（蔵書数に基づく、歴史的図書館の典故）
+            'stat_books_impressive': '私設文庫',
+            'stat_books_collection': '書斎',
+            'stat_books_variety': '正倉院',
+            'stat_books_awesome': '国立国会図書館',
+            'stat_books_unbelievable': 'アレクサンドリア図書館',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'オンラインチュートリアル',
         }

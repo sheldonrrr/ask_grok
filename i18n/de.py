@@ -482,21 +482,42 @@ class GermanTranslation(BaseTranslation):
             'minutes_ago': '{n} Minuten',
             'just_now': 'gerade eben',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': 'Statistik',
             'stat_overview': 'Übersicht',
+            'stat_overview_subtitle': 'Statistik der AI-Anfragen',
             'stat_days_unit': 'Tage',
+            'stat_days_label': 'Gestartet',
             'stat_start_at': 'Start am {date}',
             'stat_replies_unit': 'Mal',
+            'stat_replies_label': 'AI fragen',
             'stat_books_unit': 'Bücher',
+            'stat_books_label': 'Bibliothek',
             'stat_no_books': 'Im Suche-Tab aktualisieren',
             'stat_trends': 'Trends',
-            'stat_curious_index': 'Neugier-Index diese Woche',
+            'stat_curious_index': 'AI-Anfragen Verteilung diese Woche',
             'stat_daily_avg': 'Tagesdurchschnitt {n} Mal',
-            'stat_sample_data': '*Dies sind Beispieldaten',
+            'stat_sample_data': 'Beispieldaten angezeigt. Wechselt zu echten Daten nach 20+ Anfragen',
             'stat_heatmap': 'Heatmap',
+            'stat_heatmap_subtitle': 'AI-Anfragen Verteilung diesen Monat',
+            'stat_no_data_week': 'Keine Daten diese Woche',
+            'stat_no_data_month': 'Keine Daten diesen Monat',
             'stat_data_not_enough': 'Nicht genügend Daten',
             
-            # Links (v1.4.3)
+            # Statistik Benutzertitel (basierend auf Anfragezahl)
+            'stat_title_curious': 'Blätterer',
+            'stat_title_explorer': 'Bücherjäger',
+            'stat_title_seeker': 'Leseratte',
+            'stat_title_enthusiast': 'Bibliophiler',
+            'stat_title_pursuer': 'Bücherwurm',
+            
+            # Statistik Bibliotheksbewertung (basierend auf Sammlungsgröße, historische Bibliotheken)
+            'stat_books_impressive': 'Privates Studierzimmer',
+            'stat_books_collection': 'Gelehrtenstube',
+            'stat_books_variety': 'Stiftsbibliothek',
+            'stat_books_awesome': 'Bayerische Staatsbibliothek',
+            'stat_books_unbelievable': 'Bibliothek von Alexandria',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'Online-Tutorial',
         }

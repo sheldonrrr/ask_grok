@@ -515,21 +515,42 @@ class RussianTranslation(BaseTranslation):
             'minutes_ago': '{n} мин. назад',
             'just_now': 'только что',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': 'Статистика',
             'stat_overview': 'Обзор',
+            'stat_overview_subtitle': 'Статистика запросов к AI',
             'stat_days_unit': 'дней',
+            'stat_days_label': 'Начало',
             'stat_start_at': 'Начало {date}',
             'stat_replies_unit': 'раз',
+            'stat_replies_label': 'Запросы AI',
             'stat_books_unit': 'книг',
+            'stat_books_label': 'Библиотека',
             'stat_no_books': 'Обновить во вкладке Поиск',
             'stat_trends': 'Тренды',
-            'stat_curious_index': 'Индекс любопытства на этой неделе',
+            'stat_curious_index': 'Распределение запросов AI на этой неделе',
             'stat_daily_avg': 'В среднем {n} раз в день',
-            'stat_sample_data': '*Это примерные данные',
+            'stat_sample_data': 'Показаны примерные данные. Переключится на реальные данные после 20+ запросов',
             'stat_heatmap': 'Тепловая карта',
+            'stat_heatmap_subtitle': 'Распределение запросов AI в этом месяце',
+            'stat_no_data_week': 'Нет данных за эту неделю',
+            'stat_no_data_month': 'Нет данных за этот месяц',
             'stat_data_not_enough': 'Недостаточно данных',
             
-            # Links (v1.4.3)
+            # Статистические титулы пользователя (на основе количества запросов)
+            'stat_title_curious': 'Листатель',
+            'stat_title_explorer': 'Охотник за книгами',
+            'stat_title_seeker': 'Заядлый читатель',
+            'stat_title_enthusiast': 'Библиофил',
+            'stat_title_pursuer': 'Книжный червь',
+            
+            # Оценки библиотеки (на основе размера коллекции, исторические ссылки)
+            'stat_books_impressive': 'Личный кабинет',
+            'stat_books_collection': 'Кабинет учёного',
+            'stat_books_variety': 'Библиотека Ивана Грозного',
+            'stat_books_awesome': 'Российская государственная библиотека',
+            'stat_books_unbelievable': 'Александрийская библиотека',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'Онлайн-руководство',
         }

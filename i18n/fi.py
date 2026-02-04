@@ -514,4 +514,43 @@ class FinnishTranslation(BaseTranslation):
             'hours_ago': '{n} tuntia sitten',
             'minutes_ago': '{n} minuuttia sitten',
             'just_now': 'juuri nyt',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Tilastot',
+            'stat_overview': 'Yleiskatsaus',
+            'stat_overview_subtitle': 'AI-kyselyiden tilastot',
+            'stat_days_unit': 'päivää',
+            'stat_days_label': 'Aloitettu',
+            'stat_start_at': 'Aloitus {date}',
+            'stat_replies_unit': 'kertaa',
+            'stat_replies_label': 'Kysy AI',
+            'stat_books_unit': 'kirjaa',
+            'stat_books_label': 'Kirjasto',
+            'stat_no_books': 'Päivitä Haku-välilehdellä',
+            'stat_trends': 'Trendit',
+            'stat_curious_index': 'AI-kyselyiden jakauma tällä viikolla',
+            'stat_daily_avg': 'Päivittäinen keskiarvo {n} kertaa',
+            'stat_sample_data': 'Esimerkkidata näytetään. Vaihtuu oikeaan dataan 20+ pyynnön jälkeen',
+            'stat_heatmap': 'Lämpökartta',
+            'stat_heatmap_subtitle': 'AI-kyselyiden jakauma tässä kuussa',
+            'stat_no_data_week': 'Ei dataa tällä viikolla',
+            'stat_no_data_month': 'Ei dataa tässä kuussa',
+            'stat_data_not_enough': 'Ei tarpeeksi dataa',
+            
+            # Tilastot käyttäjänimikkeet (perustuu kyselyjen määrään)
+            'stat_title_curious': 'Selailija',
+            'stat_title_explorer': 'Kirjametsästäjä',
+            'stat_title_seeker': 'Innokas lukija',
+            'stat_title_enthusiast': 'Bibliofiili',
+            'stat_title_pursuer': 'Kirjatoukka',
+            
+            # Tilastot kirjastoarvioinnit (perustuu kokoelman kokoon, historialliset viittaukset)
+            'stat_books_impressive': 'Yksityinen lukuhuone',
+            'stat_books_collection': 'Oppineen työhuone',
+            'stat_books_variety': 'Helsingin yliopiston kirjasto',
+            'stat_books_awesome': 'Kansalliskirjasto',
+            'stat_books_unbelievable': 'Aleksandrian kirjasto',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online-opas',
         }

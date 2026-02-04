@@ -500,21 +500,42 @@ class FrenchTranslation(BaseTranslation):
             'minutes_ago': '{n} minutes',
             'just_now': 'à l\'instant',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': 'Statistiques',
             'stat_overview': 'Aperçu',
+            'stat_overview_subtitle': 'Statistiques des requêtes AI',
             'stat_days_unit': 'jours',
+            'stat_days_label': 'Démarré',
             'stat_start_at': 'Début le {date}',
             'stat_replies_unit': 'fois',
+            'stat_replies_label': 'Demander AI',
             'stat_books_unit': 'livres',
+            'stat_books_label': 'Bibliothèque',
             'stat_no_books': 'Mettre à jour dans l\'onglet Recherche',
             'stat_trends': 'Tendances',
-            'stat_curious_index': 'Indice de curiosité cette semaine',
+            'stat_curious_index': 'Distribution des requêtes AI cette semaine',
             'stat_daily_avg': 'Moyenne quotidienne {n} fois',
-            'stat_sample_data': '*Ceci sont des données d\'exemple',
+            'stat_sample_data': 'Données d\'exemple affichées. Passera aux données réelles après 20+ requêtes',
             'stat_heatmap': 'Carte thermique',
+            'stat_heatmap_subtitle': 'Distribution des requêtes AI ce mois',
+            'stat_no_data_week': 'Pas de données cette semaine',
+            'stat_no_data_month': 'Pas de données ce mois',
             'stat_data_not_enough': 'Données insuffisantes',
             
-            # Links (v1.4.3)
+            # Titres utilisateur statistiques (basés sur le nombre de requêtes)
+            'stat_title_curious': 'Feuilleteur',
+            'stat_title_explorer': 'Chasseur de livres',
+            'stat_title_seeker': 'Lecteur assidu',
+            'stat_title_enthusiast': 'Bibliophile',
+            'stat_title_pursuer': 'Rat de bibliothèque',
+            
+            # Évaluations de bibliothèque (basées sur la taille de collection, références historiques)
+            'stat_books_impressive': 'Cabinet de lecture',
+            'stat_books_collection': 'Bureau d\'érudit',
+            'stat_books_variety': 'Bibliothèque Mazarine',
+            'stat_books_awesome': 'Bibliothèque nationale de France',
+            'stat_books_unbelievable': 'Bibliothèque d\'Alexandrie',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'Tutoriel en ligne',
         }

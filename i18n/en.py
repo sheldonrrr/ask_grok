@@ -520,21 +520,42 @@ class EnglishTranslation(BaseTranslation):
             'minutes_ago': '{n} minutes ago',
             'just_now': 'just now',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': 'Stat',
             'stat_overview': 'Overview',
+            'stat_overview_subtitle': 'Statistics of AI inquiry calls',
             'stat_days_unit': 'days',
+            'stat_days_label': 'Started',
             'stat_start_at': 'Start at {date}',
             'stat_replies_unit': 'times',
+            'stat_replies_label': 'Ask AI',
             'stat_books_unit': 'books',
+            'stat_books_label': 'Library',
             'stat_no_books': 'Update in Search tab',
             'stat_trends': 'Trends',
-            'stat_curious_index': 'Curious Index this week',
+            'stat_curious_index': 'AI inquiries distribution this week',
             'stat_daily_avg': 'Daily average {n} times',
-            'stat_sample_data': '*This is sample data',
+            'stat_sample_data': 'Sample data shown. Will switch to real data after 20+ requests',
             'stat_heatmap': 'Heatmap',
+            'stat_heatmap_subtitle': 'AI inquiries distribution this month',
+            'stat_no_data_week': 'No data this week',
+            'stat_no_data_month': 'No data this month',
             'stat_data_not_enough': 'Data is not enough',
             
-            # Links (v1.4.3)
+            # Statistics user titles (based on inquiry count)
+            'stat_title_curious': 'Page Turner',
+            'stat_title_explorer': 'Book Hunter',
+            'stat_title_seeker': 'Avid Reader',
+            'stat_title_enthusiast': 'Bibliophile',
+            'stat_title_pursuer': 'Bookworm',
+            
+            # Statistics book responses (based on collection size, historical library references)
+            'stat_books_impressive': 'Personal Study',
+            'stat_books_collection': "Scholar's Den",
+            'stat_books_variety': 'Bodleian Library',
+            'stat_books_awesome': 'Library of Congress',
+            'stat_books_unbelievable': 'Library of Alexandria',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'Online Tutorial',
         }

@@ -514,4 +514,43 @@ class DutchTranslation(BaseTranslation):
             'hours_ago': '{n} uur geleden',
             'minutes_ago': '{n} minuten geleden',
             'just_now': 'zojuist',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistieken',
+            'stat_overview': 'Overzicht',
+            'stat_overview_subtitle': 'Statistieken van AI-verzoeken',
+            'stat_days_unit': 'dagen',
+            'stat_days_label': 'Gestart',
+            'stat_start_at': 'Start op {date}',
+            'stat_replies_unit': 'keer',
+            'stat_replies_label': 'Vraag AI',
+            'stat_books_unit': 'boeken',
+            'stat_books_label': 'Bibliotheek',
+            'stat_no_books': 'Bijwerken in Zoek-tab',
+            'stat_trends': 'Trends',
+            'stat_curious_index': 'AI-verzoeken verdeling deze week',
+            'stat_daily_avg': 'Dagelijks gemiddelde {n} keer',
+            'stat_sample_data': 'Voorbeelddata getoond. Schakelt over naar echte data na 20+ verzoeken',
+            'stat_heatmap': 'Heatmap',
+            'stat_heatmap_subtitle': 'AI-verzoeken verdeling deze maand',
+            'stat_no_data_week': 'Geen data deze week',
+            'stat_no_data_month': 'Geen data deze maand',
+            'stat_data_not_enough': 'Niet genoeg data',
+            
+            # Statistiek gebruikerstitels (gebaseerd op aantal verzoeken)
+            'stat_title_curious': 'Bladeren',
+            'stat_title_explorer': 'Boekenjager',
+            'stat_title_seeker': 'Gretige lezer',
+            'stat_title_enthusiast': 'Bibliofiel',
+            'stat_title_pursuer': 'Boekenwurm',
+            
+            # Statistiek bibliotheekbeoordelingen (gebaseerd op collectiegrootte, historische referenties)
+            'stat_books_impressive': 'Privé leeskamer',
+            'stat_books_collection': 'Geleerden studeerkamer',
+            'stat_books_variety': 'Universiteitsbibliotheek Leiden',
+            'stat_books_awesome': 'Koninklijke Bibliotheek',
+            'stat_books_unbelievable': 'Bibliotheek van Alexandrië',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online handleiding',
         }

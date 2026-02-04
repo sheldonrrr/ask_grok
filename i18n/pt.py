@@ -514,4 +514,43 @@ class PortugueseTranslation(BaseTranslation):
             'hours_ago': '{n} horas atrás',
             'minutes_ago': '{n} minutos atrás',
             'just_now': 'agora mesmo',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Estatísticas',
+            'stat_overview': 'Visão geral',
+            'stat_overview_subtitle': 'Estatísticas de consultas AI',
+            'stat_days_unit': 'dias',
+            'stat_days_label': 'Iniciado',
+            'stat_start_at': 'Início em {date}',
+            'stat_replies_unit': 'vezes',
+            'stat_replies_label': 'Perguntar AI',
+            'stat_books_unit': 'livros',
+            'stat_books_label': 'Biblioteca',
+            'stat_no_books': 'Atualizar na aba Pesquisa',
+            'stat_trends': 'Tendências',
+            'stat_curious_index': 'Distribuição de consultas AI esta semana',
+            'stat_daily_avg': 'Média diária {n} vezes',
+            'stat_sample_data': 'Dados de exemplo exibidos. Mudará para dados reais após 20+ solicitações',
+            'stat_heatmap': 'Mapa de calor',
+            'stat_heatmap_subtitle': 'Distribuição de consultas AI este mês',
+            'stat_no_data_week': 'Sem dados esta semana',
+            'stat_no_data_month': 'Sem dados este mês',
+            'stat_data_not_enough': 'Dados insuficientes',
+            
+            # Títulos de usuário estatísticos (baseados no número de consultas)
+            'stat_title_curious': 'Folheador',
+            'stat_title_explorer': 'Caçador de livros',
+            'stat_title_seeker': 'Leitor ávido',
+            'stat_title_enthusiast': 'Bibliófilo',
+            'stat_title_pursuer': 'Rato de biblioteca',
+            
+            # Avaliações de biblioteca (baseadas no tamanho da coleção, referências históricas)
+            'stat_books_impressive': 'Gabinete de leitura',
+            'stat_books_collection': 'Escritório do erudito',
+            'stat_books_variety': 'Biblioteca Joanina',
+            'stat_books_awesome': 'Biblioteca Nacional de Portugal',
+            'stat_books_unbelievable': 'Biblioteca de Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Tutorial online',
         }

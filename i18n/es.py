@@ -515,21 +515,42 @@ class SpanishTranslation(BaseTranslation):
             'minutes_ago': '{n} minutos',
             'just_now': 'ahora mismo',
             
-            # Statistics tab (v1.4.3)
+            # Statistics tab (v1.4.2)
             'stat_tab': 'Estadísticas',
             'stat_overview': 'Resumen',
+            'stat_overview_subtitle': 'Estadísticas de consultas AI',
             'stat_days_unit': 'días',
+            'stat_days_label': 'Iniciado',
             'stat_start_at': 'Inicio el {date}',
             'stat_replies_unit': 'veces',
+            'stat_replies_label': 'Preguntar AI',
             'stat_books_unit': 'libros',
+            'stat_books_label': 'Biblioteca',
             'stat_no_books': 'Actualizar en la pestaña Búsqueda',
             'stat_trends': 'Tendencias',
-            'stat_curious_index': 'Índice de curiosidad esta semana',
+            'stat_curious_index': 'Distribución de consultas AI esta semana',
             'stat_daily_avg': 'Promedio diario {n} veces',
-            'stat_sample_data': '*Estos son datos de ejemplo',
+            'stat_sample_data': 'Datos de ejemplo mostrados. Cambiará a datos reales después de 20+ solicitudes',
             'stat_heatmap': 'Mapa de calor',
+            'stat_heatmap_subtitle': 'Distribución de consultas AI este mes',
+            'stat_no_data_week': 'Sin datos esta semana',
+            'stat_no_data_month': 'Sin datos este mes',
             'stat_data_not_enough': 'Datos insuficientes',
             
-            # Links (v1.4.3)
+            # Títulos de usuario estadísticos (basados en número de consultas)
+            'stat_title_curious': 'Hojeador',
+            'stat_title_explorer': 'Cazador de libros',
+            'stat_title_seeker': 'Lector ávido',
+            'stat_title_enthusiast': 'Bibliófilo',
+            'stat_title_pursuer': 'Ratón de biblioteca',
+            
+            # Evaluaciones de biblioteca (basadas en tamaño de colección, referencias históricas)
+            'stat_books_impressive': 'Gabinete de lectura',
+            'stat_books_collection': 'Estudio del erudito',
+            'stat_books_variety': 'Biblioteca del Escorial',
+            'stat_books_awesome': 'Biblioteca Nacional de España',
+            'stat_books_unbelievable': 'Biblioteca de Alejandría',
+            
+            # Links (v1.4.2)
             'online_tutorial': 'Tutorial en línea',
         }

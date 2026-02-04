@@ -517,21 +517,42 @@ class TraditionalChineseTranslation(BaseTranslation):
         'minutes_ago': '{n} 分鐘前',
         'just_now': '剛才',
         
-        # 統計標籤頁 (v1.4.3)
+        # 統計標籤頁 (v1.4.2)
         'stat_tab': '統計',
         'stat_overview': '概覽',
+        'stat_overview_subtitle': '統計呈現調用AI問詢的次數',
         'stat_days_unit': '天',
+        'stat_days_label': '開始使用',
         'stat_start_at': '開始於 {date}',
         'stat_replies_unit': '次',
+        'stat_replies_label': '問詢AI',
         'stat_books_unit': '本書',
+        'stat_books_label': '書庫藏書',
         'stat_no_books': '在搜尋頁更新',
         'stat_trends': '趨勢',
-        'stat_curious_index': '本週好奇指數',
+        'stat_curious_index': '本週的問詢AI次數分布',
         'stat_daily_avg': '日均 {n} 次',
-        'stat_sample_data': '*這是示例資料',
+        'stat_sample_data': '當前為示例資料，總的請求次數大於20次之後會切換為正式資料',
         'stat_heatmap': '熱力圖',
+        'stat_heatmap_subtitle': '本月的問詢AI次數分布',
+        'stat_no_data_week': '暫無本週資料',
+        'stat_no_data_month': '暫無本月資料',
         'stat_data_not_enough': '資料不足',
         
-        # 連結 (v1.4.3)
+        # 統計用戶稱號（基於問詢次數）
+        'stat_title_curious': '翻書人',
+        'stat_title_explorer': '覓書客',
+        'stat_title_seeker': '啃書匠',
+        'stat_title_enthusiast': '藏書家',
+        'stat_title_pursuer': '書蟲',
+        
+        # 統計書庫評價（基於藏書數量，使用歷史圖書館典故）
+        'stat_books_impressive': '私人書齋',
+        'stat_books_collection': '文人書房',
+        'stat_books_variety': '翰林書院',
+        'stat_books_awesome': '天一閣',
+        'stat_books_unbelievable': '亞歷山大圖書館',
+        
+        # 連結 (v1.4.2)
         'online_tutorial': '線上教程',
         }
