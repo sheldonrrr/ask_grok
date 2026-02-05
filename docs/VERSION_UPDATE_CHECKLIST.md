@@ -141,8 +141,9 @@ calibre-debug -g
 2. **如果只是更新日期和版本号**
    ```bash
    # 直接修改最新的 tutorial 文件
-   # 例如：tutorial/tutorial_v0.7.md
-   # 更新第 3 行：Latest updated: January 20, 2026, Ask AI Plugin v1.4.1
+   # 例如：tutorial/tutorial_v0.8.md
+   # 更新第 3 行：Latest updated: [当前日期], Ask AI Plugin v[当前版本]
+   # 示例：Latest updated: Feb 05, 2026, Ask AI Plugin v1.4.3
    ```
 
 3. **如果需要升级 tutorial 版本**

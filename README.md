@@ -98,7 +98,7 @@ Default shortcuts:
 - Ask AI: Ask (global): Ctrl+L
 - Ask AI: Open Configuration: F2
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
-- Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
+- Ask AI: Random Question (in dialog): Ctrl+Shift+R (Cmd+Shift+R on macOS)
 
 ## Language Support
 

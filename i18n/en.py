@@ -223,6 +223,12 @@ class EnglishTranslation(BaseTranslation):
             'warning': 'Warning',
             'success': 'Success',
             'error': 'Error',
+            'error_opening_dialog': 'Error opening dialog:',
+            'skipped_books_warning': 'Skipped {count} book(s) due to file access errors.\nThis may be caused by invalid characters in file paths or files being locked by another program.',
+            'failed_to_read_all_books': 'Failed to read metadata for all selected books.\nThis may be caused by invalid characters in file paths or files being locked by another program.',
+            'error_starting_request': 'Error starting request',
+            'default_ai_mismatch_title': 'Default AI Changed',
+            'default_ai_mismatch_message': 'The default AI in configuration has been changed to "{default_ai}",\nbut the current conversation is using "{current_ai}".\n\nWould you like to switch to the new default AI?',
             
             # Metadata fields
             'metadata_title': 'Title',

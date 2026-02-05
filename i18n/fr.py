@@ -205,6 +205,12 @@ class FrenchTranslation(BaseTranslation):
             'warning': 'Avertissement',
             'success': 'Succès',
             'error': 'Erreur',
+            'error_opening_dialog': "Erreur lors de l'ouverture du dialogue:",
+            'skipped_books_warning': "{count} livre(s) ignoré(s) en raison d'erreurs d'accès aux fichiers.\nCela peut être causé par des caractères invalides dans les chemins de fichiers ou des fichiers verrouillés par un autre programme.",
+            'failed_to_read_all_books': "Impossible de lire les métadonnées de tous les livres sélectionnés.\nCela peut être causé par des caractères invalides dans les chemins de fichiers ou des fichiers verrouillés par un autre programme.",
+            'error_starting_request': "Erreur lors du démarrage de la requête",
+            'default_ai_mismatch_title': "IA par défaut modifiée",
+            'default_ai_mismatch_message': "L'IA par défaut dans la configuration a été changée en \"{default_ai}\",\nmais la conversation actuelle utilise \"{current_ai}\".\n\nVoulez-vous passer à la nouvelle IA par défaut ?",
             
             # Champs de métadonnées
             'metadata_title': 'Titre',

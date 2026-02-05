@@ -8,7 +8,7 @@ import sys
 # Shortcut for ask: Ctrl+K (all platforms, including macOS)
 # Shortcut for config: F2 (all platforms)
 # Shortcut for Send: Command + Enter(macOS), Ctrl + Enter(other)
-# Shortcut for Random Question: Command + R(macOS), Ctrl + R(other)
+# Shortcut for Random Question: Command + Shift + R(macOS), Ctrl + Shift + R(other)
 
 class ShortcutsWidget(QWidget):
     """快捷键展示组件"""
@@ -112,7 +112,7 @@ class ShortcutsWidget(QWidget):
             (self.i18n.get('config_title', 'Configuration'), 'F2'),
             (self.i18n.get('library_search', 'AI Search'), 'Ctrl+Shift+L'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),
-            (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+R'),
+            (self.i18n.get('suggest_button', 'Random Question'), f'{modifier_display}+Shift+R'),
         ]
         
         # 创建快捷键标签样式

@@ -206,6 +206,12 @@ class GermanTranslation(BaseTranslation):
             'warning': 'Warnung',
             'success': 'Erfolg',
             'error': 'Fehler',
+            'error_opening_dialog': 'Fehler beim Öffnen des Dialogs:',
+            'skipped_books_warning': '{count} Buch/Bücher wurden aufgrund von Dateizugriffsfehlern übersprungen.\nDies kann durch ungültige Zeichen in Dateipfaden oder durch von anderen Programmen gesperrte Dateien verursacht werden.',
+            'failed_to_read_all_books': 'Metadaten für alle ausgewählten Bücher konnten nicht gelesen werden.\nDies kann durch ungültige Zeichen in Dateipfaden oder durch von anderen Programmen gesperrte Dateien verursacht werden.',
+            'error_starting_request': 'Fehler beim Starten der Anfrage',
+            'default_ai_mismatch_title': 'Standard-KI geändert',
+            'default_ai_mismatch_message': 'Die Standard-KI in der Konfiguration wurde auf "{default_ai}" geändert,\naber die aktuelle Konversation verwendet "{current_ai}".\n\nMöchten Sie zur neuen Standard-KI wechseln?',
             
             # Metadatenfelder
             'metadata_title': 'Titel',

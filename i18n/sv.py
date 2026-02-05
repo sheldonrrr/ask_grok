@@ -223,6 +223,12 @@ class SwedishTranslation(BaseTranslation):
             'warning': 'Varning',
             'success': 'Framgång',
             'error': 'Fel',
+            'error_opening_dialog': 'Fel vid öppning av dialog:',
+            'skipped_books_warning': '{count} bok/böcker hoppades över på grund av filåtkomstfel.\nDetta kan orsakas av ogiltiga tecken i filsökvägar eller filer som är låsta av ett annat program.',
+            'failed_to_read_all_books': 'Kunde inte läsa metadata för alla valda böcker.\nDetta kan orsakas av ogiltiga tecken i filsökvägar eller filer som är låsta av ett annat program.',
+            'error_starting_request': 'Fel vid start av begäran',
+            'default_ai_mismatch_title': 'Standard-AI ändrad',
+            'default_ai_mismatch_message': 'Standard-AI i konfigurationen har ändrats till "{default_ai}",\nmen den aktuella konversationen använder "{current_ai}".\n\nVill du byta till den nya standard-AI?',
 
             # Metadata fields
             'metadata_title': 'Titel',

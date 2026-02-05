@@ -204,6 +204,12 @@ class TraditionalChineseTranslation(BaseTranslation):
         'warning': '警告',
         'success': '成功',
         'error': '錯誤',
+        'error_opening_dialog': '開啟對話框時發生錯誤:',
+        'skipped_books_warning': '由於檔案存取錯誤，已跳過 {count} 本書。\n這可能是由於檔案路徑包含無效字元或檔案被其他程式鎖定。',
+        'failed_to_read_all_books': '無法讀取所有選取書籍的元資料。\n這可能是由於檔案路徑包含無效字元或檔案被其他程式鎖定。',
+        'error_starting_request': '啟動請求時發生錯誤',
+        'default_ai_mismatch_title': '預設 AI 已更改',
+        'default_ai_mismatch_message': '偵測到設定中的預設 AI 已更改為 "{default_ai}"，\n但目前對話使用的是 "{current_ai}"。\n\n是否切換到新的預設 AI？',
         
         # 元數據欄位
         'metadata_title': '標題',

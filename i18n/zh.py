@@ -218,6 +218,12 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'invalid_params': '无效的参数',
             'warning': '警告',
             'error': '错误',
+            'error_opening_dialog': '打开对话框时发生错误:',
+            'skipped_books_warning': '由于文件访问错误，已跳过 {count} 本书。\n这可能是由于文件路径包含无效字符或文件被其他程序锁定。',
+            'failed_to_read_all_books': '无法读取所有选中书籍的元数据。\n这可能是由于文件路径包含无效字符或文件被其他程序锁定。',
+            'error_starting_request': '启动请求时出错',
+            'default_ai_mismatch_title': '默认 AI 已更改',
+            'default_ai_mismatch_message': '检测到配置中的默认 AI 已更改为 "{default_ai}"，\n但当前对话使用的是 "{current_ai}"。\n\n是否切换到新的默认 AI？',
             
             # 元数据字段
             'metadata_title': '标题',

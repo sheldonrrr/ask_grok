@@ -178,7 +178,7 @@ class AskAIPluginUI(InterfaceAction):
             self.gui.keyboard.register_shortcut(
                 self.unique_name + ' - ask_dialog_random_question',
                 'Ask AI: Random Question (in dialog)',
-                default_keys=('Ctrl+R',),
+                default_keys=('Ctrl+Shift+R',),
                 action=None,
                 description=None,
                 group=self.action_spec[0],
@@ -463,21 +463,46 @@ class AskAIPluginUI(InterfaceAction):
                 db = self.gui.current_db
                 logger.info("获取数据库实例成功")
                 
-                # 支持多书选择
-                if len(rows) == 1:
-                    # 单书模式（向后兼容）
-                    book_id = self.gui.library_view.model().id(rows[0])
-                    mi = db.get_metadata(book_id, index_is_id=True)
-                    books_info = mi
-                    logger.info(f"单书模式: book_id={book_id}, title={mi.title}")
-                else:
-                    # 多书模式
-                    books_info = []
-                    for row in rows:
-                        book_id = self.gui.library_view.model().id(row)
+                # 统一处理单书和多书模式，遇到错误时跳过该书籍
+                books_info = []
+                failed_books = []
+                for row in rows:
+                    book_id = self.gui.library_view.model().id(row)
+                    try:
                         mi = db.get_metadata(book_id, index_is_id=True)
                         books_info.append(mi)
-                    logger.info(f"多书模式: 共 {len(books_info)} 本书")
+                    except (OSError, Exception) as e:
+                        logger.error(f"Failed to read book metadata (book_id={book_id}): {str(e)}")
+                        failed_books.append(book_id)
+                
+                # 如果有失败的书籍，显示警告但继续处理成功的书籍
+                if failed_books:
+                    logger.warning(f"Skipped {len(failed_books)} books due to errors: {failed_books}")
+                    if books_info:
+                        # 有成功的书籍，显示警告信息
+                        from PyQt5.QtWidgets import QMessageBox
+                        msg = self.i18n.get('skipped_books_warning', 
+                            'Skipped {count} book(s) due to file access errors.\nThis may be caused by invalid characters in file paths or files being locked by another program.')
+                        msg = msg.format(count=len(failed_books))
+                        QMessageBox.warning(self.gui, self.i18n.get('warning', 'Warning'), msg)
+                
+                # 如果没有成功读取任何书籍，显示错误并返回
+                if not books_info:
+                    from PyQt5.QtWidgets import QMessageBox
+                    QMessageBox.critical(
+                        self.gui,
+                        self.i18n.get('error', 'Error'),
+                        self.i18n.get('failed_to_read_all_books', 
+                            'Failed to read metadata for all selected books.\nThis may be caused by invalid characters in file paths or files being locked by another program.')
+                    )
+                    return
+                
+                # 单书模式保持向后兼容
+                if len(rows) == 1 and len(books_info) == 1:
+                    books_info = books_info[0]
+                    logger.info(f"Single book mode: book_id={books_info.id}, title={books_info.title}")
+                else:
+                    logger.info(f"Multi-book mode: {len(books_info)} books")
             
             # 显示对话框
             d = AskDialog(self.gui, books_info, self.api)
@@ -495,13 +520,12 @@ class AskAIPluginUI(InterfaceAction):
             d.activateWindow()
             
         except Exception as e:
-            logger.error(f"show_dialog() 发生异常: {str(e)}", exc_info=True)
-            # 显示错误消息给用户
+            logger.error(f"show_dialog() error: {str(e)}", exc_info=True)
             from PyQt5.QtWidgets import QMessageBox
             QMessageBox.critical(
                 self.gui,
-                "错误",
-                f"打开询问弹窗时发生错误:\n{str(e)}"
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('error_opening_dialog', 'Error opening dialog:') + f"\n{str(e)}"
             )
     
     def _show_deprecation_notice(self):
@@ -1836,7 +1860,7 @@ class AskDialog(QDialog):
                 logger.info(f"AI Search mode, using last saved history UID: {last_uid}")
             else:
                 # 没有保存的UID时，尝试加载最新的AI Search历史记录
-                from history_manager import HistoryManager
+                from .history_manager import HistoryManager
                 temp_history_manager = HistoryManager()
                 ai_search_histories = temp_history_manager.get_ai_search_histories()
                 if ai_search_histories:
@@ -1940,7 +1964,7 @@ class AskDialog(QDialog):
                     self.send_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
 
                 if (cfg_map.get(rand_un) in (None, (), [])) and not self.suggest_action.shortcuts():
-                    key = 'Ctrl+R'
+                    key = 'Ctrl+Shift+R'
                     self.suggest_action.setShortcuts([QKeySequence(key, QKeySequence.SequenceFormat.PortableText)])
         except Exception:
             pass
@@ -2200,36 +2224,37 @@ class AskDialog(QDialog):
         
         template = prefs.get('multi_book_template', '')
         if not template:
-            template = """以下是关于多本书籍的信息：
+            template = self.i18n.get('multi_book_default_template', 
+                """Here is information about multiple books:
 
 {books_metadata}
 
-用户问题：{query}
+User question: {query}
 
-请基于以上书籍信息回答问题。"""
+Please answer the question based on the above book information.""")
         
-        # 拼接所有书籍元数据（包含所有字段：标题、作者、出版日期、系列、出版社、语言）
+        # Build book metadata text using i18n labels
         books_metadata_text = []
         for idx, book in enumerate(self.books_info, 1):
-            book_text = f"书籍 {idx}:\n"
-            book_text += f"  标题: {book.title}\n"
+            book_text = f"Book {idx}:\n"
+            book_text += f"  {self.i18n.get('metadata_title', 'Title')}: {book.title}\n"
             
             if book.authors:
-                book_text += f"  作者: {', '.join(book.authors)}\n"
+                book_text += f"  {self.i18n.get('metadata_authors', 'Author')}: {', '.join(book.authors)}\n"
             
             if hasattr(book, 'pubdate') and book.pubdate:
                 year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
-                book_text += f"  出版日期: {year}\n"
+                book_text += f"  {self.i18n.get('metadata_pubyear', 'Publication Date')}: {year}\n"
             
             if hasattr(book, 'series') and book.series:
-                book_text += f"  系列: {book.series}\n"
+                book_text += f"  {self.i18n.get('metadata_series', 'Series')}: {book.series}\n"
             
             if book.publisher:
-                book_text += f"  出版社: {book.publisher}\n"
+                book_text += f"  {self.i18n.get('metadata_publisher', 'Publisher')}: {book.publisher}\n"
             
             if book.language:
                 lang_name = self.get_language_name(book.language)
-                book_text += f"  语言: {lang_name}\n"
+                book_text += f"  {self.i18n.get('metadata_language', 'Language')}: {lang_name}\n"
             
             books_metadata_text.append(book_text)
         
@@ -3456,11 +3481,11 @@ class AskDialog(QDialog):
         def show_dialog():
             reply = QMessageBox.question(
                 self,
-                self.i18n.get('default_ai_mismatch_title', '默认 AI 已更改'),
+                self.i18n.get('default_ai_mismatch_title', 'Default AI Changed'),
                 self.i18n.get('default_ai_mismatch_message', 
-                    '检测到配置中的默认 AI 已更改为 "{default_ai}"，\n'
-                    '但当前对话使用的是 "{current_ai}"。\n\n'
-                    '是否切换到新的默认 AI？').format(
+                    'The default AI in configuration has been changed to "{default_ai}",\n'
+                    'but the current conversation is using "{current_ai}".\n\n'
+                    'Would you like to switch to the new default AI?').format(
                         default_ai=default_ai_name,
                         current_ai=current_ai_name
                     ),
@@ -4205,7 +4230,7 @@ class AskDialog(QDialog):
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
             if hasattr(self, 'response_handler'):
-                self.response_handler.handle_error(f"启动请求时出错: {str(e)}")
+                self.response_handler.handle_error(f"{self.i18n.get('error_starting_request', 'Error starting request')}: {str(e)}")
             # 恢复按钮状态
             self.send_button.setVisible(True)
             self.stop_button.setVisible(False)
