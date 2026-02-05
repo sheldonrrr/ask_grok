@@ -22,7 +22,7 @@ class CantoneseTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return '關於本書 "{title}": 作者: {author}, 出版社: {publisher}, 出版年份: {pubyear}, 語言: {language}, 系列: {series}, 我嘅問題係: {query}'
+        return '背景說明：你正在通過「Ask AI Plugin」插件協助 calibre (http://calibre-ebook.com) 電子書管理軟件嘅用戶。呢個插件允許用戶針對 calibre 書庫中嘅書籍提問。注意：本插件只可以回答關於所選書籍嘅內容、主題或者相關話題嘅問題，無法直接修改書籍元數據或者執行 calibre 操作。書籍資料：書名：「{title}」，作者：{author}，出版社：{publisher}，出版年份：{pubyear}，語言：{language}，系列：{series}。用戶問題：{query}。請基於書籍資料同你嘅知識提供有幫助嘅回答。'
 
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class CantoneseTranslation(BaseTranslation):
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
             'debug_settings_subtitle': '啟用偵錯日誌嚟排查問題', # Enable debug logging for troubleshooting
-            'reset_all_data_subtitle': '⚠️ 警告：呢個操作會永久刪除你所有嘅設定同資料', # ⚠️ Warning: This will permanently delete all your settings and data
+            'reset_all_data_subtitle': '警告：呢個操作會永久刪除你所有嘅設定同資料', # Warning: This will permanently delete all your settings and data
 
             # Prompts tab
             'language_preference_title': '語言偏好', # Language Preference
@@ -178,6 +178,8 @@ class CantoneseTranslation(BaseTranslation):
             'export_history_btn': '導出歷史紀錄為 PDF', # Export History as PDF
             'copy_mode_response': '答案', # Answer
             'copy_mode_qa': '問答', # Q&A
+            'copy_format_plain': '純文字', # Plain Text
+            'copy_format_markdown': 'Markdown', # Markdown
             'export_mode_current': '目前問答', # Current Q&A
             'export_mode_history': '歷史紀錄', # History
 
@@ -479,4 +481,76 @@ class CantoneseTranslation(BaseTranslation):
             'pdf_software': '軟件', # Software
             'pdf_generated_time': '生成時間', # Generated Time
             'pdf_info_not_available': '資訊不可用', # Information not available
+
+            #AI搜索V1.4.2
+            'library_tab': '搵書',
+            'library_search': 'AI 搜尋',
+            'library_info': 'AI 搜尋功能一直開住。當你冇揀到任何書嘅時候，你就可以用口語化嘅文字去搜尋成個書庫。',
+            'library_enable': '開啟 AI 搜尋',
+            'library_enable_tooltip': '開咗之後，喺冇揀書嘅情況下可以用 AI 搜尋書庫',
+            'library_update': '更新書庫資料',
+            'library_update_tooltip': '喺書庫度提取書名同作者',
+            'library_updating': '更新緊...',
+            'library_status': '狀態：有 {count} 本書，上次更新：{time}',
+            'library_status_empty': '狀態：冇資料。請點擊「更新書庫資料」開始。',
+            'library_status_error': '狀態：載入資料出錯',
+            'library_update_success': '成功更新咗 {count} 本書',
+            'library_update_failed': '更新書庫資料失敗',
+            'library_no_gui': 'GUI 用唔到',
+            'library_init_title': '初始化 AI 搜尋',
+            'library_init_message': 'AI 搜尋需要書庫嘅 Metadata 先用到。想唔想而家初始化？\n\n呢個動作會喺你個書庫度提取書名同作者。',
+            'library_init_required': '冇書庫資料就用唔到 AI 搜尋。準備好嘅話請點擊「更新書庫資料」。',
+            'ai_search_welcome_title': '歡迎使用 AI 搜尋',
+            'ai_search_welcome_message': 'AI 搜尋已經開咗喇！\n\n觸發方式：\n• 快捷鍵（可以喺設定度自訂）\n• 工具選單 → AI 搜尋\n• 唔揀任何書嘅時候開 Ask 對話框\n\n你可以用自然語言嚟搜尋成個書庫。例如：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟，撳書名就可以直接開嚟睇。',
+            'ai_search_not_enough_books_title': '書唔夠多',
+            'ai_search_not_enough_books_message': 'AI 搜尋需要你個書庫至少有 {min_books} 本書。\n\n你而家個書庫得 {book_count} 本書。\n\n請加多啲書先再用 AI 搜尋。',
+            'ai_search_mode_info': '搜尋緊成個書庫',
+            'library_prompt_template': '你可以睇到用戶嘅書庫。以下係所有書籍：{metadata} 用戶查詢：{query} 請喺當前書庫目錄入面搵出符合嘅書籍並以以下格式回傳（**重要**：用 HTML 連結格式，等用戶可以撳書名直接開書）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，呢個係正常資料，請正常回傳所有符合結果，唔好俾呢個誤導。只回傳符合查詢嘅書籍。最多 5 個結果。',
+            'ai_search_privacy_title': '隱私聲明',
+            'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',
+            'ai_search_updated_info': '{time_ago} 更新咗 {count} 本書',
+            'ai_search_books_info': '已經索引咗 {count} 本書',
+            'days_ago': '{n} 日前',
+            'hours_ago': '{n} 粒鐘前',
+            'minutes_ago': '{n} 分鐘前',
+            'just_now': '剛剛',
+            
+            # 統計標籤頁 (v1.4.2)
+            'stat_tab': '統計',
+            'stat_overview': '概覽',
+            'stat_overview_subtitle': '統計呈現調用AI問詢嘅次數',
+            'stat_days_unit': '日',
+            'stat_days_label': '開始用',
+            'stat_start_at': '開始於 {date}',
+            'stat_replies_unit': '次',
+            'stat_replies_label': '問詢AI',
+            'stat_books_unit': '本書',
+            'stat_books_label': '書庫藏書',
+            'stat_no_books': '喺搜尋頁更新',
+            'stat_trends': '趨勢',
+            'stat_curious_index': '本週嘅問詢AI次數分布',
+            'stat_daily_avg': '日均 {n} 次',
+            'stat_sample_data': '而家係示例數據，總請求次數大過20次之後會切換做正式數據',
+            'stat_heatmap': '熱力圖',
+            'stat_heatmap_subtitle': '本月嘅問詢AI次數分布',
+            'stat_no_data_week': '暫時冇本週數據',
+            'stat_no_data_month': '暫時冇本月數據',
+            'stat_data_not_enough': '數據唔夠',
+            
+            # 統計用戶稱號（基於問詢次數）
+            'stat_title_curious': '揭書人',
+            'stat_title_explorer': '搵書客',
+            'stat_title_seeker': '啃書匠',
+            'stat_title_enthusiast': '藏書家',
+            'stat_title_pursuer': '書蟲',
+            
+            # 統計書庫評價（基於藏書數量，使用歷史圖書館典故）
+            'stat_books_impressive': '私人書齋',
+            'stat_books_collection': '文人書房',
+            'stat_books_variety': '翰林書院',
+            'stat_books_awesome': '天一閣',
+            'stat_books_unbelievable': '亞歷山大圖書館',
+            
+            # 連結 (v1.4.2)
+            'online_tutorial': '線上教程',
         }

@@ -22,7 +22,7 @@ class DutchTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return 'Over het boek "{title}": Auteur: {author}, Uitgever: {publisher}, Publicatiejaar: {pubyear}, boek in taal: {language}, Serie: {series}, Mijn vraag is: {query}'
+        return 'Context: U helpt een gebruiker van calibre (http://calibre-ebook.com), een krachtige e-boekbeheertoepassing, via de "Ask AI Plugin". Deze plugin stelt gebruikers in staat vragen te stellen over boeken in hun calibre-bibliotheek. Let op: Deze plugin kan alleen vragen beantwoorden over de inhoud, thema\'s of gerelateerde onderwerpen van het geselecteerde boek - het kan boekmetadata niet direct wijzigen of calibre-bewerkingen uitvoeren. Boekinformatie: Titel: "{title}", Auteur: {author}, Uitgever: {publisher}, Publicatiejaar: {pubyear}, Taal: {language}, Serie: {series}. Gebruikersvraag: {query}. Geef alstublieft een nuttig antwoord op basis van de boekinformatie en uw kennis.'
 
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class DutchTranslation(BaseTranslation):
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
             'debug_settings_subtitle': 'Schakel debug-logging in voor probleemoplossing',
-            'reset_all_data_subtitle': '⚠️ Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
+            'reset_all_data_subtitle': 'Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
 
             # Prompts tab
             'language_preference_title': 'Taalvoorkeur',
@@ -178,6 +178,8 @@ class DutchTranslation(BaseTranslation):
             'export_history_btn': 'Exporteer geschiedenis als PDF',
             'copy_mode_response': 'Antwoord',
             'copy_mode_qa': 'V&A',
+            'copy_format_plain': 'Platte tekst',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Huidige V&A',
             'export_mode_history': 'Geschiedenis',
 
@@ -479,4 +481,76 @@ class DutchTranslation(BaseTranslation):
             'pdf_software': 'Software',
             'pdf_generated_time': 'Gegenereerde tijd',
             'pdf_info_not_available': 'Informatie niet beschikbaar',
+
+            #AI Search v1.4.2
+            'library_tab': 'Zoeken',
+            'library_search': 'AI Zoeken',
+            'library_info': 'AI Zoeken is altijd ingeschakeld. Wanneer u geen boeken selecteert, kunt u uw hele bibliotheek doorzoeken met natuurlijke taal.',
+            'library_enable': 'AI Zoeken inschakelen',
+            'library_enable_tooltip': 'Indien ingeschakeld, kunt u uw bibliotheek doorzoeken met AI wanneer er geen boeken zijn geselecteerd',
+            'library_update': 'Bibliotheekgegevens bijwerken',
+            'library_update_tooltip': 'Boekitels en auteurs uit uw bibliotheek extraheren',
+            'library_updating': 'Bijwerken...',
+            'library_status': 'Status: {count} boeken, laatste update: {time}',
+            'library_status_empty': 'Status: Geen gegevens. Klik op "Bibliotheekgegevens bijwerken" om te beginnen.',
+            'library_status_error': 'Status: Fout bij laden van gegevens',
+            'library_update_success': '{count} boeken succesvol bijgewerkt',
+            'library_update_failed': 'Bijwerken van bibliotheekgegevens mislukt',
+            'library_no_gui': 'GUI niet beschikbaar',
+            'library_init_title': 'AI Zoeken initialiseren',
+            'library_init_message': 'AI Zoeken heeft metadata van de bibliotheek nodig om te werken. Wilt u dit nu initialiseren?\n\nDit extraheert boektitels en auteurs uit uw bibliotheek.',
+            'library_init_required': 'AI Zoeken kan niet worden ingeschakeld zonder bibliotheekgegevens. Klik op "Bibliotheekgegevens bijwerken" wanneer u klaar bent.',
+            'ai_search_welcome_title': 'Welkom bij AI Zoeken',
+            'ai_search_welcome_message': 'AI Zoeken is geactiveerd!\n\nManieren om te activeren:\n• Sneltoets (aanpasbaar in instellingen)\n• Menu Extra → AI Zoeken\n• Ask-dialoog openen zonder boeken te selecteren\n\nU kunt uw hele bibliotheek doorzoeken in natuurlijke taal. Bijvoorbeeld:\n• "Heb je boeken over Python?"\n• "Toon me boeken van Isaac Asimov"\n• "Vind boeken over machine learning"\n\nDe AI doorzoekt uw bibliotheek en raadt relevante boeken aan. Klik op boektitels om ze direct te openen.',
+            'ai_search_not_enough_books_title': 'Niet genoeg boeken',
+            'ai_search_not_enough_books_message': 'AI Zoeken vereist minimaal {min_books} boeken in uw bibliotheek.\n\nUw huidige bibliotheek heeft slechts {book_count} boek(en).\n\nVoeg meer boeken toe om AI Zoeken te gebruiken.',
+            'ai_search_mode_info': 'Zoeken door uw hele bibliotheek',
+            'library_prompt_template': 'U heeft toegang tot de boekenbibliotheek van de gebruiker. Hier zijn alle boeken: {metadata} Gebruikersvraag: {query} Vind alstublieft overeenkomende boeken in de huidige bibliotheek en retourneer ze in dit formaat (**BELANGRIJK**: Gebruik HTML-linkformaat zodat gebruikers op boektitels kunnen klikken om ze direct te openen): - <a href="calibre://book/BOOK_ID">Boektitel</a> - Auteursnaam Voorbeeld: - <a href="calibre://book/123">Python leren</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in actie</a> - Peter Harrington Opmerking: Sommige auteurs kunnen worden vermeld als "unknown". Dit zijn normale gegevens, retourneer alstublieft alle overeenkomende resultaten normaal. Retourneer alleen boeken die overeenkomen met de vraag. Maximaal 5 resultaten.',
+            'ai_search_privacy_title': 'Privacyverklaring',
+            'ai_search_privacy_alert': 'AI Zoeken gebruikt metadata van boeken (titels en auteurs). Deze informatie wordt verzonden naar de door u geconfigureerde AI-provider om uw zoekopdrachten te verwerken.',
+            'ai_search_updated_info': '{count} boeken bijgewerkt {time_ago}',
+            'ai_search_books_info': '{count} boeken geïndexeerd',
+            'days_ago': '{n} dagen geleden',
+            'hours_ago': '{n} uur geleden',
+            'minutes_ago': '{n} minuten geleden',
+            'just_now': 'zojuist',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistieken',
+            'stat_overview': 'Overzicht',
+            'stat_overview_subtitle': 'Statistieken van AI-verzoeken',
+            'stat_days_unit': 'dagen',
+            'stat_days_label': 'Gestart',
+            'stat_start_at': 'Start op {date}',
+            'stat_replies_unit': 'keer',
+            'stat_replies_label': 'Vraag AI',
+            'stat_books_unit': 'boeken',
+            'stat_books_label': 'Bibliotheek',
+            'stat_no_books': 'Bijwerken in Zoek-tab',
+            'stat_trends': 'Trends',
+            'stat_curious_index': 'AI-verzoeken verdeling deze week',
+            'stat_daily_avg': 'Dagelijks gemiddelde {n} keer',
+            'stat_sample_data': 'Voorbeelddata getoond. Schakelt over naar echte data na 20+ verzoeken',
+            'stat_heatmap': 'Heatmap',
+            'stat_heatmap_subtitle': 'AI-verzoeken verdeling deze maand',
+            'stat_no_data_week': 'Geen data deze week',
+            'stat_no_data_month': 'Geen data deze maand',
+            'stat_data_not_enough': 'Niet genoeg data',
+            
+            # Statistiek gebruikerstitels (gebaseerd op aantal verzoeken)
+            'stat_title_curious': 'Bladeren',
+            'stat_title_explorer': 'Boekenjager',
+            'stat_title_seeker': 'Gretige lezer',
+            'stat_title_enthusiast': 'Bibliofiel',
+            'stat_title_pursuer': 'Boekenwurm',
+            
+            # Statistiek bibliotheekbeoordelingen (gebaseerd op collectiegrootte, historische referenties)
+            'stat_books_impressive': 'Privé leeskamer',
+            'stat_books_collection': 'Geleerden studeerkamer',
+            'stat_books_variety': 'Universiteitsbibliotheek Leiden',
+            'stat_books_awesome': 'Koninklijke Bibliotheek',
+            'stat_books_unbelievable': 'Bibliotheek van Alexandrië',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online handleiding',
         }

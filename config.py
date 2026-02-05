@@ -7,7 +7,7 @@ import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
-                            QFrame, QCheckBox, QMessageBox)
+                            QFrame, QCheckBox, QMessageBox, QApplication)
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
@@ -31,7 +31,7 @@ from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, BG_COLOR_ALTERNATE,
+    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
     get_list_widget_style
 )
@@ -186,6 +186,13 @@ prefs.defaults['persona'] = 'As a researcher, I want to research through book da
 # Language preference settings (v1.3.9)
 prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond in interface language
 
+# Library Chat settings (v1.4.2 MVP)
+prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature
+prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON string)
+prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
+prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
+prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
+
 def get_prefs(force_reload=False):
     """获取配置
     
@@ -210,26 +217,45 @@ def get_prefs(force_reload=False):
             base = calibre_lang.split('_')[0].lower()
 
             # Map calibre language codes to plugin language codes
-            plugin_lang = None
+            # 支持的语言映射表
+            lang_mapping = {
+                'zh': 'zh',      # Chinese Simplified
+                'en': 'en',      # English
+                'ja': 'ja',      # Japanese
+                'fr': 'fr',      # French
+                'de': 'de',      # German
+                'es': 'es',      # Spanish
+                'ru': 'ru',      # Russian
+                'pt': 'pt',      # Portuguese
+                'nl': 'nl',      # Dutch
+                'sv': 'sv',      # Swedish
+                'no': 'no',      # Norwegian
+                'fi': 'fi',      # Finnish
+                'da': 'da',      # Danish
+                'yue': 'yue',    # Cantonese
+            }
+            
+            plugin_lang = lang_mapping.get(base)
+            
+            # Special handling for Chinese variants
             if base == 'zh':
-                # Prefer Traditional for TW/HK/MO, otherwise Simplified
                 upper = calibre_lang.upper()
                 if '_TW' in upper or '_HK' in upper or '_MO' in upper:
-                    plugin_lang = 'zht'
+                    plugin_lang = 'zht'  # Traditional Chinese
                 else:
-                    plugin_lang = 'zh'
-            elif base == 'en':
-                plugin_lang = 'en'
+                    plugin_lang = 'zh'   # Simplified Chinese
 
             supported = {code for code, _ in SUPPORTED_LANGUAGES}
-            if plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
+            if plugin_lang and plugin_lang in supported and prefs.get('language', 'en') != plugin_lang:
                 prefs['language'] = plugin_lang
                 # 同时更新模板为对应语言的默认模板
                 prefs['template'] = get_default_template(plugin_lang)
                 prefs['multi_book_template'] = get_multi_book_template(plugin_lang)
                 prefs.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to inherit Calibre language: {e}")
     
     # 确保模板不为空，如果为空则使用当前语言的默认模板
     # 注意：这个检查必须在语言确定之后执行
@@ -278,6 +304,29 @@ def get_prefs(force_reload=False):
             prefs['models']['nvidia_free']['proxy_url'] = current_env_url
             prefs['models']['nvidia_free']['api_base_url'] = current_env_url
             prefs.commit()
+    
+    # 配置迁移：删除已废弃的 openrouter_free 配置（旧版本遗留数据）
+    # 同时删除任何包含 'openrouter' 且 model 为 ':free' 或包含 'free' 的旧配置
+    models_to_remove = []
+    for config_id, config in prefs['models'].items():
+        if not isinstance(config, dict):
+            continue
+        # 检查是否是废弃的 openrouter free 配置
+        if 'openrouter_free' in config_id:
+            models_to_remove.append(config_id)
+        elif config_id.startswith('openrouter') and config.get('model', '').lower().endswith(':free'):
+            models_to_remove.append(config_id)
+        elif config.get('provider_id') == 'openrouter_free':
+            models_to_remove.append(config_id)
+    
+    for config_id in models_to_remove:
+        del prefs['models'][config_id]
+        # 如果当前选中的是被删除的模型，切换到 nvidia_free
+        if prefs.get('selected_model') == config_id:
+            prefs['selected_model'] = 'nvidia_free'
+    
+    if models_to_remove:
+        prefs.commit()
     
     # 确保默认模型配置存在
     if 'grok' not in prefs['models']:
@@ -1862,26 +1911,18 @@ class ConfigDialog(QWidget):
         content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
         content_widget.setObjectName("content_container")
         content_layout = QVBoxLayout()
-        # 使用紧凑间距，因为GroupBox已经有虚线框区分了
-        from .ui_constants import SPACING_ASK_COMPACT, SPACING_SMALL
-        content_layout.setSpacing(SPACING_ASK_COMPACT)  # 区域之间使用紧凑间距（4px）
-        # 添加左右边距，为 GroupBox 的 margin 留出空间，避免水平滚动条
-        content_layout.setContentsMargins(SPACING_SMALL, 0, SPACING_SMALL, 0)
+        # 使用统一的Tab布局规范
+        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, get_tab_scroll_area_style
+        content_layout.setSpacing(TAB_CONTENT_SPACING)
+        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
         content_widget.setLayout(content_layout)
         
         # 1. 顶部：语言选择
         # Section Title（外部）- 第一个 section，顶部间距较小
+        from .ui_constants import get_first_section_title_style
         lang_title = QLabel(self.i18n.get('language_settings', 'Language'))
         lang_title.setObjectName('title_language')
-        first_section_style = f"""
-            font-weight: bold;
-            font-size: 1.08em;
-            color: palette(text);
-            text-transform: uppercase;
-            padding: 0;
-            margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
-        """
-        lang_title.setStyleSheet(first_section_style)
+        lang_title.setStyleSheet(get_first_section_title_style())
         content_layout.addWidget(lang_title)
         
         # Subtitle（外部）
@@ -2222,7 +2263,7 @@ class ConfigDialog(QWidget):
         
         # Subtitle（外部，红色警告）
         reset_subtitle = QLabel(self.i18n.get('reset_all_data_subtitle', 
-            '⚠️ Warning: This will permanently delete all your settings and data'))
+            'Warning: This will permanently delete all your settings and data'))
         reset_subtitle.setObjectName('subtitle_reset_all_data')
         reset_subtitle.setWordWrap(True)
         reset_subtitle.setStyleSheet("color: #dc3545; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
@@ -2768,7 +2809,7 @@ class ConfigDialog(QWidget):
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
             'subtitle_debug_settings': ('debug_settings_subtitle', 'Enable debug logging for troubleshooting'),
-            'subtitle_reset_all_data': ('reset_all_data_subtitle', '⚠️ Warning: This will permanently delete all your settings and data'),
+            'subtitle_reset_all_data': ('reset_all_data_subtitle', 'Warning: This will permanently delete all your settings and data'),
             # Other labels
             'label_language': ('language_label', 'Language'),
             'label_current_ai': ('current_ai', 'Current AI'),
@@ -3496,3 +3537,204 @@ class ConfigDialog(QWidget):
                     self.i18n.get('error', 'Error'),
                     self.i18n.get('reset_all_data_failed', 'Failed to reset plugin data: {error}').format(error=str(e))
                 )
+
+
+class LibraryWidget(QWidget):
+    """图书馆对话功能配置界面（MVP极简版）"""
+    config_changed = pyqtSignal()
+    
+    def __init__(self, parent=None, gui=None):
+        QWidget.__init__(self, parent)
+        self.gui = gui
+        self.prefs = get_prefs()
+        
+        # 获取当前语言的翻译
+        language = self.prefs.get('language', 'en')
+        self.i18n = get_translation(language)
+        
+        self.setup_ui()
+        self.load_values()
+    
+    def setup_ui(self):
+        """设置UI"""
+        from .ui_constants import (setup_tab_widget_layout, TAB_CONTENT_MARGIN, 
+                                   TAB_CONTENT_SPACING, get_first_section_title_style)
+        
+        # 使用统一的 Tab 布局
+        main_layout = setup_tab_widget_layout(self)
+        
+        # 创建滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        
+        # 内容容器
+        content = QWidget()
+        layout = QVBoxLayout(content)
+        layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, 
+                                  TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
+        layout.setSpacing(TAB_CONTENT_SPACING)
+        
+        # Privacy alert section - 使用统一的第一个 section 标题样式
+        self.privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        self.privacy_title.setStyleSheet(get_first_section_title_style())
+        layout.addWidget(self.privacy_title)
+        
+        self.privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
+            'AI Search uses book metadata (titles and authors) from your library. '
+            'This information will be sent to the AI provider you have configured to process your search queries.'))
+        self.privacy_alert.setWordWrap(True)
+        self.privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
+        layout.addWidget(self.privacy_alert)
+        
+        layout.addSpacing(SPACING_MEDIUM)
+        
+        # AI搜索说明
+        self.info_label = QLabel(self.i18n.get('library_info', 
+            'AI Search is always enabled. When you don\'t select any books, '
+            'you can search your entire library using natural language.'))
+        self.info_label.setWordWrap(True)
+        self.info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        layout.addWidget(self.info_label)
+        
+        layout.addSpacing(SPACING_SMALL)
+        
+        # 更新按钮
+        self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
+        self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
+            'Extract book titles and authors from your library'))
+        self.update_button.clicked.connect(self.on_update_library)
+        apply_button_style(self.update_button)
+        layout.addWidget(self.update_button)
+        
+        layout.addSpacing(SPACING_SMALL)
+        
+        # 状态标签
+        self.status_label = QLabel()
+        self.status_label.setWordWrap(True)
+        self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        layout.addWidget(self.status_label)
+        
+        # 添加弹性空间
+        layout.addStretch()
+        
+        scroll.setWidget(content)
+        main_layout.addWidget(scroll)
+    
+    def load_values(self):
+        """加载配置值"""
+        # AI搜索现在始终启用，确保配置为True
+        self.prefs['library_chat_enabled'] = True
+        
+        # 更新状态显示
+        self.update_status_display()
+    
+    def retranslate_ui(self):
+        """更新界面语言"""
+        # 重新获取当前语言的翻译
+        language = self.prefs.get('language', 'en')
+        self.i18n = get_translation(language)
+        
+        # 更新所有文本 - 使用实例变量直接更新
+        if hasattr(self, 'privacy_title'):
+            self.privacy_title.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        
+        if hasattr(self, 'privacy_alert'):
+            self.privacy_alert.setText(self.i18n.get('ai_search_privacy_alert', 
+                'AI Search uses book metadata (titles and authors) from your library. '
+                'This information will be sent to the AI provider you have configured to process your search queries.'))
+        
+        if hasattr(self, 'info_label'):
+            self.info_label.setText(self.i18n.get('library_info', 
+                'AI Search is always enabled. When you don\'t select any books, '
+                'you can search your entire library using natural language.'))
+        
+        # 更新按钮文本
+        if hasattr(self, 'update_button'):
+            self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
+            self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
+                'Extract book titles and authors from your library'))
+        
+        # 更新状态显示
+        self.update_status_display()
+    
+    def update_status_display(self):
+        """更新状态显示"""
+        from .utils import get_library_metadata, get_library_last_update
+        import json
+        
+        metadata = get_library_metadata(self.prefs)
+        last_update = get_library_last_update(self.prefs)
+        
+        if metadata and last_update:
+            try:
+                books = json.loads(metadata)
+                book_count = len(books)
+                
+                # 格式化时间显示
+                from datetime import datetime
+                update_time = datetime.fromisoformat(last_update)
+                time_str = update_time.strftime('%Y-%m-%d %H:%M:%S')
+                
+                status_text = self.i18n.get('library_status', 
+                    'Status: {count} books, last update: {time}').format(
+                    count=book_count, time=time_str)
+            except Exception as e:
+                logger.error(f"Failed to parse library metadata: {e}")
+                status_text = self.i18n.get('library_status_error', 'Status: Error loading data')
+        else:
+            status_text = self.i18n.get('library_status_empty', 
+                'Status: No data. Click "Update Library Data" to start.')
+        
+        self.status_label.setText(status_text)
+    
+    def on_update_library(self):
+        """更新图书馆数据"""
+        if not self.gui:
+            QMessageBox.warning(self, 
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('library_no_gui', 'GUI not available'))
+            return
+        
+        from .utils import update_library_metadata
+        
+        # 显示处理中提示
+        self.update_button.setEnabled(False)
+        self.update_button.setText(self.i18n.get('library_updating', 'Updating...'))
+        QApplication.processEvents()
+        
+        try:
+            # 提取元数据
+            db = self.gui.current_db
+            success, book_count, error_msg = update_library_metadata(db, self.prefs)
+            
+            if success:
+                # 更新状态显示
+                self.update_status_display()
+                
+                # 显示成功消息
+                QMessageBox.information(self,
+                    self.i18n.get('success', 'Success'),
+                    self.i18n.get('library_update_success', 
+                        'Successfully updated {count} books').format(count=book_count))
+            else:
+                QMessageBox.warning(self,
+                    self.i18n.get('error', 'Error'),
+                    error_msg or self.i18n.get('library_update_failed', 'Failed to update library data'))
+        
+        finally:
+            # 恢复按钮状态
+            self.update_button.setEnabled(True)
+            self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
+    
+    
+    def save_settings(self):
+        """保存设置"""
+        # AI搜索始终启用
+        self.prefs['library_chat_enabled'] = True
+        logger.info("AI Search is always enabled")
+    
+    def has_changes(self):
+        """检查是否有未保存的更改"""
+        # AI搜索没有可配置项，始终返回False
+        return False

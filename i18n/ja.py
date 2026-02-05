@@ -22,7 +22,7 @@ class JapaneseTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return '本について "{title}": 著者: {author}, 出版社: {publisher}, 出版年: {pubyear}, 言語: {language}, シリーズ: {series}, 質問: {query}'
+        return '背景：あなたは「Ask AI Plugin」プラグインを通じて、calibre (http://calibre-ebook.com) という強力な電子書籍管理アプリケーションのユーザーをサポートしています。このプラグインにより、ユーザーは calibre ライブラリ内の書籍について質問できます。注意：このプラグインは、選択された書籍の内容、テーマ、または関連トピックに関する質問にのみ回答でき、書籍のメタデータを直接変更したり、calibre の操作を実行したりすることはできません。書籍情報：タイトル：「{title}」、著者：{author}、出版社：{publisher}、出版年：{pubyear}、言語：{language}、シリーズ：{series}。ユーザーの質問：{query}。書籍情報とあなたの知識に基づいて、役立つ回答を提供してください。'
     
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class JapaneseTranslation(BaseTranslation):
             'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
             'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
             'debug_settings_subtitle': 'トラブルシューティングのためにデバッグログを有効化',
-            'reset_all_data_subtitle': '⚠️ 警告：すべての設定とデータが完全に削除されます',
+            'reset_all_data_subtitle': '警告：すべての設定とデータが完全に削除されます',
             
             # プロンプトタブ
             'language_preference_title': '言語設定',
@@ -112,6 +112,8 @@ class JapaneseTranslation(BaseTranslation):
             'export_history_btn': '履歴をPDFにエクスポート',
             'copy_mode_response': '回答',
             'copy_mode_qa': 'Q&A',
+            'copy_format_plain': 'プレーンテキスト',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': '現在のQ&A',
             'export_mode_history': '履歴',
             
@@ -407,7 +409,34 @@ class JapaneseTranslation(BaseTranslation):
             'pdf_plugin': 'プラグイン',
             'pdf_github': 'GitHub',
             'pdf_software': 'ソフトウェア',
-            'pdf_generated_time': '生成時刻',
+            'pdf_generated_time': '生成時間',
+            'pdf_info_not_available': '情報が利用できません',
+            
+            # Library Chat feature (v1.4.2)
+            'library_tab': '検索',
+            'library_search': 'AI検索',
+            'library_info': 'AI検索は常に有効です。本を選択しない場合、自然言語でライブラリ全体を検索できます。',
+            'library_enable': 'AI検索を有効にする',
+            'library_enable_tooltip': '有効にすると、本が選択されていない場合にAIを使用してライブラリを検索できます',
+            'library_update': 'ライブラリデータを更新',
+            'library_update_tooltip': 'ライブラリから書籍のタイトルと著者を抽出します',
+            'library_updating': '更新中...',
+            'library_status': 'ステータス：{count}冊、最終更新：{time}',
+            'library_status_empty': 'ステータス：データなし。「ライブラリデータを更新」をクリックして開始してください。',
+            'library_status_error': 'ステータス：データの読み込みエラー',
+            'library_update_success': '{count}冊の本を正常に更新しました',
+            'library_update_failed': 'ライブラリデータの更新に失敗しました',
+            'library_no_gui': 'GUIが利用できません',
+            'library_init_title': 'AI検索を初期化',
+            'library_init_message': 'AI検索を機能させるにはライブラリメタデータが必要です。今すぐ初期化しますか？\n\nこれにより、ライブラリから書籍のタイトルと著者が抽出されます。',
+            'library_init_required': 'ライブラリデータなしではAI検索を有効にできません。この機能を使用する準備ができたら、「ライブラリデータを更新」をクリックしてください。',
+            'ai_search_welcome_title': 'AI検索へようこそ',
+            'ai_search_welcome_message': '本が選択されていないため、AI検索が有効になりました！\n\n自然言語でライブラリ全体を検索できます。例えば：\n• "Pythonに関する本はありますか？"\n• "アイザック・アシモフの本を見せて"\n• "機械学習に関する本を探して"\n\nAIがライブラリを検索し、関連する本を推薦します。',
+            'ai_search_not_enough_books_title': '本が足りません',
+            'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
+            'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
+            
             'default_ai_mismatch_title': 'デフォルトAIが変更されました',
             'default_ai_mismatch_message': '設定のデフォルトAIが"{default_ai}"に変更されましたが、\n現在のダイアログは"{current_ai}"を使用しています。\n\n新しいデフォルトAIに切り替えますか？',
             'discard_changes': '変更を破棄',
@@ -482,4 +511,76 @@ class JapaneseTranslation(BaseTranslation):
             
             # Tooltip
             'manage_ai_disabled_tooltip': '最初にAIプロバイダーを追加してください。',
+
+            #AI Search v1.4.2
+            'library_tab': '検索',
+            'library_search': 'AI検索',
+            'library_info': 'AI検索は常に有効です。本を選択していない状態では、自然言語を使用してライブラリ全体を検索できます。',
+            'library_enable': 'AI検索を有効化',
+            'library_enable_tooltip': '有効にすると、本を選択していない時にAIを使用してライブラリを検索できます',
+            'library_update': 'ライブラリデータの更新',
+            'library_update_tooltip': 'ライブラリから本のタイトルと著者名を抽出します',
+            'library_updating': '更新中...',
+            'library_status': 'ステータス: {count} 冊、最終更新: {time}',
+            'library_status_empty': 'ステータス: データなし。「ライブラリデータの更新」をクリックして開始してください。',
+            'library_status_error': 'ステータス: データの読み込みエラー',
+            'library_update_success': '{count} 冊の本の更新に成功しました',
+            'library_update_failed': 'ライブラリデータの更新に失敗しました',
+            'library_no_gui': 'GUIが利用不可',
+            'library_init_title': 'AI検索の初期化',
+            'library_init_message': 'AI検索を利用するにはライブラリのメタデータが必要です。今すぐ初期化しますか？\n\nこれにより、ライブラリから本のタイトルと著者名が抽出されます。',
+            'library_init_required': 'ライブラリデータなしでAI検索を有効にすることはできません。準備ができたら「ライブラリデータの更新」をクリックしてください。',
+            'ai_search_welcome_title': 'AI検索へようこそ',
+            'ai_search_welcome_message': 'AI検索が有効になりました！\n\n起動方法：\n• キーボードショートカット（設定でカスタマイズ可能）\n• ツールメニュー → AI検索\n• 本を選択せずにAskダイアログを開く\n\n自然言語でライブラリ全体を検索できます。例：\n• 「Pythonに関する本はありますか？」\n• 「アイザック・アシモフの本を見せて」\n• 「機械学習についての本を探して」\n\nAIがライブラリ内を検索し、関連する本を推薦します。本のタイトルをクリックすると直接開けます。',
+            'ai_search_not_enough_books_title': '本が足りません',
+            'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
+            'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
+            'ai_search_privacy_title': 'プライバシーに関するお知らせ',
+            'ai_search_privacy_alert': 'AI検索はライブラリの本のメタデータ（タイトルと著者）を使用します。この情報は、検索クエリを処理するために設定されたAIプロバイダーに送信されます。',
+            'ai_search_updated_info': '{time_ago}に {count} 冊の本を更新',
+            'ai_search_books_info': '{count} 冊の本がインデックス済み',
+            'days_ago': '{n} 日前',
+            'hours_ago': '{n} 時間前',
+            'minutes_ago': '{n} 分前',
+            'just_now': 'たった今',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': '統計',
+            'stat_overview': '概要',
+            'stat_overview_subtitle': 'AI問い合わせ回数の統計',
+            'stat_days_unit': '日',
+            'stat_days_label': '利用開始',
+            'stat_start_at': '{date}から開始',
+            'stat_replies_unit': '回',
+            'stat_replies_label': 'AI問い合わせ',
+            'stat_books_unit': '冊',
+            'stat_books_label': '蔵書数',
+            'stat_no_books': '検索タブで更新',
+            'stat_trends': 'トレンド',
+            'stat_curious_index': '今週のAI問い合わせ回数分布',
+            'stat_daily_avg': '1日平均 {n} 回',
+            'stat_sample_data': 'サンプルデータを表示中。20回以上のリクエスト後に実データに切り替わります',
+            'stat_heatmap': 'ヒートマップ',
+            'stat_heatmap_subtitle': '今月のAI問い合わせ回数分布',
+            'stat_no_data_week': '今週のデータはありません',
+            'stat_no_data_month': '今月のデータはありません',
+            'stat_data_not_enough': 'データが不足しています',
+            
+            # 統計ユーザー称号（問い合わせ回数に基づく）
+            'stat_title_curious': '本めくり',
+            'stat_title_explorer': '書籍探し',
+            'stat_title_seeker': '読書家',
+            'stat_title_enthusiast': '蔵書家',
+            'stat_title_pursuer': '本の虫',
+            
+            # 統計書庫評価（蔵書数に基づく、歴史的図書館の典故）
+            'stat_books_impressive': '私設文庫',
+            'stat_books_collection': '書斎',
+            'stat_books_variety': '正倉院',
+            'stat_books_awesome': '国立国会図書館',
+            'stat_books_unbelievable': 'アレクサンドリア図書館',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'オンラインチュートリアル',
         }

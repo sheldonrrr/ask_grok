@@ -22,7 +22,7 @@ class FinnishTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'Tietoja kirjasta "{title}": Tekijä: {author}, Kustantaja: {publisher}, Julkaisuvuosi: {pubyear}, kirjan kieli: {language}, Sarja: {series}, Kysymykseni on: {query}'
+        return 'Konteksti: Autat calibre-sovelluksen (http://calibre-ebook.com), tehokkaan e-kirjojen hallintasovelluksen, käyttäjää "Ask AI Plugin" -liitännäisen kautta. Tämä liitännäinen mahdollistaa käyttäjien esittää kysymyksiä calibre-kirjastossaan olevista kirjoista. Huomautus: Tämä liitännäinen voi vastata vain valitun kirjan sisältöä, teemoja tai aiheeseen liittyviä kysymyksiä - se ei voi suoraan muokata kirjan metatietoja tai suorittaa calibre-toimintoja. Kirjan tiedot: Otsikko: "{title}", Tekijä: {author}, Kustantaja: {publisher}, Julkaisuvuosi: {pubyear}, Kieli: {language}, Sarja: {series}. Käyttäjän kysymys: {query}. Anna hyödyllinen vastaus kirjan tietojen ja tietämyksesi perusteella.'
     
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class FinnishTranslation(BaseTranslation):
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
             'debug_settings_subtitle': 'Ota käyttöön debug-lokikirjaus vianmääritystä varten',
-            'reset_all_data_subtitle': '⚠️ Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
+            'reset_all_data_subtitle': 'Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
             
             # Prompts tab
             'language_preference_title': 'Kieliasetukset',
@@ -178,6 +178,8 @@ class FinnishTranslation(BaseTranslation):
             'export_history_btn': 'Vie historia PDF-muodossa',
             'copy_mode_response': 'Vastaus',
             'copy_mode_qa': 'K&V',
+            'copy_format_plain': 'Pelkkä teksti',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Nykyinen K&V',
             'export_mode_history': 'Historia',
             
@@ -479,4 +481,76 @@ class FinnishTranslation(BaseTranslation):
             'pdf_software': 'Ohjelmisto',
             'pdf_generated_time': 'Luotu aika',
             'pdf_info_not_available': 'Tietoa ei saatavilla',
+
+            #AI Search v1.4.2
+            'library_tab': 'Haku',
+            'library_search': 'AI-haku',
+            'library_info': 'AI-haku on aina käytössä. Kun et valitse kirjoja, voit hakea koko kirjastostasi luonnollisella kielellä.',
+            'library_enable': 'Ota AI-haku käyttöön',
+            'library_enable_tooltip': 'Kun käytössä, voit hakea kirjastostasi tekoälyllä, kun kirjoja ei ole valittuna',
+            'library_update': 'Päivitä kirjaston tiedot',
+            'library_update_tooltip': 'Hae kirjojen nimet ja kirjailijat kirjastostasi',
+            'library_updating': 'Päivitetään...',
+            'library_status': 'Tila: {count} kirjaa, viimeisin päivitys: {time}',
+            'library_status_empty': 'Tila: Ei tietoja. Aloita klikkaamalla "Päivitä kirjaston tiedot".',
+            'library_status_error': 'Tila: Virhe ladattaessa tietoja',
+            'library_update_success': 'Päivitetty onnistuneesti {count} kirjaa',
+            'library_update_failed': 'Kirjaston tietojen päivitys epäonnistui',
+            'library_no_gui': 'GUI ei käytettävissä',
+            'library_init_title': 'Alusta AI-haku',
+            'library_init_message': 'AI-haku vaatii kirjaston metatiedot toimiakseen. Haluatko alustaa ne nyt?\n\nTämä hakee kirjojen nimet ja kirjailijat kirjastostasi.',
+            'library_init_required': 'AI-hakua ei voi ottaa käyttöön ilman kirjaston tietoja. Klikkaa "Päivitä kirjaston tiedot", kun olet valmis käyttämään tätä ominaisuutta.',
+            'ai_search_welcome_title': 'Tervetuloa AI-hakuun',
+            'ai_search_welcome_message': 'AI-haku on aktivoitu!\n\nAktivointitavat:\n• Pikanäppäin (muokattavissa asetuksissa)\n• Työkalut-valikko → AI-haku\n• Avaa Ask-dialogi valitsematta kirjoja\n\nVoit hakea koko kirjastostasi luonnollisella kielellä. Esimerkiksi:\n• "Onko sinulla kirjoja Pythonista?"\n• "Näytä Isaac Asimovin kirjoja"\n• "Etsi kirjoja koneoppimisesta"\n\nAI etsii kirjastostasi ja suosittelee sopivia kirjoja. Napsauta kirjan nimeä avataksesi sen suoraan.',
+            'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
+            'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
+            'ai_search_mode_info': 'Haetaan koko kirjastosta',
+            'library_prompt_template': 'Sinulla on pääsy käyttäjän kirjakirjastoon. Tässä ovat kaikki kirjat: {metadata} Käyttäjän kysely: {query} Etsi vastaavat kirjat nykyisestä kirjastosta ja palauta ne tässä muodossa (**TÄRKEÄÄ**: Käytä HTML-linkkimuotoa, jotta käyttäjät voivat napsauttaa kirjojen nimiä avatakseen ne suoraan): - <a href="calibre://book/BOOK_ID">Kirjan nimi</a> - Kirjailijan nimi Esimerkki: - <a href="calibre://book/123">Opi Python</a> - Mark Lutz - <a href="calibre://book/456">Koneoppiminen käytännössä</a> - Peter Harrington Huomautus: Jotkut kirjailijat voivat olla merkitty "unknown". Tämä on normaalia dataa, palauta kaikki vastaavat tulokset normaalisti. Palauta vain kyselyä vastaavat kirjat. Enintään 5 tulosta.',
+            'ai_search_privacy_title': 'Tietosuojailmoitus',
+            'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',
+            'ai_search_updated_info': 'Päivitetty {count} kirjaa {time_ago}',
+            'ai_search_books_info': '{count} kirjaa indeksoitu',
+            'days_ago': '{n} päivää sitten',
+            'hours_ago': '{n} tuntia sitten',
+            'minutes_ago': '{n} minuuttia sitten',
+            'just_now': 'juuri nyt',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Tilastot',
+            'stat_overview': 'Yleiskatsaus',
+            'stat_overview_subtitle': 'AI-kyselyiden tilastot',
+            'stat_days_unit': 'päivää',
+            'stat_days_label': 'Aloitettu',
+            'stat_start_at': 'Aloitus {date}',
+            'stat_replies_unit': 'kertaa',
+            'stat_replies_label': 'Kysy AI',
+            'stat_books_unit': 'kirjaa',
+            'stat_books_label': 'Kirjasto',
+            'stat_no_books': 'Päivitä Haku-välilehdellä',
+            'stat_trends': 'Trendit',
+            'stat_curious_index': 'AI-kyselyiden jakauma tällä viikolla',
+            'stat_daily_avg': 'Päivittäinen keskiarvo {n} kertaa',
+            'stat_sample_data': 'Esimerkkidata näytetään. Vaihtuu oikeaan dataan 20+ pyynnön jälkeen',
+            'stat_heatmap': 'Lämpökartta',
+            'stat_heatmap_subtitle': 'AI-kyselyiden jakauma tässä kuussa',
+            'stat_no_data_week': 'Ei dataa tällä viikolla',
+            'stat_no_data_month': 'Ei dataa tässä kuussa',
+            'stat_data_not_enough': 'Ei tarpeeksi dataa',
+            
+            # Tilastot käyttäjänimikkeet (perustuu kyselyjen määrään)
+            'stat_title_curious': 'Selailija',
+            'stat_title_explorer': 'Kirjametsästäjä',
+            'stat_title_seeker': 'Innokas lukija',
+            'stat_title_enthusiast': 'Bibliofiili',
+            'stat_title_pursuer': 'Kirjatoukka',
+            
+            # Tilastot kirjastoarvioinnit (perustuu kokoelman kokoon, historialliset viittaukset)
+            'stat_books_impressive': 'Yksityinen lukuhuone',
+            'stat_books_collection': 'Oppineen työhuone',
+            'stat_books_variety': 'Helsingin yliopiston kirjasto',
+            'stat_books_awesome': 'Kansalliskirjasto',
+            'stat_books_unbelievable': 'Aleksandrian kirjasto',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online-opas',
         }

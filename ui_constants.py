@@ -84,11 +84,12 @@ def get_groupbox_style(border_style="none"):
         border_style: 边框样式 "solid", "dashed" 或 "none"（默认无边框，使用背景色区分）
     """
     if border_style == "none":
-        # 无边框样式，使用浅色背景区分区域
+        # 无边框样式，使用背景色区分区域
+        # 使用 palette(window) 在暗色模式下提供更好的对比度
         return f"""
             QGroupBox {{
                 border: none;
-                background-color: {BG_COLOR_ALTERNATE};
+                background-color: palette(window);
                 border-radius: 6px;
                 padding: {PADDING_LARGE}px;
                 margin-top: 0px;
@@ -132,9 +133,18 @@ def get_section_title_style():
         font-weight: bold;
         font-size: 1.08em;
         color: {TEXT_COLOR_PRIMARY};
-        text-transform: uppercase;
         padding: 0;
         margin: {SPACING_LARGE}px 0 {SPACING_SMALL}px 0;
+    """
+
+def get_first_section_title_style():
+    """获取第一个section title样式（顶部间距较小，与其他Tab保持一致）"""
+    return f"""
+        font-weight: bold;
+        font-size: 1.08em;
+        color: {TEXT_COLOR_PRIMARY};
+        padding: 0;
+        margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
     """
 
 # ============ Subtitle样式 ============
@@ -164,6 +174,66 @@ FORM_LABEL_WIDTH = 150          # 表单标签宽度
 FORM_SPACING = SPACING_MEDIUM   # 表单项之间的间距
 FORM_MARGIN = MARGIN_MEDIUM     # 表单边距
 
+# ============ Tab 内容布局规范 ============
+# 统一所有配置 Tab 的内边距和间距
+# 两层间距结构：外层（Tab容器边距）+ 内层（滚动区域内容边距）
+TAB_OUTER_MARGIN = SPACING_SMALL        # Tab 外层边距 (8px)
+TAB_CONTENT_MARGIN = SPACING_SMALL      # Tab 内容的上下左右边距 (8px)
+TAB_CONTENT_SPACING = SPACING_ASK_COMPACT  # Tab 内容区域之间的间距 (4px)
+
+def setup_tab_widget_layout(widget):
+    """
+    为 Tab Widget 设置统一的主布局
+    
+    所有配置 Tab 都应该调用此函数来确保布局完全一致。
+    
+    Args:
+        widget: QWidget 实例（Tab 页面）
+    
+    Returns:
+        QVBoxLayout: 已配置好的主布局
+    
+    使用示例:
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            main_layout = setup_tab_widget_layout(self)
+            # 然后添加内容到 main_layout
+    """
+    from PyQt5.QtWidgets import QVBoxLayout
+    
+    layout = QVBoxLayout()
+    layout.setContentsMargins(TAB_OUTER_MARGIN, TAB_OUTER_MARGIN, TAB_OUTER_MARGIN, TAB_OUTER_MARGIN)
+    layout.setSpacing(0)
+    widget.setLayout(layout)
+    return layout
+
+def get_tab_scroll_area_style(object_name="tab_scroll"):
+    """
+    获取统一的 Tab 滚动区域样式
+    
+    Args:
+        object_name: QScrollArea 的 objectName
+    
+    Returns:
+        str: 滚动区域的 CSS 样式字符串
+    """
+    return f"""
+        QScrollArea#{object_name} {{
+            padding: 0px;
+            margin: 0px;
+            border: none;
+        }}
+        QScrollArea#{object_name} > QWidget {{
+            background: transparent;
+        }}
+        QScrollArea#{object_name} QWidget#qt_scrollarea_viewport {{
+            background: transparent;
+            border: none;
+            margin: 0px;
+            padding: 0px;
+        }}
+    """
+
 # ============ 标准按钮样式 ============
 STANDARD_BUTTON_MIN_WIDTH = 120  # 标准按钮最小宽度
 STANDARD_BUTTON_PADDING = "5px 12px"  # 标准按钮内边距
@@ -171,6 +241,9 @@ STANDARD_BUTTON_PADDING = "5px 12px"  # 标准按钮内边距
 def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
     """
     获取标准按钮样式
+    
+    注意：不设置 hover 和 pressed 样式，让 Qt 使用系统默认效果。
+    这样可以确保在所有平台（Linux/macOS/Windows）和主题（浅色/深色）下都正常工作。
     
     Args:
         min_width: 最小宽度（默认 120px）
@@ -184,12 +257,6 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             text-align: center;
             min-width: {min_width}px;
             min-height: 1.5em;
-        }}
-        QPushButton:hover {{
-            background: palette(mid);
-        }}
-        QPushButton:pressed {{
-            background: palette(dark);
         }}
     """
 

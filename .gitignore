@@ -204,3 +204,9 @@ Thumbs.db
 
 # Backend folder (managed in separate repository)
 backend/
+
+# Resilio Sync directory
+.sync/
+
+# Obsidian editor
+.obsidian/

@@ -22,7 +22,7 @@ class SpanishTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'Sobre el libro "{title}": Autor: {author}, Editorial: {publisher}, Año de publicación: {pubyear}, libro en idioma: {language}, Serie: {series}, Mi pregunta es: {query}'
+        return 'Contexto: Está asistiendo a un usuario de calibre (http://calibre-ebook.com), una potente aplicación de gestión de libros electrónicos, a través del plugin "Ask AI Plugin". Este plugin permite a los usuarios hacer preguntas sobre los libros de su biblioteca de calibre. Nota: Este plugin solo puede responder preguntas sobre el contenido, temas o tópicos relacionados del libro seleccionado - no puede modificar directamente los metadatos del libro ni realizar operaciones de calibre. Información del libro: Título: "{title}", Autor: {author}, Editorial: {publisher}, Año de publicación: {pubyear}, Idioma: {language}, Serie: {series}. Pregunta del usuario: {query}. Por favor, proporcione una respuesta útil basada en la información del libro y su conocimiento.'
     
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class SpanishTranslation(BaseTranslation):
             'prompts_subtitle': 'Personaliza cómo se envían las preguntas a la IA',
             'export_settings_subtitle': 'Establece la carpeta predeterminada para exportar PDFs',
             'debug_settings_subtitle': 'Habilitar el registro de depuración para solucionar problemas',
-            'reset_all_data_subtitle': '⚠️ Advertencia: Esto eliminará permanentemente todos tus ajustes y datos',
+            'reset_all_data_subtitle': 'Advertencia: Esto eliminará permanentemente todos tus ajustes y datos',
             
             # Prompts tab
             'language_preference_title': 'Preferencia de idioma',
@@ -178,6 +178,8 @@ class SpanishTranslation(BaseTranslation):
             'export_history_btn': 'Exportar historial como PDF',
             'copy_mode_response': 'Respuesta',
             'copy_mode_qa': 'P&R',
+            'copy_format_plain': 'Texto plano',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'P&R actual',
             'export_mode_history': 'Historial',
             
@@ -479,4 +481,76 @@ class SpanishTranslation(BaseTranslation):
             'pdf_software': 'Software',
             'pdf_generated_time': 'Hora de generación',
             'pdf_info_not_available': 'Información no disponible',
+            
+            # Library Chat feature (v1.4.2)
+            'library_tab': 'Búsqueda',
+            'library_search': 'Búsqueda IA',
+            'library_info': 'La búsqueda IA siempre está habilitada. Cuando no selecciona ningún libro, puede buscar en toda su biblioteca usando lenguaje natural.',
+            'library_enable': 'Habilitar búsqueda IA',
+            'library_enable_tooltip': 'Cuando está habilitado, puede buscar en su biblioteca usando IA cuando no hay libros seleccionados',
+            'library_update': 'Actualizar datos de la biblioteca',
+            'library_update_tooltip': 'Extraer títulos y autores de libros de su biblioteca',
+            'library_updating': 'Actualizando...',
+            'library_status': 'Estado: {count} libros, última actualización: {time}',
+            'library_status_empty': 'Estado: Sin datos. Haga clic en "Actualizar datos de la biblioteca" para comenzar.',
+            'library_status_error': 'Estado: Error al cargar datos',
+            'library_update_success': '{count} libros actualizados exitosamente',
+            'library_update_failed': 'Error al actualizar datos de la biblioteca',
+            'library_no_gui': 'GUI no disponible',
+            'library_init_title': 'Inicializar búsqueda IA',
+            'library_init_message': 'La búsqueda IA requiere metadatos de la biblioteca para funcionar. ¿Desea inicializarla ahora?\n\nEsto extraerá títulos y autores de libros de su biblioteca.',
+            'library_init_required': 'La búsqueda IA no se puede habilitar sin datos de la biblioteca. Haga clic en "Actualizar datos de la biblioteca" cuando esté listo para usar esta función.',
+            'ai_search_welcome_title': 'Bienvenido a la búsqueda IA',
+            'ai_search_welcome_message': '¡La búsqueda IA está activada!\n\nFormas de activar:\n• Atajo de teclado (personalizable en ajustes)\n• Menú Herramientas → Búsqueda IA\n• Abrir diálogo Ask sin seleccionar libros\n\nPuede buscar en toda su biblioteca usando lenguaje natural. Por ejemplo:\n• "¿Tiene libros sobre Python?"\n• "Muéstrame libros de Isaac Asimov"\n• "Encuentra libros sobre aprendizaje automático"\n\nLa IA buscará en su biblioteca y recomendará libros relevantes. Haga clic en los títulos para abrirlos directamente.',
+            'ai_search_not_enough_books_title': 'No hay suficientes libros',
+            'ai_search_not_enough_books_message': 'La búsqueda IA requiere al menos {min_books} libros en su biblioteca.\n\nSu biblioteca actual solo tiene {book_count} libro(s).\n\nPor favor, agregue más libros para usar la búsqueda IA.',
+            'ai_search_mode_info': 'Buscando en toda su biblioteca',
+            'library_prompt_template': 'Tiene acceso a la biblioteca de libros del usuario. Aquí están todos los libros: {metadata} Consulta del usuario: {query} Por favor, encuentre libros coincidentes en la biblioteca actual y devuélvalos en este formato (**IMPORTANTE**: Use el formato de enlace HTML para que los usuarios puedan hacer clic en los títulos de los libros para abrirlos directamente): - <a href="calibre://book/BOOK_ID">Título del libro</a> - Nombre del autor Ejemplo: - <a href="calibre://book/123">Aprender Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning en acción</a> - Peter Harrington Nota: Algunos autores pueden aparecer como "unknown". Estos son datos normales, por favor devuelva todos los resultados coincidentes normalmente. Solo devuelva libros que coincidan con la consulta. Máximo 5 resultados.',
+            'ai_search_privacy_title': 'Aviso de Privacidad',
+            'ai_search_privacy_alert': 'La Búsqueda IA utiliza metadatos de libros (títulos y autores) de tu biblioteca. Esta información se enviará al proveedor de IA que hayas configurado para procesar tus consultas de búsqueda.',
+            'ai_search_updated_info': 'Actualizado {count} libros hace {time_ago}',
+            'ai_search_books_info': '{count} libros indexados',
+            'days_ago': '{n} días',
+            'hours_ago': '{n} horas',
+            'minutes_ago': '{n} minutos',
+            'just_now': 'ahora mismo',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Estadísticas',
+            'stat_overview': 'Resumen',
+            'stat_overview_subtitle': 'Estadísticas de consultas AI',
+            'stat_days_unit': 'días',
+            'stat_days_label': 'Iniciado',
+            'stat_start_at': 'Inicio el {date}',
+            'stat_replies_unit': 'veces',
+            'stat_replies_label': 'Preguntar AI',
+            'stat_books_unit': 'libros',
+            'stat_books_label': 'Biblioteca',
+            'stat_no_books': 'Actualizar en la pestaña Búsqueda',
+            'stat_trends': 'Tendencias',
+            'stat_curious_index': 'Distribución de consultas AI esta semana',
+            'stat_daily_avg': 'Promedio diario {n} veces',
+            'stat_sample_data': 'Datos de ejemplo mostrados. Cambiará a datos reales después de 20+ solicitudes',
+            'stat_heatmap': 'Mapa de calor',
+            'stat_heatmap_subtitle': 'Distribución de consultas AI este mes',
+            'stat_no_data_week': 'Sin datos esta semana',
+            'stat_no_data_month': 'Sin datos este mes',
+            'stat_data_not_enough': 'Datos insuficientes',
+            
+            # Títulos de usuario estadísticos (basados en número de consultas)
+            'stat_title_curious': 'Hojeador',
+            'stat_title_explorer': 'Cazador de libros',
+            'stat_title_seeker': 'Lector ávido',
+            'stat_title_enthusiast': 'Bibliófilo',
+            'stat_title_pursuer': 'Ratón de biblioteca',
+            
+            # Evaluaciones de biblioteca (basadas en tamaño de colección, referencias históricas)
+            'stat_books_impressive': 'Gabinete de lectura',
+            'stat_books_collection': 'Estudio del erudito',
+            'stat_books_variety': 'Biblioteca del Escorial',
+            'stat_books_awesome': 'Biblioteca Nacional de España',
+            'stat_books_unbelievable': 'Biblioteca de Alejandría',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Tutorial en línea',
         }

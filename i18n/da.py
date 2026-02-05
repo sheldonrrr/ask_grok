@@ -22,7 +22,7 @@ class DanishTranslation(BaseTranslation):
 
     @property
     def default_template(self) -> str:
-        return 'Om bogen "{title}": Forfatter: {author}, Forlag: {publisher}, Udgivelsesår: {pubyear}, bog i language: {language}, Serie: {series}, Mit spørgsmål er: {query}'
+        return 'Kontekst: Du hjælper en bruger af calibre (http://calibre-ebook.com), en kraftfuld e-bogshåndteringsapplikation, gennem "Ask AI Plugin". Dette plugin giver brugerne mulighed for at stille spørgsmål om bøger i deres calibre-bibliotek. Bemærk: Dette plugin kan kun besvare spørgsmål om den valgte bogs indhold, emner eller relaterede emner - det kan ikke direkte ændre bogmetadata eller udføre calibre-operationer. Boginformation: Titel: "{title}", Forfatter: {author}, Forlag: {publisher}, Udgivelsesår: {pubyear}, Sprog: {language}, Serie: {series}. Brugerens spørgsmål: {query}. Giv venligst et nyttigt svar baseret på boginformationen og din viden.'
 
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class DanishTranslation(BaseTranslation):
             'prompts_subtitle': 'Tilpas, hvordan spørgsmål sendes til AI',
             'export_settings_subtitle': 'Indstil standardmappe for eksport af PDF\'er',
             'debug_settings_subtitle': 'Aktivér fejlfindingslogning til fejlfinding',
-            'reset_all_data_subtitle': '⚠️ Advarsel: Dette vil permanent slette alle dine indstillinger og data',
+            'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine indstillinger og data',
 
             # Prompts tab
             'language_preference_title': 'Sprogpræference',
@@ -178,6 +178,8 @@ class DanishTranslation(BaseTranslation):
             'export_history_btn': 'Eksportér historik som PDF',
             'copy_mode_response': 'Svar',
             'copy_mode_qa': 'S&S',
+            'copy_format_plain': 'Ren tekst',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Nuværende S&S',
             'export_mode_history': 'Historik',
 
@@ -477,4 +479,76 @@ class DanishTranslation(BaseTranslation):
             'pdf_software': 'Software',
             'pdf_generated_time': 'Genereringstid',
             'pdf_info_not_available': 'Information ikke tilgængelig',
+
+            # AI Search Version 1.4.2
+            'library_tab': 'Søg',
+            'library_search': 'AI Søgning',
+            'library_info': 'AI Søgning er altid aktiveret. Når du ikke vælger nogen bøger, kan du søge i hele dit bibliotek ved hjælp af naturligt sprog.',
+            'library_enable': 'Aktiver AI Søgning',
+            'library_enable_tooltip': 'Når aktiveret, kan du søge i dit bibliotek ved hjælp af AI, når ingen bøger er valgt',
+            'library_update': 'Opdater biblioteksdata',
+            'library_update_tooltip': 'Udtræk bogtitler og forfattere fra dit bibliotek',
+            'library_updating': 'Opdaterer...',
+            'library_status': 'Status: {count} bøger, sidste opdatering: {time}',
+            'library_status_empty': 'Status: Ingen data. Klik på "Opdater biblioteksdata" for at starte.',
+            'library_status_error': 'Status: Fejl ved indlæsning af data',
+            'library_update_success': 'Opdateret {count} bøger med succes',
+            'library_update_failed': 'Kunne ikke opdatere biblioteksdata',
+            'library_no_gui': 'GUI ikke tilgængelig',
+            'library_init_title': 'Initialiser AI Søgning',
+            'library_init_message': 'AI Søgning kræver biblioteksmetadata for at fungere. Vil du initialisere det nu?\n\nDette vil udtrække bogtitler og forfattere fra dit bibliotek.',
+            'library_init_required': 'AI Søgning kan ikke aktiveres uden biblioteksdata. Klik venligst på "Opdater biblioteksdata", når du er klar til at bruge denne funktion.',
+            'ai_search_welcome_title': 'Velkommen til AI Søgning',
+            'ai_search_welcome_message': 'AI Søgning er aktiveret!\n\nSådan aktiveres:\n• Tastaturgenvej (kan tilpasses i indstillinger)\n• Værktøjsmenu → AI Søgning\n• Åbn Ask-dialog uden at vælge bøger\n\nDu kan søge i hele dit bibliotek med naturligt sprog. For eksempel:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger. Klik på bogtitler for at åbne dem direkte.',
+            'ai_search_not_enough_books_title': 'Ikke nok bøger',
+            'ai_search_not_enough_books_message': 'AI Søgning kræver mindst {min_books} bøger i dit bibliotek.\n\nDit nuværende bibliotek har kun {book_count} bog/bøger.\n\nTilføj venligst flere bøger for at bruge AI Søgning.',
+            'ai_search_mode_info': 'Søger på tværs af hele dit bibliotek',
+            'library_prompt_template': 'Du har adgang til brugerens bogbibliotek. Her er alle bøgerne: {metadata} Brugerforespørgsel: {query} Find venligst matchende bøger i det aktuelle bibliotek og returner dem i dette format (**VIGTIGT**: Brug HTML-linkformat, så brugere kan klikke på bogtitler for at åbne dem direkte): - <a href="calibre://book/BOOK_ID">Bogtitel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Bemærk: Nogle forfattere kan være angivet som "unknown". Dette er normale data, returner venligst alle matchende resultater normalt. Returner kun bøger, der matcher forespørgslen. Maksimalt 5 resultater.',
+            'ai_search_privacy_title': 'Meddelelse om beskyttelse af personlige oplysninger',
+            'ai_search_privacy_alert': 'AI Søgning bruger bogmetadata (titler og forfattere) fra dit bibliotek. Disse oplysninger vil blive sendt til den AI-udbyder, du har konfigureret til at behandle dine søgeforespørgsler.',
+            'ai_search_updated_info': 'Opdateret {count} bøger {time_ago}',
+            'ai_search_books_info': '{count} bøger indekseret',
+            'days_ago': '{n} dage siden',
+            'hours_ago': '{n} timer siden',
+            'minutes_ago': '{n} minutter siden',
+            'just_now': 'lige nu',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistik',
+            'stat_overview': 'Oversigt',
+            'stat_overview_subtitle': 'Statistik over AI-forespørgsler',
+            'stat_days_unit': 'dage',
+            'stat_days_label': 'Startet',
+            'stat_start_at': 'Start {date}',
+            'stat_replies_unit': 'gange',
+            'stat_replies_label': 'Spørg AI',
+            'stat_books_unit': 'bøger',
+            'stat_books_label': 'Bibliotek',
+            'stat_no_books': 'Opdater i Søg-fanen',
+            'stat_trends': 'Tendenser',
+            'stat_curious_index': 'AI-forespørgsler fordeling denne uge',
+            'stat_daily_avg': 'Dagligt gennemsnit {n} gange',
+            'stat_sample_data': 'Eksempeldata vist. Skifter til rigtige data efter 20+ forespørgsler',
+            'stat_heatmap': 'Varmekort',
+            'stat_heatmap_subtitle': 'AI-forespørgsler fordeling denne måned',
+            'stat_no_data_week': 'Ingen data denne uge',
+            'stat_no_data_month': 'Ingen data denne måned',
+            'stat_data_not_enough': 'Ikke nok data',
+            
+            # Statistik brugertitler (baseret på antal forespørgsler)
+            'stat_title_curious': 'Bladrer',
+            'stat_title_explorer': 'Bogjæger',
+            'stat_title_seeker': 'Ivrig læser',
+            'stat_title_enthusiast': 'Bibliofil',
+            'stat_title_pursuer': 'Bogorm',
+            
+            # Statistik biblioteksvurderinger (baseret på samlingsstørrelse, historiske referencer)
+            'stat_books_impressive': 'Privat læseværelse',
+            'stat_books_collection': 'Lærdes studie',
+            'stat_books_variety': 'Det Kongelige Bibliotek',
+            'stat_books_awesome': 'British Library',
+            'stat_books_unbelievable': 'Biblioteket i Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online vejledning',
         }

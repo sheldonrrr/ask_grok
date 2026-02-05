@@ -151,7 +151,7 @@ class APIClient:
                 
             raise AIAPIError(error_msg, error_type=error_type) from e
     
-    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None, model_id: str = None) -> str:
+    def ask(self, prompt: str, lang_code: str = 'en', return_dict: bool = False, stream: bool = False, stream_callback=None, model_id: str = None, use_library_chat: bool = False) -> str:
         """向 AI 模型发送问题并获取回答，支持流式请求
         
         Args:
@@ -161,6 +161,7 @@ class APIClient:
             stream: 是否使用流式请求，默认为 False
             stream_callback: 流式响应回调函数，用于处理流式响应的每个片段
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
+            use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
             
         Returns:
             str 或 dict: 如果 return_dict 为 False，返回回答文本；否则返回完整的响应字典
@@ -189,6 +190,17 @@ class APIClient:
                 if not self._ai_model:
                     error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
                     raise AIAPIError(error_msg, error_type="config_error")
+            
+            # Library Chat支持：检查是否需要注入图书馆元数据
+            if use_library_chat:
+                from .utils import is_library_chat_enabled, build_library_prompt
+                from .config import get_prefs
+                
+                prefs = get_prefs()
+                if is_library_chat_enabled(prefs):
+                    # 使用build_library_prompt包装用户查询，传入i18n支持多语言
+                    prompt = build_library_prompt(prompt, prefs, self.i18n)
+                    logger.info("Library Chat enabled, injected library metadata into prompt")
             
             # 准备请求参数
             kwargs = {

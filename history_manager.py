@@ -161,6 +161,25 @@ class HistoryManager:
         """根据 UID 获取历史记录"""
         return self.histories.get(uid)
     
+    def get_ai_search_histories(self):
+        """获取所有 AI Search 模式的历史记录（books 为空或包含 AI Search 标记）
+        
+        Returns:
+            历史记录列表，按时间倒序
+        """
+        ai_search_histories = []
+        
+        for uid, history in self.histories.items():
+            books = history.get('books', [])
+            # AI Search 模式：books 为空列表，或包含特殊的 AI Search 标记
+            if not books or (len(books) == 1 and books[0].get('id') == 'ai_search'):
+                ai_search_histories.append(history)
+        
+        # 按时间倒序排序
+        ai_search_histories.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return ai_search_histories
+    
     def delete_history(self, uid):
         """删除指定UID的历史记录
         

@@ -56,16 +56,20 @@ class ResponsePanel(QWidget):
         # 当前问题（用于按钮状态判断）
         self.current_question = ""
         
+        # 存储原始Markdown文本（用于复制Markdown格式）
+        self._original_markdown_text = ""
+        
         self.setup_ui()
         
     def setup_ui(self):
         """设置UI布局"""
+        # 检查是否为AI搜索模式
+        is_ai_search_mode = hasattr(self.parent_dialog, 'books_info') and not self.parent_dialog.books_info
+        
         # 主布局：垂直
         main_layout = QVBoxLayout(self)
-        # 使用紧凑间距，让AI回复区域更大
-        from calibre_plugins.ask_ai_plugin.ui_constants import SPACING_ASK_COMPACT
-        main_layout.setContentsMargins(0, 0, 0, SPACING_ASK_COMPACT)  # 上边距0，下边距4px
-        main_layout.setSpacing(SPACING_ASK_COMPACT)  # 内部元素间距4px
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(SPACING_SMALL)
         
         # === Header 区域（横向） ===
         # 只有当 show_ai_switcher 为 True 时才显示 header
@@ -109,12 +113,15 @@ class ResponsePanel(QWidget):
         
         # === Response Area（占据主要空间） ===
         self.response_area = QTextBrowser()
-        self.response_area.setOpenExternalLinks(True)
+        self.response_area.setOpenExternalLinks(False)  # 禁用外部链接，使用自定义处理
+        self.response_area.setOpenLinks(False)  # 禁止QTextBrowser自动导航，防止内容被清除
         self.response_area.setMinimumHeight(200)
         self.response_area.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextBrowserInteraction | 
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
+        # 连接链接点击信号
+        self.response_area.anchorClicked.connect(self._on_anchor_clicked)
         self.response_area.setStyleSheet("""
             QTextBrowser {
                 border: 1px dashed palette(mid);
@@ -155,6 +162,14 @@ class ResponsePanel(QWidget):
                 padding: 8px 12px;
                 text-align: left;
             }
+            a {
+                color: #0066cc;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            a:hover {
+                color: #0044aa;
+            }
         """)
         
         main_layout.addWidget(self.response_area, stretch=1)  # stretch=1 让它占据剩余空间
@@ -167,6 +182,7 @@ class ResponsePanel(QWidget):
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         self.copy_mode = prefs.get('copy_mode', 'response')  # 'response' or 'qa'
+        self.copy_format = prefs.get('copy_format', 'plain')  # 'plain' or 'markdown'
         self.export_mode = prefs.get('export_mode', 'current')  # 'current' or 'history'
         parallel_ai_count = prefs.get('parallel_ai_count', 1)
         
@@ -184,6 +200,14 @@ class ResponsePanel(QWidget):
         self.copy_response_action.triggered.connect(lambda: self._switch_copy_mode('response'))
         self.copy_qa_action = copy_menu.addAction(self.i18n.get('copy_mode_qa', 'Q&A'))
         self.copy_qa_action.triggered.connect(lambda: self._switch_copy_mode('qa'))
+        
+        # 添加分隔符和格式选项
+        copy_menu.addSeparator()
+        self.copy_plain_action = copy_menu.addAction(self.i18n.get('copy_format_plain', 'Plain Text'))
+        self.copy_plain_action.triggered.connect(lambda: self._switch_copy_format('plain'))
+        self.copy_markdown_action = copy_menu.addAction(self.i18n.get('copy_format_markdown', 'Markdown'))
+        self.copy_markdown_action.triggered.connect(lambda: self._switch_copy_format('markdown'))
+        
         self.copy_btn.setMenu(copy_menu)
         self._update_copy_menu_checkmarks()
         
@@ -207,13 +231,16 @@ class ResponsePanel(QWidget):
             self.export_btn.setMenu(export_menu)
             self._update_export_menu_checkmarks()
             
-            button_layout.addWidget(self.copy_btn)
-            button_layout.addWidget(self.export_btn)
+            # AI搜索模式下隐藏复制和导出按钮
+            if not is_ai_search_mode:
+                button_layout.addWidget(self.copy_btn)
+                button_layout.addWidget(self.export_btn)
             button_layout.addStretch()
         else:
             # 多AI模式（2个面板）
             # 所有面板都显示复制按钮（左对齐）
-            button_layout.addWidget(self.copy_btn)
+            if not is_ai_search_mode:
+                button_layout.addWidget(self.copy_btn)
             button_layout.addStretch()
             
             # 只有最后一个面板（右侧）显示导出按钮（右对齐）
@@ -239,7 +266,9 @@ class ResponsePanel(QWidget):
                 self.export_btn.setMenu(export_menu)
                 self._update_export_menu_checkmarks()
                 
-                button_layout.addWidget(self.export_btn)
+                # AI搜索模式下隐藏导出按钮
+                if not is_ai_search_mode:
+                    button_layout.addWidget(self.export_btn)
             else:
                 # 非最后一个面板，不创建导出按钮
                 self.export_btn = None
@@ -434,12 +463,13 @@ class ResponsePanel(QWidget):
             
             return False
     
-    def send_request(self, prompt, model_id=None):
+    def send_request(self, prompt, model_id=None, use_library_chat=False):
         """发送请求到选中的AI
         
         Args:
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的AI
+            use_library_chat: 是否使用Library Chat功能
         """
         if not self.response_handler:
             logger.error(f"面板 {self.panel_index} 的 ResponseHandler 未初始化")
@@ -452,15 +482,15 @@ class ResponsePanel(QWidget):
             logger.warning(f"面板 {self.panel_index} 没有选中的AI")
             return
         
-        logger.info(f"[面板 {self.panel_index}] 开始请求 AI: {target_model_id}")
+        logger.info(f"[面板 {self.panel_index}] 开始请求 AI: {target_model_id}, use_library_chat={use_library_chat}")
         self.request_started.emit(self.panel_index)
         
         # 更新响应处理器的AI标识符（用于历史记录）
         self.response_handler.ai_id = target_model_id
         logger.info(f"[面板 {self.panel_index}] 已设置 ai_id={target_model_id} 用于历史记录")
         
-        # 调用响应处理器发送请求，传递model_id参数
-        self.response_handler.start_async_request(prompt, model_id=target_model_id)
+        # 调用响应处理器发送请求，传递model_id和use_library_chat参数
+        self.response_handler.start_async_request(prompt, model_id=target_model_id, use_library_chat=use_library_chat)
         logger.info(f"[面板 {self.panel_index}] 异步请求已启动")
     
     def get_response_text(self):
@@ -471,11 +501,40 @@ class ResponsePanel(QWidget):
         """
         return self.response_area.toPlainText()
     
+    def _get_clean_text(self):
+        """获取干净的文本内容（根据copy_format返回不同格式）
+        
+        Returns:
+            str: 根据copy_format设置返回Markdown或纯文本
+        """
+        if self.copy_format == 'markdown':
+            # 尝试从ResponseHandler获取原始Markdown文本
+            if self.response_handler and hasattr(self.response_handler, '_response_text'):
+                original_text = self.response_handler._response_text
+                if original_text:
+                    return original_text
+            # 如果没有，尝试从流式响应获取
+            if self.response_handler and hasattr(self.response_handler, '_stream_response'):
+                stream_text = self.response_handler._stream_response
+                if stream_text:
+                    return stream_text
+            # 如果都没有，使用存储的原始文本
+            if self._original_markdown_text:
+                return self._original_markdown_text
+        
+        # toPlainText() 已经自动移除所有HTML标签和CSS，返回纯文本
+        return self.response_area.toPlainText()
+    
     def copy_response(self):
         """复制响应内容到剪贴板"""
         from PyQt5.QtWidgets import QApplication
         clipboard = QApplication.clipboard()
-        response_text = self.response_area.toPlainText()
+        
+        # 根据copy_format设置返回不同格式的文本
+        # 'markdown': 返回原始Markdown文本（保留**bold**、`code`等格式符号）
+        # 'plain': 返回纯文本（移除所有HTML/CSS和Markdown符号）
+        response_text = self._get_clean_text()
+        
         if response_text.strip():
             clipboard.setText(response_text)
             self._show_copy_tooltip(self.copy_btn, self.i18n.get('copied', 'Copied!'))
@@ -491,7 +550,8 @@ class ResponsePanel(QWidget):
         if hasattr(self.parent_dialog, 'input_area') and self.parent_dialog.input_area:
             question = self.parent_dialog.input_area.toPlainText().strip()
         
-        response = self.response_area.toPlainText().strip()
+        # 获取干净的响应文本
+        response = self._get_clean_text()
         
         if not question and not response:
             return
@@ -645,6 +705,16 @@ class ResponsePanel(QWidget):
             ('✓ ' if self.copy_mode == 'qa' else '') + 
             self.i18n.get('copy_mode_qa', 'Q&A')
         )
+        
+        # 更新格式选项的勾选标记
+        self.copy_plain_action.setText(
+            ('✓ ' if self.copy_format == 'plain' else '') + 
+            self.i18n.get('copy_format_plain', 'Plain Text')
+        )
+        self.copy_markdown_action.setText(
+            ('✓ ' if self.copy_format == 'markdown' else '') + 
+            self.i18n.get('copy_format_markdown', 'Markdown')
+        )
     
     def _update_export_menu_checkmarks(self):
         """更新导出菜单的勾选标记"""
@@ -694,6 +764,16 @@ class ResponsePanel(QWidget):
         from calibre_plugins.ask_ai_plugin.config import get_prefs
         prefs = get_prefs()
         prefs['copy_mode'] = mode
+    
+    def _switch_copy_format(self, format_type):
+        """切换复制格式"""
+        self.copy_format = format_type
+        self._update_copy_menu_checkmarks()
+        
+        # 保存到config
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        prefs = get_prefs()
+        prefs['copy_format'] = format_type
     
     def _switch_export_mode(self, mode):
         """切换导出模式"""
@@ -1342,3 +1422,113 @@ class ResponsePanel(QWidget):
             self.history_info_bar.setParent(None)
             self.history_info_bar.deleteLater()
             self.history_info_bar = None
+    
+    def _on_anchor_clicked(self, url):
+        """处理链接点击事件
+        
+        支持的链接格式：
+        - calibre://book/BOOK_ID - 在Calibre中打开书籍
+        - http://... 或 https://... - 在浏览器中打开外部链接
+        """
+        from PyQt5.QtCore import QUrl
+        from PyQt5.QtGui import QDesktopServices
+        
+        url_str = url.toString()
+        
+        # Windows compatibility: normalize backslashes to forward slashes
+        # On Windows, QUrl might convert forward slashes to backslashes in some cases
+        url_str = url_str.replace('\\', '/')
+        
+        logger.info("="*80)
+        logger.info(f"[BOOK_LINK_CLICK] 链接被点击: {url_str}")
+        logger.info(f"[BOOK_LINK_CLICK] 父对话框状态: visible={self.parent_dialog.isVisible()}, modal={self.parent_dialog.isModal()}")
+        logger.info(f"[BOOK_LINK_CLICK] 响应区域内容长度: {len(self.response_area.toPlainText())}")
+        
+        try:
+            # Windows compatibility: also check for backslash variants
+            if url_str.startswith('calibre://book/') or url_str.startswith('calibre:/book/'):
+                # 提取书籍ID - handle both double and single slash variants
+                book_id_str = url_str.replace('calibre://book/', '').replace('calibre:/book/', '')
+                book_id = int(book_id_str)
+                logger.info(f"[BOOK_LINK_CLICK] 提取书籍 ID: {book_id}")
+                
+                # 使用Calibre的正确API打开书籍
+                if hasattr(self.parent_dialog, 'gui') and self.parent_dialog.gui:
+                    gui = self.parent_dialog.gui
+                    logger.info(f"[BOOK_LINK_CLICK] GUI 实例可用")
+                    logger.info(f"[BOOK_LINK_CLICK] 当前库视图选择: {gui.library_view.selectionModel().selectedRows()}")
+                    
+                    # 使用Calibre的View action打开书籍，不改变库视图选择
+                    # 这样可以避免触发show_dialog()，保持AI Search对话框内容
+                    try:
+                        db = gui.current_db
+                        fmt = db.formats(book_id, index_is_id=True)
+                        logger.info(f"[BOOK_LINK_CLICK] 书籍格式: {fmt}")
+                        
+                        if fmt:
+                            fmt = fmt.split(',')[0].lower()
+                            path = db.format_abspath(book_id, fmt, index_is_id=True)
+                            logger.info(f"[BOOK_LINK_CLICK] 书籍路径: {path}")
+                            
+                            if path:
+                                print(f"[BOOK_LINK_CLICK] 准备打开书籍")
+                                print(f"[BOOK_LINK_CLICK] 打开前对话框状态: visible={self.parent_dialog.isVisible()}")
+                                logger.info(f"[BOOK_LINK_CLICK] 准备打开书籍")
+                                logger.info(f"[BOOK_LINK_CLICK] 打开前对话框状态: visible={self.parent_dialog.isVisible()}")
+                                
+                                # 使用Calibre的View action来打开书籍，但通过直接调用view_book方法
+                                # 这样可以避免改变库视图选择，同时避免EbookViewer直接实例化导致的崩溃
+                                if 'View' in gui.iactions:
+                                    view_action = gui.iactions['View']
+                                    # 使用内部方法直接打开书籍，传入book_id
+                                    try:
+                                        # view_book方法需要book_id作为参数
+                                        view_action._view_calibre_books([book_id])
+                                        logger.info(f"[BOOK_LINK_CLICK] 使用View action打开书籍成功")
+                                    except AttributeError:
+                                        # 如果_view_calibre_books不存在，尝试其他方法
+                                        # 临时选中书籍，打开后立即恢复选择
+                                        old_selection = [gui.library_view.model().id(row) for row in gui.library_view.selectionModel().selectedRows()]
+                                        gui.library_view.select_rows([book_id])
+                                        view_action.qaction.trigger()
+                                        # 恢复原来的选择（如果是AI Search模式，原来没有选择）
+                                        if old_selection:
+                                            gui.library_view.select_rows(old_selection)
+                                        else:
+                                            gui.library_view.selectionModel().clear()
+                                        logger.info(f"[BOOK_LINK_CLICK] 使用View action trigger打开书籍成功")
+                                else:
+                                    logger.error(f"[BOOK_LINK_CLICK] View action不可用")
+                            
+                                # 使用QTimer延迟检查，因为对话框可能在稍后被关闭
+                                from PyQt5.QtCore import QTimer
+                                def check_dialog_state():
+                                    print(f"[BOOK_LINK_CLICK] 打开后对话框状态: visible={self.parent_dialog.isVisible()}")
+                                    print(f"[BOOK_LINK_CLICK] 打开后响应区域内容长度: {len(self.response_area.toPlainText())}")
+                                    print(f"[BOOK_LINK_CLICK] 对话框是否被关闭: {self.parent_dialog.isHidden()}")
+                                    print(f"[BOOK_LINK_CLICK] 成功打开书籍: {path}")
+                                    print("="*80)
+                                
+                                # 立即检查
+                                check_dialog_state()
+                                # 1秒后再检查一次
+                                QTimer.singleShot(1000, check_dialog_state)
+                            else:
+                                logger.error(f"[BOOK_LINK_CLICK] 找不到书籍文件路径")
+                        else:
+                            logger.error(f"[BOOK_LINK_CLICK] 书籍 {book_id} 没有可用格式")
+                    except Exception as e:
+                        logger.error(f"[BOOK_LINK_CLICK] 打开书籍失败: {str(e)}", exc_info=True)
+                else:
+                    logger.warning("[BOOK_LINK_CLICK] GUI 实例不可用")
+            elif url_str.startswith('http://') or url_str.startswith('https://'):
+                # 外部链接，在浏览器中打开
+                QDesktopServices.openUrl(url)
+                logger.info(f"在浏览器中打开: {url_str}")
+            else:
+                logger.warning(f"[BOOK_LINK_CLICK] 未知的链接格式: {url_str}")
+        except Exception as e:
+            logger.error(f"[BOOK_LINK_CLICK] 处理链接点击时出错: {str(e)}", exc_info=True)
+        finally:
+            logger.info(f"[BOOK_LINK_CLICK] _on_anchor_clicked 执行完成")
+            logger.info("="*80)

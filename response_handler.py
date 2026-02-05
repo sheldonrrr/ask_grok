@@ -74,6 +74,7 @@ class MarkdownWorker(QThread):
             text_to_convert, think_blocks = self._process_think_tags(self.text)
             
             # 使用markdown2转换markdown为HTML
+            # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
                 extras=[
@@ -83,7 +84,8 @@ class MarkdownWorker(QThread):
                     'header-ids',
                     'strike',
                     'task_list',
-                    'markdown-in-html'
+                    'markdown-in-html',
+                    'html-classes'
                 ]
             )
             
@@ -113,11 +115,15 @@ class MarkdownWorker(QThread):
                 '*': ['class', 'id', 'style']
             }
             
+            # 允许的URL协议（包括calibre://用于打开书籍）
+            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
+            
             # 清理HTML
             safe_html = bleach.clean(
                 html,
                 tags=allowed_tags,
                 attributes=allowed_attrs,
+                protocols=allowed_protocols,
                 strip=True
             )
             
@@ -302,12 +308,13 @@ class ResponseHandler(QObject):
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
 
-    def start_async_request(self, prompt, model_id=None):
+    def start_async_request(self, prompt, model_id=None, use_library_chat=False):
         """开始异步请求 API，可以处理普通请求和流式请求
         
         Args:
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
+            use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
         """
         self._request_start_time = time.time()
         
@@ -375,15 +382,15 @@ class ResponseHandler(QObject):
                             self._stream_log_counter += 1
                             self._current_signals.stream_update.emit(chunk)
                     
-                    # 调用API时传入回调函数和model_id
-                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id)
+                    # 调用API时传入回调函数、model_id和use_library_chat
+                    response = self.api.ask(prompt, stream=True, stream_callback=stream_callback, model_id=model_id, use_library_chat=use_library_chat)
                     
                     # 在流式请求完成后，发送完整响应
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(self._stream_response, True)
                 else:
                     # 使用普通请求
-                    response = self.api.ask(prompt, stream=False, model_id=model_id)  # 明确指定不使用流式，并传递model_id
+                    response = self.api.ask(prompt, stream=False, model_id=model_id, use_library_chat=use_library_chat)  # 明确指定不使用流式，并传递model_id和use_library_chat
                     if not self._request_cancelled:
                         self._current_signals.update_ui.emit(response, True)
                 
@@ -495,6 +502,7 @@ class ResponseHandler(QObject):
             text_to_convert, think_blocks = self._process_think_tags_for_stream(self._stream_response)
             
             # 使用markdown2转换完整的累积响应为HTML
+            # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
                 extras=[
@@ -504,7 +512,8 @@ class ResponseHandler(QObject):
                     'header-ids',
                     'strike',
                     'task_list',
-                    'markdown-in-html'
+                    'markdown-in-html',
+                    'html-classes'
                 ]
             )
             
@@ -521,7 +530,8 @@ class ResponseHandler(QObject):
                         'header-ids',
                         'strike',
                         'task_list',
-                        'markdown-in-html'
+                        'markdown-in-html',
+                        'html-classes'
                     ]
                 )
                 
@@ -564,11 +574,15 @@ class ResponseHandler(QObject):
                 '*': ['class', 'id', 'style']
             }
             
+            # 允许的URL协议（包括calibre://用于打开书籍）
+            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
+            
             # 清理HTML
             safe_html = bleach.clean(
                 html,
                 tags=allowed_tags,
                 attributes=allowed_attrs,
+                protocols=allowed_protocols,
                 strip=True
             )
             
@@ -782,6 +796,9 @@ class ResponseHandler(QObject):
         if not text:
             self.response_area.setText(self.i18n.get('no_response', 'No response'))
             return
+        
+        # 存储原始Markdown文本（用于复制Markdown格式）
+        self._response_text = text
             
         self._stop_all_timers()  # 停止加载动画
         
@@ -956,7 +973,14 @@ class ResponseHandler(QObject):
                         question = self.input_area.toPlainText() if self.input_area else ''
                         
                         # 确定模式
-                        mode = 'multi' if parent_dialog.is_multi_book else 'single'
+                        # AI Search 模式：books_info 为空
+                        if not parent_dialog.books_info:
+                            mode = 'ai_search'
+                            # 使用特殊的 books_metadata 标记
+                            books_metadata_to_save = [{'id': 'ai_search', 'title': 'AI Search', 'deleted': False}]
+                        else:
+                            mode = 'multi' if parent_dialog.is_multi_book else 'single'
+                            books_metadata_to_save = parent_dialog.books_metadata
                         
                         # 使用新的保存方法，传递AI标识符和模型信息
                         ai_id = getattr(self, 'ai_id', None)  # 获取AI标识符
@@ -1009,12 +1033,21 @@ class ResponseHandler(QObject):
                         self.history_manager.save_history(
                             parent_dialog.current_uid,
                             mode,
-                            parent_dialog.books_metadata,
+                            books_metadata_to_save,
                             question,
                             text,
                             ai_id=ai_id,
                             model_info=model_info
                         )
+                        
+                        # 增加AI回复统计计数
+                        try:
+                            from .statistics_widget import increment_ai_reply_count
+                            from .config import get_prefs
+                            prefs = get_prefs()
+                            increment_ai_reply_count(prefs)
+                        except Exception as stat_error:
+                            logger.warning(f"Failed to increment AI reply count: {stat_error}")
                         
                         # 更新历史信息标签（显示新的时间戳）
                         if hasattr(parent_dialog, '_update_history_info_label'):

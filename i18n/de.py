@@ -22,7 +22,7 @@ class GermanTranslation(BaseTranslation):
     
     @property
     def default_template(self) -> str:
-        return 'Über das Buch "{title}": Autor: {author}, Verlag: {publisher}, Erscheinungsjahr: {pubyear}, Buch in language: {language}, Reihe: {series}, Meine Frage ist: {query}'
+        return 'Kontext: Sie unterstützen einen Benutzer von calibre (http://calibre-ebook.com), einer leistungsstarken E-Book-Verwaltungsanwendung, über das "Ask AI Plugin". Dieses Plugin ermöglicht es Benutzern, Fragen zu Büchern in ihrer calibre-Bibliothek zu stellen. Hinweis: Dieses Plugin kann nur Fragen zum Inhalt, zu Themen oder verwandten Themen des ausgewählten Buches beantworten - es kann Buchmetadaten nicht direkt ändern oder calibre-Operationen ausführen. Buchinformationen: Titel: "{title}", Autor: {author}, Verlag: {publisher}, Erscheinungsjahr: {pubyear}, Sprache: {language}, Reihe: {series}. Benutzerfrage: {query}. Bitte geben Sie eine hilfreiche Antwort basierend auf den Buchinformationen und Ihrem Wissen.'
     
     @property
     def suggestion_template(self) -> str:
@@ -56,7 +56,7 @@ class GermanTranslation(BaseTranslation):
             'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
             'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
             'debug_settings_subtitle': 'Debug-Protokollierung zur Fehlerbehebung aktivieren',
-            'reset_all_data_subtitle': '⚠️ Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
+            'reset_all_data_subtitle': 'Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
             
             # Prompts-Tab
             'language_preference_title': 'Sprachpräferenz',
@@ -112,6 +112,8 @@ class GermanTranslation(BaseTranslation):
             'export_history_btn': 'Verlauf als PDF exportieren',
             'copy_mode_response': 'Antwort',
             'copy_mode_qa': 'F&A',
+            'copy_format_plain': 'Klartext',
+            'copy_format_markdown': 'Markdown',
             'export_mode_current': 'Aktuelles F&A',
             'export_mode_history': 'Verlauf',
             
@@ -373,7 +375,7 @@ class GermanTranslation(BaseTranslation):
             'pdf_plugin': 'Plugin',
             'pdf_github': 'GitHub',
             'pdf_software': 'Software',
-            'pdf_generated_time': 'Generierte Zeit',
+            'pdf_generated_time': 'Erstellungszeit',
             'discard_changes': 'Änderungen Verwerfen',
             'empty_response': 'Leere Antwort von API erhalten',
             'empty_response_after_filter': 'Antwort ist nach dem Filtern von Think-Tags leer',
@@ -446,4 +448,76 @@ class GermanTranslation(BaseTranslation):
             
             # Tooltip
             'manage_ai_disabled_tooltip': 'Bitte fügen Sie zuerst einen KI-Anbieter hinzu.',
+
+            # AI Search Version 1.4.2
+            'library_tab': 'Suche',
+            'library_search': 'KI-Suche',
+            'library_info': 'KI-Suche ist immer aktiviert. Wenn Sie keine Bücher auswählen, können Sie Ihre gesamte Bibliothek mit natürlicher Sprache durchsuchen.',
+            'library_enable': 'KI-Suche aktivieren',
+            'library_enable_tooltip': 'Wenn aktiviert, können Sie Ihre Bibliothek mithilfe von KI durchsuchen, wenn keine Bücher ausgewählt sind',
+            'library_update': 'Bibliotheksdaten aktualisieren',
+            'library_update_tooltip': 'Buchtitel und Autoren aus Ihrer Bibliothek extrahieren',
+            'library_updating': 'Aktualisierung...',
+            'library_status': 'Status: {count} Bücher, letzte Aktualisierung: {time}',
+            'library_status_empty': 'Status: Keine Daten. Klicken Sie auf "Bibliotheksdaten aktualisieren", um zu beginnen.',
+            'library_status_error': 'Status: Fehler beim Laden der Daten',
+            'library_update_success': 'Erfolgreich {count} Bücher aktualisiert',
+            'library_update_failed': 'Bibliotheksdaten konnten nicht aktualisiert werden',
+            'library_no_gui': 'GUI nicht verfügbar',
+            'library_init_title': 'KI-Suche initialisieren',
+            'library_init_message': 'Die KI-Suche benötigt Bibliotheks-Metadaten, um zu funktionieren. Möchten Sie diese jetzt initialisieren?\n\nDadurch werden Buchtitel und Autoren aus Ihrer Bibliothek extrahiert.',
+            'library_init_required': 'Die KI-Suche kann ohne Bibliotheksdaten nicht aktiviert werden. Bitte klicken Sie auf "Bibliotheksdaten aktualisieren", wenn Sie bereit sind, diese Funktion zu nutzen.',
+            'ai_search_welcome_title': 'Willkommen zur KI-Suche',
+            'ai_search_welcome_message': 'KI-Suche ist aktiviert!\n\nAuslösemethoden:\n• Tastenkürzel (in den Einstellungen anpassbar)\n• Extras-Menü → KI-Suche\n• Ask-Dialog öffnen ohne Bücher auszuwählen\n\nSie können Ihre gesamte Bibliothek mit natürlicher Sprache durchsuchen. Zum Beispiel:\n• "Hast du Bücher über Python?"\n• "Zeig mir Bücher von Isaac Asimov"\n• "Finde Bücher über maschinelles Lernen"\n\nDie KI durchsucht Ihre Bibliothek und empfiehlt relevante Bücher. Klicken Sie auf Buchtitel, um sie direkt zu öffnen.',
+            'ai_search_not_enough_books_title': 'Nicht genügend Bücher',
+            'ai_search_not_enough_books_message': 'Die KI-Suche erfordert mindestens {min_books} Bücher in Ihrer Bibliothek.\n\nIhre aktuelle Bibliothek enthält nur {book_count} Buch/Bücher.\n\nBitte fügen Sie mehr Bücher hinzu, um die KI-Suche zu nutzen.',
+            'ai_search_mode_info': 'Suche in der gesamten Bibliothek',
+            'library_prompt_template': 'Sie haben Zugriff auf die Buchbibliothek des Benutzers. Hier sind alle Bücher: {metadata} Benutzeranfrage: {query} Bitte finden Sie passende Bücher in der aktuellen Bibliothek und geben Sie sie in diesem Format zurück (**WICHTIG**: Verwenden Sie das HTML-Link-Format, damit Benutzer auf Buchtitel klicken können, um sie direkt zu öffnen): - <a href="calibre://book/BOOK_ID">Buchtitel</a> - Autorenname Beispiel: - <a href="calibre://book/123">Python lernen</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Aktion</a> - Peter Harrington Hinweis: Einige Autoren können als "unknown" aufgeführt sein. Dies sind normale Daten, bitte geben Sie alle passenden Ergebnisse normal zurück. Nur Bücher zurückgeben, die der Anfrage entsprechen. Maximal 5 Ergebnisse.',
+            'ai_search_privacy_title': 'Datenschutzhinweis',
+            'ai_search_privacy_alert': 'Die KI-Suche verwendet Buch-Metadaten (Titel und Autoren) aus Ihrer Bibliothek. Diese Informationen werden an den von Ihnen konfigurierten KI-Anbieter gesendet, um Ihre Suchanfragen zu verarbeiten.',
+            'ai_search_updated_info': '{count} Bücher vor {time_ago} aktualisiert',
+            'ai_search_books_info': '{count} Bücher indiziert',
+            'days_ago': '{n} Tagen',
+            'hours_ago': '{n} Stunden',
+            'minutes_ago': '{n} Minuten',
+            'just_now': 'gerade eben',
+            
+            # Statistics tab (v1.4.2)
+            'stat_tab': 'Statistik',
+            'stat_overview': 'Übersicht',
+            'stat_overview_subtitle': 'Statistik der AI-Anfragen',
+            'stat_days_unit': 'Tage',
+            'stat_days_label': 'Gestartet',
+            'stat_start_at': 'Start am {date}',
+            'stat_replies_unit': 'Mal',
+            'stat_replies_label': 'AI fragen',
+            'stat_books_unit': 'Bücher',
+            'stat_books_label': 'Bibliothek',
+            'stat_no_books': 'Im Suche-Tab aktualisieren',
+            'stat_trends': 'Trends',
+            'stat_curious_index': 'AI-Anfragen Verteilung diese Woche',
+            'stat_daily_avg': 'Tagesdurchschnitt {n} Mal',
+            'stat_sample_data': 'Beispieldaten angezeigt. Wechselt zu echten Daten nach 20+ Anfragen',
+            'stat_heatmap': 'Heatmap',
+            'stat_heatmap_subtitle': 'AI-Anfragen Verteilung diesen Monat',
+            'stat_no_data_week': 'Keine Daten diese Woche',
+            'stat_no_data_month': 'Keine Daten diesen Monat',
+            'stat_data_not_enough': 'Nicht genügend Daten',
+            
+            # Statistik Benutzertitel (basierend auf Anfragezahl)
+            'stat_title_curious': 'Blätterer',
+            'stat_title_explorer': 'Bücherjäger',
+            'stat_title_seeker': 'Leseratte',
+            'stat_title_enthusiast': 'Bibliophiler',
+            'stat_title_pursuer': 'Bücherwurm',
+            
+            # Statistik Bibliotheksbewertung (basierend auf Sammlungsgröße, historische Bibliotheken)
+            'stat_books_impressive': 'Privates Studierzimmer',
+            'stat_books_collection': 'Gelehrtenstube',
+            'stat_books_variety': 'Stiftsbibliothek',
+            'stat_books_awesome': 'Bayerische Staatsbibliothek',
+            'stat_books_unbelievable': 'Bibliothek von Alexandria',
+            
+            # Links (v1.4.2)
+            'online_tutorial': 'Online-Tutorial',
         }
