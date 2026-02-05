@@ -223,6 +223,12 @@ class NorwegianTranslation(BaseTranslation):
             'warning': 'Advarsel',
             'success': 'Suksess',
             'error': 'Feil',
+            'error_opening_dialog': 'Feil ved åpning av dialog:',
+            'skipped_books_warning': '{count} bok/bøker ble hoppet over på grunn av filtilgangsfeil.\nDette kan skyldes ugyldige tegn i filstier eller filer som er låst av et annet program.',
+            'failed_to_read_all_books': 'Kunne ikke lese metadata for alle valgte bøker.\nDette kan skyldes ugyldige tegn i filstier eller filer som er låst av et annet program.',
+            'error_starting_request': 'Feil ved start av forespørsel',
+            'default_ai_mismatch_title': 'Standard AI endret',
+            'default_ai_mismatch_message': 'Standard AI i konfigurasjonen er endret til "{default_ai}",\nmen den nåværende samtalen bruker "{current_ai}".\n\nVil du bytte til den nye standard AI?',
 
             # Metadata fields
             'metadata_title': 'Tittel',

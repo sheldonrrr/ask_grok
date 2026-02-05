@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.8
-Latest updated: Feb 04, 2026, Ask AI Plugin v1.4.2
+Latest updated: Feb 05, 2026, Ask AI Plugin v1.4.3
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -158,13 +158,13 @@ Common shortcuts (defaults):
 - Ask AI: Open Configuration: F2
 - Ask AI: AI Search: Ctrl+Shift+L
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
-- Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
+- Ask AI: Random Question (in dialog): Ctrl+Shift+R (Cmd+Shift+R on macOS)
 
 Note: If you customized shortcuts in calibre, your custom settings take precedence.
 
 ## Random Questions
 
-1. Click Random Question button (or Ctrl+R / Cmd+R)
+1. Click Random Question button (or Ctrl+Shift+R / Cmd+Shift+R)
 2. AI suggests a question
 
 Customize prompts in Configuration -> Prompts Tab -> Random Question Prompts

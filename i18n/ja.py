@@ -203,6 +203,12 @@ class JapaneseTranslation(BaseTranslation):
             'warning': '警告',
             'success': '成功',
             'error': 'エラー',
+            'error_opening_dialog': 'ダイアログを開く際にエラーが発生しました:',
+            'skipped_books_warning': 'ファイルアクセスエラーのため、{count}冊の本をスキップしました。\nこれはファイルパスに無効な文字が含まれているか、ファイルが他のプログラムによってロックされていることが原因である可能性があります。',
+            'failed_to_read_all_books': '選択したすべての本のメタデータを読み取れませんでした。\nこれはファイルパスに無効な文字が含まれているか、ファイルが他のプログラムによってロックされていることが原因である可能性があります。',
+            'error_starting_request': 'リクエストの開始中にエラーが発生しました',
+            'default_ai_mismatch_title': 'デフォルトAIが変更されました',
+            'default_ai_mismatch_message': '設定のデフォルトAIが「{default_ai}」に変更されましたが、\n現在の会話は「{current_ai}」を使用しています。\n\n新しいデフォルトAIに切り替えますか？',
             
             # メタデータフィールド
             'metadata_title': 'タイトル',

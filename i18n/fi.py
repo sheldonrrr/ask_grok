@@ -223,6 +223,12 @@ class FinnishTranslation(BaseTranslation):
             'warning': 'Varoitus',
             'success': 'Onnistui',
             'error': 'Virhe',
+            'error_opening_dialog': 'Virhe dialogin avaamisessa:',
+            'skipped_books_warning': '{count} kirja(a) ohitettiin tiedostojen käyttövirheiden vuoksi.\nTämä voi johtua virheellisistä merkeistä tiedostopoluissa tai toisen ohjelman lukitsemista tiedostoista.',
+            'failed_to_read_all_books': 'Kaikkien valittujen kirjojen metatietoja ei voitu lukea.\nTämä voi johtua virheellisistä merkeistä tiedostopoluissa tai toisen ohjelman lukitsemista tiedostoista.',
+            'error_starting_request': 'Virhe pyynnön käynnistämisessä',
+            'default_ai_mismatch_title': 'Oletus-AI muutettu',
+            'default_ai_mismatch_message': 'Asetuksissa oletus-AI on muutettu arvoon "{default_ai}",\nmutta nykyinen keskustelu käyttää "{current_ai}".\n\nHaluatko vaihtaa uuteen oletus-AI:hin?',
             
             # Metadata fields
             'metadata_title': 'Otsikko',

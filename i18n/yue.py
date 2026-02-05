@@ -223,6 +223,12 @@ class CantoneseTranslation(BaseTranslation):
             'warning': '警告', # Warning
             'success': '成功', # Success
             'error': '錯誤', # Error
+            'error_opening_dialog': '開啟對話框時發生錯誤:', # Error opening dialog
+            'skipped_books_warning': '由於檔案存取錯誤，已跳過 {count} 本書。\n呢個可能係因為檔案路徑包含無效字元或者檔案俾其他程式鎖住咗。', # Skipped books warning
+            'failed_to_read_all_books': '無法讀取所有揀選書籍嘅元資料。\n呢個可能係因為檔案路徑包含無效字元或者檔案俾其他程式鎖住咗。', # Failed to read all books
+            'error_starting_request': '啟動請求時發生錯誤', # Error starting request
+            'default_ai_mismatch_title': '預設 AI 已更改', # Default AI Changed
+            'default_ai_mismatch_message': '偵測到設定入面嘅預設 AI 已經改咗做 "{default_ai}"，\n但係而家嘅對話用緊 "{current_ai}"。\n\n想唔想切換去新嘅預設 AI？', # Default AI mismatch message
 
             # 元數據字段
             'metadata_title': '標題', # Title

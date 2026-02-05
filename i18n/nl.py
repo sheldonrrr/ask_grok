@@ -223,6 +223,12 @@ class DutchTranslation(BaseTranslation):
             'warning': 'Waarschuwing',
             'success': 'Succes',
             'error': 'Fout',
+            'error_opening_dialog': 'Fout bij openen van dialoog:',
+            'skipped_books_warning': '{count} boek(en) overgeslagen vanwege bestandstoegangsfouten.\nDit kan worden veroorzaakt door ongeldige tekens in bestandspaden of bestanden die door een ander programma zijn vergrendeld.',
+            'failed_to_read_all_books': 'Kan metadata voor alle geselecteerde boeken niet lezen.\nDit kan worden veroorzaakt door ongeldige tekens in bestandspaden of bestanden die door een ander programma zijn vergrendeld.',
+            'error_starting_request': 'Fout bij starten van verzoek',
+            'default_ai_mismatch_title': 'Standaard AI gewijzigd',
+            'default_ai_mismatch_message': 'De standaard AI in de configuratie is gewijzigd naar "{default_ai}",\nmaar het huidige gesprek gebruikt "{current_ai}".\n\nWilt u overschakelen naar de nieuwe standaard AI?',
 
             # Metadata fields
             'metadata_title': 'Titel',

@@ -223,6 +223,12 @@ class SpanishTranslation(BaseTranslation):
             'warning': 'Advertencia',
             'success': 'Éxito',
             'error': 'Error',
+            'error_opening_dialog': 'Error al abrir el diálogo:',
+            'skipped_books_warning': 'Se omitieron {count} libro(s) debido a errores de acceso a archivos.\nEsto puede ser causado por caracteres inválidos en las rutas de archivos o archivos bloqueados por otro programa.',
+            'failed_to_read_all_books': 'No se pudieron leer los metadatos de todos los libros seleccionados.\nEsto puede ser causado por caracteres inválidos en las rutas de archivos o archivos bloqueados por otro programa.',
+            'error_starting_request': 'Error al iniciar la solicitud',
+            'default_ai_mismatch_title': 'IA predeterminada cambiada',
+            'default_ai_mismatch_message': 'La IA predeterminada en la configuración ha sido cambiada a "{default_ai}",\npero la conversación actual está usando "{current_ai}".\n\n¿Desea cambiar a la nueva IA predeterminada?',
             
             # Metadata fields
             'metadata_title': 'Título',

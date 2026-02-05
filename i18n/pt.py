@@ -223,6 +223,12 @@ class PortugueseTranslation(BaseTranslation):
             'warning': 'Aviso',
             'success': 'Sucesso',
             'error': 'Erro',
+            'error_opening_dialog': 'Erro ao abrir diálogo:',
+            'skipped_books_warning': '{count} livro(s) ignorado(s) devido a erros de acesso a arquivos.\nIsso pode ser causado por caracteres inválidos nos caminhos dos arquivos ou arquivos bloqueados por outro programa.',
+            'failed_to_read_all_books': 'Falha ao ler metadados de todos os livros selecionados.\nIsso pode ser causado por caracteres inválidos nos caminhos dos arquivos ou arquivos bloqueados por outro programa.',
+            'error_starting_request': 'Erro ao iniciar solicitação',
+            'default_ai_mismatch_title': 'IA padrão alterada',
+            'default_ai_mismatch_message': 'A IA padrão na configuração foi alterada para "{default_ai}",\nmas a conversa atual está usando "{current_ai}".\n\nDeseja mudar para a nova IA padrão?',
 
             # Metadata fields
             'metadata_title': 'Título',

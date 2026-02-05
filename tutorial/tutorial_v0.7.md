@@ -121,13 +121,13 @@ Common shortcuts (defaults):
 - Ask AI: Ask (global): Ctrl+L
 - Ask AI: Open Configuration: F2
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
-- Ask AI: Random Question (in dialog): Ctrl+R (Cmd+R on macOS)
+- Ask AI: Random Question (in dialog): Ctrl+Shift+R (Cmd+Shift+R on macOS)
 
 Note: If you customized shortcuts in calibre, your custom settings take precedence.
 
 ## Random Questions
 
-1. Click Random Question button (or Ctrl+R / Cmd+R)
+1. Click Random Question button (or Ctrl+Shift+R / Cmd+Shift+R)
 2. AI suggests a question
 
 Customize prompts in Configuration -> Prompts Tab -> Random Question Prompts

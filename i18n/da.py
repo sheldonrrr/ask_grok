@@ -222,6 +222,12 @@ class DanishTranslation(BaseTranslation):
             'warning': 'Advarsel',
             'success': 'Succes',
             'error': 'Fejl',
+            'error_opening_dialog': 'Fejl ved åbning af dialog:',
+            'skipped_books_warning': '{count} bog/bøger blev sprunget over på grund af filadgangsfejl.\nDette kan skyldes ugyldige tegn i filstier eller filer, der er låst af et andet program.',
+            'failed_to_read_all_books': 'Kunne ikke læse metadata for alle valgte bøger.\nDette kan skyldes ugyldige tegn i filstier eller filer, der er låst af et andet program.',
+            'error_starting_request': 'Fejl ved start af anmodning',
+            'default_ai_mismatch_title': 'Standard AI ændret',
+            'default_ai_mismatch_message': 'Standard AI i konfigurationen er blevet ændret til "{default_ai}",\nmen den aktuelle samtale bruger "{current_ai}".\n\nVil du skifte til den nye standard AI?',
 
             # Metadata fields
             'metadata_title': 'Titel',
