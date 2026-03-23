@@ -150,7 +150,6 @@ class AnthropicModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),
                         stream=True,
-                        verify=False
                     ) as response:
                         response.raise_for_status()
                         
@@ -204,7 +203,6 @@ class AnthropicModel(BaseAIModel):
                     headers=headers,
                     json=data,
                     timeout=kwargs.get('timeout', 60),
-                    verify=False
                 )
                 response.raise_for_status()
                 
@@ -313,7 +311,6 @@ class AnthropicModel(BaseAIModel):
                 headers=headers,
                 json=test_data,
                 timeout=timeout_seconds,
-                verify=False
             )
             
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")

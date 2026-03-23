@@ -150,7 +150,6 @@ class GrokModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),  # 流式传输需要更长的超时时间
                         stream=True,
-                        verify=False  # 注意：生产环境应该验证 SSL 证书
                     ) as response:
                         response.raise_for_status()
                         
@@ -231,7 +230,6 @@ class GrokModel(BaseAIModel):
                                 json=recovery_data,
                                 timeout=recovery_timeout,
                                 stream=True,
-                                verify=False
                             ) as recovery_response:
                                 recovery_response.raise_for_status()
                                 logger.info(f"恢复连接成功，状态码: {recovery_response.status_code}")
@@ -293,7 +291,6 @@ class GrokModel(BaseAIModel):
                         headers=headers,
                         json=data,
                         timeout=kwargs.get('timeout', 300),  # 增加超时时间
-                        verify=False  # 注意：生产环境应该验证 SSL 证书
                     )
                     response.raise_for_status()
                     
@@ -349,7 +346,7 @@ class GrokModel(BaseAIModel):
                         try:
                             error_detail = req_e.response.json()
                             logger.error(f"错误详情: {json.dumps(error_detail, ensure_ascii=False)}")
-                        except:
+                        except Exception:
                             logger.error(f"响应内容: {req_e.response.text[:500]}")
                     raise Exception(error_msg) from req_e
             
@@ -360,7 +357,7 @@ class GrokModel(BaseAIModel):
                 try:
                     error_detail = e.response.json()
                     error_msg += f" | {json.dumps(error_detail, ensure_ascii=False)}"
-                except:
+                except Exception:
                     error_msg += f" | {e.response.text}"
             raise Exception(error_msg) from e
     

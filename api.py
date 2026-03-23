@@ -7,7 +7,6 @@ import logging
 
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
-from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import urllib3
 
 from .i18n import get_translation
 from .models import AIModelFactory, BaseAIModel
@@ -16,9 +15,6 @@ from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 
 # 添加一个 logger
 logger = logging.getLogger(__name__)
-
-# 禁用不安全的请求警告
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class AIAPIError(Exception):
     """自定义 API 错误异常类，适用于所有 AI 模型"""
@@ -105,7 +101,7 @@ class APIClient:
         if hasattr(self, '_session'):
             try:
                 self._session.close()
-            except:
+            except Exception:
                 pass
     
     def _prepare_request(self, prompt: str) -> Tuple[Dict[str, str], Dict[str, Any]]:

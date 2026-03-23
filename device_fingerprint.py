@@ -59,7 +59,7 @@ class DeviceFingerprint:
                 lang_code, encoding = locale.getdefaultlocale()
                 system_info['locale'] = lang_code or 'en_US'
                 system_info['encoding'] = encoding or 'UTF-8'
-            except:
+            except Exception:
                 system_info['locale'] = 'en_US'
                 system_info['encoding'] = 'UTF-8'
             
@@ -135,5 +135,5 @@ class DeviceFingerprint:
         try:
             from .version import __version__
             return __version__
-        except:
+        except (ImportError, AttributeError):
             return 'unknown'

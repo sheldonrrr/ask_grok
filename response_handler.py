@@ -13,12 +13,19 @@ from threading import Thread
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import bleach
+from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor.bleach.css_sanitizer import (
+    ALLOWED_CSS_PROPERTIES,
+    CSSSanitizer,
+)
 
 # 使用 Calibre 配置目录存储日志
 from calibre.utils.config import config_dir
 
 # 导入历史记录管理器
 from .history_manager import HistoryManager
+
+# 插件偏好（与 api.py 中 request_timeout 一致）
+from .config import get_prefs
 
 # 导入UI常量
 from .ui_constants import FONT_SIZE_MEDIUM
@@ -32,6 +39,60 @@ log_file = os.path.join(log_dir, 'ask_ai_plugin_response.log')
 # 只创建当前模块的日志记录器
 
 logger = logging.getLogger(__name__)
+
+# markdown2：与流式/非流式渲染共用；cuddled-lists 减少「段落后紧贴 * 列表」未被识别为列表的情况
+_MARKDOWN2_EXTRAS = [
+    'fenced-code-blocks',
+    'tables',
+    'break-on-newline',
+    'header-ids',
+    'strike',
+    'task_list',
+    'markdown-in-html',
+    'html-classes',
+    'cuddled-lists',
+]
+
+# bleach：允许 style 时必须提供 css_sanitizer，否则告警且 style 会被置空（见 vendor bleach sanitizer）
+_EXTRA_BLEACH_CSS_PROPERTIES = frozenset({
+    'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+    'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+    'border', 'border-left', 'border-top', 'border-right', 'border-bottom',
+    'border-radius', 'border-width', 'border-style',
+    'align-items', 'justify-content', 'flex-grow', 'flex-shrink', 'flex-basis',
+})
+_BLEACH_CSS_SANITIZER = CSSSanitizer(
+    allowed_css_properties=ALLOWED_CSS_PROPERTIES | _EXTRA_BLEACH_CSS_PROPERTIES
+)
+
+_RESPONSE_BLEACH_TAGS = [
+    'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'pre', 'code', 'blockquote',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+    'ul', 'ol', 'li',
+    'a', 'img', 'div', 'span',
+]
+_RESPONSE_BLEACH_ATTRS = {
+    'a': ['href', 'title', 'target'],
+    'img': ['src', 'alt', 'title'],
+    'th': ['align'],
+    'td': ['align'],
+    '*': ['class', 'id', 'style'],
+}
+_RESPONSE_BLEACH_PROTOCOLS = ['http', 'https', 'mailto', 'calibre']
+
+
+def _sanitize_response_html(fragment: str) -> str:
+    return bleach.clean(
+        fragment,
+        tags=_RESPONSE_BLEACH_TAGS,
+        attributes=_RESPONSE_BLEACH_ATTRS,
+        protocols=_RESPONSE_BLEACH_PROTOCOLS,
+        strip=True,
+        css_sanitizer=_BLEACH_CSS_SANITIZER,
+    )
+
 
 class MarkdownWorker(QThread):
     result = pyqtSignal(str)
@@ -77,16 +138,7 @@ class MarkdownWorker(QThread):
             # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
-                extras=[
-                    'fenced-code-blocks',
-                    'tables',
-                    'break-on-newline',
-                    'header-ids',
-                    'strike',
-                    'task_list',
-                    'markdown-in-html',
-                    'html-classes'
-                ]
+                extras=_MARKDOWN2_EXTRAS,
             )
             
             # 将占位符替换回 think 块的 HTML
@@ -97,35 +149,7 @@ class MarkdownWorker(QThread):
             if self._is_cancelled:
                 return
                 
-            # 清理HTML，允许表格相关标签
-            allowed_tags = [
-                'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
-                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'pre', 'code', 'blockquote',
-                'table', 'thead', 'tbody', 'tr', 'th', 'td',
-                'ul', 'ol', 'li',
-                'a', 'img', 'div', 'span'
-            ]
-            
-            allowed_attrs = {
-                'a': ['href', 'title', 'target'],
-                'img': ['src', 'alt', 'title'],
-                'th': ['align'],
-                'td': ['align'],
-                '*': ['class', 'id', 'style']
-            }
-            
-            # 允许的URL协议（包括calibre://用于打开书籍）
-            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
-            
-            # 清理HTML
-            safe_html = bleach.clean(
-                html,
-                tags=allowed_tags,
-                attributes=allowed_attrs,
-                protocols=allowed_protocols,
-                strip=True
-            )
+            safe_html = _sanitize_response_html(html)
             
             if not self._is_cancelled:
                 self.result.emit(safe_html)
@@ -316,10 +340,11 @@ class ResponseHandler(QObject):
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
             use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
         """
-        self._request_start_time = time.time()
-        
         # 清理之前的请求状态
         self.cleanup()
+
+        # 从新请求开始时刻计时（与下方 UI 守护超时一致）
+        self._request_start_time = time.time()
         
         # 创建新的信号对象，避免信号重复连接
         self._current_signals = ResponseSignals()
@@ -416,11 +441,23 @@ class ResponseHandler(QObject):
         # 设置加载动画
         self._setup_loading_animation()
         
-        # 设置超时检查
+        # 设置超时检查：与设置里的「请求超时时间」(request_timeout) 一致，单位秒 → QTimer 毫秒
+        try:
+            guard_sec = int(get_prefs().get('request_timeout', 60))
+        except (TypeError, ValueError):
+            guard_sec = 60
+        guard_sec = max(1, min(guard_sec, 3600))
+        self._ui_guard_timeout_sec = guard_sec
+
+        if hasattr(self, '_timeout_timer') and self._timeout_timer is not None:
+            self._timeout_timer.stop()
+            self._timeout_timer.deleteLater()
+            self._timeout_timer = None
+
         self._timeout_timer = QTimer()
         self._timeout_timer.setSingleShot(True)
         self._timeout_timer.timeout.connect(self._check_request_timeout)
-        self._timeout_timer.start(360000)  # 增加超时时间到60秒
+        self._timeout_timer.start(guard_sec * 1000)
     
     # 初始化流式响应相关变量
     def _init_stream_variables(self):
@@ -505,16 +542,7 @@ class ResponseHandler(QObject):
             # 注意：markdown-in-html 允许在markdown中使用HTML标签（如<a>链接）
             html = markdown2.markdown(
                 text_to_convert,
-                extras=[
-                    'fenced-code-blocks',
-                    'tables',
-                    'break-on-newline',
-                    'header-ids',
-                    'strike',
-                    'task_list',
-                    'markdown-in-html',
-                    'html-classes'
-                ]
+                extras=_MARKDOWN2_EXTRAS,
             )
             
             # 将占位符替换回 think 块的 HTML
@@ -523,16 +551,7 @@ class ResponseHandler(QObject):
                 # 将推理内容转换为 Markdown HTML
                 think_html_content = markdown2.markdown(
                     think_content,
-                    extras=[
-                        'fenced-code-blocks',
-                        'tables',
-                        'break-on-newline',
-                        'header-ids',
-                        'strike',
-                        'task_list',
-                        'markdown-in-html',
-                        'html-classes'
-                    ]
+                    extras=_MARKDOWN2_EXTRAS,
                 )
                 
                 # 完整的 think 块 - 添加结束标识
@@ -556,35 +575,7 @@ class ResponseHandler(QObject):
                 </div>'''
                 html = html.replace(f'<!--THINK_BLOCK_INCOMPLETE_{i}-->', incomplete_html)
             
-            # 清理HTML，允许表格相关标签
-            allowed_tags = [
-                'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's',
-                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'pre', 'code', 'blockquote',
-                'table', 'thead', 'tbody', 'tr', 'th', 'td',
-                'ul', 'ol', 'li',
-                'a', 'img', 'div', 'span'
-            ]
-            
-            allowed_attrs = {
-                'a': ['href', 'title', 'target'],
-                'img': ['src', 'alt', 'title'],
-                'th': ['align'],
-                'td': ['align'],
-                '*': ['class', 'id', 'style']
-            }
-            
-            # 允许的URL协议（包括calibre://用于打开书籍）
-            allowed_protocols = ['http', 'https', 'mailto', 'calibre']
-            
-            # 清理HTML
-            safe_html = bleach.clean(
-                html,
-                tags=allowed_tags,
-                attributes=allowed_attrs,
-                protocols=allowed_protocols,
-                strip=True
-            )
+            safe_html = _sanitize_response_html(html)
             
             # 更新UI
             self._set_html_response(safe_html)
@@ -596,11 +587,24 @@ class ResponseHandler(QObject):
             logger.error(f"[Stream Update] 处理流式响应时出错: {str(e)}")
     
     def _check_request_timeout(self):
-        """检查请求是否超时"""
-        if hasattr(self, '_request_start_time') and self._request_start_time and not self._request_cancelled:
-            elapsed = time.time() - self._request_start_time
-            if elapsed > 360:  # 60秒超时
-                self.handle_error("Request took too long, automatically terminated", "timeout")
+        """检查请求是否超时（与 request_timeout 偏好一致，由 QTimer 触发）"""
+        if not getattr(self, '_request_start_time', None) or self._request_cancelled:
+            return
+        elapsed = time.time() - self._request_start_time
+        guard = getattr(self, '_ui_guard_timeout_sec', 60)
+        # 允许少量时钟/调度误差，避免已到点却因严格 > 而不提示
+        if elapsed + 0.25 < guard:
+            return
+
+        self._request_cancelled = True
+        self._stop_loading_timer()
+        msg = self.i18n.get(
+            'request_timeout_error',
+            'Request timeout. Current timeout: {timeout} seconds',
+        ).format(timeout=guard)
+        self.handle_error(msg, 'timeout')
+        # 与 cancel_request 一致：worker 的 finally 因已取消不会 emit request_finished，需在此清理信号/定时器
+        self._cleanup_request()
     
     def _cleanup_request(self):
         """清理请求资源"""
@@ -617,7 +621,8 @@ class ResponseHandler(QObject):
                 self._current_signals.request_finished.disconnect()
                 # 断开流式响应信号
                 self._current_signals.stream_update.disconnect()
-            except:
+            except (TypeError, RuntimeError):
+                # 未连接或已断开时 PyQt 会抛 TypeError
                 pass
             self._current_signals = None
         
@@ -935,7 +940,7 @@ class ResponseHandler(QObject):
                 scrollbar = self.response_area.verticalScrollBar()
                 if scrollbar:
                     scrollbar.valueChanged.connect(self._on_scroll_value_changed)
-            except:
+            except Exception:
                 pass
 
 

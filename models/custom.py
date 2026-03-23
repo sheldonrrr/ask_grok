@@ -281,7 +281,7 @@ class CustomModel(BaseAIModel):
                         try:
                             error_detail = req_e.response.json()
                             logger.error(f"错误详情: {json.dumps(error_detail, ensure_ascii=False)}")
-                        except:
+                        except Exception:
                             logger.error(f"响应内容: {req_e.response.text[:500]}")
                     raise Exception(error_msg) from req_e
             
@@ -292,7 +292,7 @@ class CustomModel(BaseAIModel):
                 try:
                     error_detail = e.response.json()
                     error_msg += f" | {json.dumps(error_detail, ensure_ascii=False)}"
-                except:
+                except Exception:
                     error_msg += f" | {e.response.text}"
             raise Exception(error_msg) from e
     

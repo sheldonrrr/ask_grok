@@ -545,7 +545,7 @@ class BaseAIModel(ABC):
             headers = self.prepare_models_request_headers()
             
             # 发送请求
-            response = requests.get(url, headers=headers, timeout=15, verify=False)
+            response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
             
             # 解析响应
@@ -678,7 +678,6 @@ class BaseAIModel(ABC):
                 headers=headers,
                 json=test_data,
                 timeout=timeout_seconds,
-                verify=False
             )
             
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")

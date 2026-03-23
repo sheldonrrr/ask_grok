@@ -2946,7 +2946,7 @@ class ConfigDialog(QWidget):
                         if current_text.replace(' ', '').replace('\n', '') == lang_default.replace(' ', '').replace('\n', ''):
                             is_default_template = True
                             break
-                    except:
+                    except Exception:
                         pass
                 
                 if is_default_template:

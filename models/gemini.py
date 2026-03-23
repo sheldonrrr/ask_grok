@@ -390,7 +390,7 @@ class GeminiModel(BaseAIModel):
                             try:
                                 error_detail = req_e.response.json()
                                 logger.error(f"错误详情: {json.dumps(error_detail, ensure_ascii=False)}")
-                            except:
+                            except Exception:
                                 logger.error(f"响应内容: {req_e.response.text[:500]}")
                         raise
             
@@ -428,7 +428,7 @@ class GeminiModel(BaseAIModel):
                             )
                         elif e.response.status_code == 429:
                             error_msg = translations.get('api_rate_limit', 'Request rate limit exceeded, please try again later\n\nYou may have exceeded the free usage quota. This could be due to:\n1. Too many requests per minute\n2. Too many requests per day\n3. Too many input tokens per minute')
-                    except:
+                    except Exception:
                         error_msg += f" | 响应内容: {e.response.text[:200] if hasattr(e.response, 'text') else '无法解析响应'}"
                 
                 raise Exception(error_msg) from e
@@ -553,7 +553,6 @@ class GeminiModel(BaseAIModel):
                 headers=headers,
                 json=test_data,
                 timeout=timeout_seconds,
-                verify=False
             )
             
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")

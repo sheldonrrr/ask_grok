@@ -224,7 +224,7 @@ class NvidiaFreeModel(NvidiaModel):
                     error_data = error.response.json()
                     if 'error' in error_data:
                         return f"{translations.get('free_tier_error', '免费通道错误')}: {error_data['error']}"
-                except:
+                except Exception:
                     pass
         
         return format_http_error(error, self.config.get('language', 'en'))

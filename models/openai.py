@@ -151,7 +151,6 @@ class OpenAIModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),
                         stream=True,
-                        verify=False
                     ) as response:
                         response.raise_for_status()
                         
@@ -204,7 +203,6 @@ class OpenAIModel(BaseAIModel):
                     headers=headers,
                     json=data,
                     timeout=kwargs.get('timeout', 60),
-                    verify=False
                 )
                 response.raise_for_status()
                 

@@ -213,7 +213,6 @@ class OpenRouterModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),
                         stream=True,
-                        verify=False
                     ) as response:
                         response.raise_for_status()
                         
@@ -265,7 +264,6 @@ class OpenRouterModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),
                         stream=False,  # 非流式传输
-                        verify=False
                     )
                     response.raise_for_status()
                     

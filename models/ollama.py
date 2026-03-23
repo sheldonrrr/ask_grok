@@ -251,7 +251,7 @@ class OllamaModel(BaseAIModel):
                 try:
                     error_detail = e.response.json()
                     logger.error(f"Error details: {json.dumps(error_detail, ensure_ascii=False)}")
-                except:
+                except Exception:
                     logger.error(f"Response content: {e.response.text[:500]}")
             raise Exception(error_msg) from e
     
@@ -287,7 +287,7 @@ class OllamaModel(BaseAIModel):
                 api_url,
                 headers=headers,
                 timeout=timeout_seconds,
-                verify=False
+                verify=False,  # 本地/自签 HTTPS，跳过证书校验
             )
             response.raise_for_status()
             
@@ -357,7 +357,7 @@ class OllamaModel(BaseAIModel):
                 try:
                     error_detail = e.response.json()
                     logger.error(f"Error details: {json.dumps(error_detail, ensure_ascii=False)}")
-                except:
+                except Exception:
                     logger.error(f"Response content: {e.response.text[:500]}")
             raise Exception(error_msg)
             
@@ -472,7 +472,7 @@ class OllamaModel(BaseAIModel):
                 test_url,
                 json=test_data,
                 timeout=timeout_seconds,
-                verify=False
+                verify=False,  # 本地/自签 HTTPS，跳过证书校验
             )
             
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")

@@ -2085,7 +2085,7 @@ class AskDialog(QDialog):
             dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S')
             # 只显示日期和时间，不显示秒
             time_display = dt.strftime('%m-%d %H:%M')
-        except:
+        except ValueError:
             time_display = timestamp
         
         # 更新标签文本（去掉 AI: 前缀）
@@ -2109,7 +2109,7 @@ class AskDialog(QDialog):
             db = self.gui.current_db
             db.get_metadata(book_info.id, index_is_id=True)
             deleted = False
-        except:
+        except Exception:
             deleted = True
         
         return {
@@ -4476,7 +4476,7 @@ Please answer the question based on the above book information.""")
                     main_window = QApplication.instance().activeWindow()
                     if main_window and hasattr(main_window, 'statusBar'):
                         main_window.statusBar().showMessage(f"{success_msg} - {file_path}", 3000)
-            except:
+            except Exception:
                 pass
             
         except Exception as e:
