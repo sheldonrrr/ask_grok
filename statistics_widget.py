@@ -189,7 +189,7 @@ def sync_stats_from_history(prefs):
                         prefs['stat_first_use_date'] = oldest_date_str
                         changed = True
                         logger.info(f"Updated first use date from history: {oldest_date_str} (was {current_first_use})")
-                except:
+                except ValueError:
                     pass
         
         # Update request count
@@ -204,7 +204,7 @@ def sync_stats_from_history(prefs):
         if daily_counts:
             try:
                 existing_daily = json.loads(prefs.get('stat_daily_counts', '{}'))
-            except:
+            except (json.JSONDecodeError, TypeError):
                 existing_daily = {}
             
             # Merge: use max of existing and history counts for each day
@@ -248,7 +248,7 @@ def increment_ai_reply_count(prefs):
     today = datetime.now().strftime('%Y-%m-%d')
     try:
         daily_counts = json.loads(prefs.get('stat_daily_counts', '{}'))
-    except:
+    except (json.JSONDecodeError, TypeError):
         daily_counts = {}
     
     daily_counts[today] = daily_counts.get(today, 0) + 1
@@ -267,7 +267,7 @@ def get_weekly_data(prefs):
     """Get request counts for each day of the current week (Mon-Sun)."""
     try:
         daily_counts = json.loads(prefs.get('stat_daily_counts', '{}'))
-    except:
+    except (json.JSONDecodeError, TypeError):
         daily_counts = {}
     
     today = datetime.now()
@@ -288,7 +288,7 @@ def get_monthly_data(prefs):
     """Get request counts for each day of the current month."""
     try:
         daily_counts = json.loads(prefs.get('stat_daily_counts', '{}'))
-    except:
+    except (json.JSONDecodeError, TypeError):
         daily_counts = {}
     
     today = datetime.now()

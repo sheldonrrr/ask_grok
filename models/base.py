@@ -97,7 +97,7 @@ DEFAULT_MODELS = {
         display_name="Nvidia AI",
         api_key_label="Nvidia API Key:",
         default_api_base_url="https://integrate.api.nvidia.com/v1",
-        default_model_name="meta/llama-3.3-70b-instruct"
+        default_model_name="openai/gpt-oss-120b"
     ),
     AIProvider.AI_OPENROUTER: ModelConfig(
         provider=AIProvider.AI_OPENROUTER,
@@ -125,7 +125,7 @@ DEFAULT_MODELS = {
         display_name="Nvidia AI (Free)",
         api_key_label="API Key (Not Required):",
         default_api_base_url="https://nvidia-proxy.boy-liushaopeng.workers.dev",
-        default_model_name="meta/llama-3.3-70b-instruct"
+        default_model_name="openai/gpt-oss-120b"
     )
 }
 
@@ -545,7 +545,7 @@ class BaseAIModel(ABC):
             headers = self.prepare_models_request_headers()
             
             # 发送请求
-            response = requests.get(url, headers=headers, timeout=15, verify=False)
+            response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
             
             # 解析响应
@@ -678,7 +678,6 @@ class BaseAIModel(ABC):
                 headers=headers,
                 json=test_data,
                 timeout=timeout_seconds,
-                verify=False
             )
             
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")

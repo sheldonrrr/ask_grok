@@ -303,7 +303,7 @@ class DeepseekModel(BaseAIModel):
                     try:
                         error_detail = e.response.json()
                         error_msg += f" | {json.dumps(error_detail, ensure_ascii=False)}"
-                    except:
+                    except Exception:
                         error_msg += f" | {e.response.text}"
                 raise Exception(error_msg) from e
     

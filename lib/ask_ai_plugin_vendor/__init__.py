@@ -7,6 +7,8 @@ All external dependencies are isolated in this namespace.
 Vendored libraries:
 - requests (2.32.3) - HTTP library for API calls
 - bleach (6.2.0) - HTML sanitization
+- tinycss2 (1.4.0) - CSS parsing (bleach css_sanitizer dependency; Calibre 未内置)
+- webencodings (0.5.1) - Encoding labels (tinycss2 dependency)
 - markdown2 (2.5.3) - Markdown to HTML conversion
 - urllib3 (2.3.0) - HTTP client (requests dependency)
 - certifi (2025.01.31) - SSL certificates (requests dependency)

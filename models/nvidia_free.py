@@ -21,7 +21,8 @@ class NvidiaFreeModel(NvidiaModel):
     通过 Cloudflare Worker 代理访问 Nvidia API
     支持本地测试环境和生产环境切换
     """
-    
+    DEFAULT_MODEL = "openai/gpt-oss-120b"
+
     def __init__(self, config: Dict[str, Any]):
         """
         初始化 Nvidia 免费代理模型
@@ -224,7 +225,7 @@ class NvidiaFreeModel(NvidiaModel):
                     error_data = error.response.json()
                     if 'error' in error_data:
                         return f"{translations.get('free_tier_error', '免费通道错误')}: {error_data['error']}"
-                except:
+                except Exception:
                     pass
         
         return format_http_error(error, self.config.get('language', 'en'))
@@ -238,11 +239,10 @@ class NvidiaFreeModel(NvidiaModel):
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
         """获取默认配置"""
-        from .nvidia import NvidiaModel
         return {
             "proxy_url": EnvironmentConfig.get_nvidia_free_proxy_url(),
             "api_key": "free-tier",
-            "model": NvidiaModel.DEFAULT_MODEL,
+            "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,
         }
     
@@ -300,6 +300,7 @@ class NvidiaFreeModel(NvidiaModel):
         获取后备模型列表（当 API 请求失败时使用）
         """
         return [
+            "openai/gpt-oss-120b",
             "meta/llama-3.3-70b-instruct",
             "meta/llama-3.1-405b-instruct",
             "nvidia/llama-3.1-nemotron-70b-instruct",

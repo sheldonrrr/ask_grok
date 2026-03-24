@@ -20,7 +20,7 @@ class NvidiaModel(BaseAIModel):
     Note: Free tier available with 40 RPM rate limit
     """
     # Default model name
-    DEFAULT_MODEL = "meta/llama-3.3-70b-instruct"
+    DEFAULT_MODEL = "openai/gpt-oss-120b"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://integrate.api.nvidia.com/v1"
     
@@ -168,7 +168,6 @@ class NvidiaModel(BaseAIModel):
                         json=data,
                         timeout=kwargs.get('timeout', 300),
                         stream=True,
-                        verify=False
                     ) as response:
                         response.raise_for_status()
                         
@@ -225,7 +224,6 @@ class NvidiaModel(BaseAIModel):
                     headers=headers,
                     json=data,
                     timeout=kwargs.get('timeout', 60),
-                    verify=False
                 )
                 response.raise_for_status()
                 
