@@ -304,6 +304,18 @@ def get_prefs(force_reload=False):
             prefs['models']['nvidia_free']['proxy_url'] = current_env_url
             prefs['models']['nvidia_free']['api_base_url'] = current_env_url
             prefs.commit()
+        # 将仍为旧默认模型的免费通道升级到当前默认（用户若从未改过模型）
+        nf = prefs['models']['nvidia_free']
+        if nf.get('model') == 'meta/llama-3.3-70b-instruct':
+            nf['model'] = NVIDIA_FREE_CONFIG.default_model_name
+            prefs.commit()
+    
+    # 付费 Nvidia：仍为旧默认模型时升级到当前默认
+    if 'nvidia' in prefs['models']:
+        nv = prefs['models']['nvidia']
+        if isinstance(nv, dict) and nv.get('model') == 'meta/llama-3.3-70b-instruct':
+            nv['model'] = NVIDIA_CONFIG.default_model_name
+            prefs.commit()
     
     # 配置迁移：删除已废弃的 openrouter_free 配置（旧版本遗留数据）
     # 同时删除任何包含 'openrouter' 且 model 为 ':free' 或包含 'free' 的旧配置
