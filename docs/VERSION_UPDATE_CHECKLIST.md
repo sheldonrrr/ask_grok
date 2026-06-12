@@ -11,7 +11,7 @@ VERSION = (X, Y, Z)
 # 2️⃣ __init__.py Line 22 🔴 最重要！
 VERSION = (X, Y, Z) # 版本号推送触发
 
-# 3️⃣ __init__.py Line 84
+# 3️⃣ __init__.py Line 87
 version = (X, Y, Z)
 
 # 4️⃣ setup.py Line 15
@@ -21,12 +21,28 @@ version='X.Y.Z'
 # VERSION_DISPLAY 从 version.py 自动导入
 ```
 
+当前版本示例（v1.4.5）：
+
+```bash
+# version.py:11
+VERSION = (1, 4, 5)
+
+# __init__.py:22
+VERSION = (1, 4, 5) # 版本号推送触发
+
+# __init__.py:87
+version = (1, 4, 5)
+
+# setup.py:15
+version='1.4.5',
+```
+
 ---
 
 ### 第二步：验证版本号
 
 ```bash
-cd /home/she/ask_grok
+cd /Users/sheldon/ask_grok
 
 # 检查所有版本号
 grep -n "VERSION = (" version.py __init__.py
@@ -34,10 +50,10 @@ grep -n "version.*= (" __init__.py
 grep -n "version=" setup.py
 
 # 应该看到：
-# version.py:11:VERSION = (X, Y, Z)
-# __init__.py:22:VERSION = (X, Y, Z) # 版本号推送触发
-# __init__.py:84:    version             = (X, Y, Z)
-# setup.py:15:    version='X.Y.Z',
+# version.py:11:VERSION = (1, 4, 5)
+# __init__.py:22:VERSION = (1, 4, 5) # 版本号推送触发
+# __init__.py:87:    version             = (1, 4, 5)
+# setup.py:15:    version='1.4.5',
 ```
 
 ---
@@ -45,11 +61,11 @@ grep -n "version=" setup.py
 ### 第三步：构建并测试
 
 ```bash
-# 构建插件
+# 本地安装/更新插件（需要 calibre 命令可用）
 calibre-customize -b .
 
 # 应该看到：
-# Plugin updated: Ask AI Plugin (X, Y, Z)
+# Plugin updated: Ask AI Plugin (1, 4, 5)
 
 # 启动 calibre 测试
 calibre-debug -g
@@ -57,14 +73,33 @@ calibre-debug -g
 # 检查：
 # 1. 插件能否正常加载
 # 2. 打开插件菜单 → About
-# 3. 确认版本号显示为 vX.Y.Z
+# 3. 确认版本号显示为 v1.4.5
 ```
 
 ---
 
-### 第四步：更新文档
+### 第四步：打包发布 zip
 
-#### 4.1 创建 CHANGELOG 文档（必须）
+```bash
+# 输出到 dist/ 目录（每次打包都会覆盖 dist/Ask AI Plugin.zip）
+chmod +x scripts/package.sh
+./scripts/package.sh
+
+# 会生成：
+# dist/Ask AI Plugin.zip
+# dist/Ask AI Plugin-1.4.5.zip
+```
+
+说明：
+- `dist/` 目录保留在仓库中，但 zip 产物已被 `.gitignore` 忽略
+- 打包脚本会自动排除 `.git/`、`.cursor/`、`.github/`、`aiprovider/`、`docs/`、`backend/`、`__pycache__/`、`.DS_Store` 等无用文件
+- `aiprovider/`、`docs/` 仅保留在 GitHub 仓库中，供开发/文档查阅，不随插件 zip 分发
+
+---
+
+### 第五步：更新文档
+
+#### 5.1 创建 CHANGELOG 文档（必须）
 
 **🔴 重要：每次版本更新都必须创建新的 CHANGELOG 文档**
 
@@ -72,7 +107,7 @@ calibre-debug -g
    ```bash
    # 在 docs/ 目录下创建新文件
    # 文件名格式：CHANGELOG_VX.Y.Z_EN.md
-   # 例如：docs/CHANGELOG_V1.4.1_EN.md
+   # 例如：docs/CHANGELOG_V1.4.5_EN.md
    ```
 
 2. **CHANGELOG 文档结构（包含两种格式）**
@@ -124,13 +159,14 @@ calibre-debug -g
 4. **CHANGELOG 版本管理**
    - 始终保留最新两个版本的 CHANGELOG 文档
    - 创建新版本后，手动删除倒数第三个旧版本
-   - 例如：创建 V1.4.1 后，删除 V1.3.9（保留 V1.4.1 和 V1.4.0）
+   - 例如：创建 V1.4.5 后，删除 V1.4.3（保留 V1.4.5 和 V1.4.4）
 
 5. **发布流程**
    - 第一部分（BBCode）：复制到 mobileread.com 论坛发布帖
    - 第二部分（Markdown）：复制到 GitHub Release 页面
+   - 上传 `dist/Ask AI Plugin.zip` 或带版本号的 zip 到 GitHub Release
 
-#### 4.2 更新 Tutorial 文档（仅当内容有变化时）
+#### 5.2 更新 Tutorial 文档（仅当内容有变化时）
 
 **注意：只有当教程内容（除日期和版本号外）有实质性修改时才需要升级 tutorial 版本**
 
@@ -143,7 +179,7 @@ calibre-debug -g
    # 直接修改最新的 tutorial 文件
    # 例如：tutorial/tutorial_v0.8.md
    # 更新第 3 行：Latest updated: [当前日期], Ask AI Plugin v[当前版本]
-   # 示例：Latest updated: Feb 05, 2026, Ask AI Plugin v1.4.3
+   # 示例：Latest updated: Jun 12, 2026, Ask AI Plugin v1.4.5
    ```
 
 3. **如果需要升级 tutorial 版本**
@@ -168,18 +204,17 @@ calibre-debug -g
    ```
 
 4. **Tutorial 版本号规则**
-   - Tutorial 版本号（如 v0.7）独立于插件版本号（如 v1.4.1）
+   - Tutorial 版本号（如 v0.8）独立于插件版本号（如 v1.4.5）
    - Tutorial 版本号只在教程内容有实质性变化时才递增
    - 一个 tutorial 版本可以对应多个插件版本
 
-#### 4.3 其他文档更新
+#### 5.3 其他文档更新
 
 ```bash
 # 1. 更新本文档（VERSION_UPDATE_CHECKLIST.md）
 # 如果示例中的版本号或日期需要更新，同步修改
 
-# 2. 更新 VERSION_UPDATE_GUIDE.md
-# 在"版本号历史记录"中添加新版本记录
+# 2. 更新 RELEASE_UPDATE_GUIDE.md（如有新的发版流程变化）
 ```
 
 ---
@@ -189,14 +224,19 @@ calibre-debug -g
 ### 代码更新
 - [ ] version.py 已更新
 - [ ] __init__.py Line 22 已更新（🔴 最重要）
-- [ ] __init__.py Line 84 已更新
+- [ ] __init__.py Line 87 已更新
 - [ ] setup.py Line 15 已更新
 - [ ] 版本号验证通过
 
 ### 测试验证
-- [ ] 插件构建成功
+- [ ] 插件构建成功（`calibre-customize -b .` 或 `./scripts/package.sh`）
 - [ ] calibre 加载正常
 - [ ] 界面显示正确版本号
+
+### 打包发布
+- [ ] `./scripts/package.sh` 已执行
+- [ ] `dist/Ask AI Plugin.zip` 已生成
+- [ ] `dist/Ask AI Plugin-X.Y.Z.zip` 已生成
 
 ### 文档更新
 - [ ] 🔴 CHANGELOG_VX.Y.Z_EN.md 已创建（必须）
@@ -228,7 +268,7 @@ calibre-debug -g
 #### ❌ 忘记更新 __init__.py Line 22
 **后果：** calibre 不会推送更新给用户
 
-#### ❌ 忘记更新 __init__.py Line 84
+#### ❌ 忘记更新 __init__.py Line 87
 **后果：** 插件管理器显示旧版本号
 
 #### ❌ 忘记更新 setup.py Line 15
@@ -257,9 +297,12 @@ calibre-debug -g
 #### ❌ 升级 Tutorial 版本但忘记更新代码中的加载逻辑
 **后果：** 插件仍然加载旧版本教程，用户看不到新内容
 
+#### ❌ 忘记执行 `./scripts/package.sh`
+**后果：** 发版时没有可上传的 zip 文件
+
 ---
 
 ## 🔗 相关文档
 
-- 详细指南：`docs/VERSION_UPDATE_GUIDE.md`
+- 发版补充指南：`docs/RELEASE_UPDATE_GUIDE.md`
 - 变更日志：`CHANGELOG_VENDOR_NAMESPACE.md`

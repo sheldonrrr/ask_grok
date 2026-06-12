@@ -42,7 +42,7 @@ curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/models
   "object": "list",
   "data": [
     {
-      "id": "meta/llama-3.3-70b-instruct",
+      "id": "meta/llama-4-maverick-17b-128e-instruct",
       "object": "model",
       "created": 1234567890,
       "owned_by": "nvidia"
@@ -81,7 +81,7 @@ X-Plugin-Version: 1.0.0
 #### 请求体
 ```json
 {
-  "model": "meta/llama-3.3-70b-instruct",
+  "model": "meta/llama-4-maverick-17b-128e-instruct",
   "messages": [
     {
       "role": "user",
@@ -102,7 +102,7 @@ curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
   -H "X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7" \
   -H "X-Client-Locale: zh_CN" \
   -d '{
-    "model": "meta/llama-3.3-70b-instruct",
+    "model": "meta/llama-4-maverick-17b-128e-instruct",
     "messages": [
       {"role": "user", "content": "Hello, how are you?"}
     ],
@@ -118,7 +118,7 @@ curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
   "id": "chatcmpl-123",
   "object": "chat.completion",
   "created": 1677652288,
-  "model": "meta/llama-3.3-70b-instruct",
+  "model": "meta/llama-4-maverick-17b-128e-instruct",
   "choices": [
     {
       "index": 0,
@@ -169,7 +169,7 @@ curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
   -H "Content-Type: application/json" \
   -H "X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7" \
   -d '{
-    "model": "meta/llama-3.3-70b-instruct",
+    "model": "meta/llama-4-maverick-17b-128e-instruct",
     "messages": [
       {"role": "user", "content": "Tell me a short story"}
     ],
@@ -181,13 +181,13 @@ curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
 流式响应，每行一个 JSON 对象：
 
 ```
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-3.3-70b-instruct","choices":[{"index":0,"delta":{"role":"assistant","content":"Once"},"finish_reason":null}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-4-maverick-17b-128e-instruct","choices":[{"index":0,"delta":{"role":"assistant","content":"Once"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-3.3-70b-instruct","choices":[{"index":0,"delta":{"content":" upon"},"finish_reason":null}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-4-maverick-17b-128e-instruct","choices":[{"index":0,"delta":{"content":" upon"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-3.3-70b-instruct","choices":[{"index":0,"delta":{"content":" a"},"finish_reason":null}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-4-maverick-17b-128e-instruct","choices":[{"index":0,"delta":{"content":" a"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-3.3-70b-instruct","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1677652288,"model":"meta/llama-4-maverick-17b-128e-instruct","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
 
 data: [DONE]
 ```
@@ -248,7 +248,7 @@ data: [DONE]
   - `content`: 消息内容（字符串）
 
 ### model 字段
-- 可选，默认: `meta/llama-3.3-70b-instruct`
+- 可选，默认: `meta/llama-4-maverick-17b-128e-instruct`
 - 支持的模型请通过 `/api/models` 查询
 
 ### temperature 字段

@@ -18,7 +18,7 @@ class GrokModel(BaseAIModel):
     Grok AI 模型实现类
     """
     # 默认模型名称，集中管理便于后续更新
-    DEFAULT_MODEL = "grok-4-latest"
+    DEFAULT_MODEL = "grok-4.3"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://api.x.ai/v1"
     

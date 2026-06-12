@@ -24,7 +24,7 @@ class OllamaModel(BaseAIModel):
     Ollama 使用自定义 API 格式，主要用于本地运行大语言模型
     """
     # 默认模型名称
-    DEFAULT_MODEL = "llama3"
+    DEFAULT_MODEL = "minimax-m3"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "http://localhost:11434"
     

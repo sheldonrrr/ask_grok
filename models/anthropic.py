@@ -19,7 +19,7 @@ class AnthropicModel(BaseAIModel):
     Supports Claude 3.5 Sonnet, Claude 3 Opus, and other Claude models
     """
     # Default model name
-    DEFAULT_MODEL = "claude-3-5-sonnet-20241022"
+    DEFAULT_MODEL = "claude-opus-4-8"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.anthropic.com/v1"
     # Required Anthropic API version

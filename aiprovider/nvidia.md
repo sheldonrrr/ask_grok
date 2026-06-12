@@ -33,7 +33,7 @@ Nvidia 的 API 遵循 OpenAI 的格式，但存在一个主要的 **CORS 跨域�
 - **请求体 (Body)**:
   ```json
   {
-    "model": "meta/llama-4-maverick-17b-128e-instruct",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b",
     "messages": [
       {
         "role": "user",

@@ -19,7 +19,7 @@ class CustomModel(BaseAIModel):
     支持用户自定义的本地或远程API模型，如Ollama等
     """
     # 默认模型名称
-    DEFAULT_MODEL = "llama3"
+    DEFAULT_MODEL = "minimax-m3"
     # 默认 API 基础 URL (Ollama默认地址)
     DEFAULT_API_BASE_URL = "http://localhost:11434"
     

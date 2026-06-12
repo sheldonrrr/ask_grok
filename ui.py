@@ -864,9 +864,9 @@ class TutorialWidget(QWidget):
                 return
             
             # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.8.md')
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.9.md')
             if not tutorial_data:
-                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.7.md')
+                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.8.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")

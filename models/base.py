@@ -55,21 +55,21 @@ DEFAULT_MODELS = {
         display_name="x.AI (Grok)",
         api_key_label="X.AI API Key:",
         default_api_base_url="https://api.x.ai/v1",
-        default_model_name="grok-4-latest"
+        default_model_name="grok-4.3"
     ),
     AIProvider.AI_GEMINI: ModelConfig(
         provider=AIProvider.AI_GEMINI,
         display_name="Google Gemini",
         api_key_label="API Key:",
         default_api_base_url="https://generativelanguage.googleapis.com/v1beta",
-        default_model_name="gemini-2.5-pro"
+        default_model_name="google/gemini-3.5-flash"
     ),
     AIProvider.AI_DEEPSEEK: ModelConfig(
         provider=AIProvider.AI_DEEPSEEK,
         display_name="Deepseek",
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
-        default_model_name="deepseek-chat"
+        default_model_name="deepseek-v4-flash"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,
@@ -83,42 +83,42 @@ DEFAULT_MODELS = {
         display_name="OpenAI",
         api_key_label="OpenAI API Key:",
         default_api_base_url="https://api.openai.com/v1",
-        default_model_name="gpt-4o-mini"
+        default_model_name="gpt-5.4"
     ),
     AIProvider.AI_ANTHROPIC: ModelConfig(
         provider=AIProvider.AI_ANTHROPIC,
         display_name="Anthropic (Claude)",
         api_key_label="Anthropic API Key:",
         default_api_base_url="https://api.anthropic.com/v1",
-        default_model_name="claude-3-5-sonnet-20241022"
+        default_model_name="claude-opus-4-8"
     ),
     AIProvider.AI_NVIDIA: ModelConfig(
         provider=AIProvider.AI_NVIDIA,
         display_name="Nvidia AI",
         api_key_label="Nvidia API Key:",
         default_api_base_url="https://integrate.api.nvidia.com/v1",
-        default_model_name="openai/gpt-oss-120b"
+        default_model_name="nvidia/nemotron-3-ultra-550b-a55b"
     ),
     AIProvider.AI_OPENROUTER: ModelConfig(
         provider=AIProvider.AI_OPENROUTER,
         display_name="OpenRouter",
         api_key_label="OpenRouter API Key:",
         default_api_base_url="https://openrouter.ai/api/v1",
-        default_model_name="openai/gpt-4o-mini"
+        default_model_name="x-ai/grok-4.3"
     ),
     AIProvider.AI_PERPLEXITY: ModelConfig(
         provider=AIProvider.AI_PERPLEXITY,
         display_name="Perplexity",
         api_key_label="Perplexity API Key:",
         default_api_base_url="https://api.perplexity.ai",
-        default_model_name="sonar"
+        default_model_name="sonar-pro"
     ),
     AIProvider.AI_OLLAMA: ModelConfig(
         provider=AIProvider.AI_OLLAMA,
         display_name="Ollama (Local)",
         api_key_label="API Key (Optional):",
         default_api_base_url="http://localhost:11434",
-        default_model_name="llama3"
+        default_model_name="minimax-m3"
     ),
     AIProvider.AI_NVIDIA_FREE: ModelConfig(
         provider=AIProvider.AI_NVIDIA_FREE,

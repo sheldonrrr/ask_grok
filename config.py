@@ -612,13 +612,15 @@ class ModelConfigWidget(QWidget):
                 self.model_combo.addItems(hardcoded_models)
                 # Mark as loaded so the button becomes "Test Current Model"
                 self._models_loaded = True
-                # Default-select Sonar so user can test immediately (prefer saved model if valid)
+                # Default-select sonar-pro so user can test immediately (prefer saved model if valid)
                 saved_model = (self.config.get('model') or '').strip()
+                default_perplexity_model = 'sonar-pro'
+                default_idx = self.model_combo.findText(default_perplexity_model)
                 if saved_model and saved_model in hardcoded_models:
                     idx = self.model_combo.findText(saved_model)
-                    self.model_combo.setCurrentIndex(idx if idx >= 1 else 1)
+                    self.model_combo.setCurrentIndex(idx if idx >= 1 else (default_idx if default_idx >= 1 else 1))
                 else:
-                    self.model_combo.setCurrentIndex(1)
+                    self.model_combo.setCurrentIndex(default_idx if default_idx >= 1 else 1)
             elif self.model_id in cached_models and cached_models[self.model_id]:
                 self.model_combo.addItems(cached_models[self.model_id])
             else:
@@ -1769,7 +1771,7 @@ class ModelConfigWidget(QWidget):
                 prefs['models'] = prefs_models
                 logger.info(f"已将 {self.model_id} 的 prefs 配置重置为默认值")
 
-            # 8.2 Perplexity：恢复硬编码模型列表并默认选中 sonar
+            # 8.2 Perplexity：恢复硬编码模型列表并默认选中默认模型（sonar-pro）
             if self.model_id == 'perplexity':
                 try:
                     self.model_combo.clear()

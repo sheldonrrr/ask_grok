@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Package Ask AI Plugin into dist/ for release.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DIST="$ROOT/dist"
+VERSION="$(python3 -c "import sys; sys.path.insert(0, '$ROOT'); from version import VERSION_STRING; print(VERSION_STRING)")"
+ZIP_NAME="Ask AI Plugin.zip"
+VERSIONED_ZIP="Ask AI Plugin-${VERSION}.zip"
+
+mkdir -p "$DIST"
+cd "$ROOT"
+
+echo "Packaging Ask AI Plugin v${VERSION}..."
+
+rm -f "$DIST/$ZIP_NAME" "$DIST/$VERSIONED_ZIP"
+
+zip -r "$DIST/$ZIP_NAME" . \
+  -x "*.git*" \
+  -x ".cursor/*" \
+  -x ".cursor/**" \
+  -x "dist/*" \
+  -x "dist/**" \
+  -x "scripts/*" \
+  -x "scripts/**" \
+  -x "aiprovider/*" \
+  -x "aiprovider/**" \
+  -x "docs/*" \
+  -x "docs/**" \
+  -x "backend/*" \
+  -x "backend/**" \
+  -x ".github/*" \
+  -x ".github/**" \
+  -x ".obsidian/*" \
+  -x ".obsidian/**" \
+  -x ".sync/*" \
+  -x ".sync/**" \
+  -x ".idea/*" \
+  -x ".idea/**" \
+  -x ".vscode/*" \
+  -x ".vscode/**" \
+  -x ".windsurf/*" \
+  -x ".windsurf/**" \
+  -x "**/__pycache__/*" \
+  -x "**/*.py[cod]" \
+  -x "**/.DS_Store" \
+  -x "**/._*" \
+  -x "*.zip" \
+  -x "*.code-workspace" \
+  > /dev/null
+
+cp "$DIST/$ZIP_NAME" "$DIST/$VERSIONED_ZIP"
+
+echo "Created:"
+echo "  $DIST/$ZIP_NAME"
+echo "  $DIST/$VERSIONED_ZIP"

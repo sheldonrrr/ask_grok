@@ -1,6 +1,6 @@
 
-# Ask AI Plugin User Manual v0.7
-Latest updated: January 20, 2026, Ask AI Plugin v1.4.1
+# Ask AI Plugin User Manual v0.9
+Latest updated: Jun 12, 2026, Ask AI Plugin v1.4.5
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -8,6 +8,7 @@ ToC of this tutorial:
 - Installation
 - First Time Setup an AI Service
 - How to Use
+- AI Search
 - Keyboard Shortcuts
 - Random Questions
 - Prompts
@@ -95,7 +96,7 @@ Done!
 1. Select a book or multiple books in calibre
 2. Open Ask dialog:
    - Click Ask AI Plugin button in toolbar, or
-   - Use the global shortcut (default: Ctrl+L)
+   - Use the global shortcut (default: Ctrl+K)
 3. Type your question
 4. Click Send (or use Ctrl+Enter / Cmd+Enter)
 
@@ -106,6 +107,41 @@ The plugin automatically includes book metadata. You don't need to type title or
 Perplexity is useful when you want answers with sources.
 
 When Perplexity returns citations/search results, the plugin appends a plain-text "Citations" / "Search Results" section (with full URLs) at the end of the answer, so you can copy/paste the links.
+
+## AI Search
+
+AI Search lets you search your entire library using natural language, without selecting any books first.
+
+### How to Use AI Search
+
+**Open AI Search**:
+- Click "AI Search" in the plugin menu, or
+- Use the shortcut Ctrl+Shift+L, or
+- Simply open the Ask dialog without selecting any books
+
+**Ask questions about your library**:
+- "Do you have any books about Python programming?"
+- "Show me books by Isaac Asimov"
+- "Find books about machine learning"
+- "What science fiction books do I have?"
+
+**Open the book in response**
+
+AI will search through your library metadata and recommend relevant books, and you can open the book in response by clicking the book title.
+
+### Features
+
+- **Natural Language Search**: Ask in plain language, no special syntax needed
+- **Library-Wide**: Searches all books in your current calibre library
+- **Smart Matching**: AI understands context and can find related books
+- **Click to Open**: Click on book titles in the results to open them directly
+
+### Tips for AI Search
+
+- Be specific about what you're looking for
+- You can ask about genres, authors, topics, or any metadata
+- AI Search works best with well-organized library metadata
+- The search uses your book titles and authors
 
 ## Keyboard Shortcuts
 
@@ -118,8 +154,9 @@ How to customize:
 4. Edit the shortcuts you want
 
 Common shortcuts (defaults):
-- Ask AI: Ask (global): Ctrl+L
+- Ask AI: Ask (global): Ctrl+K
 - Ask AI: Open Configuration: F2
+- Ask AI: AI Search: Ctrl+Shift+L
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
 - Ask AI: Random Question (in dialog): Ctrl+Shift+R (Cmd+Shift+R on macOS)
 
@@ -246,6 +283,7 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 3. Be specific in questions for better answers.
 4. Set up a detailed persona for more relevant responses.
 5. Use Perplexity for research questions that need citations.
+6. Use AI Search to quickly find books in your library without browsing.
 
 ## Getting Help
 
