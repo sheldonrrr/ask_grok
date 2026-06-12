@@ -55,7 +55,6 @@ class RussianTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Настройте провайдеров ИИ и выберите ИИ по умолчанию',
             'prompts_subtitle': 'Настройте способ отправки вопросов в ИИ',
             'export_settings_subtitle': 'Установите папку по умолчанию для экспорта PDF',
-            'debug_settings_subtitle': 'Включить отладочное логирование для устранения неполадок',
             'reset_all_data_subtitle': 'Внимание: Это навсегда удалит все ваши настройки и данные',
 
             # Prompts tab
@@ -292,9 +291,6 @@ class RussianTranslation(BaseTranslation):
             'open_settings': 'Настройки плагина',
             'ask_anyway': 'Все равно спросить',
             'later': 'Позже',
-            'debug_settings': 'Настройки отладки',
-            'enable_debug_logging': 'Включить отладочное логирование (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'При отключении отладочные логи не будут записываться в файл. Это может предотвратить слишком большой рост файла логов.',
             'reset_all_data': 'Сбросить все данные',
             'reset_all_data_warning': 'Это удалит все ключи API, шаблоны промптов и локальные записи истории. Ваши языковые предпочтения будут сохранены. Пожалуйста, действуйте осторожно.',
             'reset_all_data_confirm_title': 'Подтвердить сброс',

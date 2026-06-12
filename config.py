@@ -33,7 +33,8 @@ from .ui_constants import (
     MARGIN_MEDIUM, PADDING_MEDIUM,
     TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
-    get_list_widget_style
+    get_list_widget_style,
+    setup_settings_tab_content, add_settings_section, configure_layout,
 )
 
 # 初始化日志
@@ -1924,34 +1925,22 @@ class ConfigDialog(QWidget):
         # 只为这个特定的 widget 设置样式，不影响子控件
         content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
         content_widget.setObjectName("content_container")
-        content_layout = QVBoxLayout()
-        # 使用统一的Tab布局规范
-        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, get_tab_scroll_area_style
-        content_layout.setSpacing(TAB_CONTENT_SPACING)
-        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        content_widget.setLayout(content_layout)
+        content_layout = setup_settings_tab_content(content_widget)
         
-        # 1. 顶部：语言选择
-        # Section Title（外部）- 第一个 section，顶部间距较小
-        from .ui_constants import get_first_section_title_style
-        lang_title = QLabel(self.i18n.get('language_settings', 'Language'))
+        # 1. 语言
+        lang_section, lang_title, lang_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('language_settings', 'Language'),
+            self.i18n.get('language_subtitle', 'Choose your preferred interface language'),
+        )
         lang_title.setObjectName('title_language')
-        lang_title.setStyleSheet(get_first_section_title_style())
-        content_layout.addWidget(lang_title)
-        
-        # Subtitle（外部）
-        lang_subtitle = QLabel(self.i18n.get('language_subtitle', 'Choose your preferred interface language'))
         lang_subtitle.setObjectName('subtitle_language')
-        lang_subtitle.setWordWrap(True)
-        lang_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(lang_subtitle)
         
-        # GroupBox（无标题）
         lang_group = QGroupBox()
         lang_group.setObjectName('groupbox_display')
         lang_group.setStyleSheet(get_groupbox_style())
         lang_layout = QVBoxLayout()
-        lang_layout.setSpacing(SPACING_SMALL)
+        configure_layout(lang_layout, 'settings_section')
         
         self.lang_combo = NoScrollComboBox(self)
         for code, name in SUPPORTED_LANGUAGES:
@@ -1964,28 +1953,22 @@ class ConfigDialog(QWidget):
         lang_layout.addWidget(language_label)
         lang_layout.addWidget(self.lang_combo)
         lang_group.setLayout(lang_layout)
-        content_layout.addWidget(lang_group)
+        lang_section.addWidget(lang_group)
 
-        # 2. 中部：AI模型选择和配置
-        # Section Title（外部）
-        ai_title = QLabel(self.i18n.get('ai_models', 'AI Providers'))
+        # 2. AI 模型
+        ai_section, ai_title, ai_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('ai_models', 'AI Providers'),
+            self.i18n.get('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
+        )
         ai_title.setObjectName('title_ai_providers')
-        ai_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(ai_title)
-        
-        # Subtitle（外部）
-        ai_subtitle = QLabel(self.i18n.get('ai_providers_subtitle', 'Configure AI providers and select your default AI'))
         ai_subtitle.setObjectName('subtitle_ai_providers')
-        ai_subtitle.setWordWrap(True)
-        ai_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(ai_subtitle)
         
-        # GroupBox（无标题）
         model_group = QGroupBox()
         model_group.setObjectName('groupbox_ai_models')
         model_group.setStyleSheet(get_groupbox_style())
         model_layout = QVBoxLayout()
-        model_layout.setSpacing(SPACING_MEDIUM)
+        configure_layout(model_layout, 'settings_section')
 
         # ========== 新版 AI 区域：列表概览 + 管理入口 ==========
         
@@ -2008,7 +1991,7 @@ class ConfigDialog(QWidget):
         
         # 默认 AI 选择行
         default_ai_layout = QHBoxLayout()
-        default_ai_layout.setSpacing(SPACING_SMALL)
+        configure_layout(default_ai_layout, 'form_row')
         
         default_ai_label = QLabel(self.i18n.get('default_ai_label', 'Default AI:'))
         default_ai_label.setObjectName('label_default_ai')
@@ -2039,7 +2022,7 @@ class ConfigDialog(QWidget):
         
         # AI 操作按钮区域
         ai_buttons_layout = QHBoxLayout()
-        ai_buttons_layout.setSpacing(SPACING_SMALL)
+        configure_layout(ai_buttons_layout, 'form_row')
         
         # 添加 AI 按钮（使用默认样式）
         self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
@@ -2073,7 +2056,7 @@ class ConfigDialog(QWidget):
         
         # 添加请求超时时间设置
         timeout_layout = QHBoxLayout()
-        timeout_layout.setSpacing(SPACING_SMALL)
+        configure_layout(timeout_layout, 'form_row')
         timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout'))
         timeout_label.setObjectName('label_request_timeout')
         timeout_layout.addWidget(timeout_label)
@@ -2097,7 +2080,7 @@ class ConfigDialog(QWidget):
         
         # 添加并行AI数量设置
         parallel_layout = QHBoxLayout()
-        parallel_layout.setSpacing(SPACING_SMALL)
+        configure_layout(parallel_layout, 'form_row')
         parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count'))
         parallel_label.setObjectName('label_parallel_ai_count')
         parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
@@ -2152,28 +2135,22 @@ class ConfigDialog(QWidget):
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
-        content_layout.addWidget(model_group)
+        ai_section.addWidget(model_group)
         
         # 3. Export Settings
-        # Section Title（外部）
-        export_title = QLabel(self.i18n.get('export_settings', 'Export Settings'))
+        export_section, export_title, export_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('export_settings', 'Export Settings'),
+            self.i18n.get('export_settings_subtitle', 'Set default folder for exporting PDFs'),
+        )
         export_title.setObjectName('title_export_settings')
-        export_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(export_title)
-        
-        # Subtitle（外部）
-        export_subtitle = QLabel(self.i18n.get('export_settings_subtitle', 'Set default folder for exporting PDFs'))
         export_subtitle.setObjectName('subtitle_export_settings')
-        export_subtitle.setWordWrap(True)
-        export_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(export_subtitle)
         
-        # GroupBox（无标题）
         export_group = QGroupBox()
         export_group.setObjectName('groupbox_export_settings')
         export_group.setStyleSheet(get_groupbox_style())
         export_layout = QVBoxLayout()
-        export_layout.setSpacing(SPACING_SMALL)
+        configure_layout(export_layout, 'settings_section')
         
         # 复选框：导出到默认文件夹
         self.enable_default_folder_checkbox = QCheckBox(
@@ -2188,7 +2165,7 @@ class ConfigDialog(QWidget):
         
         # 文件夹选择区域
         folder_layout = QHBoxLayout()
-        folder_layout.setSpacing(SPACING_SMALL)
+        configure_layout(folder_layout, 'form_row')
         
         # 文件夹路径标签（显示当前选择的路径）
         saved_folder = self.initial_values.get('default_export_folder', '').strip()
@@ -2222,73 +2199,25 @@ class ConfigDialog(QWidget):
         export_layout.addLayout(folder_layout)
         
         export_group.setLayout(export_layout)
-        content_layout.addWidget(export_group)
+        export_section.addWidget(export_group)
         
-        # 5. Debug Logging Settings
-        # Section Title（外部）
-        debug_title = QLabel(self.i18n.get('debug_settings', 'Debug Settings'))
-        debug_title.setObjectName('title_debug_settings')
-        debug_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(debug_title)
-        
-        # Subtitle（外部）
-        debug_subtitle = QLabel(self.i18n.get('debug_settings_subtitle', 'Enable debug logging for troubleshooting'))
-        debug_subtitle.setObjectName('subtitle_debug_settings')
-        debug_subtitle.setWordWrap(True)
-        debug_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(debug_subtitle)
-        
-        # GroupBox（无标题）
-        debug_group = QGroupBox()
-        debug_group.setObjectName('groupbox_debug_settings')
-        debug_group.setStyleSheet(get_groupbox_style())
-        debug_layout = QVBoxLayout()
-        debug_layout.setSpacing(SPACING_SMALL)
-        
-        # 复选框：启用调试日志
-        self.enable_debug_logging_checkbox = QCheckBox(
-            self.i18n.get('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)')
+        # 4. 重置所有数据
+        reset_subtitle_style = get_subtitle_style() + " color: #dc3545;"
+        reset_section, reset_title, reset_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('reset_all_data', 'Reset All Data'),
+            self.i18n.get('reset_all_data_subtitle',
+                'Warning: This will permanently delete all your settings and data'),
+            subtitle_style=reset_subtitle_style,
         )
-        self.enable_debug_logging_checkbox.setObjectName('checkbox_enable_debug_logging')
-        self.enable_debug_logging_checkbox.setChecked(
-            self.initial_values.get('enable_debug_logging', False)
-        )
-        self.enable_debug_logging_checkbox.stateChanged.connect(self.on_config_changed)
-        debug_layout.addWidget(self.enable_debug_logging_checkbox)
-        
-        # 说明文字
-        debug_hint = QLabel(self.i18n.get('debug_logging_hint', 
-            'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'))
-        debug_hint.setObjectName('label_debug_hint')
-        debug_hint.setWordWrap(True)
-        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
-        debug_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
-        debug_layout.addWidget(debug_hint)
-        
-        debug_group.setLayout(debug_layout)
-        content_layout.addWidget(debug_group)
-        
-        # 6. 危险区域：重置所有数据
-        # Section Title（外部）
-        reset_title = QLabel(self.i18n.get('reset_all_data', 'Reset All Data'))
         reset_title.setObjectName('title_reset_all_data')
-        reset_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(reset_title)
-        
-        # Subtitle（外部，红色警告）
-        reset_subtitle = QLabel(self.i18n.get('reset_all_data_subtitle', 
-            'Warning: This will permanently delete all your settings and data'))
         reset_subtitle.setObjectName('subtitle_reset_all_data')
-        reset_subtitle.setWordWrap(True)
-        reset_subtitle.setStyleSheet("color: #dc3545; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
-        content_layout.addWidget(reset_subtitle)
         
-        # GroupBox（无标题，无红色边框）
         reset_group = QGroupBox()
         reset_group.setObjectName('groupbox_reset_data')
         reset_group.setStyleSheet(get_groupbox_style())
         reset_layout = QVBoxLayout()
-        reset_layout.setSpacing(SPACING_SMALL)
+        configure_layout(reset_layout, 'settings_section')
         
         # 重置按钮（使用默认样式）
         self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
@@ -2297,13 +2226,10 @@ class ConfigDialog(QWidget):
         reset_layout.addWidget(self.reset_button)
         
         reset_group.setLayout(reset_layout)
-        content_layout.addWidget(reset_group)
+        reset_section.addWidget(reset_group)
         
-        # 底部添加固定间距和弹性空间
-        content_layout.addSpacing(SPACING_MEDIUM)
         content_layout.addStretch()
         
-        # 将内容容器设置到主滚动区域
         main_scroll.setWidget(content_widget)
         
         # 添加主滚动区域到主布局
@@ -2593,7 +2519,6 @@ class ConfigDialog(QWidget):
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
-            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
         # 调试日志
@@ -2815,14 +2740,12 @@ class ConfigDialog(QWidget):
             'title_ai_providers': ('ai_models', 'AI Providers'),
             'title_prompts': ('prompt_template', 'Prompts'),
             'title_export_settings': ('export_settings', 'Export Settings'),
-            'title_debug_settings': ('debug_settings', 'Debug Settings'),
             'title_reset_all_data': ('reset_all_data', 'Reset All Data'),
             # Section subtitles
             'subtitle_language': ('language_subtitle', 'Choose your preferred interface language'),
             'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
-            'subtitle_debug_settings': ('debug_settings_subtitle', 'Enable debug logging for troubleshooting'),
             'subtitle_reset_all_data': ('reset_all_data_subtitle', 'Warning: This will permanently delete all your settings and data'),
             # Other labels
             'label_language': ('language_label', 'Language'),
@@ -2835,7 +2758,6 @@ class ConfigDialog(QWidget):
             'label_random_questions_prompts': ('random_questions_prompts', 'Random Questions Prompts'),
             'label_multi_book_template': ('multi_book_template_label', 'Multi-Book Prompt Template'),
             'label_multi_book_placeholder_hint': ('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'),
-            'label_debug_hint': ('debug_logging_hint', 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'),
             'label_nvidia_free_info': ('nvidia_free_info', 'New users get 6 months free API access - No credit card required'),
         }
         
@@ -2852,7 +2774,6 @@ class ConfigDialog(QWidget):
         # 更新 CheckBox 文本（使用 ObjectName 映射）
         checkbox_map = {
             'checkbox_enable_default_folder': ('enable_default_export_folder', 'Export to default folder'),
-            'checkbox_enable_debug_logging': ('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)'),
         }
         
         for checkbox in self.findChildren(QCheckBox):
@@ -3184,11 +3105,6 @@ class ConfigDialog(QWidget):
                 prefs['default_export_folder'] = ''
                 logger.info(f"[Export Config Save] 保存空字符串（占位符）")
         
-        # 保存Debug Logging配置
-        if hasattr(self, 'enable_debug_logging_checkbox'):
-            prefs['enable_debug_logging'] = self.enable_debug_logging_checkbox.isChecked()
-            logger.info(f"[Debug Logging] 保存调试日志设置: {self.enable_debug_logging_checkbox.isChecked()}")
-        
         # 保存选中的模型（只有当 model_combo 有有效数据时才保存）
         selected_model = self.model_combo.currentData()
         if selected_model is not None:
@@ -3242,7 +3158,6 @@ class ConfigDialog(QWidget):
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
-            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
         # 注意：提示词模板的原始文本值现在在 Prompts Tab 中管理
@@ -3571,65 +3486,53 @@ class LibraryWidget(QWidget):
     
     def setup_ui(self):
         """设置UI"""
-        from .ui_constants import (setup_tab_widget_layout, TAB_CONTENT_MARGIN, 
-                                   TAB_CONTENT_SPACING, get_first_section_title_style)
+        from .ui_constants import (
+            setup_tab_widget_layout, get_first_section_title_style,
+            setup_settings_tab_content, add_settings_section, configure_layout,
+            PADDING_MEDIUM,
+        )
         
-        # 使用统一的 Tab 布局
         main_layout = setup_tab_widget_layout(self)
         
-        # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         
-        # 内容容器
         content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, 
-                                  TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        layout.setSpacing(TAB_CONTENT_SPACING)
+        layout = setup_settings_tab_content(content)
         
-        # Privacy alert section - 使用统一的第一个 section 标题样式
-        self.privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
+        search_section, self.privacy_title, _privacy_sub = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_privacy_title', 'Privacy Notice'),
+        )
         self.privacy_title.setStyleSheet(get_first_section_title_style())
-        layout.addWidget(self.privacy_title)
         
         self.privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
             'AI Search uses book metadata (titles and authors) from your library. '
             'This information will be sent to the AI provider you have configured to process your search queries.'))
         self.privacy_alert.setWordWrap(True)
         self.privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
-        layout.addWidget(self.privacy_alert)
+        search_section.addWidget(self.privacy_alert)
         
-        layout.addSpacing(SPACING_MEDIUM)
-        
-        # AI搜索说明
         self.info_label = QLabel(self.i18n.get('library_info', 
             'AI Search is always enabled. When you don\'t select any books, '
             'you can search your entire library using natural language.'))
         self.info_label.setWordWrap(True)
         self.info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        layout.addWidget(self.info_label)
+        search_section.addWidget(self.info_label)
         
-        layout.addSpacing(SPACING_SMALL)
-        
-        # 更新按钮
         self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
         self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
             'Extract book titles and authors from your library'))
         self.update_button.clicked.connect(self.on_update_library)
         apply_button_style(self.update_button)
-        layout.addWidget(self.update_button)
+        search_section.addWidget(self.update_button)
         
-        layout.addSpacing(SPACING_SMALL)
-        
-        # 状态标签
         self.status_label = QLabel()
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        layout.addWidget(self.status_label)
+        search_section.addWidget(self.status_label)
         
-        # 添加弹性空间
         layout.addStretch()
         
         scroll.setWidget(content)

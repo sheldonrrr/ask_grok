@@ -12,7 +12,8 @@ from .i18n import get_default_template, get_suggestion_template, get_multi_book_
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_ASK_COMPACT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
-    TEXT_COLOR_SECONDARY_STRONG
+    TEXT_COLOR_SECONDARY_STRONG,
+    setup_settings_tab_content, add_settings_section, configure_layout,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,29 +34,22 @@ class PromptsWidget(QWidget):
         
     def setup_ui(self):
         """设置UI"""
-        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, setup_tab_widget_layout, get_tab_scroll_area_style
+        from .ui_constants import setup_tab_widget_layout, get_tab_scroll_area_style
         
-        # 创建主布局 - 使用统一的 Tab 布局函数
         main_layout = setup_tab_widget_layout(self)
         
-        # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.NoFrame)
         scroll.setObjectName("prompts_scroll")
         scroll.setStyleSheet(get_tab_scroll_area_style("prompts_scroll"))
-        # 直接设置 viewport 的边距
         if scroll.viewport():
             scroll.viewport().setContentsMargins(0, 0, 0, 0)
         
-        # 创建内容容器
         content_widget = QWidget()
         content_widget.setStyleSheet("QWidget#prompts_content_container { background: transparent; border: none; }")
         content_widget.setObjectName("prompts_content_container")
-        content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        content_layout.setSpacing(TAB_CONTENT_SPACING)
-        content_widget.setLayout(content_layout)
+        content_layout = setup_settings_tab_content(content_widget)
         
         # 添加语言偏好设置部分
         self.add_language_preference_section(content_layout)
@@ -77,39 +71,25 @@ class PromptsWidget(QWidget):
         
         scroll.setWidget(content_widget)
         main_layout.addWidget(scroll)
-        
+
         
     def add_language_preference_section(self, parent_layout):
         """添加语言偏好设置部分"""
         from PyQt5.QtWidgets import QCheckBox
         
-        # Section Title - 第一个section，顶部间距较小
-        lang_pref_title = QLabel(self.i18n.get('language_preference_title', 'Language Preference'))
+        lang_section, lang_pref_title, lang_pref_subtitle = add_settings_section(
+            parent_layout,
+            self.i18n.get('language_preference_title', 'Language Preference'),
+            self.i18n.get('language_preference_subtitle',
+                'Control whether AI responses should match your interface language'),
+        )
         lang_pref_title.setObjectName('title_language_preference')
-        first_section_style = f"""
-            font-weight: bold;
-            font-size: 1.08em;
-            color: palette(text);
-            text-transform: uppercase;
-            padding: 0;
-            margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
-        """
-        lang_pref_title.setStyleSheet(first_section_style)
-        parent_layout.addWidget(lang_pref_title)
-        
-        # Subtitle
-        lang_pref_subtitle = QLabel(self.i18n.get('language_preference_subtitle', 
-            'Control whether AI responses should match your interface language'))
         lang_pref_subtitle.setObjectName('subtitle_language_preference')
-        lang_pref_subtitle.setWordWrap(True)
-        lang_pref_subtitle.setStyleSheet(get_subtitle_style())
-        parent_layout.addWidget(lang_pref_subtitle)
         
-        # 创建语言偏好组
         lang_pref_group = QGroupBox()
         lang_pref_group.setStyleSheet(get_groupbox_style())
         lang_pref_layout = QVBoxLayout()
-        lang_pref_layout.setSpacing(SPACING_SMALL)
+        configure_layout(lang_pref_layout, 'settings_section')
         
         # 复选框
         self.use_interface_language_checkbox = QCheckBox(
@@ -129,31 +109,25 @@ class PromptsWidget(QWidget):
         self.update_language_instruction_display()
         
         lang_pref_group.setLayout(lang_pref_layout)
-        parent_layout.addWidget(lang_pref_group)
+        lang_section.addWidget(lang_pref_group)
     
     def add_persona_section(self, parent_layout):
         """添加 Persona 部分"""
         from PyQt5.QtWidgets import QCheckBox, QLineEdit
         
-        # Section Title
-        persona_title = QLabel(self.i18n.get('persona_title', 'Persona'))
+        persona_section, persona_title, persona_subtitle = add_settings_section(
+            parent_layout,
+            self.i18n.get('persona_title', 'Persona'),
+            self.i18n.get('persona_subtitle',
+                'Define your research background and goals to help AI provide more relevant responses'),
+        )
         persona_title.setObjectName('title_persona')
-        persona_title.setStyleSheet(get_section_title_style())
-        parent_layout.addWidget(persona_title)
-        
-        # Subtitle
-        persona_subtitle = QLabel(self.i18n.get('persona_subtitle', 
-            'Define your research background and goals to help AI provide more relevant responses'))
         persona_subtitle.setObjectName('subtitle_persona')
-        persona_subtitle.setWordWrap(True)
-        persona_subtitle.setStyleSheet(get_subtitle_style())
-        parent_layout.addWidget(persona_subtitle)
         
-        # 创建 Persona 组
         persona_group = QGroupBox()
         persona_group.setStyleSheet(get_groupbox_style())
         persona_layout = QVBoxLayout()
-        persona_layout.setSpacing(SPACING_SMALL)
+        configure_layout(persona_layout, 'settings_section')
         
         # 复选框：Use persona
         self.use_persona_checkbox = QCheckBox(
@@ -183,7 +157,7 @@ class PromptsWidget(QWidget):
         persona_layout.addWidget(persona_hint)
         
         persona_group.setLayout(persona_layout)
-        parent_layout.addWidget(persona_group)
+        persona_section.addWidget(persona_group)
     
     def on_persona_checkbox_changed(self):
         """Persona 复选框变更时触发"""
@@ -194,29 +168,22 @@ class PromptsWidget(QWidget):
     
     def add_prompts_section(self, parent_layout):
         """添加提示词模板部分"""
-        # Section Title
-        prompts_title = QLabel(self.i18n.get('prompt_templates_title', 'Prompt Templates'))
+        prompts_section, prompts_title, prompts_subtitle = add_settings_section(
+            parent_layout,
+            self.i18n.get('prompt_templates_title', 'Prompt Templates'),
+            self.i18n.get('prompt_templates_subtitle',
+                'Customize how book information is sent to AI using dynamic fields like {title}, {author}, {query}'),
+        )
         prompts_title.setObjectName('title_prompt_templates')
-        prompts_title.setStyleSheet(get_section_title_style())
-        parent_layout.addWidget(prompts_title)
-        
-        # Subtitle
-        prompts_subtitle = QLabel(self.i18n.get('prompt_templates_subtitle', 
-            'Customize how book information is sent to AI using dynamic fields like {title}, {author}, {query}'))
         prompts_subtitle.setObjectName('subtitle_prompt_templates')
-        prompts_subtitle.setWordWrap(True)
-        prompts_subtitle.setStyleSheet(get_subtitle_style())
-        parent_layout.addWidget(prompts_subtitle)
         
-        # 创建提示词组
         prompts_group = QGroupBox()
         prompts_group.setStyleSheet(get_groupbox_style())
         prompts_layout = QVBoxLayout()
-        prompts_layout.setSpacing(SPACING_MEDIUM)
+        configure_layout(prompts_layout, 'settings_section')
         
-        # Ask Prompts
         ask_layout = QVBoxLayout()
-        ask_layout.setSpacing(SPACING_SMALL)
+        configure_layout(ask_layout, 'settings_section')
         ask_label = QLabel(self.i18n.get('ask_prompts', 'Ask Prompts'))
         ask_label.setObjectName('label_ask_prompts')
         ask_layout.addWidget(ask_label)
@@ -230,7 +197,7 @@ class PromptsWidget(QWidget):
         
         # Random Questions Prompts
         random_layout = QVBoxLayout()
-        random_layout.setSpacing(SPACING_SMALL)
+        configure_layout(random_layout, 'settings_section')
         random_label = QLabel(self.i18n.get('random_questions_prompts', 'Random Questions Prompts'))
         random_label.setObjectName('label_random_questions_prompts')
         random_layout.addWidget(random_label)
@@ -244,7 +211,7 @@ class PromptsWidget(QWidget):
         
         # Multi-Book Prompts
         multi_layout = QVBoxLayout()
-        multi_layout.setSpacing(SPACING_SMALL)
+        configure_layout(multi_layout, 'settings_section')
         multi_label = QLabel(self.i18n.get('multi_book_prompts_label', 'Multi-Book Prompts'))
         multi_label.setObjectName('label_multi_book_prompts')
         multi_layout.addWidget(multi_label)
@@ -265,29 +232,23 @@ class PromptsWidget(QWidget):
         prompts_layout.addLayout(multi_layout)
         
         prompts_group.setLayout(prompts_layout)
-        parent_layout.addWidget(prompts_group)
+        prompts_section.addWidget(prompts_group)
     
     def add_dynamic_fields_examples(self, parent_layout):
         """添加动态字段使用示例"""
-        # Section Title
-        examples_title = QLabel(self.i18n.get('dynamic_fields_title', 'Dynamic Fields Reference'))
+        examples_section, examples_title, examples_subtitle = add_settings_section(
+            parent_layout,
+            self.i18n.get('dynamic_fields_title', 'Dynamic Fields Reference'),
+            self.i18n.get('dynamic_fields_subtitle',
+                'Available fields and example values from "Frankenstein" by Mary Shelley'),
+        )
         examples_title.setObjectName('title_dynamic_fields')
-        examples_title.setStyleSheet(get_section_title_style())
-        parent_layout.addWidget(examples_title)
-        
-        # Subtitle
-        examples_subtitle = QLabel(self.i18n.get('dynamic_fields_subtitle', 
-            'Available fields and example values from "Frankenstein" by Mary Shelley'))
         examples_subtitle.setObjectName('subtitle_dynamic_fields')
-        examples_subtitle.setWordWrap(True)
-        examples_subtitle.setStyleSheet(get_subtitle_style())
-        parent_layout.addWidget(examples_subtitle)
         
-        # 创建示例组
         examples_group = QGroupBox()
         examples_group.setStyleSheet(get_groupbox_style())
         examples_layout = QVBoxLayout()
-        examples_layout.setSpacing(SPACING_SMALL)
+        configure_layout(examples_layout, 'settings_section')
         
         # 创建示例表格
         example_text = self.i18n.get('dynamic_fields_examples', 
@@ -307,7 +268,7 @@ class PromptsWidget(QWidget):
         examples_layout.addWidget(examples_label)
         
         examples_group.setLayout(examples_layout)
-        parent_layout.addWidget(examples_group)
+        examples_section.addWidget(examples_group)
         
     def setup_text_edit_height(self, text_edit):
         """设置文本编辑框的高度"""
@@ -326,7 +287,7 @@ class PromptsWidget(QWidget):
     def add_reset_button(self, parent_layout):
         """添加重置按钮"""
         reset_layout = QHBoxLayout()
-        reset_layout.setContentsMargins(0, SPACING_MEDIUM, 0, SPACING_MEDIUM)  # Add top and bottom spacing
+        configure_layout(reset_layout, 'footer')
         reset_layout.addStretch()
         
         reset_button = QPushButton(self.i18n.get('reset_prompts', 'Reset Prompts to Default'))

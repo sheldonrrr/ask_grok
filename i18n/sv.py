@@ -55,7 +55,6 @@ class SwedishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurera AI-leverantörer och välj din standard-AI',
             'prompts_subtitle': 'Anpassa hur frågor skickas till AI',
             'export_settings_subtitle': 'Ställ in standardmapp för export av PDF-filer',
-            'debug_settings_subtitle': 'Aktivera felloggning för felsökning',
             'reset_all_data_subtitle': 'Varning: Detta kommer permanent att radera alla dina inställningar och data',
 
             # Prompts tab
@@ -292,9 +291,6 @@ class SwedishTranslation(BaseTranslation):
             'open_settings': 'Plugin-konfiguration',
             'ask_anyway': 'Fråga ändå',
             'later': 'Senare',
-            'debug_settings': 'Felsökningsinställningar',
-            'enable_debug_logging': 'Aktivera felloggning (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'När det är inaktiverat kommer felloggar inte att skrivas till fil. Detta kan förhindra att loggfilen blir för stor.',
             'reset_all_data': 'Återställ alla data',
             'reset_all_data_warning': 'Detta kommer att radera alla API-nycklar, promptmallar och lokala historikposter. Din språkpreferens kommer att bevaras. Fortsätt med försiktighet.',
             'reset_all_data_confirm_title': 'Bekräfta återställning',

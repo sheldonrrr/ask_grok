@@ -55,7 +55,6 @@ class GermanTranslation(BaseTranslation):
             'ai_providers_subtitle': 'KI-Anbieter konfigurieren und Standard-KI auswählen',
             'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
             'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
-            'debug_settings_subtitle': 'Debug-Protokollierung zur Fehlerbehebung aktivieren',
             'reset_all_data_subtitle': 'Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
             
             # Prompts-Tab
@@ -280,9 +279,6 @@ class GermanTranslation(BaseTranslation):
             'open_settings': 'Plugin-Konfiguration',
             'ask_anyway': 'Trotzdem fragen',
             'later': 'Später',
-            'debug_settings': 'Debug-Einstellungen',
-            'enable_debug_logging': 'Debug-Protokollierung aktivieren (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Wenn deaktiviert, werden Debug-Protokolle nicht in die Datei geschrieben. Dies kann verhindern, dass die Protokolldatei zu groß wird.',
             'reset_all_data': 'Alle Daten zurücksetzen',
             'reset_all_data_warning': 'Dies löscht alle API-Schlüssel, Prompt-Vorlagen und lokale Verlaufseinträge. Ihre Spracheinstellung wird beibehalten. Bitte vorsichtig vorgehen.',
             'reset_all_data_confirm_title': 'Zurücksetzen bestätigen',

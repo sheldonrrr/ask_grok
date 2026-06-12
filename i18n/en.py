@@ -55,7 +55,6 @@ class EnglishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configure AI providers and select your default AI',
             'prompts_subtitle': 'Customize how questions are sent to AI',
             'export_settings_subtitle': 'Set default folder for exporting PDFs',
-            'debug_settings_subtitle': 'Enable debug logging for troubleshooting',
             'reset_all_data_subtitle': 'Warning: This will permanently delete all your settings and data',
             
             # Prompts tab
@@ -294,9 +293,6 @@ class EnglishTranslation(BaseTranslation):
             'open_settings': 'Plugin Configuration',
             'ask_anyway': 'Ask Anyway',
             'later': 'Later',
-            'debug_settings': 'Debug Settings',
-            'enable_debug_logging': 'Enable debug logging (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.',
             'reset_all_data': 'Reset All Data',
             'reset_all_data_warning': 'This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.',
             'reset_all_data_confirm_title': 'Confirm Reset',

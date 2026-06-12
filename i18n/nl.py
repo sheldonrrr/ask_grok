@@ -55,7 +55,6 @@ class DutchTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configureer AI-aanbieders en selecteer uw standaard-AI',
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
-            'debug_settings_subtitle': 'Schakel debug-logging in voor probleemoplossing',
             'reset_all_data_subtitle': 'Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
 
             # Prompts tab
@@ -292,9 +291,6 @@ class DutchTranslation(BaseTranslation):
             'open_settings': 'Plugin Configuratie',
             'ask_anyway': 'Vraag toch',
             'later': 'Later',
-            'debug_settings': 'Debug-instellingen',
-            'enable_debug_logging': 'Schakel debug-logging in (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Indien uitgeschakeld, worden debug-logs niet naar een bestand geschreven. Dit kan voorkomen dat het logbestand te groot wordt.',
             'reset_all_data': 'Reset alle gegevens',
             'reset_all_data_warning': 'Dit zal alle API-sleutels, promptsjablonen en lokale geschiedenisrecords verwijderen. Uw taalvoorkeur blijft behouden. Ga voorzichtig te werk.',
             'reset_all_data_confirm_title': 'Bevestig reset',

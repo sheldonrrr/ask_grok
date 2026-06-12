@@ -222,7 +222,6 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
-- Debug Logging: Enable/disable debug log file (thanks to Comfy.n for feedback)
 
 AI Provider Settings:
 - API Key: Your authentication key

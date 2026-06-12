@@ -55,7 +55,6 @@ class JapaneseTranslation(BaseTranslation):
             'ai_providers_subtitle': 'AIプロバイダーを設定し、デフォルトのAIを選択してください',
             'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
             'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
-            'debug_settings_subtitle': 'トラブルシューティングのためにデバッグログを有効化',
             'reset_all_data_subtitle': '警告：すべての設定とデータが完全に削除されます',
             
             # プロンプトタブ
@@ -313,9 +312,6 @@ class JapaneseTranslation(BaseTranslation):
             'open_settings': 'プラグイン設定',
             'ask_anyway': 'とにかく質問する',
             'later': '後で',
-            'debug_settings': 'デバッグ設定',
-            'enable_debug_logging': 'デバッグログを有効にする (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': '無効にすると、デバッグログはファイルに書き込まれません。これにより、ログファイルが大きくなりすぎるのを防ぐことができます。',
             'reset_all_data': 'すべてのデータをリセット',
             'reset_all_data_warning': 'これにより、すべてのAPIキー、プロンプトテンプレート、ローカル履歴レコードが削除されます。言語設定は保持されます。慎重に進めてください。',
             'reset_all_data_confirm_title': 'リセットの確認',

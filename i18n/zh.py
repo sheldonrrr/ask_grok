@@ -55,7 +55,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_providers_subtitle': '配置AI服务商并选择默认AI',
             'prompts_subtitle': '自定义向AI发送问题的方式',
             'export_settings_subtitle': '设置导出PDF的默认文件夹',
-            'debug_settings_subtitle': '启用调试日志以排查问题',
             'reset_all_data_subtitle': '警告：这将永久删除所有设置和数据',
             
             # 提示词标签页
@@ -292,9 +291,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'open_settings': '插件配置',
             'ask_anyway': '仍要询问',
             'later': '稍后',
-            'debug_settings': '调试设置',
-            'enable_debug_logging': '启用调试日志 (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': '禁用后，调试日志将不会写入文件。这可以防止日志文件变得过大。',
             'reset_all_data': '重置所有数据',
             'reset_all_data_warning': '这将会删除所有API密钥、提示词模板和本地历史记录。您的语言偏好将被保留。请慎重操作。',
             'reset_all_data_confirm_title': '确认重置',

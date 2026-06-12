@@ -55,7 +55,6 @@ class SpanishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configura los proveedores de IA y selecciona tu IA predeterminada',
             'prompts_subtitle': 'Personaliza cómo se envían las preguntas a la IA',
             'export_settings_subtitle': 'Establece la carpeta predeterminada para exportar PDFs',
-            'debug_settings_subtitle': 'Habilitar el registro de depuración para solucionar problemas',
             'reset_all_data_subtitle': 'Advertencia: Esto eliminará permanentemente todos tus ajustes y datos',
             
             # Prompts tab
@@ -292,9 +291,6 @@ class SpanishTranslation(BaseTranslation):
             'open_settings': 'Configuración del plugin',
             'ask_anyway': 'Preguntar de todos modos',
             'later': 'Más tarde',
-            'debug_settings': 'Ajustes de depuración',
-            'enable_debug_logging': 'Habilitar registro de depuración (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Cuando está deshabilitado, los registros de depuración no se escribirán en un archivo. Esto puede evitar que el archivo de registro crezca demasiado.',
             'reset_all_data': 'Restablecer todos los datos',
             'reset_all_data_warning': 'Esto eliminará todas las claves API, plantillas de prompts y registros de historial locales. Tu preferencia de idioma se conservará. Procede con precaución.',
             'reset_all_data_confirm_title': 'Confirmar restablecimiento',

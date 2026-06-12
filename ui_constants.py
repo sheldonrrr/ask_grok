@@ -75,97 +75,29 @@ FONT_SIZE_NORMAL = '1em'
 FONT_SIZE_MEDIUM = '1.08em'
 FONT_SIZE_LARGE = '1.15em'
 
-# ============ GroupBox样式 ============
+# ============ GroupBox / Section 样式（兼容别名 → 设置弹窗规范） ============
 def get_groupbox_style(border_style="none"):
-    """
-    获取统一的GroupBox样式（不包含标题，标题由外部单独管理）
-    
-    Args:
-        border_style: 边框样式 "solid", "dashed" 或 "none"（默认无边框，使用背景色区分）
-    """
-    if border_style == "none":
-        # 无边框样式，使用背景色区分区域
-        # 使用 palette(window) 在暗色模式下提供更好的对比度
-        return f"""
-            QGroupBox {{
-                border: none;
-                background-color: palette(window);
-                border-radius: 6px;
-                padding: {PADDING_LARGE}px;
-                margin-top: 0px;
-                margin-bottom: {SPACING_MEDIUM}px;
-                margin-left: 0px;
-                margin-right: 0px;
-            }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                padding: 0;
-                margin: 0;
-            }}
-        """
-    else:
-        # 带边框样式（兼容旧代码）
-        return f"""
-            QGroupBox {{
-                border: 1px {border_style} {BORDER_COLOR_MEDIUM};
-                border-radius: 4px;
-                padding: {PADDING_LARGE}px;
-                margin-top: {SPACING_SMALL}px;
-                margin-bottom: {SPACING_MEDIUM}px;
-                margin-left: {SPACING_SMALL}px;
-                margin-right: {SPACING_SMALL}px;
-            }}
-            QGroupBox::title {{
-                font-weight: bold;
-                color: {TEXT_COLOR_SECONDARY_STRONG};
-                padding: 0 {SPACING_SMALL}px;
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: {SPACING_MEDIUM}px;
-            }}
-        """
+    return get_settings_groupbox_style(border_style)
 
-# ============ Section Title样式 ============
+
 def get_section_title_style():
-    """获取统一的section title样式（放在GroupBox外部）"""
-    return f"""
-        font-weight: bold;
-        font-size: 1.08em;
-        color: {TEXT_COLOR_PRIMARY};
-        padding: 0;
-        margin: {SPACING_LARGE}px 0 {SPACING_SMALL}px 0;
-    """
+    return get_settings_title_style()
+
 
 def get_first_section_title_style():
-    """获取第一个section title样式（顶部间距较小，与其他Tab保持一致）"""
-    return f"""
-        font-weight: bold;
-        font-size: 1.08em;
-        color: {TEXT_COLOR_PRIMARY};
-        padding: 0;
-        margin: {SPACING_SMALL}px 0 {SPACING_SMALL}px 0;
-    """
+    return get_settings_title_style()
 
-# ============ Subtitle样式 ============
+
 def get_subtitle_style():
-    """获取统一的subtitle样式（放在GroupBox外部）"""
-    return f"""
-        color: palette(text);
-        font-size: 1em;
-        padding: 0;
-        margin: 0 0 {SPACING_SMALL}px 0;
-        opacity: 0.7;
-    """
+    return get_settings_subtitle_style()
 
-# ============ 分隔线样式 ============
+
 def get_separator_style():
-    """获取统一的分隔线样式"""
+    """分隔线：外边距由 layout 承担，避免与 section 内间距叠加。"""
     return f"""
         border: none;
         border-top: 1px dashed {SEPARATOR_COLOR};
-        margin-top: {SPACING_MEDIUM}px;
-        margin-bottom: {SPACING_MEDIUM}px;
+        margin: 0;
         background: none;
     """
 
@@ -174,12 +106,142 @@ FORM_LABEL_WIDTH = 150          # 表单标签宽度
 FORM_SPACING = SPACING_MEDIUM   # 表单项之间的间距
 FORM_MARGIN = MARGIN_MEDIUM     # 表单边距
 
-# ============ Tab 内容布局规范 ============
-# 统一所有配置 Tab 的内边距和间距
-# 两层间距结构：外层（Tab容器边距）+ 内层（滚动区域内容边距）
-TAB_OUTER_MARGIN = SPACING_SMALL        # Tab 外层边距 (8px)
-TAB_CONTENT_MARGIN = SPACING_SMALL      # Tab 内容的上下左右边距 (8px)
-TAB_CONTENT_SPACING = SPACING_ASK_COMPACT  # Tab 内容区域之间的间距 (4px)
+# ============ 设置弹窗布局规范（对齐 tradsimp configure_layout 分层） ============
+# 外层 content → section 块之间 SETTINGS_SECTION_GAP
+# section 内 title / subtitle / groupbox → SETTINGS_SECTION_INNER
+SETTINGS_CONTENT_MARGIN = SPACING_SMALL       # 8px — Tab 滚动内容区边距
+SETTINGS_SECTION_GAP = 12                     # 12px — section 块之间（tradsimp SECTION_SPACING）
+SETTINGS_SECTION_INNER = SPACING_SMALL        # 8px — section 内部元素
+SETTINGS_FORM_ROW = SPACING_SMALL             # 8px — 表单行
+SETTINGS_RADIO_ROW = 6                        # 6px — 单选/紧凑列表
+SETTINGS_FOOTER_TOP = 12                      # 12px — 底部按钮区上方
+
+
+def configure_layout(layout, role='settings_section'):
+    """为布局应用统一的边距与间距（参考 tradsimp ui_style.configure_layout）。"""
+    if layout is None:
+        return
+    if role == 'settings_content':
+        layout.setContentsMargins(
+            SETTINGS_CONTENT_MARGIN, SETTINGS_CONTENT_MARGIN,
+            SETTINGS_CONTENT_MARGIN, SETTINGS_CONTENT_MARGIN,
+        )
+        layout.setSpacing(SETTINGS_SECTION_GAP)
+    elif role == 'settings_section':
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SETTINGS_SECTION_INNER)
+    elif role == 'form_row':
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SETTINGS_FORM_ROW)
+    elif role == 'radio':
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SETTINGS_RADIO_ROW)
+    elif role == 'footer':
+        layout.setContentsMargins(0, SETTINGS_FOOTER_TOP, 0, 0)
+        layout.setSpacing(SETTINGS_SECTION_INNER)
+    elif role == 'zero':
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+
+def setup_settings_tab_content(content_widget):
+    """设置 Tab 滚动区内容容器布局，返回 content_layout。"""
+    from PyQt5.QtWidgets import QVBoxLayout
+    content_layout = QVBoxLayout(content_widget)
+    configure_layout(content_layout, 'settings_content')
+    return content_layout
+
+
+def get_settings_title_style():
+    """Section 标题：间距由 layout 控制，CSS 不设 margin。"""
+    return f"""
+        font-weight: bold;
+        font-size: 1.08em;
+        color: {TEXT_COLOR_PRIMARY};
+        padding: 0;
+        margin: 0;
+    """
+
+
+def get_settings_subtitle_style():
+    """Section 副标题：间距由 layout 控制。"""
+    return f"""
+        color: {TEXT_COLOR_PRIMARY};
+        font-size: 1em;
+        padding: 0;
+        margin: 0;
+        opacity: 0.7;
+    """
+
+
+def get_settings_groupbox_style(border_style="none"):
+    """GroupBox：无外边距，section 间距仅由 layout 承担。"""
+    if border_style == "none":
+        return f"""
+            QGroupBox {{
+                border: none;
+                background-color: palette(window);
+                border-radius: 6px;
+                padding: {PADDING_LARGE}px;
+                margin: 0;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0;
+                margin: 0;
+            }}
+        """
+    return f"""
+        QGroupBox {{
+            border: 1px {border_style} {BORDER_COLOR_MEDIUM};
+            border-radius: 4px;
+            padding: {PADDING_LARGE}px;
+            margin: 0;
+        }}
+        QGroupBox::title {{
+            font-weight: bold;
+            color: {TEXT_COLOR_SECONDARY_STRONG};
+            padding: 0 {SPACING_SMALL}px;
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            left: {SPACING_MEDIUM}px;
+        }}
+    """
+
+
+def add_settings_section(content_layout, title_text, subtitle_text=None, subtitle_style=None):
+    """
+    向设置 Tab 添加一个 section 块（title + 可选 subtitle + 内容由调用方加入 section_layout）。
+    返回 (section_layout, title_label, subtitle_label_or_None)。
+    """
+    from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+
+    section = QWidget()
+    section.setObjectName('settings_section')
+    section_layout = QVBoxLayout(section)
+    configure_layout(section_layout, 'settings_section')
+
+    title_label = QLabel(title_text)
+    title_label.setStyleSheet(get_settings_title_style())
+    section_layout.addWidget(title_label)
+
+    subtitle_label = None
+    if subtitle_text is not None:
+        subtitle_label = QLabel(subtitle_text)
+        subtitle_label.setWordWrap(True)
+        style = subtitle_style or get_settings_subtitle_style()
+        subtitle_label.setStyleSheet(style)
+        section_layout.addWidget(subtitle_label)
+
+    content_layout.addWidget(section)
+    return section_layout, title_label, subtitle_label
+
+
+# ============ Tab 内容布局规范（兼容别名） ============
+TAB_OUTER_MARGIN = SPACING_SMALL
+TAB_CONTENT_MARGIN = SETTINGS_CONTENT_MARGIN
+TAB_CONTENT_SPACING = SETTINGS_SECTION_GAP
 
 def setup_tab_widget_layout(widget):
     """

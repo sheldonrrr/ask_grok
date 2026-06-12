@@ -18,8 +18,6 @@ from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor.bleach.css_sanitizer
     CSSSanitizer,
 )
 
-# 使用 Calibre 配置目录存储日志
-from calibre.utils.config import config_dir
 
 # 导入历史记录管理器
 from .history_manager import HistoryManager
@@ -29,14 +27,6 @@ from .config import get_prefs
 
 # 导入UI常量
 from .ui_constants import FONT_SIZE_MEDIUM
-
-# 配置日志目录
-log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, 'ask_ai_plugin_response.log')
-
-# 使用已配置的日志系统，不再重复配置根日志记录器
-# 只创建当前模块的日志记录器
 
 logger = logging.getLogger(__name__)
 
@@ -486,16 +476,6 @@ class ResponseHandler(QObject):
         # 累积响应内容
         self._stream_response += chunk
         self._stream_buffer += chunk
-        
-        # 检测推理标签（用于调试）
-        if '<' in chunk and any(tag in chunk for tag in ['think', 'reasoning', 'ds-think', 'thinking']):
-            logger.warning(f"[Response Handler Debug] 检测到可能的推理标签，chunk内容: {repr(chunk[:200])}")
-        
-        # 只在每1000个字符时记录一次日志
-        if len(self._stream_response) % 1000 < len(chunk):
-            logger.info(f"[Stream Update] 累积响应长度: {len(self._stream_response)} 字符 (~{len(self._stream_response)//4} tokens)")
-            # 输出累积内容的前500字符用于调试
-            logger.debug(f"[Response Handler Debug] 累积内容（前500字符）: {repr(self._stream_response[:500])}")
         
         # 停止加载动画，因为我们已经开始收到响应
         self._stop_loading_timer()

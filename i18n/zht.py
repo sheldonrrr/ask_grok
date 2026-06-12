@@ -55,7 +55,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_providers_subtitle': '配置AI服務商並選擇預設AI',
         'prompts_subtitle': '自定義向AI發送問題的方式',
         'export_settings_subtitle': '設定匯出PDF的預設資料夾',
-        'debug_settings_subtitle': '啟用除錯日誌以排查問題',
         'reset_all_data_subtitle': '警告：這將永久刪除所有設定和資料',
         
         # Prompts tab
@@ -311,9 +310,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'open_settings': '外掛程式配置',
         'ask_anyway': '仍要詢問',
         'later': '稍後',
-        'debug_settings': '調試設定',
-        'enable_debug_logging': '啟用調試日誌 (ask_ai_plugin_debug.log)',
-        'debug_logging_hint': '禁用後，調試日誌將不會寫入文件。這可以防止日誌文件變得過大。',
         'reset_all_data': '重置所有資料',
         'reset_all_data_warning': '這將會刪除所有API密鑰、提示詞模板和本地歷史記錄。您的語言偏好將被保留。請慎重操作。',
         'reset_all_data_confirm_title': '確認重置',

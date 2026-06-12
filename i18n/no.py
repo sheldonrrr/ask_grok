@@ -55,7 +55,6 @@ class NorwegianTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurer AI-leverandører og velg din standard-AI',
             'prompts_subtitle': 'Tilpass hvordan spørsmål sendes til AI',
             'export_settings_subtitle': 'Angi standardmappe for eksport av PDF-filer',
-            'debug_settings_subtitle': 'Aktiver feilsøkingslogging for feilsøking',
             'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine innstillinger og data',
 
             # Prompts tab
@@ -292,9 +291,6 @@ class NorwegianTranslation(BaseTranslation):
             'open_settings': 'Plugin-konfigurasjon',
             'ask_anyway': 'Spør likevel',
             'later': 'Senere',
-            'debug_settings': 'Feilsøkingsinnstillinger',
-            'enable_debug_logging': 'Aktiver feilsøkingslogging (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Når deaktivert, vil feilsøkingslogger ikke bli skrevet til fil. Dette kan forhindre at loggfilen blir for stor.',
             'reset_all_data': 'Tilbakestill alle data',
             'reset_all_data_warning': 'Dette vil slette alle API-nøkler, prompt-maler og lokale historikkposter. Din språkpreferanse vil bli bevart. Vennligst fortsett med forsiktighet.',
             'reset_all_data_confirm_title': 'Bekreft tilbakestilling',

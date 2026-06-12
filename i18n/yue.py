@@ -55,7 +55,6 @@ class CantoneseTranslation(BaseTranslation):
             'ai_providers_subtitle': '設定 AI 服務供應商並揀你嘅預設 AI', # Configure AI providers and select your default AI
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
-            'debug_settings_subtitle': '啟用偵錯日誌嚟排查問題', # Enable debug logging for troubleshooting
             'reset_all_data_subtitle': '警告：呢個操作會永久刪除你所有嘅設定同資料', # Warning: This will permanently delete all your settings and data
 
             # Prompts tab
@@ -292,9 +291,6 @@ class CantoneseTranslation(BaseTranslation):
             'open_settings': '插件設定', # Plugin Configuration
             'ask_anyway': '照問', # Ask Anyway
             'later': '稍後', # Later
-            'debug_settings': '偵錯設定', # Debug Settings
-            'enable_debug_logging': '啟用偵錯日誌 (ask_ai_plugin_debug.log)', # Enable debug logging (ask_ai_plugin_debug.log)
-            'debug_logging_hint': '禁用後，偵錯日誌將唔會寫入文件。咁樣可以防止日誌文件變得太大。', # When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.
             'reset_all_data': '重設所有資料', # Reset All Data
             'reset_all_data_warning': '呢個操作會刪除所有 API 金鑰、提示詞範本同本地歷史紀錄。你嘅語言偏好會保留。請小心操作。', # This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.
             'reset_all_data_confirm_title': '確認重設', # Confirm Reset

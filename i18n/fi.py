@@ -55,7 +55,6 @@ class FinnishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Määritä tekoälypalveluntarjoajat ja valitse oletustekoäly',
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
-            'debug_settings_subtitle': 'Ota käyttöön debug-lokikirjaus vianmääritystä varten',
             'reset_all_data_subtitle': 'Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
             
             # Prompts tab
@@ -292,9 +291,6 @@ class FinnishTranslation(BaseTranslation):
             'open_settings': 'Lisäosan asetukset',
             'ask_anyway': 'Kysy silti',
             'later': 'Myöhemmin',
-            'debug_settings': 'Virheenkorjausasetukset',
-            'enable_debug_logging': 'Ota käyttöön virheenkorjausloki (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Kun pois käytöstä, virheenkorjauslokeja ei kirjoiteta tiedostoon. Tämä voi estää lokitiedoston kasvamisen liian suureksi.',
             'reset_all_data': 'Nollaa kaikki tiedot',
             'reset_all_data_warning': 'Tämä poistaa kaikki API-avaimet, kehotemallit ja paikalliset historiatietueet. Kieliasetuksesi säilytetään. Ole varovainen.',
             'reset_all_data_confirm_title': 'Vahvista nollaus',

@@ -55,7 +55,6 @@ class DanishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurér AI-udbydere, og vælg din standard-AI',
             'prompts_subtitle': 'Tilpas, hvordan spørgsmål sendes til AI',
             'export_settings_subtitle': 'Indstil standardmappe for eksport af PDF\'er',
-            'debug_settings_subtitle': 'Aktivér fejlfindingslogning til fejlfinding',
             'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine indstillinger og data',
 
             # Prompts tab
@@ -290,9 +289,6 @@ class DanishTranslation(BaseTranslation):
             'open_settings': 'Plugin-konfiguration',
             'ask_anyway': 'Spørg alligevel',
             'later': 'Senere',
-            'debug_settings': 'Fejlfindingsindstillinger',
-            'enable_debug_logging': 'Aktivér fejlfindingslogning (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Når deaktiveret, vil fejlfindingslogfiler ikke blive skrevet til fil. Dette kan forhindre, at logfilen bliver for stor.',
             'reset_all_data': 'Nulstil alle data',
             'reset_all_data_warning': 'Dette vil slette alle API-nøgler, prompt-skabeloner og lokale historikposter. Din sprogpræference bevares. Fortsæt venligst med forsigtighed.',
             'reset_all_data_confirm_title': 'Bekræft nulstilling',

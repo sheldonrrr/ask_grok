@@ -165,7 +165,6 @@ Delete Ask AI Plugin and related configuration files:
 About Ask AI Plugin Configuration Files:
 - Ask AI Plugin.zip/Ask AI Plugin folder: Plugin folder, delete it to remove the plugin
 - ask_ai_plugin.json: Plugin configuration file, delete it to remove the plugin's configuration information
-- ask_ai_plugin_logs folder: Plugin log folder, delete it to remove the plugin's log information
 - ask_ai_plugin_latest_history.json: Plugin recent query history file, delete it to remove the plugin's recent query history information
 
 Note!

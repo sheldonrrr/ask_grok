@@ -55,7 +55,6 @@ class FrenchTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configurez les fournisseurs d\'IA et sélectionnez votre IA par défaut',
             'prompts_subtitle': 'Personnalisez la façon dont les questions sont envoyées à l\'IA',
             'export_settings_subtitle': 'Définissez le dossier par défaut pour l\'export de PDF',
-            'debug_settings_subtitle': 'Activez la journalisation de débogage pour le dépannage',
             'reset_all_data_subtitle': 'Attention : Cela supprimera définitivement tous vos paramètres et données',
             
             # Onglet Prompts
@@ -313,9 +312,6 @@ class FrenchTranslation(BaseTranslation):
             'open_settings': 'Configuration du Plugin',
             'ask_anyway': 'Demander Quand Même',
             'later': 'Plus Tard',
-            'debug_settings': 'Paramètres de Débogage',
-            'enable_debug_logging': 'Activer la journalisation de débogage (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Lorsque désactivé, les journaux de débogage ne seront pas écrits dans le fichier. Cela peut empêcher le fichier journal de devenir trop volumineux.',
             'reset_all_data': 'Réinitialiser Toutes les Données',
             'reset_all_data_warning': 'Cela supprimera toutes les clés API, les modèles de prompt et les enregistrements d\'historique locaux. Votre préférence linguistique sera préservée. Veuillez procéder avec prudence.',
             'reset_all_data_confirm_title': 'Confirmer la Réinitialisation',

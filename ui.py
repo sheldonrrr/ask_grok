@@ -72,8 +72,25 @@ class AskAIPluginUI(InterfaceAction):
         # 保存插件实例到全局变量
         global plugin_instance
         plugin_instance = self
+
+    @staticmethod
+    def _remove_legacy_debug_log_handlers():
+        """Remove file handlers from prior plugin versions that wrote ask_ai_plugin_logs."""
+        root_logger = logging.getLogger()
+        to_remove = []
+        for handler in root_logger.handlers[:]:
+            if isinstance(handler, logging.FileHandler):
+                try:
+                    if 'ask_ai_plugin_logs' in handler.baseFilename:
+                        handler.close()
+                        to_remove.append(handler)
+                except (AttributeError, TypeError):
+                    pass
+        for handler in to_remove:
+            root_logger.removeHandler(handler)
         
     def genesis(self):
+        self._remove_legacy_debug_log_handlers()
         icon = get_icons('images/ask_ai_plugin.png')
         self.qaction.setIcon(icon)
         
