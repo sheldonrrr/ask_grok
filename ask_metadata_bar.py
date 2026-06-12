@@ -61,6 +61,33 @@ class AskMetadataBar(QWidget):
         self.detail_list.setVisible(self._expanded)
         self.toggle_btn.setText('▾' if self._expanded else '▸')
 
+    def _single_book_summary(self, meta):
+        """单书折叠摘要：书名优先，无书名时再显示作者、出版社等。"""
+        parts = []
+        title = (meta.get('title') or '').strip()
+        if title:
+            parts.append(title)
+        authors = meta.get('authors') or []
+        author_str = ', '.join(a for a in authors if a).strip()
+        if author_str:
+            parts.append(author_str)
+        publisher = (meta.get('publisher') or '').strip()
+        if publisher:
+            parts.append(publisher)
+        if parts:
+            return ' · '.join(parts)
+        # 无书名/作者/出版社时，回退到其他元数据
+        if meta.get('series'):
+            parts.append(str(meta['series']).strip())
+        if meta.get('pubdate'):
+            parts.append(str(meta['pubdate']).strip())
+        if meta.get('languages'):
+            langs = [self._language_name_fn(code) for code in meta['languages']]
+            lang_str = ', '.join(l for l in langs if l).strip()
+            if lang_str:
+                parts.append(lang_str)
+        return ' · '.join(parts)
+
     def _ai_search_summary(self):
         try:
             from calibre_plugins.ask_ai_plugin.config import get_prefs
@@ -113,14 +140,7 @@ class AskMetadataBar(QWidget):
                 self.detail_list.addItem(QListWidgetItem(line))
         else:
             meta = books_metadata[0]
-            parts = []
-            if meta.get('authors'):
-                parts.append(', '.join(meta['authors']))
-            if meta.get('publisher'):
-                parts.append(meta['publisher'])
-            if not parts and meta.get('title'):
-                parts.append(meta['title'])
-            self.summary_label.setText(' · '.join(parts) if parts else meta.get('title', ''))
+            self.summary_label.setText(self._single_book_summary(meta))
 
             detail_lines = []
             if meta.get('title'):
