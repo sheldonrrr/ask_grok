@@ -73,24 +73,25 @@ def configure_ask_dialog_cursors(dialog):
 
 
 def get_ask_metadata_collapsed_style():
-    """可折叠元数据栏摘要行样式。"""
+    """可折叠元数据栏摘要行样式（与设置页 section 标题同色，适配明暗主题）。"""
     return f"""
-        color: {TEXT_COLOR_SECONDARY};
+        color: {TEXT_COLOR_PRIMARY};
         font-size: {FONT_SIZE_SMALL};
+        font-weight: bold;
         padding: 2px 0;
     """
 
 
 def get_ask_metadata_toggle_style():
     """元数据展开/收起按钮样式。"""
-    return """
-        QPushButton {
+    return f"""
+        QPushButton {{
             border: none;
             background: transparent;
-            color: palette(dark);
+            color: {TEXT_COLOR_PRIMARY};
             padding: 0 4px;
             min-width: 20px;
-        }
+        }}
     """
 
 # 边距（Margins）
