@@ -26,22 +26,26 @@ from .history_manager import HistoryManager
 from .config import get_prefs
 
 # 导入UI常量
-from .ui_constants import FONT_SIZE_MEDIUM
+from .ui_constants import get_reasoning_process_html
 
 logger = logging.getLogger(__name__)
 
 # markdown2：与流式/非流式渲染共用；cuddled-lists 减少「段落后紧贴 * 列表」未被识别为列表的情况
-_MARKDOWN2_EXTRAS = [
-    'fenced-code-blocks',
-    'tables',
-    'break-on-newline',
-    'header-ids',
-    'strike',
-    'task_list',
-    'markdown-in-html',
-    'html-classes',
-    'cuddled-lists',
-]
+_MARKDOWN2_EXTRAS = {
+    'fenced-code-blocks': None,
+    'tables': None,
+    'break-on-newline': None,
+    'header-ids': None,
+    'strike': None,
+    'task_list': None,
+    'markdown-in-html': None,
+    'cuddled-lists': None,
+    'html-classes': {
+        'pre': 'code-block',
+        'code': 'inline-code',
+        'table': 'md-table',
+    },
+}
 
 # bleach：允许 style 时必须提供 css_sanitizer，否则告警且 style 会被置空（见 vendor bleach sanitizer）
 _EXTRA_BLEACH_CSS_PROPERTIES = frozenset({
@@ -133,7 +137,8 @@ class MarkdownWorker(QThread):
             
             # 将占位符替换回 think 块的 HTML
             for i, think_content in enumerate(think_blocks):
-                think_html = f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+                body = f'<div class="reasoning-process-body">{think_content}</div>'
+                think_html = get_reasoning_process_html('[推理过程]', body)
                 html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
             
             if self._is_cancelled:
@@ -534,25 +539,14 @@ class ResponseHandler(QObject):
                     extras=_MARKDOWN2_EXTRAS,
                 )
                 
-                # 完整的 think 块 - 添加结束标识
-                think_html = f'''<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
-                    <div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px; display: flex; align-items: center;">
-                        <span>[推理过程]</span>
-                    </div>
-                    <div style="line-height: 1.6;">{think_html_content}</div>
-                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #d0e8ff; font-size: 0.85em; color: #888; text-align: right;">
-                        [推理完成]
-                    </div>
-                </div>'''
+                think_html = get_reasoning_process_html(
+                    '[推理过程]', think_html_content, footer='[推理完成]',
+                )
                 html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
-                
-                # 未完成的 think 块
-                incomplete_html = f'''<div class="reasoning-process" style="background-color: #fff9e6; border-left: 4px solid #ffa500; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
-                    <div style="font-weight: bold; color: #ffa500; margin-bottom: 8px; display: flex; align-items: center;">
-                        <span>[正在思考...]</span>
-                    </div>
-                    <div style="line-height: 1.6;">{think_html_content}</div>
-                </div>'''
+
+                incomplete_html = get_reasoning_process_html(
+                    '[正在思考...]', think_html_content, incomplete=True,
+                )
                 html = html.replace(f'<!--THINK_BLOCK_INCOMPLETE_{i}-->', incomplete_html)
             
             safe_html = _sanitize_response_html(html)
@@ -764,9 +758,8 @@ class ResponseHandler(QObject):
         else:
             self.send_button.setText('Send')
         
-        # 恢复按钮的原始样式（使用标准样式）
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-        self.send_button.setStyleSheet(get_standard_button_style())
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
+        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""
@@ -848,7 +841,10 @@ class ResponseHandler(QObject):
     def _set_html_response(self, html):
         """设置HTML响应并确保正确的样式"""
         import time
-        
+
+        if html and 'class="response-body"' not in html:
+            html = f'<div class="response-body">{html}</div>'
+
         # 只在HTML长度较大时记录日志（每1000字符记录一次）
         if not hasattr(self, '_last_html_log_size'):
             self._last_html_log_size = 0
@@ -1072,9 +1068,8 @@ class ResponseHandler(QObject):
             
         # 处理非响应状态（如加载中）
         self.send_button.setText(text)
-        # 设置固定宽度，避免文字变化导致按钮忽大忽小
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-        self.send_button.setStyleSheet(get_standard_button_style())
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
+        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
         self.send_button.setEnabled(False)
         
         # 根据文本内容判断当前状态

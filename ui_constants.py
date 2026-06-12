@@ -18,8 +18,80 @@ SPACING_LARGE = SPACING_UNIT * 3      # 24px - 大间距
 SPACING_XLARGE = SPACING_UNIT * 4     # 32px - 超大间距
 
 # Ask 弹窗专用间距（更紧凑的布局）
-SPACING_ASK_COMPACT = SPACING_UNIT // 2    # 4px - 区域内部元素间距（原间距的1/3，从12px减到4px）
-SPACING_ASK_SECTION = SPACING_MEDIUM       # 16px - 区域之间的间距（保持不变）
+SPACING_ASK_COMPACT = SPACING_UNIT // 2    # 4px - 区域内部元素间距
+SPACING_ASK_SECTION = SPACING_SMALL          # 8px - 区域之间的间距（统一为 8px）
+
+# Ask 弹窗布局尺寸
+ASK_INPUT_HEIGHT = 60
+ASK_INPUT_HEIGHT_COMPACT = 52
+ASK_COMBO_MIN_WIDTH = 140
+# 历史记录等 QToolButton 右侧为下拉箭头预留的空间
+ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE = 36
+ASK_METADATA_COLLAPSED_HEIGHT = 24
+ASK_RESPONSE_PANEL_MIN_HEIGHT = 120
+
+
+def configure_ask_dialog_root(layout):
+    """Ask 弹窗根布局：边距与区块间距。"""
+    if layout is None:
+        return
+    layout.setContentsMargins(MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM, MARGIN_MEDIUM)
+    layout.setSpacing(SPACING_SMALL)
+
+
+def reset_application_cursor():
+    """清除 QApplication 可能残留的全局等待/忙碌光标（如 Calibre 读元数据后未恢复）。"""
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        return
+    while app.overrideCursor() is not None:
+        app.restoreOverrideCursor()
+
+
+def configure_ask_dialog_cursors(dialog):
+    """Ask 弹窗显示后统一恢复箭头光标，避免继承 loading 状态。"""
+    from PyQt5.QtCore import Qt
+
+    reset_application_cursor()
+    if dialog is None:
+        return
+    dialog.setCursor(Qt.ArrowCursor)
+    for attr in ('ask_toolbar', 'metadata_bar', 'input_area'):
+        widget = getattr(dialog, attr, None)
+        if widget is not None:
+            widget.setCursor(Qt.ArrowCursor)
+    for panel in getattr(dialog, 'response_panels', None) or []:
+        area = getattr(panel, 'response_area', None)
+        if area is None:
+            continue
+        area.setCursor(Qt.ArrowCursor)
+        viewport = area.viewport()
+        if viewport is not None:
+            viewport.setCursor(Qt.ArrowCursor)
+
+
+def get_ask_metadata_collapsed_style():
+    """可折叠元数据栏摘要行样式。"""
+    return f"""
+        color: {TEXT_COLOR_SECONDARY};
+        font-size: {FONT_SIZE_SMALL};
+        padding: 2px 0;
+    """
+
+
+def get_ask_metadata_toggle_style():
+    """元数据展开/收起按钮样式。"""
+    return """
+        QPushButton {
+            border: none;
+            background: transparent;
+            color: palette(dark);
+            padding: 0 4px;
+            min-width: 20px;
+        }
+    """
 
 # 边距（Margins）
 MARGIN_SMALL = 8
@@ -37,6 +109,12 @@ BUTTON_MIN_WIDTH = 100
 BUTTON_MEDIUM_WIDTH = 150
 BUTTON_LARGE_WIDTH = 200
 BUTTON_HEIGHT = 32
+# 工具栏行高：控件 32px + 上下留白（容纳边框与焦点环，避免父容器裁切）
+ASK_TOOLBAR_INSET_V = 2
+ASK_TOOLBAR_HEIGHT = BUTTON_HEIGHT + ASK_TOOLBAR_INSET_V * 2
+ASK_TOOLBAR_BUTTON_MIN_WIDTH = 100
+# 样式表 height 为内容区，1px 边框各占一侧，合计 BUTTON_HEIGHT
+ASK_TOOLBAR_CONTROL_INNER_HEIGHT = BUTTON_HEIGHT - 2
 
 # 输入框
 INPUT_MIN_WIDTH = 200
@@ -74,6 +152,159 @@ FONT_SIZE_SMALL = '0.9em'
 FONT_SIZE_NORMAL = '1em'
 FONT_SIZE_MEDIUM = '1.08em'
 FONT_SIZE_LARGE = '1.15em'
+
+# 回答区排版
+RESPONSE_FONT_FAMILY = (
+    "-apple-system, 'Segoe UI', 'Ubuntu', 'PingFang SC', 'Microsoft YaHei', sans-serif"
+)
+RESPONSE_LINE_HEIGHT = '1.65'
+RESPONSE_CODE_FONT_FAMILY = "'Consolas', 'Menlo', 'Ubuntu Mono', monospace"
+
+
+def get_response_area_qss():
+    """QTextBrowser 容器样式（内边距由 document margin 承担）。"""
+    return """
+        QTextBrowser {
+            border: 1px solid palette(mid);
+            color: palette(text);
+            border-radius: 4px;
+            padding: 0;
+            background: palette(base);
+        }
+    """
+
+
+def get_response_content_stylesheet():
+    """回答区 Markdown 内容样式（用于 document().setDefaultStyleSheet）。"""
+    return f"""
+        .response-body {{
+            color: palette(text);
+            font-family: {RESPONSE_FONT_FAMILY};
+            line-height: {RESPONSE_LINE_HEIGHT};
+        }}
+        p {{
+            margin: 0.4em 0;
+            line-height: {RESPONSE_LINE_HEIGHT};
+        }}
+        h1 {{
+            font-size: {FONT_SIZE_LARGE};
+            font-weight: bold;
+            margin: 0.6em 0 0.4em 0;
+            line-height: 1.4;
+        }}
+        h2 {{
+            font-size: {FONT_SIZE_MEDIUM};
+            font-weight: bold;
+            margin: 0.5em 0 0.35em 0;
+            line-height: 1.4;
+        }}
+        h3, h4, h5, h6 {{
+            font-size: {FONT_SIZE_NORMAL};
+            font-weight: bold;
+            margin: 0.45em 0 0.3em 0;
+            line-height: 1.4;
+        }}
+        ul, ol {{
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }}
+        li {{
+            margin-bottom: 0.25em;
+            line-height: {RESPONSE_LINE_HEIGHT};
+        }}
+        blockquote {{
+            margin: 0.5em 0;
+            padding-left: 1em;
+            color: palette(dark);
+        }}
+        hr {{
+            border: none;
+            border-top: 1px solid palette(mid);
+            margin: 0.8em 0;
+        }}
+        strong, b {{ font-weight: bold; }}
+        em, i {{ font-style: italic; }}
+        code, .inline-code {{
+            background-color: palette(alternate-base);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: {RESPONSE_CODE_FONT_FAMILY};
+        }}
+        pre, .code-block {{
+            background-color: palette(alternate-base);
+            padding: 10px;
+            border-radius: 4px;
+            margin: 0.6em 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: {RESPONSE_CODE_FONT_FAMILY};
+        }}
+        pre code, .code-block .inline-code {{
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }}
+        table, .md-table {{
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.6em 0;
+        }}
+        th, td {{
+            border: 1px solid palette(mid);
+            padding: 6px 10px;
+            text-align: left;
+        }}
+        th {{
+            background-color: palette(alternate-base);
+            font-weight: bold;
+        }}
+        a {{
+            color: palette(link);
+            text-decoration: underline;
+        }}
+        .reasoning-process {{
+            background-color: palette(alternate-base);
+            color: palette(text);
+            padding: 10px;
+            margin: 0.6em 0;
+            border-radius: 4px;
+            font-size: {FONT_SIZE_SMALL};
+        }}
+        .reasoning-process-title {{
+            font-weight: bold;
+            color: palette(link);
+            margin-bottom: 6px;
+        }}
+        .reasoning-process-footer {{
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid palette(mid);
+            font-size: {FONT_SIZE_SMALL};
+            color: palette(dark);
+            text-align: right;
+        }}
+        .reasoning-process-body {{
+            white-space: pre-wrap;
+            font-family: {RESPONSE_CODE_FONT_FAMILY};
+            line-height: {RESPONSE_LINE_HEIGHT};
+        }}
+    """
+
+
+def get_reasoning_process_html(title, body_html, footer=None, incomplete=False):
+    """推理块 HTML（极简 palette 样式，供 response_handler 使用）。"""
+    footer_html = ''
+    if footer:
+        footer_html = f'<div class="reasoning-process-footer">{footer}</div>'
+    incomplete_class = ' reasoning-process-incomplete' if incomplete else ''
+    return (
+        f'<div class="reasoning-process{incomplete_class}">'
+        f'<div class="reasoning-process-title">{title}</div>'
+        f'<div>{body_html}</div>'
+        f'{footer_html}'
+        f'</div>'
+    )
+
 
 # ============ GroupBox / Section 样式（兼容别名 → 设置弹窗规范） ============
 def get_groupbox_style(border_style="none"):
@@ -321,6 +552,95 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
             min-height: 1.5em;
         }}
     """
+
+
+def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
+    """Ask 工具栏 QPushButton：边框计入固定高度，焦点环不溢出容器。"""
+    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT
+    return f"""
+        QPushButton {{
+            min-width: {min_width}px;
+            min-height: {h}px;
+            max-height: {h}px;
+            height: {h}px;
+            border: 1px solid palette(mid);
+            border-radius: 4px;
+            padding: 0 12px;
+            margin: 0;
+            text-align: center;
+        }}
+        QPushButton:focus {{
+            border: 1px solid palette(highlight);
+        }}
+    """
+
+
+def get_ask_toolbar_toolbutton_style(min_width=ASK_COMBO_MIN_WIDTH):
+    """Ask 工具栏 QToolButton（历史记录等）：与 PushButton 同高。"""
+    arrow_reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE
+    return f"""
+        QToolButton {{
+            min-width: {min_width}px;
+            min-height: {BUTTON_HEIGHT}px;
+            max-height: {BUTTON_HEIGHT}px;
+            height: {BUTTON_HEIGHT}px;
+            padding: 0 {arrow_reserve}px 0 12px;
+            margin: 0;
+            text-align: left;
+        }}
+        QToolButton::menu-indicator {{
+            subcontrol-origin: padding;
+            subcontrol-position: center right;
+            right: 10px;
+            width: 14px;
+            height: 14px;
+        }}
+    """
+
+
+def elide_ask_toolbar_toolbutton_text(text, font, button_width):
+    """为带下拉箭头的工具栏按钮截断文字，避免与箭头重叠。"""
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QFontMetrics
+
+    reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE + 8
+    max_width = max(int(button_width) - reserve, 48)
+    return QFontMetrics(font).elidedText(text, Qt.ElideRight, max_width)
+
+
+def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH):
+    """Ask 工具栏 QComboBox（AI 切换器）：与按钮同高。"""
+    return f"""
+        QComboBox {{
+            min-width: {min_width}px;
+            min-height: {BUTTON_HEIGHT}px;
+            max-height: {BUTTON_HEIGHT}px;
+            height: {BUTTON_HEIGHT}px;
+            padding: 0 8px;
+            margin: 0;
+            text-align: left;
+        }}
+        QComboBox::drop-down {{
+            width: 20px;
+            border: none;
+        }}
+    """
+
+
+def style_ask_toolbar_widget(widget, min_width=None):
+    """为 Ask 工具栏控件应用统一尺寸与样式。"""
+    from PyQt5.QtWidgets import QComboBox, QToolButton, QPushButton
+
+    width = min_width or ASK_COMBO_MIN_WIDTH
+    widget.setFixedHeight(BUTTON_HEIGHT)
+    if hasattr(widget, 'setMinimumWidth'):
+        widget.setMinimumWidth(width)
+    if isinstance(widget, QComboBox):
+        widget.setStyleSheet(get_ask_toolbar_combo_style(width))
+    elif isinstance(widget, QToolButton):
+        widget.setStyleSheet(get_ask_toolbar_toolbutton_style(width))
+    elif isinstance(widget, QPushButton):
+        widget.setStyleSheet(get_ask_toolbar_pushbutton_style(width))
 
 
 # ============ QListWidget 样式 ============
