@@ -326,6 +326,7 @@ class EnglishTranslation(BaseTranslation):
             'book_title_check': 'Book title required',
             'avoid_repeat_question': 'Please use a different question',
             'empty_answer': 'Empty answer',
+            'invalid_json': 'Invalid JSON',
             'invalid_response': 'Invalid response',
             'auth_error_401': 'Unauthorized',
             'auth_error_403': 'Access denied',
@@ -441,6 +442,11 @@ class EnglishTranslation(BaseTranslation):
             'max_prompt_length_tooltip': (
                 'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
                 'Rough guide: 1 token ≈ 3–4 characters. For Ollama, also set num_ctx on the model side.'
+            ),
+            'max_prompt_length_normalized_title': 'Prompt limit adjusted',
+            'max_prompt_length_normalized': (
+                'Prompt length was normalized to {value} characters (separators such as commas '
+                'or spaces were removed).'
             ),
             
             # Parallel AI settings

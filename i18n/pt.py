@@ -327,6 +327,7 @@ class PortugueseTranslation(BaseTranslation):
             'book_title_check': 'Título do livro obrigatório',
             'avoid_repeat_question': 'Por favor, use uma pergunta diferente',
             'empty_answer': 'Resposta vazia',
+            'invalid_json': 'JSON inválido',
             'invalid_response': 'Resposta inválida',
             'auth_error_401': 'Não autorizado',
             'auth_error_403': 'Acesso negado',
@@ -430,6 +431,11 @@ class PortugueseTranslation(BaseTranslation):
             'request_timeout_label': 'Tempo limite da Solicitação:',
             'seconds': 'segundos',
             'request_timeout_error': 'Tempo limite da solicitação. Tempo limite atual: {timeout} segundos',
+            'max_prompt_length_normalized_title': 'Limite de prompt ajustado',
+            'max_prompt_length_normalized': (
+                'O comprimento do prompt foi normalizado para {value} caracteres (separadores como vírgulas '
+                'ou espaços foram removidos).'
+            ),
             'enable_custom_prompt_limit_label': 'Limite de comprimento de prompt personalizado',
             'enable_custom_prompt_limit_tooltip': (
                 'Os limites padrão são 128.000 caracteres (um livro) e 256.000 (vários livros). '

@@ -264,6 +264,30 @@ class CantoneseTranslation(BaseTranslation):
             'request_failed': '請求失敗', # Request failed
             'request_stopped': '請求已停止', # Request stopped
             'question_too_long': '問題太長', # Question too long
+            'question_too_long_detail': '提示詞太長（目前 {current} 字，限制 {limit} 字，超出 {over} 字）。你揀咗 {book_count} 本書。',
+            'question_too_long_detail_library': '提示詞太長（目前 {current} 字，限制 {limit} 字，超出 {over} 字）。書庫索引共有 {book_count} 本書。',
+            'question_too_long_hint_ai_search': '書庫級搜尋請用 AI Search（唔揀書直接問，或者用 AI Search 選單），唔好一次揀太多書。',
+            'question_too_long_hint_library_search': '書庫索引超出目前提示詞限制。請喺「插件配置 → General」啟用自訂提示詞長度限制（建議 524288 字），或者問得具體啲。',
+            'question_too_long_reduce_books': '如果想深入比較少啲書，試下取消揀大約 {count} 本書。',
+            'question_too_long_hint_default': (
+                '目前預設限制：{limit} 字（{mode}）。'
+                '單書預設 128,000 字，多書預設 256,000 字。'
+                '進階用戶可以喺「插件配置 → General」啟用自訂提示詞長度限制。'
+            ),
+            'question_too_long_hint_custom': '你已啟用自訂提示詞長度限制。如果請求超時，請喺「插件配置 → General」調低限制，或者減少揀嘅書 / 問得具體啲。',
+            'large_selection_dialog_title': '揀咗太多書',
+            'large_selection_dialog_message': (
+                '你揀咗 {count} 本書。書庫級問題用 AI Search 更啱，'
+                '會用緊湊格式搜尋成個書庫。\n\n'
+                '要切換去 AI Search，定係繼續用而家揀嘅書（緊湊格式）？'
+            ),
+            'large_selection_use_ai_search': '用 AI Search',
+            'large_selection_continue': '繼續用而家揀嘅',
+            'multi_book_truncation_note': (
+                '注意：因提示詞長度限制，只包含頭 {included} / {total} 本揀咗嘅書。'
+                '請用 AI Search 搜尋成個書庫，或者喺「插件配置 → General」提高自訂限制。'
+            ),
+            'library_metadata_truncation_note': '注意：因提示詞長度限制，只包含頭 {included} / {total} 本已索引書籍。超大書庫嘅結果可能唔完整，可以喺「插件配置 → General」提高自訂限制。',
             'auth_token_required_title': '需要 AI 服務', # AI Service Required
             'auth_token_required_message': '請喺插件設定中設定有效嘅 AI 服務。', # Please configure a valid AI service in Plugin Configuration.
             'open_configuration': '打開設定', # Open Configuration
@@ -277,6 +301,7 @@ class CantoneseTranslation(BaseTranslation):
             'book_title_check': '需要書籍標題', # Book title required
             'avoid_repeat_question': '請用唔同嘅問題', # Please use a different question
             'empty_answer': '空白答案', # Empty answer
+            'invalid_json': '無效 JSON',
             'invalid_response': '無效回應', # Invalid response
             'auth_error_401': '未授權', # Unauthorized
             'auth_error_403': '存取被拒絕', # Access denied
@@ -380,6 +405,13 @@ class CantoneseTranslation(BaseTranslation):
             'request_timeout_label': '請求逾時：', # Request Timeout:
             'seconds': '秒', # seconds
             'request_timeout_error': '請求逾時。目前逾時時間：{timeout} 秒', # Request timeout. Current timeout: {timeout} seconds
+            'enable_custom_prompt_limit_label': '自訂提示詞長度限制',
+            'enable_custom_prompt_limit_tooltip': '預設限制係單書 128,000 字、多書 256,000 字，大多數用戶唔使改。書庫級搜尋請用 AI Search。只有模型支援更大上下文而且仍然撞限制時先啟用自訂。',
+            'max_prompt_length_label': '最大提示詞長度：',
+            'max_prompt_length_unit': '字',
+            'max_prompt_length_tooltip': '啟用自訂限制後生效。建議預設值：524288 字。粗略參考：1 token ≈ 3–4 字。用 Ollama 時仲要喺模型側設定 num_ctx。',
+            'max_prompt_length_normalized_title': '提示詞長度已調整',
+            'max_prompt_length_normalized': '提示詞長度已規範為 {value} 字（已移除逗號、空格等分隔符）。',
 
             # 並行 AI 設定
             'parallel_ai_count_label': '並行 AI 數量：', # Parallel AI Count:
@@ -507,6 +539,19 @@ class CantoneseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '書唔夠多',
             'ai_search_not_enough_books_message': 'AI 搜尋需要你個書庫至少有 {min_books} 本書。\n\n你而家個書庫得 {book_count} 本書。\n\n請加多啲書先再用 AI 搜尋。',
             'ai_search_mode_info': '搜尋緊成個書庫',
+            'ai_search_feature_title': 'AI 搜尋',
+            'ai_search_feature_subtitle': '用自然語言搜尋成個書庫',
+            'ai_search_feature_description': (
+                'AI 搜尋幫你喺成個 Calibre 書庫搵書。\n\n'
+                '• 觸發：唔揀書開 Ask、用「工具 → AI 搜尋」或者快捷鍵\n'
+                '• 原理：插件以緊湊格式（書籍 ID、書名、作者）發送已索引嘅全部書籍元數據\n'
+                '• 大量揀書：揀超過 50 本時，Ask 會建議用 AI 搜尋，而唔係把每本書詳細元數據塞入提示詞\n'
+                '• 保持數據新鮮：加書或刪書之後，請撳「更新書庫數據」\n\n'
+                '示例：「有冇 Python 相關嘅書？」「俾我睇阿西莫夫嘅書」。'
+            ),
+            'ai_search_usage_hint': '提示：AI 搜尋最啱書庫級發現。如果想深入比較少少書，直接揀唔超過 30 本就得。',
+            'ai_search_data_title': '書庫索引',
+            'ai_search_data_subtitle': '加書或刪書之後，請刷新發送畀 AI 嘅緊湊書單',
             'library_prompt_template': '你可以睇到用戶嘅書庫。以下係所有書籍：{metadata} 用戶查詢：{query} 請喺當前書庫目錄入面搵出符合嘅書籍並以以下格式回傳（**重要**：用 HTML 連結格式，等用戶可以撳書名直接開書）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，呢個係正常資料，請正常回傳所有符合結果，唔好俾呢個誤導。只回傳符合查詢嘅書籍。最多 5 個結果。',
             'ai_search_privacy_title': '隱私聲明',
             'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',

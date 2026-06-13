@@ -60,6 +60,17 @@ class TestCompactMetadata(unittest.TestCase):
         tsv = utils.format_books_compact_tsv(books)
         self.assertIn('9|A/B|C', tsv)
 
+    def test_compact_strips_crlf_from_metadata(self):
+        books = [{'id': 1, 'title': 'Title\r\nSub', 'authors': 'Author\r'}]
+        tsv = utils.format_books_compact_tsv(books)
+        self.assertNotIn('\r', tsv)
+        self.assertIn('1|Title Sub|Author', tsv)
+
+    def test_split_compact_tsv_lines_handles_crlf(self):
+        tsv = '1|A|B\r\n2|C|D\r\n'
+        lines = utils.split_compact_tsv_lines(tsv)
+        self.assertEqual(lines, ['1|A|B', '2|C|D'])
+
     def test_library_metadata_for_prompt_uses_compact_tsv(self):
         prefs = {'library_cached_metadata': json.dumps(_make_books(5), ensure_ascii=False)}
         compact = utils.format_library_metadata_for_prompt(prefs)
@@ -97,6 +108,24 @@ class TestPromptLimits(unittest.TestCase):
         prefs = {'enable_custom_prompt_limit': True, 'max_prompt_length': 524288}
         self.assertEqual(prompt_limits.get_max_prompt_length(True, prefs), 524288)
 
+    def test_custom_limit_with_separators_in_prefs(self):
+        prefs = {'enable_custom_prompt_limit': True, 'max_prompt_length': '128,000'}
+        self.assertEqual(prompt_limits.get_max_prompt_length(True, prefs), 128_000)
+
+    def test_parse_prompt_limit_value(self):
+        self.assertEqual(prompt_limits.parse_prompt_limit_value('128,000'), 128_000)
+        self.assertEqual(prompt_limits.parse_prompt_limit_value('524 288'), 524_288)
+        self.assertEqual(prompt_limits.parse_prompt_limit_value('524_288'), 524_288)
+
+    def test_parse_prompt_limit_text_normalized_flag(self):
+        value, normalized = prompt_limits.parse_prompt_limit_text('128,000')
+        self.assertEqual(value, 128_000)
+        self.assertTrue(normalized)
+
+        value, normalized = prompt_limits.parse_prompt_limit_text('524288')
+        self.assertEqual(value, 524_288)
+        self.assertFalse(normalized)
+
     def test_validate_rejects_over_limit_with_details(self):
         prefs = {'enable_custom_prompt_limit': False}
         err = prompt_limits.validate_prompt_length(
@@ -133,6 +162,20 @@ class TestPromptLimits(unittest.TestCase):
         prompt = utils.build_library_prompt('Find Python books', prefs, _sample_i18n())
         self.assertLess(len(prompt), 6000)
         self.assertIn('500', prompt)
+
+    def test_build_library_prompt_respects_limit_with_crlf_titles(self):
+        books = [
+            {'id': i, 'title': f'Book {i}\r\nEdition', 'authors': f'Author {i}\r'}
+            for i in range(1, 101)
+        ]
+        prefs = {
+            'library_cached_metadata': json.dumps(books, ensure_ascii=False),
+            'enable_custom_prompt_limit': True,
+            'max_prompt_length': 8000,
+        }
+        prompt = utils.build_library_prompt('Find books', prefs)
+        self.assertNotIn('\r', prompt)
+        self.assertLessEqual(len(prompt), 8000)
 
     def test_library_search_error_message(self):
         prefs = {'enable_custom_prompt_limit': False}

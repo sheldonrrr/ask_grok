@@ -36,7 +36,7 @@ class JapaneseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # プラグイン情報
-            'plugin_name': 'Ask AI Plugin',
+            'plugin_name': 'Ask AI プラグイン',
             'plugin_desc': 'AIを使用して本について質問する',
             
             # UI - タブとセクション
@@ -213,6 +213,7 @@ class JapaneseTranslation(BaseTranslation):
             'metadata_title': 'タイトル',
             'metadata_authors': '著者',
             'metadata_publisher': '出版社',
+            'metadata_pubdate': '出版日',
             'metadata_pubyear': '出版日',
             'metadata_language': '言語',
             'metadata_series': 'シリーズ',
@@ -431,6 +432,8 @@ class JapaneseTranslation(BaseTranslation):
             'request_timeout_label': 'リクエストタイムアウト:',
             'seconds': '秒',
             'request_timeout_error': 'リクエストがタイムアウトしました。現在のタイムアウト: {timeout}秒',
+            'max_prompt_length_normalized_title': 'プロンプト制限を調整しました',
+            'max_prompt_length_normalized': 'プロンプト長を {value} 文字に正規化しました（カンマやスペースなどの区切り文字を削除しました）。',
             'enable_custom_prompt_limit_label': 'カスタムプロンプト長制限',
             'enable_custom_prompt_limit_tooltip': (
                 'デフォルト制限は単一書籍 128,000 文字、複数書籍 256,000 文字です。'

@@ -36,7 +36,7 @@ class TraditionalChineseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
         # 插件信息
-        'plugin_name': 'Ask AI Plugin',
+        'plugin_name': 'Ask AI 插件',
         'plugin_desc': '使用AI提問關於書籍的問題',
         
         # UI - 標籤和區域
@@ -214,6 +214,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'metadata_title': '標題',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日期',
         'metadata_pubyear': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
@@ -424,6 +425,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'request_timeout_label': '請求超時時間：',
         'seconds': '秒',
         'request_timeout_error': '請求超時，當前超時時間為：{timeout} 秒',
+        'max_prompt_length_normalized_title': '提示詞長度已調整',
+        'max_prompt_length_normalized': '提示詞長度已規範為 {value} 字元（已移除逗號、空格等分隔符）。',
         'enable_custom_prompt_limit_label': '自訂提示詞長度限制',
         'enable_custom_prompt_limit_tooltip': (
             '預設限制為單書 128,000 字元、多書 256,000 字元，大多數使用者無需修改。'

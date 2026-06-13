@@ -264,6 +264,51 @@ class NorwegianTranslation(BaseTranslation):
             'request_failed': 'Forespørsel mislyktes',
             'request_stopped': 'Forespørsel stoppet',
             'question_too_long': 'Spørsmål for langt',
+            'question_too_long_detail': (
+                'Prompten er for lang ({current} tegn, grense {limit}, overskrider med {over}). '
+                'Du har valgt {book_count} bok/bøker.'
+            ),
+            'question_too_long_detail_library': (
+                'Prompten er for lang ({current} tegn, grense {limit}, overskrider med {over}). '
+                'Biblioteksindeksen din inneholder {book_count} bok/bøker.'
+            ),
+            'question_too_long_hint_ai_search': (
+                'For bibliotekomfattende søk, bruk AI Search (spør uten å velge bøker, '
+                'eller bruk AI Search-menyen) i stedet for å velge mange bøker.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Biblioteksindeksen overskrider gjeldende promptgrense. Aktiver tilpasset promptlengdegrense '
+                'under Plugin-konfigurasjon → General (foreslått: 524288 tegn), '
+                'eller still et mer spesifikt spørsmål.'
+            ),
+            'question_too_long_reduce_books': 'For å sammenligne et mindre sett i dybden, prøv å fjerne valg av ca. {count} bok/bøker.',
+            'question_too_long_hint_default': (
+                'Gjeldende standardgrense: {limit} tegn ({mode}). '
+                'Standard for enkelt bok er 128.000; for flere bøker 256.000. '
+                'Avanserte brukere kan aktivere en tilpasset grense under Plugin-konfigurasjon → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'Du har aktivert en tilpasset promptgrense. Hvis forespørsler får tidsavbrudd, senk grensen '
+                'under Plugin-konfigurasjon → General, eller reduser valgte bøker / bruk en mer spesifikk forespørsel.'
+            ),
+            'large_selection_dialog_title': 'Mange bøker valgt',
+            'large_selection_dialog_message': (
+                'Du har valgt {count} bøker. For bibliotekomfattende spørsmål fungerer AI Search bedre '
+                'og søker i hele biblioteket med kompakte metadata.\n\n'
+                'Bytte til AI Search, eller fortsette med valgte bøker i kompakt format?'
+            ),
+            'large_selection_use_ai_search': 'Bruk AI Search',
+            'large_selection_continue': 'Fortsett med valgte',
+            'multi_book_truncation_note': (
+                'Merk: På grunn av promptgrensen er bare de første {included} av {total} valgte bøker inkludert. '
+                'Bruk AI Search for å søke i hele biblioteket, eller øk den tilpassede grensen '
+                'under Plugin-konfigurasjon → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Merk: På grunn av promptgrensen er bare de første {included} av {total} indekserte bøker inkludert. '
+                'Resultater kan være ufullstendige for svært store bibliotek med mindre du øker den tilpassede grensen '
+                'under Plugin-konfigurasjon → General.'
+            ),
             'auth_token_required_title': 'AI-tjeneste kreves',
             'auth_token_required_message': 'Konfigurer en gyldig AI-tjeneste i plugin-konfigurasjonen.',
             'open_configuration': 'Åpne konfigurasjon',
@@ -277,6 +322,7 @@ class NorwegianTranslation(BaseTranslation):
             'book_title_check': 'Boktittel er påkrevd',
             'avoid_repeat_question': 'Vennligst bruk et annet spørsmål',
             'empty_answer': 'Tomt svar',
+            'invalid_json': 'Ugyldig JSON',
             'invalid_response': 'Ugyldig svar',
             'auth_error_401': 'Uautorisert',
             'auth_error_403': 'Tilgang nektet',
@@ -380,6 +426,24 @@ class NorwegianTranslation(BaseTranslation):
             'request_timeout_label': 'Forespørsel tidsavbrudd:',
             'seconds': 'sekunder',
             'request_timeout_error': 'Forespørsel tidsavbrutt. Gjeldende tidsavbrudd: {timeout} sekunder',
+            'enable_custom_prompt_limit_label': 'Tilpasset promptlengdegrense',
+            'enable_custom_prompt_limit_tooltip': (
+                'Standardgrenser er 128.000 tegn (enkelt bok) og 256.000 (flere bøker). '
+                'De fleste brukere trenger ikke endre dette. For bibliotekomfattende søk, bruk AI Search. '
+                'Aktiver bare en tilpasset grense hvis modellen støtter mye større kontekst og '
+                'forespørsler fortsatt treffer grensen.'
+            ),
+            'max_prompt_length_label': 'Maks. promptlengde:',
+            'max_prompt_length_unit': 'tegn',
+            'max_prompt_length_tooltip': (
+                'Gjelder når tilpasset grense er aktivert. Standardforslag: 524288 tegn. '
+                'Grovt estimat: 1 token ≈ 3–4 tegn. For Ollama, sett også num_ctx på modellsiden.'
+            ),
+            'max_prompt_length_normalized_title': 'Promptgrense justert',
+            'max_prompt_length_normalized': (
+                'Promptlengden ble normalisert til {value} tegn (skilletegn som kommaer '
+                'eller mellomrom ble fjernet).'
+            ),
 
             # Parallel AI settings
             'parallel_ai_count_label': 'Antall parallelle AI-er:',
@@ -507,6 +571,24 @@ class NorwegianTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Ikke nok bøker',
             'ai_search_not_enough_books_message': 'AI-søk krever minst {min_books} bøker i biblioteket ditt.\n\nDitt nåværende bibliotek har bare {book_count} bok/bøker.\n\nVennligst legg til flere bøker for å bruke AI-søk.',
             'ai_search_mode_info': 'Søker i hele biblioteket',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Søk i hele biblioteket med naturlig språk',
+            'ai_search_feature_description': (
+                'AI Search hjelper deg å finne bøker i hele Calibre-biblioteket.\n\n'
+                '• Utløs: åpne Ask uten å velge bøker, bruk Verktøy → AI Search eller snarvei\n'
+                '• Slik fungerer det: pluginet sender kompakte metadata (bok-ID, tittel, forfatter) '
+                'for alle indekserte bøker\n'
+                '• Store valg: hvis du velger mer enn 50 bøker, foreslår Ask AI Search i stedet for '
+                'å bygge inn hver bok i detaljert format\n'
+                '• Hold data oppdatert: klikk "Oppdater biblioteksdata" etter å ha lagt til eller fjernet bøker\n\n'
+                'Eksempler: "Finn bøker om Python", "Vis meg bøker av Isaac Asimov".'
+            ),
+            'ai_search_usage_hint': (
+                'Tips: AI Search fungerer best for bibliotekomfattende oppdagelse. For dyptgående '
+                'sammenligning av få bøker, velg opptil 30 bøker.'
+            ),
+            'ai_search_data_title': 'Biblioteksindeks',
+            'ai_search_data_subtitle': 'Oppdater den kompakte boklisten som sendes til AI når du legger til eller fjerner bøker',
             'library_prompt_template': 'Du har tilgang til brukerens bokbibliotek. Her er alle bøkene: {metadata} Brukerforespørsel: {query} Vennligst finn matchende bøker i det nåværende biblioteket og returner dem i dette formatet (**VIKTIG**: Bruk HTML-lenkformat slik at brukere kan klikke på boktitler for å åpne dem direkte): - <a href="calibre://book/BOOK_ID">Boktittel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Merk: Noen forfattere kan være oppført som "unknown". Dette er normale data, vennligst returner alle matchende resultater normalt. Returner kun bøker som matcher forespørselen. Maksimalt 5 resultater.',
             'ai_search_privacy_title': 'Personvernerklæring',
             'ai_search_privacy_alert': 'AI-søk bruker bokmetadata (titler og forfattere). Denne informasjonen sendes til AI-leverandøren du har konfigurert for å behandle søkene dine.',

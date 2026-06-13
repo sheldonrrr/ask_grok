@@ -238,12 +238,22 @@ class AskAIPluginUI(InterfaceAction):
         # 设置主图标点击和菜单
         self.qaction.triggered.connect(self.show_dialog)
         self.qaction.setMenu(self.menu)
-        
+        self._update_toolbar_text()
+
+    def _update_toolbar_text(self, language=None):
+        """更新工具栏主按钮显示名称（action_spec[0] 保持英文供内部标识）。"""
+        if language is None:
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+        self.qaction.setText(self.i18n.get('plugin_name', 'Ask AI Plugin'))
+
     def about_to_show_menu(self):
         # 更新菜单项的文本
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.i18n = get_translation(language)
+        self._update_toolbar_text(language)
         
         # 同步 Ask 菜单项显示的快捷键（跟随用户在 Preferences->Shortcuts 的自定义）
         # macOS 上需要手动将快捷键文本添加到菜单项中
@@ -651,7 +661,8 @@ class AskAIPluginUI(InterfaceAction):
             self.shortcuts_action.setText(self.i18n['shortcuts'])
             self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
             self.stat_action.setText(self.i18n.get('stat_tab', 'Stat'))
-            
+            self._update_toolbar_text(language)
+
         except Exception as e:
             # 发生错误时恢复原始状态
             logger.error(f"更新菜单文本时出错: {str(e)}")
@@ -2207,7 +2218,7 @@ class AskDialog(QDialog):
         msg.exec_()
 
         clicked = msg.clickedButton()
-        if clicked == cancel_btn:
+        if clicked is None or clicked == cancel_btn:
             return 'cancel'
         if clicked == ai_search_btn:
             return 'ai_search'
@@ -2235,7 +2246,7 @@ class AskDialog(QDialog):
     def _build_multi_book_prompt(self, question):
         """构建多书提示词（超过阈值时自动使用 compact 格式）"""
         from calibre_plugins.ask_ai_plugin.config import get_prefs
-        from calibre_plugins.ask_ai_plugin.utils import format_books_compact_tsv
+        from calibre_plugins.ask_ai_plugin.utils import format_books_compact_tsv, split_compact_tsv_lines
         from calibre_plugins.ask_ai_plugin.prompt_limits import (
             COMPACT_METADATA_THRESHOLD,
             get_max_prompt_length,
@@ -2257,7 +2268,7 @@ User question: {query}
 Please answer the question based on the above book information.""")
 
         if use_compact:
-            compact_lines = format_books_compact_tsv(self.books_info).split('\n')
+            compact_lines = split_compact_tsv_lines(format_books_compact_tsv(self.books_info))
             max_length = get_max_prompt_length(True, prefs)
             overhead = len(template.format(books_metadata='', query=question)) + 200
 

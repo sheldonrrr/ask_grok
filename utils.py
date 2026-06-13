@@ -74,6 +74,23 @@ def safe_log_config(config, keys_to_mask=None):
     
     return safe_config
 
+
+def _sanitize_metadata_field(text):
+    """Normalize title/author text for compact TSV (cross-platform line endings)."""
+    text = str(text)
+    text = text.replace('\r\n', ' ').replace('\r', ' ')
+    text = text.replace('\u2028', ' ').replace('\u2029', ' ')
+    text = text.replace('|', '/').replace('\n', ' ')
+    return text
+
+
+def split_compact_tsv_lines(tsv_text):
+    """Split compact TSV into non-empty lines, tolerating CRLF."""
+    if not tsv_text:
+        return []
+    return [line for line in tsv_text.splitlines() if line.strip()]
+
+
 def format_books_compact_tsv(books):
     """
     Format book entries as compact TSV lines: id|title|authors
@@ -93,8 +110,8 @@ def format_books_compact_tsv(books):
             author_list = getattr(book, 'authors', None) or ['Unknown']
             authors = ', '.join(author_list) if author_list else 'Unknown'
 
-        title = str(title).replace('|', '/').replace('\n', ' ')
-        authors = str(authors).replace('|', '/').replace('\n', ' ')
+        title = _sanitize_metadata_field(title)
+        authors = _sanitize_metadata_field(authors)
         lines.append(f"{book_id}|{title}|{authors}")
     return '\n'.join(lines)
 
@@ -238,7 +255,7 @@ def build_library_prompt(user_query, prefs, i18n=None):
     except ImportError:
         from prompt_limits import get_max_prompt_length
 
-    compact_lines = compact_metadata.split('\n') if compact_metadata else []
+    compact_lines = split_compact_tsv_lines(compact_metadata)
     total_books = len(compact_lines)
     max_length = get_max_prompt_length(True, prefs)
     overhead = len(template.format(metadata='', query=user_query)) + 200

@@ -33,14 +33,61 @@ MIN_CUSTOM_LIMIT = 1000
 MAX_CUSTOM_LIMIT = 2_000_000
 
 
+def parse_prompt_limit_value(raw, default=DEFAULT_CUSTOM_LIMIT):
+    """Parse prompt limit from prefs or input, stripping separators; clamp to range."""
+    if raw is None:
+        return default
+    if isinstance(raw, bool):
+        return default
+    if isinstance(raw, int):
+        return max(MIN_CUSTOM_LIMIT, min(raw, MAX_CUSTOM_LIMIT))
+    if isinstance(raw, float):
+        return max(MIN_CUSTOM_LIMIT, min(int(raw), MAX_CUSTOM_LIMIT))
+
+    text = str(raw).strip()
+    if not text:
+        return default
+
+    cleaned = text.replace(',', '').replace('_', '').replace(' ', '')
+    try:
+        value = int(cleaned)
+    except ValueError:
+        return default
+    return max(MIN_CUSTOM_LIMIT, min(value, MAX_CUSTOM_LIMIT))
+
+
+def parse_prompt_limit_text(text, default=DEFAULT_CUSTOM_LIMIT):
+    """
+    Parse prompt limit from a UI text field.
+
+    :return: (value, was_normalized) where was_normalized is True if separators were stripped.
+    """
+    if text is None:
+        return default, False
+
+    stripped = str(text).strip()
+    if not stripped:
+        return default, False
+
+    cleaned = stripped.replace(',', '').replace('_', '').replace(' ', '')
+    try:
+        value = int(cleaned)
+    except ValueError:
+        return default, False
+
+    clamped = max(MIN_CUSTOM_LIMIT, min(value, MAX_CUSTOM_LIMIT))
+    was_normalized = cleaned != stripped
+    return clamped, was_normalized
+
+
 def get_max_prompt_length(is_multi_book, prefs):
     """Return the effective max prompt length in characters."""
     if prefs.get('enable_custom_prompt_limit'):
-        try:
-            value = int(prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT))
-        except (TypeError, ValueError):
-            value = DEFAULT_CUSTOM_LIMIT
-        return max(MIN_CUSTOM_LIMIT, min(value, MAX_CUSTOM_LIMIT))
+        value = parse_prompt_limit_value(
+            prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
+            DEFAULT_CUSTOM_LIMIT,
+        )
+        return value
     return DEFAULT_MULTI_LIMIT if is_multi_book else DEFAULT_SINGLE_LIMIT
 
 

@@ -3179,24 +3179,19 @@ class ConfigDialog(QWidget):
                 prefs['request_timeout'] = 60  # 默认值
 
         # 保存自定义提示词长度限制
+        limit_normalized = False
+        limit_value = DEFAULT_CUSTOM_LIMIT
         if hasattr(self, 'custom_prompt_limit_checkbox'):
             prefs['enable_custom_prompt_limit'] = self.custom_prompt_limit_checkbox.isChecked()
         if hasattr(self, 'max_prompt_length_input'):
             from calibre_plugins.ask_ai_plugin.prompt_limits import (
-                DEFAULT_CUSTOM_LIMIT, MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT,
+                DEFAULT_CUSTOM_LIMIT, parse_prompt_limit_text,
             )
             limit_text = self.max_prompt_length_input.text().strip()
-            if limit_text:
-                try:
-                    limit_value = max(
-                        MIN_CUSTOM_LIMIT,
-                        min(int(limit_text), MAX_CUSTOM_LIMIT),
-                    )
-                except ValueError:
-                    limit_value = DEFAULT_CUSTOM_LIMIT
-            else:
-                limit_value = DEFAULT_CUSTOM_LIMIT
+            limit_value, limit_normalized = parse_prompt_limit_text(limit_text)
             prefs['max_prompt_length'] = limit_value
+            if limit_normalized:
+                self.max_prompt_length_input.setText(str(limit_value))
         
         # 保存并行AI数量
         if hasattr(self, 'parallel_ai_combo'):
@@ -3240,6 +3235,16 @@ class ConfigDialog(QWidget):
             self.save_success_label.setText(self.i18n.get('save_success', 'Settings saved successfully!'))
             self.save_success_label.show()
             QTimer.singleShot(2000, self.save_success_label.hide)
+
+        if limit_normalized:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('max_prompt_length_normalized_title', 'Prompt limit adjusted'),
+                self.i18n.get(
+                    'max_prompt_length_normalized',
+                    'Prompt length was normalized to {value} characters (separators removed).',
+                ).format(value=limit_value),
+            )
         
         # 发出保存成功信号
         self.settings_saved.emit()
@@ -3368,7 +3373,10 @@ class ConfigDialog(QWidget):
         if hasattr(self, 'max_prompt_length_input'):
             limit_text = self.max_prompt_length_input.text().strip()
             try:
-                current_limit = int(limit_text) if limit_text else DEFAULT_CUSTOM_LIMIT
+                from calibre_plugins.ask_ai_plugin.prompt_limits import (
+                    DEFAULT_CUSTOM_LIMIT, parse_prompt_limit_text,
+                )
+                current_limit, _ = parse_prompt_limit_text(limit_text)
                 if current_limit != self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT):
                     prompt_limit_changed = True
             except ValueError:

@@ -36,7 +36,7 @@ class FrenchTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Informations sur le plugin
-            'plugin_name': 'Ask AI Plugin',
+            'plugin_name': 'Plugin Ask AI',
             'plugin_desc': 'Posez des questions sur un livre en utilisant l\'IA',
             
             # UI - Onglets et sections
@@ -215,6 +215,7 @@ class FrenchTranslation(BaseTranslation):
             'metadata_title': 'Titre',
             'metadata_authors': 'Auteur',
             'metadata_publisher': 'Éditeur',
+            'metadata_pubdate': 'Date de publication',
             'metadata_pubyear': 'Date de Publication',
             'metadata_language': 'Langue',
             'metadata_series': 'Série',
@@ -354,6 +355,8 @@ class FrenchTranslation(BaseTranslation):
             'book_title_check': 'Titre du livre requis',
             'avoid_repeat_question': 'Veuillez utiliser une question différente',
             'empty_answer': 'Réponse vide',
+            'empty_response': "Réponse vide reçue de l'API",
+            'empty_response_after_filter': 'La réponse est vide après filtrage des balises think',
             'invalid_response': 'Réponse invalide',
             'auth_error_401': 'Non autorisé',
             'auth_error_403': 'Accès refusé',
@@ -408,6 +411,9 @@ class FrenchTranslation(BaseTranslation):
             'fetching_models_from': 'Récupération des modèles depuis {url}',
             'successfully_fetched_models': '{count} modèles {provider} récupérés avec succès',
             'failed_to_fetch_models': 'Échec de la récupération des modèles : {error}',
+            'error_401': "Échec de l'authentification de la clé API. Veuillez vérifier : la clé API est correcte, le compte a un solde suffisant, la clé API n'a pas expiré.",
+            'error_403': "Accès refusé. Veuillez vérifier : la clé API a des permissions suffisantes, aucune restriction d'accès régional.",
+            'error_404': "Point de terminaison API introuvable. Veuillez vérifier si la configuration de l'URL de base API est correcte.",
 
             # Informations à propos
             'author_name': 'Sheldon',
@@ -437,6 +443,11 @@ class FrenchTranslation(BaseTranslation):
             'request_timeout_label': 'Délai d\'attente de la requête:',
             'seconds': 'secondes',
             'request_timeout_error': 'Délai d\'attente de la requête dépassé. Délai actuel: {timeout} secondes',
+            'max_prompt_length_normalized_title': 'Limite de prompt ajustée',
+            'max_prompt_length_normalized': (
+                'La longueur du prompt a été normalisée à {value} caractères (des séparateurs tels que des virgules '
+                'ou des espaces ont été supprimés).'
+            ),
             'enable_custom_prompt_limit_label': 'Limite de longueur de prompt personnalisée',
             'enable_custom_prompt_limit_tooltip': (
                 'Les limites par défaut sont de 128 000 caractères (un livre) et 256 000 '
@@ -471,6 +482,15 @@ class FrenchTranslation(BaseTranslation):
             'pdf_book_metadata': 'MÉTADONNÉES DU LIVRE',
             'pdf_question': 'QUESTION',
             'pdf_answer': 'RÉPONSE',
+            'pdf_ai_model_info': 'INFORMATIONS SUR LE MODÈLE IA',
+            'pdf_generated_by': 'GÉNÉRÉ PAR',
+            'pdf_provider': 'Fournisseur',
+            'pdf_model': 'Modèle',
+            'pdf_api_base_url': 'URL de base API',
+            'pdf_panel': 'Panneau',
+            'pdf_plugin': 'Plugin',
+            'pdf_github': 'GitHub',
+            'pdf_generated_time': 'Heure de génération',
             'error_429': 'Trop de requêtes, limite de débit atteinte. Veuillez réessayer plus tard.',
             'error_5xx': 'Erreur serveur. Veuillez réessayer plus tard ou vérifier l\'état du fournisseur de services.',
             'error_network': 'Échec de la connexion réseau. Veuillez vérifier la connexion réseau, les paramètres du proxy ou la configuration du pare-feu.',
@@ -488,6 +508,7 @@ class FrenchTranslation(BaseTranslation):
             'reset_current_ai': 'Réinitialiser l\'IA Actuelle par Défaut',
             'reset_tooltip': 'Réinitialiser l\'IA actuelle aux valeurs par défaut',
             'save_and_close': 'Enregistrer et Fermer',
+            'discard_changes': 'Abandonner les modifications',
             'skip': 'Ignorer',
             'technical_details': 'Détails Techniques',
             'test_current_model': 'Tester le Modèle Actuel',

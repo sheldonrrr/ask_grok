@@ -36,7 +36,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # 插件信息
-            'plugin_name': 'Ask AI Plugin',
+            'plugin_name': 'Ask AI 插件',
             'plugin_desc': '使用AI回答关于书籍的问题',
             
             # UI - 标签和区域
@@ -323,6 +323,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'empty_answer': '空回答',
             'empty_response': 'API 返回了空响应',
             'empty_response_after_filter': '过滤后响应为空',
+            'invalid_json': '无效 JSON',
             'invalid_response': '无效回应',
             'auth_error_401': '未授权',
             'auth_error_403': '访问被拒绝',
@@ -433,6 +434,10 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'max_prompt_length_tooltip': (
                 '启用自定义限制后生效。建议默认值：524288 字符。'
                 '粗略参考：1 token ≈ 3–4 字符。使用 Ollama 时还需在模型侧配置 num_ctx。'
+            ),
+            'max_prompt_length_normalized_title': '提示词长度已调整',
+            'max_prompt_length_normalized': (
+                '提示词长度已规范为 {value} 字符（已移除逗号、空格等分隔符）。'
             ),
             
             # 并行AI设置
