@@ -27,6 +27,7 @@ from .env_config import EnvironmentConfig
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
 from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
+from .prompt_limits import DEFAULT_CUSTOM_LIMIT
 from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
@@ -194,6 +195,10 @@ prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
 prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
 prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
 
+# Prompt length settings
+prefs.defaults['enable_custom_prompt_limit'] = False
+prefs.defaults['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT  # Used when enable_custom_prompt_limit is True
+
 def get_prefs(force_reload=False):
     """获取配置
     
@@ -296,6 +301,12 @@ def get_prefs(force_reload=False):
     # 确保 parallel_ai_count 键存在
     if 'parallel_ai_count' not in prefs:
         prefs['parallel_ai_count'] = 1
+
+    # 确保提示词长度限制键存在
+    if 'enable_custom_prompt_limit' not in prefs:
+        prefs['enable_custom_prompt_limit'] = False
+    if 'max_prompt_length' not in prefs:
+        prefs['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT
     
     # 配置迁移：强制更新 nvidia_free 的 proxy_url 为当前环境配置
     # 这确保环境切换后配置能正确更新
@@ -2077,6 +2088,49 @@ class ConfigDialog(QWidget):
         timeout_layout.addStretch()
         
         model_layout.addLayout(timeout_layout)
+
+        # 自定义提示词长度限制（高级选项）
+        from calibre_plugins.ask_ai_plugin.prompt_limits import (
+            DEFAULT_CUSTOM_LIMIT, MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT,
+        )
+
+        self.custom_prompt_limit_checkbox = QCheckBox(self)
+        self.custom_prompt_limit_checkbox.setObjectName('checkbox_enable_custom_prompt_limit')
+        self.custom_prompt_limit_checkbox.setText(
+            self.i18n.get('enable_custom_prompt_limit_label', 'Custom prompt length limit'))
+        self.custom_prompt_limit_checkbox.setToolTip(
+            self.i18n.get('enable_custom_prompt_limit_tooltip',
+                'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '
+                'Most users do not need to change this. For library-wide searches, use AI Search.'))
+        self.custom_prompt_limit_checkbox.setChecked(
+            get_prefs().get('enable_custom_prompt_limit', False))
+        self.custom_prompt_limit_checkbox.toggled.connect(self._on_custom_prompt_limit_toggled)
+        self.custom_prompt_limit_checkbox.toggled.connect(self.on_config_changed)
+        model_layout.addWidget(self.custom_prompt_limit_checkbox)
+
+        prompt_limit_layout = QHBoxLayout()
+        configure_layout(prompt_limit_layout, 'form_row')
+        prompt_limit_label = QLabel(self.i18n.get('max_prompt_length_label', 'Max prompt length:'))
+        prompt_limit_label.setObjectName('label_max_prompt_length')
+        prompt_limit_label.setToolTip(self.i18n.get('max_prompt_length_tooltip',
+            'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
+            'Rough guide: 1 token ≈ 3–4 characters.'))
+        prompt_limit_layout.addWidget(prompt_limit_label)
+
+        self.max_prompt_length_input = QLineEdit(self)
+        self.max_prompt_length_input.setText(str(get_prefs().get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+        self.max_prompt_length_input.setMaximumWidth(120)
+        self.max_prompt_length_input.setValidator(
+            QIntValidator(MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT, self))
+        self.max_prompt_length_input.textChanged.connect(self.on_config_changed)
+        prompt_limit_layout.addWidget(self.max_prompt_length_input)
+
+        prompt_limit_unit = QLabel(self.i18n.get('max_prompt_length_unit', 'characters'))
+        prompt_limit_unit.setObjectName('label_max_prompt_length_unit')
+        prompt_limit_layout.addWidget(prompt_limit_unit)
+        prompt_limit_layout.addStretch()
+        model_layout.addLayout(prompt_limit_layout)
+        self._on_custom_prompt_limit_toggled(self.custom_prompt_limit_checkbox.isChecked())
         
         # 添加并行AI数量设置
         parallel_layout = QHBoxLayout()
@@ -2517,6 +2571,8 @@ class ConfigDialog(QWidget):
             'models': copy.deepcopy(prefs.get('models', {})),
             'request_timeout': prefs.get('request_timeout', 60),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
+            'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
         }
@@ -2564,6 +2620,26 @@ class ConfigDialog(QWidget):
             button_enabled = self.initial_values.get('enable_default_export_folder', False)
             self.browse_folder_button.setEnabled(button_enabled)
             logger.info(f"[Export Config] 设置浏览按钮状态: {button_enabled}")
+
+        if hasattr(self, 'timeout_input'):
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 60)))
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            checked = self.initial_values.get('enable_custom_prompt_limit', False)
+            self.custom_prompt_limit_checkbox.setChecked(checked)
+            self._on_custom_prompt_limit_toggled(checked)
+
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setText(
+                str(self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+
+        if hasattr(self, 'parallel_ai_combo'):
+            parallel = self.initial_values.get('parallel_ai_count', 1)
+            if parallel > 2:
+                parallel = 2
+            index = self.parallel_ai_combo.findData(parallel)
+            if index >= 0:
+                self.parallel_ai_combo.setCurrentIndex(index)
             
     def on_language_changed(self, index):
         """语言改变时的处理函数"""
@@ -2752,6 +2828,8 @@ class ConfigDialog(QWidget):
             'label_current_ai': ('current_ai', 'Current AI'),
             'label_request_timeout': ('request_timeout_label', 'Request Timeout'),
             'label_timeout_unit': ('seconds', 'seconds'),
+            'label_max_prompt_length': ('max_prompt_length_label', 'Max prompt length:'),
+            'label_max_prompt_length_unit': ('max_prompt_length_unit', 'characters'),
             'label_parallel_ai_count': ('parallel_ai_count_label', 'Parallel AI Count'),
             'label_parallel_ai_notice': ('parallel_ai_notice', 'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'),
             'label_ask_prompts': ('ask_prompts', 'Ask Prompts'),
@@ -2774,6 +2852,8 @@ class ConfigDialog(QWidget):
         # 更新 CheckBox 文本（使用 ObjectName 映射）
         checkbox_map = {
             'checkbox_enable_default_folder': ('enable_default_export_folder', 'Export to default folder'),
+            'checkbox_enable_custom_prompt_limit': (
+                'enable_custom_prompt_limit_label', 'Custom prompt length limit'),
         }
         
         for checkbox in self.findChildren(QCheckBox):
@@ -2782,6 +2862,22 @@ class ConfigDialog(QWidget):
                 i18n_key, fallback = checkbox_map[obj_name]
                 checkbox.setText(self.i18n.get(i18n_key, fallback))
                 logger.debug(f"更新了复选框 [{obj_name}]: {checkbox.text()}")
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            self.custom_prompt_limit_checkbox.setToolTip(
+                self.i18n.get('enable_custom_prompt_limit_tooltip',
+                    'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '
+                    'Most users do not need to change this. For library-wide searches, use AI Search.'))
+
+        for label in self.findChildren(QLabel):
+            obj_name = label.objectName()
+            if obj_name == 'label_max_prompt_length':
+                label.setToolTip(self.i18n.get('max_prompt_length_tooltip',
+                    'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
+                    'Rough guide: 1 token ≈ 3–4 characters.'))
+            elif obj_name == 'label_parallel_ai_count':
+                label.setToolTip(self.i18n.get('parallel_ai_count_tooltip',
+                    'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
         
         # 更新所有按钮文本（使用ObjectName映射，避免硬编码文本检测）
         button_map = {
@@ -3081,6 +3177,26 @@ class ConfigDialog(QWidget):
                 prefs['request_timeout'] = int(timeout_value)
             else:
                 prefs['request_timeout'] = 60  # 默认值
+
+        # 保存自定义提示词长度限制
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            prefs['enable_custom_prompt_limit'] = self.custom_prompt_limit_checkbox.isChecked()
+        if hasattr(self, 'max_prompt_length_input'):
+            from calibre_plugins.ask_ai_plugin.prompt_limits import (
+                DEFAULT_CUSTOM_LIMIT, MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT,
+            )
+            limit_text = self.max_prompt_length_input.text().strip()
+            if limit_text:
+                try:
+                    limit_value = max(
+                        MIN_CUSTOM_LIMIT,
+                        min(int(limit_text), MAX_CUSTOM_LIMIT),
+                    )
+                except ValueError:
+                    limit_value = DEFAULT_CUSTOM_LIMIT
+            else:
+                limit_value = DEFAULT_CUSTOM_LIMIT
+            prefs['max_prompt_length'] = limit_value
         
         # 保存并行AI数量
         if hasattr(self, 'parallel_ai_combo'):
@@ -3156,6 +3272,8 @@ class ConfigDialog(QWidget):
             'models': copy.deepcopy(prefs.get('models', {})),
             'request_timeout': prefs.get('request_timeout', 60),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
+            'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
         }
@@ -3187,7 +3305,7 @@ class ConfigDialog(QWidget):
             self.initial_values = {}
         
         # 确保必要的键存在
-        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout', 'parallel_ai_count']:
+        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout', 'parallel_ai_count', 'enable_custom_prompt_limit', 'max_prompt_length']:
             if key not in self.initial_values:
                 if key == 'language':
                     self.initial_values[key] = 'en'
@@ -3201,6 +3319,10 @@ class ConfigDialog(QWidget):
                     self.initial_values[key] = 60
                 elif key == 'parallel_ai_count':
                     self.initial_values[key] = 1
+                elif key == 'enable_custom_prompt_limit':
+                    self.initial_values[key] = False
+                elif key == 'max_prompt_length':
+                    self.initial_values[key] = DEFAULT_CUSTOM_LIMIT
         
         # 检查通用设置是否更改
         general_changed = False
@@ -3236,6 +3358,21 @@ class ConfigDialog(QWidget):
             if current_parallel != self.initial_values.get('parallel_ai_count', 1):
                 parallel_ai_changed = True
                 logger.debug(f"并行AI数量已更改: {current_parallel} != {self.initial_values.get('parallel_ai_count', 1)}")
+
+        # 检查自定义提示词长度限制是否更改
+        prompt_limit_changed = False
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            if self.custom_prompt_limit_checkbox.isChecked() != self.initial_values.get(
+                    'enable_custom_prompt_limit', False):
+                prompt_limit_changed = True
+        if hasattr(self, 'max_prompt_length_input'):
+            limit_text = self.max_prompt_length_input.text().strip()
+            try:
+                current_limit = int(limit_text) if limit_text else DEFAULT_CUSTOM_LIMIT
+                if current_limit != self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT):
+                    prompt_limit_changed = True
+            except ValueError:
+                prompt_limit_changed = True
         
         # 检查模型配置是否更改
         models_changed = False
@@ -3255,7 +3392,12 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or timeout_changed or parallel_ai_changed
+        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed
+    
+    def _on_custom_prompt_limit_toggled(self, checked):
+        """启用/禁用自定义提示词长度输入框"""
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setEnabled(bool(checked))
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
@@ -3285,6 +3427,26 @@ class ConfigDialog(QWidget):
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
+
+        if hasattr(self, 'timeout_input'):
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 60)))
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            checked = self.initial_values.get('enable_custom_prompt_limit', False)
+            self.custom_prompt_limit_checkbox.setChecked(checked)
+            self._on_custom_prompt_limit_toggled(checked)
+
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setText(
+                str(self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+
+        if hasattr(self, 'parallel_ai_combo'):
+            parallel = self.initial_values.get('parallel_ai_count', 1)
+            if parallel > 2:
+                parallel = 2
+            index = self.parallel_ai_combo.findData(parallel)
+            if index >= 0:
+                self.parallel_ai_combo.setCurrentIndex(index)
         
         # 更新模型名称显示（会调用 refresh_ai_list）
         self.update_model_name_display()
@@ -3500,38 +3662,76 @@ class LibraryWidget(QWidget):
         
         content = QWidget()
         layout = setup_settings_tab_content(content)
+
+        feature_section, self.feature_title, self.feature_subtitle = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_feature_title', 'AI Search'),
+            self.i18n.get('ai_search_feature_subtitle',
+                'Search your entire library using natural language'),
+        )
+        self.feature_title.setObjectName('title_ai_search_feature')
+        self.feature_title.setStyleSheet(get_first_section_title_style())
+        if self.feature_subtitle:
+            self.feature_subtitle.setObjectName('subtitle_ai_search_feature')
+
+        self.feature_description = QLabel(self.i18n.get('ai_search_feature_description',
+            'AI Search helps you discover books across your whole Calibre library.\n\n'
+            '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
+            '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
+            '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
+            'embedding every book in verbose format\n'
+            '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
+            'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
+        self.feature_description.setObjectName('label_ai_search_feature')
+        self.feature_description.setWordWrap(True)
+        self.feature_description.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        feature_section.addWidget(self.feature_description)
+
+        self.usage_label = QLabel(self.i18n.get('ai_search_usage_hint',
+            'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
+            'select up to 30 books instead.'))
+        self.usage_label.setObjectName('label_ai_search_usage')
+        self.usage_label.setWordWrap(True)
+        self.usage_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        feature_section.addWidget(self.usage_label)
         
         search_section, self.privacy_title, _privacy_sub = add_settings_section(
             layout,
             self.i18n.get('ai_search_privacy_title', 'Privacy Notice'),
         )
-        self.privacy_title.setStyleSheet(get_first_section_title_style())
+        self.privacy_title.setObjectName('title_ai_search_privacy')
         
         self.privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
             'AI Search uses book metadata (titles and authors) from your library. '
             'This information will be sent to the AI provider you have configured to process your search queries.'))
+        self.privacy_alert.setObjectName('label_ai_search_privacy')
         self.privacy_alert.setWordWrap(True)
         self.privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
         search_section.addWidget(self.privacy_alert)
-        
-        self.info_label = QLabel(self.i18n.get('library_info', 
-            'AI Search is always enabled. When you don\'t select any books, '
-            'you can search your entire library using natural language.'))
-        self.info_label.setWordWrap(True)
-        self.info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        search_section.addWidget(self.info_label)
+
+        data_section, self.data_title, self.data_subtitle = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_data_title', 'Library Index'),
+            self.i18n.get('ai_search_data_subtitle',
+                'Refresh the compact book list sent to AI when you add or remove books'),
+        )
+        self.data_title.setObjectName('title_ai_search_data')
+        if self.data_subtitle:
+            self.data_subtitle.setObjectName('subtitle_ai_search_data')
         
         self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
+        self.update_button.setObjectName('button_library_update')
         self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-            'Extract book titles and authors from your library'))
+            'Extract titles and authors for all books in your library (no 100-book limit)'))
         self.update_button.clicked.connect(self.on_update_library)
         apply_button_style(self.update_button)
-        search_section.addWidget(self.update_button)
+        data_section.addWidget(self.update_button)
         
         self.status_label = QLabel()
+        self.status_label.setObjectName('label_library_status')
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        search_section.addWidget(self.status_label)
+        data_section.addWidget(self.status_label)
         
         layout.addStretch()
         
@@ -3552,7 +3752,25 @@ class LibraryWidget(QWidget):
         language = self.prefs.get('language', 'en')
         self.i18n = get_translation(language)
         
-        # 更新所有文本 - 使用实例变量直接更新
+        if hasattr(self, 'feature_title'):
+            self.feature_title.setText(self.i18n.get('ai_search_feature_title', 'AI Search'))
+        if hasattr(self, 'feature_subtitle'):
+            self.feature_subtitle.setText(self.i18n.get('ai_search_feature_subtitle',
+                'Search your entire library using natural language'))
+        if hasattr(self, 'feature_description'):
+            self.feature_description.setText(self.i18n.get('ai_search_feature_description',
+                'AI Search helps you discover books across your whole Calibre library.\n\n'
+                '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
+                '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
+                '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
+                'embedding every book in verbose format\n'
+                '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
+                'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
+        if hasattr(self, 'usage_label'):
+            self.usage_label.setText(self.i18n.get('ai_search_usage_hint',
+                'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
+                'select up to 30 books instead.'))
+
         if hasattr(self, 'privacy_title'):
             self.privacy_title.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
         
@@ -3560,17 +3778,17 @@ class LibraryWidget(QWidget):
             self.privacy_alert.setText(self.i18n.get('ai_search_privacy_alert', 
                 'AI Search uses book metadata (titles and authors) from your library. '
                 'This information will be sent to the AI provider you have configured to process your search queries.'))
+
+        if hasattr(self, 'data_title'):
+            self.data_title.setText(self.i18n.get('ai_search_data_title', 'Library Index'))
+        if hasattr(self, 'data_subtitle') and self.data_subtitle:
+            self.data_subtitle.setText(self.i18n.get('ai_search_data_subtitle',
+                'Refresh the compact book list sent to AI when you add or remove books'))
         
-        if hasattr(self, 'info_label'):
-            self.info_label.setText(self.i18n.get('library_info', 
-                'AI Search is always enabled. When you don\'t select any books, '
-                'you can search your entire library using natural language.'))
-        
-        # 更新按钮文本
         if hasattr(self, 'update_button'):
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
             self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-                'Extract book titles and authors from your library'))
+                'Extract titles and authors for all books in your library (no 100-book limit)'))
         
         # 更新状态显示
         self.update_status_display()

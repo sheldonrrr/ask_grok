@@ -201,3 +201,5 @@ backend/
 
 # Project specific
 *.zip
+
+# See "Environments" above — .env holds local API keys (e.g. DEEPSEEK_API_KEY) and must not be committed.

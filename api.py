@@ -191,12 +191,21 @@ class APIClient:
             if use_library_chat:
                 from .utils import is_library_chat_enabled, build_library_prompt
                 from .config import get_prefs
+                from .prompt_limits import validate_prompt_length, count_books_in_library_metadata
                 
                 prefs = get_prefs()
                 if is_library_chat_enabled(prefs):
                     # 使用build_library_prompt包装用户查询，传入i18n支持多语言
                     prompt = build_library_prompt(prompt, prefs, self.i18n)
                     logger.info("Library Chat enabled, injected library metadata into prompt")
+
+                    book_count = count_books_in_library_metadata(prefs)
+                    length_error = validate_prompt_length(
+                        prompt, True, prefs, self.i18n, book_count,
+                        is_library_search=True,
+                    )
+                    if length_error:
+                        raise AIAPIError(length_error, error_type="prompt_too_long")
             
             # 准备请求参数
             kwargs = {

@@ -246,6 +246,58 @@ class GermanTranslation(BaseTranslation):
             'request_failed': 'Anfrage fehlgeschlagen',
             'request_stopped': 'Anfrage gestoppt',
             'question_too_long': 'Frage zu lang',
+            'question_too_long_detail': (
+                'Prompt ist zu lang ({current} Zeichen, Limit {limit}, um {over} zu lang). '
+                'Sie haben {book_count} Buch/Bücher ausgewählt.'
+            ),
+            'question_too_long_detail_library': (
+                'Prompt ist zu lang ({current} Zeichen, Limit {limit}, um {over} zu lang). '
+                'Ihr Bibliotheksindex enthält {book_count} Buch/Bücher.'
+            ),
+            'question_too_long_hint_ai_search': (
+                'Für bibliotheksweite Suchen verwenden Sie AI Search (fragen ohne Bücher '
+                'auszuwählen oder über das AI-Search-Menü), statt viele Bücher auszuwählen.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Ihr Bibliotheksindex überschreitet das aktuelle Prompt-Limit. Aktivieren Sie '
+                '„Benutzerdefiniertes Prompt-Längenlimit“ unter Plugin-Konfiguration → General '
+                '(Vorschlag: 524288 Zeichen), oder stellen Sie eine spezifischere Frage.'
+            ),
+            'question_too_long_reduce_books': (
+                'Für einen tieferen Vergleich weniger Bücher versuchen Sie, etwa {count} '
+                'Buch/Bücher abzuwählen.'
+            ),
+            'question_too_long_hint_default': (
+                'Aktuelles Standardlimit: {limit} Zeichen ({mode}). '
+                'Standard für ein Buch: 128.000; für mehrere Bücher: 256.000. '
+                'Fortgeschrittene können ein benutzerdefiniertes Limit unter '
+                'Plugin-Konfiguration → General aktivieren.'
+            ),
+            'question_too_long_hint_custom': (
+                'Sie haben ein benutzerdefiniertes Prompt-Limit aktiviert. Bei Timeouts senken '
+                'Sie das Limit unter Plugin-Konfiguration → General, wählen weniger Bücher '
+                'aus oder stellen eine spezifischere Frage.'
+            ),
+            'large_selection_dialog_title': 'Viele Bücher ausgewählt',
+            'large_selection_dialog_message': (
+                'Sie haben {count} Bücher ausgewählt. Für bibliotheksweite Fragen eignet sich '
+                'AI Search besser und durchsucht Ihre gesamte Bibliothek mit kompakten Metadaten.\n\n'
+                'Zu AI Search wechseln oder mit den ausgewählten Büchern im Kompaktformat fortfahren?'
+            ),
+            'large_selection_use_ai_search': 'AI Search verwenden',
+            'large_selection_continue': 'Mit Auswahl fortfahren',
+            'multi_book_truncation_note': (
+                'Hinweis: Aufgrund des Prompt-Limits sind nur die ersten {included} von {total} '
+                'ausgewählten Büchern enthalten. Verwenden Sie AI Search für die gesamte '
+                'Bibliothek oder erhöhen Sie das benutzerdefinierte Limit unter '
+                'Plugin-Konfiguration → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Hinweis: Aufgrund des Prompt-Limits sind nur die ersten {included} von {total} '
+                'indizierten Büchern enthalten. Ergebnisse können bei sehr großen Bibliotheken '
+                'unvollständig sein, sofern Sie das benutzerdefinierte Limit unter '
+                'Plugin-Konfiguration → General nicht erhöhen.'
+            ),
             'auth_token_required_title': 'API-Schlüssel erforderlich',
             'auth_token_required_message': 'Bitte API-Schlüssel in der Plugin-Konfiguration festlegen.',
             'open_configuration': 'Konfiguration öffnen',
@@ -349,6 +401,21 @@ class GermanTranslation(BaseTranslation):
             'request_timeout_label': 'Anfrage-Timeout:',
             'seconds': 'Sekunden',
             'request_timeout_error': 'Anfrage-Timeout. Aktuelles Timeout: {timeout} Sekunden',
+            'enable_custom_prompt_limit_label': 'Benutzerdefiniertes Prompt-Längenlimit',
+            'enable_custom_prompt_limit_tooltip': (
+                'Standardlimits sind 128.000 Zeichen (ein Buch) und 256.000 (mehrere Bücher). '
+                'Die meisten Benutzer müssen dies nicht ändern. Für bibliotheksweite Suchen '
+                'verwenden Sie AI Search. Aktivieren Sie ein benutzerdefiniertes Limit nur, wenn '
+                'Ihr Modell einen deutlich größeren Kontext unterstützt und Anfragen weiterhin '
+                'am Limit scheitern.'
+            ),
+            'max_prompt_length_label': 'Max. Prompt-Länge:',
+            'max_prompt_length_unit': 'Zeichen',
+            'max_prompt_length_tooltip': (
+                'Gilt, wenn das benutzerdefinierte Limit aktiviert ist. Standardvorschlag: '
+                '524288 Zeichen. Grobe Regel: 1 Token ≈ 3–4 Zeichen. Bei Ollama auch num_ctx '
+                'auf der Modellseite setzen.'
+            ),
             
             # Parallel AI settings
             'parallel_ai_count_label': 'Anzahl paralleler KIs:',
@@ -474,6 +541,28 @@ class GermanTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Nicht genügend Bücher',
             'ai_search_not_enough_books_message': 'Die KI-Suche erfordert mindestens {min_books} Bücher in Ihrer Bibliothek.\n\nIhre aktuelle Bibliothek enthält nur {book_count} Buch/Bücher.\n\nBitte fügen Sie mehr Bücher hinzu, um die KI-Suche zu nutzen.',
             'ai_search_mode_info': 'Suche in der gesamten Bibliothek',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Durchsuchen Sie Ihre gesamte Bibliothek in natürlicher Sprache',
+            'ai_search_feature_description': (
+                'AI Search hilft Ihnen, Bücher in Ihrer gesamten Calibre-Bibliothek zu entdecken.\n\n'
+                '• Auslösen: Ask ohne Bücherauswahl öffnen, Extras → AI Search oder Tastenkürzel\n'
+                '• Funktionsweise: Das Plugin sendet kompakte Metadaten (Buch-ID, Titel, Autor) '
+                'für alle indizierten Bücher\n'
+                '• Große Auswahl: Bei mehr als 50 Büchern schlägt Ask AI Search vor, statt jedes '
+                'Buch im ausführlichen Format einzubetten\n'
+                '• Daten aktuell halten: Nach Hinzufügen oder Entfernen von Büchern '
+                '„Bibliotheksdaten aktualisieren“ klicken\n\n'
+                'Beispielfragen: „Finde Bücher über Python“, „Zeig mir Bücher von Isaac Asimov“.'
+            ),
+            'ai_search_usage_hint': (
+                'Tipp: AI Search eignet sich am besten für bibliotheksweite Suche. Für einen '
+                'tiefen Vergleich weniger Bücher wählen Sie bis zu 30 Bücher aus.'
+            ),
+            'ai_search_data_title': 'Bibliotheksindex',
+            'ai_search_data_subtitle': (
+                'Aktualisieren Sie die kompakte Buchliste für die KI, wenn Sie Bücher '
+                'hinzufügen oder entfernen'
+            ),
             'library_prompt_template': 'Sie haben Zugriff auf die Buchbibliothek des Benutzers. Hier sind alle Bücher: {metadata} Benutzeranfrage: {query} Bitte finden Sie passende Bücher in der aktuellen Bibliothek und geben Sie sie in diesem Format zurück (**WICHTIG**: Verwenden Sie das HTML-Link-Format, damit Benutzer auf Buchtitel klicken können, um sie direkt zu öffnen): - <a href="calibre://book/BOOK_ID">Buchtitel</a> - Autorenname Beispiel: - <a href="calibre://book/123">Python lernen</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Aktion</a> - Peter Harrington Hinweis: Einige Autoren können als "unknown" aufgeführt sein. Dies sind normale Daten, bitte geben Sie alle passenden Ergebnisse normal zurück. Nur Bücher zurückgeben, die der Anfrage entsprechen. Maximal 5 Ergebnisse.',
             'ai_search_privacy_title': 'Datenschutzhinweis',
             'ai_search_privacy_alert': 'Die KI-Suche verwendet Buch-Metadaten (Titel und Autoren) aus Ihrer Bibliothek. Diese Informationen werden an den von Ihnen konfigurierten KI-Anbieter gesendet, um Ihre Suchanfragen zu verarbeiten.',

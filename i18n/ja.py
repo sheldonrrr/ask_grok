@@ -243,6 +243,54 @@ class JapaneseTranslation(BaseTranslation):
             'request_failed': 'リクエスト失敗',
             'request_stopped': 'リクエストが停止されました',
             'question_too_long': '質問が長すぎます',
+            'question_too_long_detail': (
+                'プロンプトが長すぎます（現在 {current} 文字、制限 {limit} 文字、{over} 文字超過）。'
+                '選択した書籍数：{book_count} 冊。'
+            ),
+            'question_too_long_detail_library': (
+                'プロンプトが長すぎます（現在 {current} 文字、制限 {limit} 文字、{over} 文字超過）。'
+                'ライブラリインデックスの書籍数：{book_count} 冊。'
+            ),
+            'question_too_long_hint_ai_search': (
+                'ライブラリ全体の検索には AI Search を使用してください（書籍を選択せずに質問する、'
+                'または AI Search メニューを使用）。多数の書籍を選択するのではなく。'
+            ),
+            'question_too_long_hint_library_search': (
+                'ライブラリインデックスが現在のプロンプト制限を超えています。'
+                'プラグイン設定 → General で「カスタムプロンプト長制限」を有効にしてください'
+                '（推奨：524288 文字）、またはより具体的な質問をしてください。'
+            ),
+            'question_too_long_reduce_books': (
+                '少数の書籍を詳しく比較する場合は、約 {count} 冊の選択を解除してみてください。'
+            ),
+            'question_too_long_hint_default': (
+                '現在のデフォルト制限：{limit} 文字（{mode}）。'
+                '単一書籍のデフォルトは 128,000 文字、複数書籍は 256,000 文字。'
+                '上級ユーザーはプラグイン設定 → General でカスタム制限を有効にできます。'
+            ),
+            'question_too_long_hint_custom': (
+                'カスタムプロンプト長制限が有効です。リクエストがタイムアウトする場合は、'
+                'プラグイン設定 → General で制限を下げるか、選択書籍を減らすか、'
+                'より具体的な質問にしてください。'
+            ),
+            'large_selection_dialog_title': '多数の書籍が選択されています',
+            'large_selection_dialog_message': (
+                '{count} 冊の書籍が選択されています。ライブラリ全体に関する質問には '
+                'AI Search が適しており、コンパクトなメタデータでライブラリ全体を検索します。\n\n'
+                'AI Search に切り替えますか？それとも選択した書籍でコンパクト形式のまま続けますか？'
+            ),
+            'large_selection_use_ai_search': 'AI Search を使用',
+            'large_selection_continue': '選択した書籍で続行',
+            'multi_book_truncation_note': (
+                '注意：プロンプト制限により、選択した {total} 冊のうち最初の {included} 冊のみが'
+                '含まれます。ライブラリ全体を検索するには AI Search を使用するか、'
+                'プラグイン設定 → General でカスタム制限を引き上げてください。'
+            ),
+            'library_metadata_truncation_note': (
+                '注意：プロンプト制限により、インデックス済み {total} 冊のうち最初の {included} 冊のみが'
+                '含まれます。非常に大きなライブラリでは結果が不完全になる場合があります。'
+                'プラグイン設定 → General でカスタム制限を引き上げてください。'
+            ),
             'auth_token_required_title': 'APIキーが必要です',
             'auth_token_required_message': 'プラグイン設定で有効なAPIキーを設定してください。',
             'open_configuration': '設定を開く',
@@ -383,6 +431,19 @@ class JapaneseTranslation(BaseTranslation):
             'request_timeout_label': 'リクエストタイムアウト:',
             'seconds': '秒',
             'request_timeout_error': 'リクエストがタイムアウトしました。現在のタイムアウト: {timeout}秒',
+            'enable_custom_prompt_limit_label': 'カスタムプロンプト長制限',
+            'enable_custom_prompt_limit_tooltip': (
+                'デフォルト制限は単一書籍 128,000 文字、複数書籍 256,000 文字です。'
+                'ほとんどのユーザーは変更不要です。ライブラリ全体の検索には AI Search を使用してください。'
+                'モデルがより大きなコンテキストをサポートし、リクエストが制限に達する場合のみ'
+                'カスタム制限を有効にしてください。'
+            ),
+            'max_prompt_length_label': '最大プロンプト長：',
+            'max_prompt_length_unit': '文字',
+            'max_prompt_length_tooltip': (
+                'カスタム制限が有効な場合に適用されます。デフォルト推奨：524288 文字。'
+                '目安：1 トークン ≈ 3–4 文字。Ollama 使用時はモデル側でも num_ctx を設定してください。'
+            ),
             
             # 並列AI設定
             'parallel_ai_count_label': '並列AIの数:',
@@ -437,6 +498,23 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': '自然言語でライブラリ全体を検索',
+            'ai_search_feature_description': (
+                'AI Search は Calibre ライブラリ全体から書籍を見つけるのに役立ちます。\n\n'
+                '• 起動方法：書籍を選択せずに Ask を開く、ツール → AI Search、またはショートカット\n'
+                '• 仕組み：プラグインはインデックス済みの全書籍のコンパクトメタデータ'
+                '（書籍 ID、タイトル、著者）を送信します\n'
+                '• 大量選択：50 冊を超える場合、Ask は詳細形式の代わりに AI Search を提案します\n'
+                '• データ更新：書籍の追加・削除後は「ライブラリデータの更新」をクリックしてください\n\n'
+                '例：「Python に関する本を探して」「アイザック・アシモフの本を見せて」。'
+            ),
+            'ai_search_usage_hint': (
+                'ヒント：AI Search はライブラリ全体の発見に最適です。少数の書籍を詳しく比較する場合は、'
+                '30 冊以内を選択してください。'
+            ),
+            'ai_search_data_title': 'ライブラリインデックス',
+            'ai_search_data_subtitle': '書籍の追加・削除時に AI へ送るコンパクトな書籍リストを更新',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             
             'default_ai_mismatch_title': 'デフォルトAIが変更されました',
@@ -537,6 +615,23 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': '自然言語でライブラリ全体を検索',
+            'ai_search_feature_description': (
+                'AI Search は Calibre ライブラリ全体から書籍を見つけるのに役立ちます。\n\n'
+                '• 起動方法：書籍を選択せずに Ask を開く、ツール → AI Search、またはショートカット\n'
+                '• 仕組み：プラグインはインデックス済みの全書籍のコンパクトメタデータ'
+                '（書籍 ID、タイトル、著者）を送信します\n'
+                '• 大量選択：50 冊を超える場合、Ask は詳細形式の代わりに AI Search を提案します\n'
+                '• データ更新：書籍の追加・削除後は「ライブラリデータの更新」をクリックしてください\n\n'
+                '例：「Python に関する本を探して」「アイザック・アシモフの本を見せて」。'
+            ),
+            'ai_search_usage_hint': (
+                'ヒント：AI Search はライブラリ全体の発見に最適です。少数の書籍を詳しく比較する場合は、'
+                '30 冊以内を選択してください。'
+            ),
+            'ai_search_data_title': 'ライブラリインデックス',
+            'ai_search_data_subtitle': '書籍の追加・削除時に AI へ送るコンパクトな書籍リストを更新',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             'ai_search_privacy_title': 'プライバシーに関するお知らせ',
             'ai_search_privacy_alert': 'AI検索はライブラリの本のメタデータ（タイトルと著者）を使用します。この情報は、検索クエリを処理するために設定されたAIプロバイダーに送信されます。',

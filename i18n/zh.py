@@ -260,6 +260,50 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'request_failed': '请求失败',
             'request_stopped': '请求已停止',
             'question_too_long': '问题过长',
+            'question_too_long_detail': (
+                '提示词过长（当前 {current} 字符，限制 {limit} 字符，超出 {over} 字符）。'
+                '您选中了 {book_count} 本书。'
+            ),
+            'question_too_long_detail_library': (
+                '提示词过长（当前 {current} 字符，限制 {limit} 字符，超出 {over} 字符）。'
+                '书库索引共 {book_count} 本书。'
+            ),
+            'question_too_long_hint_ai_search': (
+                '书库级筛选请使用 AI Search（不选书直接提问，或使用 AI Search 菜单），'
+                '而不是一次选中大量书籍。'
+            ),
+            'question_too_long_hint_library_search': (
+                '书库索引超出当前提示词限制。请在「插件配置 → General」中启用自定义提示词长度限制'
+                '（建议 524288 字符），或提出更具体的问题。'
+            ),
+            'question_too_long_reduce_books': (
+                '若需对少量书深度对比，请尝试取消选中约 {count} 本书。'
+            ),
+            'question_too_long_hint_default': (
+                '当前默认限制：{limit} 字符（{mode}）。'
+                '单书默认 128,000 字符，多书默认 256,000 字符。'
+                '高级用户可在「插件配置 → General」中启用自定义提示词长度限制。'
+            ),
+            'question_too_long_hint_custom': (
+                '您已启用自定义提示词长度限制。若请求超时，请在「插件配置 → General」中调低限制，'
+                '或减少选中书籍 / 提出更具体的问题。'
+            ),
+            'large_selection_dialog_title': '选中书籍过多',
+            'large_selection_dialog_message': (
+                '您选中了 {count} 本书。书库级问题更适合使用 AI Search，'
+                '将以紧凑格式搜索整个书库。\n\n'
+                '是否切换到 AI Search，还是继续用当前选中书籍（紧凑格式）？'
+            ),
+            'large_selection_use_ai_search': '使用 AI Search',
+            'large_selection_continue': '继续用当前选中',
+            'multi_book_truncation_note': (
+                '注意：因提示词长度限制，仅包含前 {included} / {total} 本选中书籍。'
+                '请使用 AI Search 搜索整个书库，或在「插件配置 → General」中提高自定义限制。'
+            ),
+            'library_metadata_truncation_note': (
+                '注意：因提示词长度限制，仅包含前 {included} / {total} 本已索引书籍。'
+                '超大书库的结果可能不完整，可在「插件配置 → General」中提高自定义限制。'
+            ),
             'auth_token_required_title': '需要AI服务',
             'auth_token_required_message': '请在插件配置中设置有效的AI服务。',
             'open_configuration': '打开配置',
@@ -379,6 +423,17 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'request_timeout_label': '请求超时时间：',
             'seconds': '秒',
             'request_timeout_error': '请求超时，当前超时时间为：{timeout} 秒',
+            'enable_custom_prompt_limit_label': '自定义提示词长度限制',
+            'enable_custom_prompt_limit_tooltip': (
+                '默认限制为单书 128,000 字符、多书 256,000 字符，大多数用户无需修改。'
+                '书库级搜索请使用 AI Search。仅在模型支持更大上下文且仍遇到长度限制时启用自定义。'
+            ),
+            'max_prompt_length_label': '最大提示词长度：',
+            'max_prompt_length_unit': '字符',
+            'max_prompt_length_tooltip': (
+                '启用自定义限制后生效。建议默认值：524288 字符。'
+                '粗略参考：1 token ≈ 3–4 字符。使用 Ollama 时还需在模型侧配置 num_ctx。'
+            ),
             
             # 并行AI设置
             'parallel_ai_count_label': '并行AI数量：',
@@ -492,7 +547,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'library_enable': '启用AI搜索',
             'library_enable_tooltip': '启用后，未选择书籍时可以使用AI搜索图书馆',
             'library_update': '更新图书馆数据',
-            'library_update_tooltip': '从图书馆中提取书名和作者信息',
+            'library_update_tooltip': '为书库中全部书籍建立索引（书名与作者，紧凑格式，无数量上限）',
             'library_updating': '更新中...',
             'library_status': '状态：{count} 本书，最后更新：{time}',
             'library_status_empty': '状态：无数据。点击“更新图书馆数据”开始。',
@@ -508,6 +563,21 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': '书籍数量不足',
             'ai_search_not_enough_books_message': 'AI搜索需要您的图书馆中至少有 {min_books} 本书。\n\n您当前的图书馆只有 {book_count} 本书。\n\n请添加更多书籍后再使用AI搜索。',
             'ai_search_mode_info': '正在搜索您的整个图书馆',
+            'ai_search_feature_title': 'AI 搜索',
+            'ai_search_feature_subtitle': '用自然语言搜索整个书库',
+            'ai_search_feature_description': (
+                'AI 搜索帮助您在整本 Calibre 书库中发现书籍。\n\n'
+                '• 触发方式：不选书打开 Ask、使用「工具 → AI 搜索」或快捷键\n'
+                '• 工作原理：插件以紧凑格式（书籍 ID、书名、作者）发送已索引的全部书籍元数据\n'
+                '• 大量选书：选中超过 50 本时，Ask 会建议使用 AI 搜索，而不是把每本书的详细元数据塞进提示词\n'
+                '• 保持数据最新：添加或删除书籍后，请点击「更新图书馆数据」\n\n'
+                '示例问题：「有没有 Python 相关的书？」「给我看看阿西莫夫的书」。'
+            ),
+            'ai_search_usage_hint': (
+                '提示：AI 搜索最适合书库级发现。若需深度对比少量书籍，请直接选中不超过 30 本书。'
+            ),
+            'ai_search_data_title': '书库索引',
+            'ai_search_data_subtitle': '添加或删除书籍后，请刷新发送给 AI 的紧凑书单',
             'library_prompt_template': '您可以访问用户的图书馆。以下是所有书籍：{metadata} 用户查询：{query} 请在当前书库目录中找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：- <a href="calibre://book/书籍ID">书名</a> - 作者名 示例：- <a href="calibre://book/123">Python编程</a> - Mark Lutz - <a href="calibre://book/456">机器学习实战</a> - Peter Harrington 注意：部分作者信息可能显示为"unknown"，这是正常数据，请正常返回所有匹配结果，不要被此误导。只返回匹配查询的书籍。最多5个结果。',
             'ai_search_privacy_title': '隐私提示',
             'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',

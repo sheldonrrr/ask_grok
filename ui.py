@@ -2178,14 +2178,76 @@ class AskDialog(QDialog):
         self.setWindowTitle(title)
     
     
-    def _build_multi_book_prompt(self, question):
-        """构建多书提示词"""
+    def _prompt_large_selection_routing(self, book_count):
+        """Ask user how to handle a large multi-book selection."""
+        from PyQt5.QtWidgets import QMessageBox
+
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle(self.i18n.get('large_selection_dialog_title', 'Many Books Selected'))
+        msg.setText(self.i18n.get(
+            'large_selection_dialog_message',
+            'You selected {count} books. For library-wide questions, AI Search works better '
+            'and searches your entire library with compact metadata.\n\n'
+            'Switch to AI Search, or continue with the selected books in compact format?'
+        ).format(count=book_count))
+
+        ai_search_btn = msg.addButton(
+            self.i18n.get('large_selection_use_ai_search', 'Use AI Search'),
+            QMessageBox.AcceptRole,
+        )
+        continue_btn = msg.addButton(
+            self.i18n.get('large_selection_continue', 'Continue with Selection'),
+            QMessageBox.ActionRole,
+        )
+        cancel_btn = msg.addButton(
+            self.i18n.get('cancel', 'Cancel'),
+            QMessageBox.RejectRole,
+        )
+        msg.exec_()
+
+        clicked = msg.clickedButton()
+        if clicked == cancel_btn:
+            return 'cancel'
+        if clicked == ai_search_btn:
+            return 'ai_search'
+        return 'continue'
+
+    def _prepare_ai_search_metadata(self):
+        """Ensure library metadata is cached before AI Search routing."""
+        import logging
         from calibre_plugins.ask_ai_plugin.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.utils import update_library_metadata, get_library_metadata
+
+        logger = logging.getLogger(__name__)
         prefs = get_prefs()
-        
+
+        if get_library_metadata(prefs):
+            return True
+
+        try:
+            update_library_metadata(self.gui.current_db, prefs)
+            return bool(get_library_metadata(prefs))
+        except Exception as e:
+            logger.warning(f"Failed to update library metadata for AI Search routing: {e}")
+            return False
+
+    def _build_multi_book_prompt(self, question):
+        """构建多书提示词（超过阈值时自动使用 compact 格式）"""
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.utils import format_books_compact_tsv
+        from calibre_plugins.ask_ai_plugin.prompt_limits import (
+            COMPACT_METADATA_THRESHOLD,
+            get_max_prompt_length,
+        )
+
+        prefs = get_prefs()
+        book_count = len(self.books_info)
+        use_compact = book_count > COMPACT_METADATA_THRESHOLD
+
         template = prefs.get('multi_book_template', '')
         if not template:
-            template = self.i18n.get('multi_book_default_template', 
+            template = self.i18n.get('multi_book_default_template',
                 """Here is information about multiple books:
 
 {books_metadata}
@@ -2193,41 +2255,65 @@ class AskDialog(QDialog):
 User question: {query}
 
 Please answer the question based on the above book information.""")
-        
-        # Build book metadata text using i18n labels
-        books_metadata_text = []
-        for idx, book in enumerate(self.books_info, 1):
-            book_text = f"Book {idx}:\n"
-            book_text += f"  {self.i18n.get('metadata_title', 'Title')}: {book.title}\n"
-            
-            if book.authors:
-                book_text += f"  {self.i18n.get('metadata_authors', 'Author')}: {', '.join(book.authors)}\n"
-            
-            if hasattr(book, 'pubdate') and book.pubdate:
-                year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
-                book_text += f"  {self.i18n.get('metadata_pubyear', 'Publication Date')}: {year}\n"
-            
-            if hasattr(book, 'series') and book.series:
-                book_text += f"  {self.i18n.get('metadata_series', 'Series')}: {book.series}\n"
-            
-            if book.publisher:
-                book_text += f"  {self.i18n.get('metadata_publisher', 'Publisher')}: {book.publisher}\n"
-            
-            if book.language:
-                lang_name = self.get_language_name(book.language)
-                book_text += f"  {self.i18n.get('metadata_language', 'Language')}: {lang_name}\n"
-            
-            books_metadata_text.append(book_text)
-        
+
+        if use_compact:
+            compact_lines = format_books_compact_tsv(self.books_info).split('\n')
+            max_length = get_max_prompt_length(True, prefs)
+            overhead = len(template.format(books_metadata='', query=question)) + 200
+
+            included_lines = []
+            current_len = 0
+            for line in compact_lines:
+                add_len = len(line) + (1 if included_lines else 0)
+                if included_lines and current_len + add_len > max_length - overhead:
+                    break
+                included_lines.append(line)
+                current_len += add_len
+
+            books_metadata = '\n'.join(included_lines)
+            if len(included_lines) < book_count:
+                note = self.i18n.get(
+                    'multi_book_truncation_note',
+                    'Note: Only the first {included} of {total} selected books are included due to the '
+                    'prompt limit. Use AI Search to query your entire library, or raise the custom limit '
+                    'in Plugin Configuration → General.'
+                ).format(included=len(included_lines), total=book_count)
+                books_metadata = f"{books_metadata}\n\n{note}"
+        else:
+            books_metadata_text = []
+            for idx, book in enumerate(self.books_info, 1):
+                book_text = f"Book {idx}:\n"
+                book_text += f"  {self.i18n.get('metadata_title', 'Title')}: {book.title}\n"
+
+                if book.authors:
+                    book_text += f"  {self.i18n.get('metadata_authors', 'Author')}: {', '.join(book.authors)}\n"
+
+                if hasattr(book, 'pubdate') and book.pubdate:
+                    year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
+                    book_text += f"  {self.i18n.get('metadata_pubyear', 'Publication Date')}: {year}\n"
+
+                if hasattr(book, 'series') and book.series:
+                    book_text += f"  {self.i18n.get('metadata_series', 'Series')}: {book.series}\n"
+
+                if book.publisher:
+                    book_text += f"  {self.i18n.get('metadata_publisher', 'Publisher')}: {book.publisher}\n"
+
+                if book.language:
+                    lang_name = self.get_language_name(book.language)
+                    book_text += f"  {self.i18n.get('metadata_language', 'Language')}: {lang_name}\n"
+
+                books_metadata_text.append(book_text)
+
+            books_metadata = '\n'.join(books_metadata_text)
+
         prompt = template.format(
-            books_metadata='\n'.join(books_metadata_text),
+            books_metadata=books_metadata,
             query=question
         )
-        
-        # 应用 persona 和语言指令
+
         from calibre_plugins.ask_ai_plugin.prompts_widget import apply_prompt_enhancements
         prompt = apply_prompt_enhancements(prompt)
-        
+
         return prompt
     
     def _create_history_switcher(self):
@@ -3721,6 +3807,11 @@ Please answer the question based on the above book information.""")
         """发送问题"""
         import logging
         from calibre_plugins.ask_ai_plugin.config import get_prefs
+        from calibre_plugins.ask_ai_plugin.prompt_limits import (
+            LARGE_SELECTION_THRESHOLD,
+            count_books_in_library_metadata,
+            validate_prompt_length,
+        )
         logger = logging.getLogger(__name__)
         
         # 检查是否是随机问题请求
@@ -3759,9 +3850,32 @@ Please answer the question based on the above book information.""")
             question = self.input_area.toPlainText()
             # 标准化换行符并确保使用 UTF-8 编码
             question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
-        
-            # 根据模式构建提示词
-            if self.is_multi_book:
+
+            prefs = get_prefs()
+            use_library_chat = False
+            book_count_for_validation = len(self.books_info)
+            validation_is_multi = self.is_multi_book
+
+            # 大规模选书：引导使用 AI Search 或 compact 多书模式
+            if self.is_multi_book and len(self.books_info) > LARGE_SELECTION_THRESHOLD:
+                routing = self._prompt_large_selection_routing(len(self.books_info))
+                if routing == 'cancel':
+                    return
+                if routing == 'ai_search':
+                    if not self._prepare_ai_search_metadata():
+                        self.response_handler.handle_error(
+                            self.i18n.get('library_update_failed', 'Failed to update library data')
+                        )
+                        return
+                    prompt = question
+                    use_library_chat = True
+                    book_count_for_validation = count_books_in_library_metadata(prefs)
+                    validation_is_multi = True
+                    logger.info("大规模选书已路由到 AI Search 管线")
+                else:
+                    logger.info("大规模选书继续使用 compact 多书模式")
+                    prompt = self._build_multi_book_prompt(question)
+            elif self.is_multi_book:
                 # 多书模式：使用多书提示词
                 logger.info("使用多书模式构建提示词...")
                 prompt = self._build_multi_book_prompt(question)
@@ -3845,12 +3959,15 @@ Please answer the question based on the above book information.""")
         except Exception as e:
             self.response_handler.handle_error(f"{self.i18n.get('error_preparing_request', 'Error preparing request')}: {str(e)}")
             return
-        
-        # 如果提示词过长，可能会导致超时（多书模式允许更长）
-        max_length = 4000 if self.is_multi_book else 2000
-        if len(prompt) > max_length:
-            self.response_handler.handle_error(self.i18n.get('question_too_long', 'Question is too long, please simplify and try again'))
-            return
+
+        # 长度校验（AI Search 在 ui 层仅校验用户问题；完整 prompt 在 api 层二次校验）
+        if not use_library_chat:
+            length_error = validate_prompt_length(
+                prompt, validation_is_multi, prefs, self.i18n, book_count_for_validation,
+            )
+            if length_error:
+                self.response_handler.handle_error(length_error)
+                return
         
         self._reset_history_button_text()
         self._blur_input_area()
@@ -3859,9 +3976,8 @@ Please answer the question based on the above book information.""")
         self.send_button.setVisible(False)
         self.stop_button.setVisible(True)
         
-        # 判断是否使用Library Chat（仅在未选择书籍时）
-        use_library_chat = False
-        if not self.books_info:
+        # 判断是否使用Library Chat（未选书时，或大规模选书已路由到 AI Search）
+        if not use_library_chat and not self.books_info:
             # AI搜索模式（books_info为空列表）
             # AI搜索现在始终启用，只要有元数据就使用
             prefs = get_prefs()
