@@ -3184,9 +3184,7 @@ class ConfigDialog(QWidget):
         if hasattr(self, 'custom_prompt_limit_checkbox'):
             prefs['enable_custom_prompt_limit'] = self.custom_prompt_limit_checkbox.isChecked()
         if hasattr(self, 'max_prompt_length_input'):
-            from calibre_plugins.ask_ai_plugin.prompt_limits import (
-                DEFAULT_CUSTOM_LIMIT, parse_prompt_limit_text,
-            )
+            from calibre_plugins.ask_ai_plugin.prompt_limits import parse_prompt_limit_text
             limit_text = self.max_prompt_length_input.text().strip()
             limit_value, limit_normalized = parse_prompt_limit_text(limit_text)
             prefs['max_prompt_length'] = limit_value
