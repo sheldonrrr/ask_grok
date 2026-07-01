@@ -5,6 +5,7 @@
 UI设计系统常量
 定义统一的间距、尺寸、颜色等设计规范
 """
+import sys
 
 # ============ 间距系统 (8px基准) ============
 # 使用8px作为基准单位，所有间距都是8的倍数
@@ -26,7 +27,7 @@ ASK_INPUT_HEIGHT = 60
 ASK_INPUT_HEIGHT_COMPACT = 52
 ASK_COMBO_MIN_WIDTH = 140
 # 历史记录等 QToolButton 右侧为下拉箭头预留的空间
-ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE = 36
+ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE = 42 if sys.platform == 'darwin' else 36
 ASK_METADATA_COLLAPSED_HEIGHT = 24
 ASK_RESPONSE_PANEL_MIN_HEIGHT = 120
 
@@ -556,43 +557,60 @@ def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
 
 
 def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
-    """Ask 工具栏 QPushButton：边框计入固定高度，焦点环不溢出容器。"""
-    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT
+    """Ask 工具栏 QPushButton（发送/停止/随机）：与历史按钮采用一致的平台策略。"""
+    is_macos = sys.platform == 'darwin'
+    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT if is_macos else BUTTON_HEIGHT
+    border_decl = "border: 1px solid palette(mid);" if is_macos else ""
+    radius_decl = "border-radius: 4px;" if is_macos else ""
+    focus_style = (
+        "QPushButton:focus {\n            border: 1px solid palette(highlight);\n        }"
+        if is_macos else ""
+    )
     return f"""
         QPushButton {{
             min-width: {min_width}px;
             min-height: {h}px;
             max-height: {h}px;
             height: {h}px;
-            border: 1px solid palette(mid);
-            border-radius: 4px;
+            {border_decl}
+            {radius_decl}
             padding: 0 12px;
             margin: 0;
             text-align: center;
         }}
-        QPushButton:focus {{
-            border: 1px solid palette(highlight);
-        }}
+        {focus_style}
     """
 
 
 def get_ask_toolbar_toolbutton_style(min_width=ASK_COMBO_MIN_WIDTH):
     """Ask 工具栏 QToolButton（历史记录等）：与 PushButton 同高。"""
     arrow_reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE
+    is_macos = sys.platform == 'darwin'
+    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT if is_macos else BUTTON_HEIGHT
+    border_decl = "border: 1px solid palette(mid);" if is_macos else ""
+    radius_decl = "border-radius: 4px;" if is_macos else ""
+    focus_style = (
+        "QToolButton:focus {\n            border: 1px solid palette(highlight);\n        }"
+        if is_macos else ""
+    )
+    indicator_right = 12 if is_macos else 10
     return f"""
         QToolButton {{
             min-width: {min_width}px;
-            min-height: {BUTTON_HEIGHT}px;
-            max-height: {BUTTON_HEIGHT}px;
-            height: {BUTTON_HEIGHT}px;
+            min-height: {h}px;
+            max-height: {h}px;
+            height: {h}px;
+            {border_decl}
+            {radius_decl}
             padding: 0 {arrow_reserve}px 0 12px;
             margin: 0;
             text-align: left;
         }}
+        {focus_style}
         QToolButton::menu-indicator {{
             subcontrol-origin: padding;
             subcontrol-position: center right;
-            right: 10px;
+            right: {indicator_right}px;
             width: 14px;
             height: 14px;
         }}
@@ -604,7 +622,7 @@ def elide_ask_toolbar_toolbutton_text(text, font, button_width):
     from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QFontMetrics
 
-    reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE + 8
+    reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE + (12 if sys.platform == 'darwin' else 8)
     max_width = max(int(button_width) - reserve, 48)
     return QFontMetrics(font).elidedText(text, Qt.ElideRight, max_width)
 

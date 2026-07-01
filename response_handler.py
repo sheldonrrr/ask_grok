@@ -283,6 +283,9 @@ class ResponseHandler(QObject):
         
         # 停止加载动画
         self._stop_loading_timer()
+
+        # 显示明确的停止提示（保留已返回内容）
+        self._prepend_stopped_notice()
         
         # 如果有正在运行的请求线程，等待它结束
         if hasattr(self, '_request_thread') and self._request_thread and self._request_thread.is_alive():
@@ -290,6 +293,61 @@ class ResponseHandler(QObject):
         
         # 清理资源
         self._cleanup_request()
+
+    def _get_stopped_notice_text(self):
+        """停止提示文案：默认英文（含回退），仅额外支持简体中文。"""
+        lang_code = str(get_prefs().get('language', 'en') or 'en').lower()
+        if lang_code in ('zh', 'zh_cn', 'zh-hans', 'zh-hans-cn'):
+            return '请求已停止。'
+        return 'Request stopped.'
+
+    def _prepend_stopped_notice(self):
+        """在响应区顶部追加停止提示与分隔线，并保留已渲染格式。"""
+        if not self.response_area:
+            return
+
+        stopped_text = self._get_stopped_notice_text()
+        existing_text = (self.response_area.toPlainText() or '').strip()
+
+        # 避免重复追加（用户连续点击停止）
+        if existing_text.startswith(stopped_text):
+            return
+
+        notice_text = f"{stopped_text}\n----\n"
+        requesting_text = self.i18n.get('requesting', 'Requesting, please wait')
+        formatting_text = self.i18n.get('formatting', 'Request successful, formatting')
+        # 如果当前只有加载占位文本，则不保留它，直接展示停止提示
+        if existing_text and (requesting_text in existing_text or formatting_text in existing_text):
+            self.response_area.setPlainText(notice_text.rstrip('\n'))
+            self.response_area.setAlignment(Qt.AlignLeft)
+            applied_mode = 'replace_loading_plain'
+        else:
+            # 保留已渲染 Markdown：在文档起始处插入纯文本提示，不回退整个文档
+            from PyQt5.QtGui import QTextCursor, QTextCharFormat, QTextBlockFormat, QFont
+            cursor = self.response_area.textCursor()
+            move_start = getattr(getattr(QTextCursor, 'MoveOperation', QTextCursor), 'Start', None)
+            if move_start is None:
+                move_start = getattr(QTextCursor, 'Start')
+            cursor.movePosition(move_start)
+
+            # 使用显式普通文本格式，避免继承首块（例如 h1/h2）样式
+            normal_char = QTextCharFormat()
+            normal_weight = getattr(QFont, 'Normal', None)
+            if normal_weight is None:
+                normal_weight = getattr(getattr(QFont, 'Weight', QFont), 'Normal', 50)
+            normal_char.setFontWeight(int(normal_weight))
+            normal_char.setFontItalic(False)
+            normal_char.setFontUnderline(False)
+
+            normal_block = QTextBlockFormat()
+            cursor.beginEditBlock()
+            cursor.insertText(stopped_text, normal_char)
+            cursor.insertBlock(normal_block, normal_char)
+            cursor.insertText('----', normal_char)
+            cursor.insertBlock(normal_block, normal_char)
+            cursor.endEditBlock()
+            self.response_area.setTextCursor(cursor)
+            self.response_area.setAlignment(Qt.AlignLeft)
 
     def start_request(self, prompt):
         """开始一个新的请求，使用非流式 API"""
@@ -514,7 +572,7 @@ class ResponseHandler(QObject):
         # 只在缓冲区较大时记录日志
         if len(self._stream_buffer) > 100:
             logger.debug(f"[Stream Process] 处理缓冲区: {len(self._stream_buffer)} 字符，新增: {current_length - self._last_processed_length} 字符")
-        
+
         self._stream_buffer = ""  # 清空缓冲区
         self._last_update_time = time.time()
         self._last_processed_length = current_length  # 更新已处理长度
@@ -859,19 +917,31 @@ class ResponseHandler(QObject):
                 self.response_area.setHtml(html)
                 self.response_area.setAlignment(Qt.AlignLeft)
                 return
-            
-            # 如果用户正在滚动，降低更新频率（500ms一次）
-            current_time = time.time()
-            if self._user_is_scrolling:
-                if current_time - self._last_html_update_time < 0.5:
-                    return  # 跳过本次更新
-            
-            self._last_html_update_time = current_time
-            
-            # 保存当前滚动位置和状态
+
             old_value = scrollbar.value()
             old_maximum = scrollbar.maximum()
             was_at_bottom = old_value >= old_maximum - 5
+            
+            # 自适应刷新节流：
+            # - 用户主动滚动：500ms（保持阅读稳定）
+            # - 用户在底部且长文本：提高间隔，降低全量 setHtml 引发的闪屏
+            current_time = time.time()
+            min_interval = 0.0
+            if self._user_is_scrolling:
+                min_interval = 0.5
+            elif was_at_bottom:
+                html_len = len(html or '')
+                if html_len >= 4000:
+                    min_interval = 0.33
+                elif html_len >= 2500:
+                    min_interval = 0.25
+                else:
+                    min_interval = 0.1
+
+            if min_interval > 0 and current_time - self._last_html_update_time < min_interval:
+                return  # 跳过本次更新
+            
+            self._last_html_update_time = current_time
             
             # 临时断开滚动条信号，避免setHtml触发valueChanged导致误判
             scrollbar.valueChanged.disconnect(self._on_scroll_value_changed)

@@ -1542,6 +1542,28 @@ class TabDialog(QDialog):
     
     def on_settings_saved(self):
         """处理设置保存成功事件"""
+        # 重新加载全局 API 实例，确保新默认模型生效
+        try:
+            from calibre_plugins.ask_ai_plugin.api import api
+            api.reload_model()
+        except Exception as e:
+            logger.error(f"重新加载全局API失败: {str(e)}")
+
+        # 刷新已打开的 AskDialog
+        try:
+            if plugin_instance and hasattr(plugin_instance, 'ask_dialog') and plugin_instance.ask_dialog:
+                ask_dialog = plugin_instance.ask_dialog
+                if hasattr(ask_dialog, 'api'):
+                    ask_dialog.api.reload_model()
+                ask_dialog.update_model_info()
+                logger.info("配置已保存，已刷新 AskDialog 模型信息")
+        except Exception as e:
+            logger.error(f"刷新 AskDialog 模型信息失败: {str(e)}")
+
+        # 同步语言（保存时语言可能发生变化）
+        new_language = get_prefs().get('language', 'en')
+        self.on_language_changed(new_language)
+
         # 禁用保存按钮
         if hasattr(self, 'save_button'):
             self.save_button.setEnabled(False)
@@ -2334,6 +2356,7 @@ Please answer the question based on the above book information.""")
         self.history_button = QToolButton()
         self.history_button.setText(self.i18n.get('history', '历史记录'))
         self.history_button.setPopupMode(QToolButton.InstantPopup)  # 点击整个按钮弹出菜单
+        self.history_button.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
         
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
@@ -2551,13 +2574,24 @@ Please answer the question based on the above book information.""")
                             prefs = get_prefs()
                             default_ai = prefs.get('selected_model', 'grok')
                             logger.warning(f"历史AI {ai_id} 不可用，切换到默认AI: {default_ai}")
+                            fallback_applied = False
                             
                             # 尝试切换到默认AI
                             for i in range(panel.ai_switcher.count()):
                                 if panel.ai_switcher.itemData(i) == default_ai:
                                     panel.ai_switcher.setCurrentIndex(i)
                                     logger.info(f"面板 {idx} 已切换到默认AI: {default_ai}")
+                                    fallback_applied = True
                                     break
+                            # 若默认AI也不可用，回退到第一个可用AI
+                            if not fallback_applied:
+                                for i in range(panel.ai_switcher.count()):
+                                    candidate_ai = panel.ai_switcher.itemData(i)
+                                    if candidate_ai:
+                                        panel.ai_switcher.setCurrentIndex(i)
+                                        fallback_applied = True
+                                        logger.warning(f"面板 {idx} 默认AI不可用，回退到首个可用AI: {candidate_ai}")
+                                        break
                         
                         panel.ai_switcher.blockSignals(False)
                     
@@ -3264,59 +3298,59 @@ Please answer the question based on the above book information.""")
             return
         
         # 读取当前配置中的默认AI
-        parallel_ai_count = prefs.get('parallel_ai_count', 1)
         default_ai = prefs.get('selected_model', 'grok')
+        force_default_once = bool(prefs.get('force_default_ai_on_next_open', False))
+
+        def set_panel_ai(panel, ai_id):
+            """程序化设置 AI 时屏蔽信号，避免初始化反写默认值。"""
+            index = panel.ai_switcher.findData(ai_id)
+            if index < 0:
+                return False
+            panel.ai_switcher.blockSignals(True)
+            panel.ai_switcher.setCurrentIndex(index)
+            panel.ai_switcher.blockSignals(False)
+            return True
         
         # 为每个面板设置默认AI
         for i, panel in enumerate(self.response_panels):
             panel_key = f"panel_{i}"
-            
-            # 1. 优先使用记忆的选择（包括第一个面板）
-            # 说明：
-            # - 用户在 Ask 对话框中切换 AI 时，会同步更新 selected_model
-            # - 因此 panel_ai_selections 和 selected_model 应该保持一致
-            # - 优先使用 panel_ai_selections 可以记住用户的选择
-            if panel_key in saved_selections:
+
+            target_ai = None
+
+            # hybrid 规则：仅当配置页刚改过默认 AI 时，下次打开强制应用一次默认值
+            if i == 0 and force_default_once and any(ai_id == default_ai for ai_id, _ in configured_ais):
+                target_ai = default_ai
+            elif panel_key in saved_selections:
                 saved_ai_id = saved_selections[panel_key]
-                # 检查这个AI是否还存在且可用
                 if any(ai_id == saved_ai_id for ai_id, _ in configured_ais):
-                    index = panel.ai_switcher.findData(saved_ai_id)
-                    if index >= 0:
-                        panel.ai_switcher.setCurrentIndex(index)
-                        logger.info(f"面板 {i} 恢复上次选择: {saved_ai_id}")
-                        continue
-            
-            # 2. 如果没有记忆或记忆的AI不可用
-            # 第一个面板使用 default_ai，其他面板按顺序分配
-            if i == 0:
-                # 第一个面板使用配置中的默认 AI
-                if any(ai_id == default_ai for ai_id, _ in configured_ais):
-                    index = panel.ai_switcher.findData(default_ai)
-                    if index >= 0:
-                        panel.ai_switcher.setCurrentIndex(index)
-                        saved_selections[panel_key] = default_ai
-                        logger.info(f"面板 {i} 使用默认AI: {default_ai}")
-                        continue
-            
-            # 其他面板按顺序分配
-            if i < len(configured_ais):
-                ai_id, _ = configured_ais[i]
-                index = panel.ai_switcher.findData(ai_id)
-                if index >= 0:
-                    panel.ai_switcher.setCurrentIndex(index)
-                    saved_selections[panel_key] = ai_id
-                    logger.info(f"面板 {i} 默认选择: {ai_id}")
+                    target_ai = saved_ai_id
+            elif i == 0 and any(ai_id == default_ai for ai_id, _ in configured_ais):
+                target_ai = default_ai
+            elif i < len(configured_ais):
+                target_ai = configured_ais[i][0]
+
+            if target_ai and set_panel_ai(panel, target_ai):
+                saved_selections[panel_key] = target_ai
+                logger.info(f"面板 {i} 初始化选择: {target_ai}")
             else:
-                # 3. AI数量不足，留空
+                panel.ai_switcher.blockSignals(True)
                 panel.ai_switcher.setCurrentIndex(-1)
+                panel.ai_switcher.blockSignals(False)
                 saved_selections.pop(panel_key, None)
-                logger.info(f"面板 {i} 留空（AI数量不足）")
+                logger.info(f"面板 {i} 留空（AI数量不足或目标AI不可用）")
         
         # 将更新后的面板选择记忆回写到配置中
         prefs['panel_ai_selections'] = saved_selections
+        if force_default_once:
+            prefs['force_default_ai_on_next_open'] = False
+            prefs.commit()
 
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
+
+        # 初始化完成，允许后续用户切换时触发默认AI确认逻辑
+        for panel in self.response_panels:
+            panel._is_initializing = False
     
     def _check_default_ai_mismatch(self):
         """检查配置中的默认 AI 是否与当前选中的 AI 一致
@@ -3435,10 +3469,6 @@ Please answer the question based on the above book information.""")
         # 延迟 100ms 后显示对话框
         QTimer.singleShot(100, show_dialog)
         
-        # 初始化完成，允许弹出确认对话框
-        for panel in self.response_panels:
-            panel._is_initializing = False
-    
     def _switch_api_to_panel_ai(self, ai_id: str):
         """强制 API 切换到指定的 AI
         
@@ -3543,6 +3573,7 @@ Please answer the question based on the above book information.""")
             panel_index: 面板索引
             new_ai_id: 新选中的AI ID
         """
+        panel = None
         # 更新对应面板的API对象（修复模型信息显示错误）
         if panel_index < len(self.response_panels) and new_ai_id:
             panel = self.response_panels[panel_index]
@@ -3554,11 +3585,16 @@ Please answer the question based on the above book information.""")
         # 这样随机问题和发送请求都会使用面板选中的 AI
         if panel_index == 0 and new_ai_id:
             self._switch_api_to_panel_ai(new_ai_id)
-            # 同步更新配置中的默认 AI（selected_model）
-            prefs = get_prefs()
-            prefs['selected_model'] = new_ai_id
-            prefs.commit()
-            logger.info(f"[面板AI切换] 已同步更新默认 AI: {new_ai_id}")
+            # 初始化阶段不回写默认值，避免覆盖配置页刚保存的新默认
+            if panel is not None and not getattr(panel, '_is_initializing', False):
+                prefs = get_prefs()
+                prefs['selected_model'] = new_ai_id
+                panel_selections = prefs.get('panel_ai_selections', {}) or {}
+                panel_selections['panel_0'] = new_ai_id
+                prefs['panel_ai_selections'] = panel_selections
+                prefs['force_default_ai_on_next_open'] = False
+                prefs.commit()
+                logger.info(f"[面板AI切换] 已同步更新默认 AI: {new_ai_id}")
         
         # 更新所有面板的AI切换器（实现互斥）
         self._update_all_panel_ai_switchers()
@@ -3661,6 +3697,10 @@ Please answer the question based on the above book information.""")
         layout.addWidget(response_container, stretch=1)
 
         if self.parallel_ai_count == 1 and self.response_panels:
+            if sys.platform == 'darwin':
+                # macOS 下给历史按钮留更多空间，避免右侧挤压
+                self.response_panels[0].ai_switcher.setMaximumWidth(240)
+                self.response_panels[0].ai_switcher.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             self.ask_toolbar.add_left_widget(self.response_panels[0].ai_switcher)
 
         self.history_button = self._create_history_switcher()
@@ -4122,6 +4162,7 @@ Please answer the question based on the above book information.""")
         super().showEvent(event)
         from .ui_constants import configure_ask_dialog_cursors
         configure_ask_dialog_cursors(self)
+        QTimer.singleShot(0, self._refresh_history_button_text)
 
     def closeEvent(self, event):
         """处理窗口关闭事件"""

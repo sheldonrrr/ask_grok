@@ -324,6 +324,10 @@ class AddAIDialog(QDialog):
         configured_count = sum(1 for c in models_config.values() if c.get('is_configured', False))
         if configured_count == 1:
             prefs['selected_model'] = config_id
+            panel_selections = prefs.get('panel_ai_selections', {}) or {}
+            panel_selections['panel_0'] = config_id
+            prefs['panel_ai_selections'] = panel_selections
+            prefs['force_default_ai_on_next_open'] = True
         
         prefs.commit()
         
@@ -716,6 +720,14 @@ class ManageAIDialog(QDialog):
                     new_default = cid
                     break
             prefs['selected_model'] = new_default if new_default else ''
+            panel_selections = prefs.get('panel_ai_selections', {}) or {}
+            if new_default:
+                panel_selections['panel_0'] = new_default
+                prefs['force_default_ai_on_next_open'] = True
+            else:
+                panel_selections.pop('panel_0', None)
+                prefs['force_default_ai_on_next_open'] = False
+            prefs['panel_ai_selections'] = panel_selections
         
         prefs['models'] = models_config
         prefs.commit()

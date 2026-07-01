@@ -136,7 +136,6 @@ class PerplexityModel(BaseAIModel):
         stream_callback = kwargs.get('stream_callback', None)
 
         api_url = f"{self.config['api_base_url'].rstrip('/')}/chat/completions"
-
         try:
             if use_stream and stream_callback:
                 full_content = ""
@@ -154,31 +153,24 @@ class PerplexityModel(BaseAIModel):
                         stream=True,
                     ) as response:
                         response.raise_for_status()
+                        pending_event_lines = []
 
-                        for line in response.iter_lines(decode_unicode=True):
-                            if not line:
-                                continue
-
-                            if not line.startswith('data: '):
-                                continue
-
-                            chunk_data = line[len('data: '):]
-                            if chunk_data == '[DONE]':
-                                break
-
+                        def process_event_payload(payload_text: str):
+                            nonlocal citations, search_results
+                            nonlocal chunk_count, full_content, last_chunk_time
+                            if not payload_text:
+                                return
                             try:
-                                chunk = json.loads(chunk_data)
+                                chunk = json.loads(payload_text)
                             except json.JSONDecodeError:
-                                continue
+                                return
 
-                            # Perplexity may include citations/search_results in some chunks
                             if isinstance(chunk, dict):
                                 if isinstance(chunk.get('citations'), list):
                                     citations = chunk.get('citations') or citations
                                 if isinstance(chunk.get('search_results'), list):
                                     search_results = chunk.get('search_results') or search_results
 
-                            # OpenAI compatible delta
                             try:
                                 content = (
                                     chunk.get('choices', [{}])[0]
@@ -188,11 +180,49 @@ class PerplexityModel(BaseAIModel):
                             except Exception:
                                 content = None
 
+                            try:
+                                message_content = (
+                                    chunk.get('choices', [{}])[0]
+                                    .get('message', {})
+                                    .get('content')
+                                )
+                            except Exception:
+                                message_content = None
+                            # 回退兼容：某些返回把增量放在 message.content
+                            if not content and message_content:
+                                content = message_content
+
                             if content:
                                 full_content += content
                                 stream_callback(content)
                                 chunk_count += 1
                                 last_chunk_time = time.time()
+
+                        for raw_line in response.iter_lines(decode_unicode=False):
+                            if isinstance(raw_line, bytes):
+                                line_text = raw_line.decode('utf-8', errors='replace')
+                            else:
+                                line_text = raw_line if isinstance(raw_line, str) else str(raw_line)
+                            if not line_text:
+                                if pending_event_lines:
+                                    process_event_payload('\n'.join(pending_event_lines))
+                                    pending_event_lines = []
+                                continue
+
+                            if line_text.startswith('event:'):
+                                continue
+
+                            if line_text.startswith('data:'):
+                                chunk_data = line_text[len('data:'):].lstrip()
+                                if chunk_data == '[DONE]':
+                                    break
+                                pending_event_lines.append(chunk_data)
+                                continue
+
+                            if pending_event_lines:
+                                # 容错：部分服务端会把同一event拆成首行data + 后续续行
+                                pending_event_lines.append(line_text)
+                                continue
 
                             # Warn if no new data for 15 seconds
                             current_time = time.time()
@@ -200,6 +230,9 @@ class PerplexityModel(BaseAIModel):
                                 logger.warning(
                                     f"No new data received for {current_time - last_chunk_time:.1f} seconds"
                                 )
+
+                        if pending_event_lines:
+                            process_event_payload('\n'.join(pending_event_lines))
 
                         logger.info(
                             f"Streaming completed, received {chunk_count} chunks, total length: {len(full_content)}"

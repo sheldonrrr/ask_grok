@@ -72,6 +72,7 @@ OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
 # 默认配置
 prefs.defaults['selected_model'] = 'nvidia_free'  # 当前选中的模型（默认使用免费通道）
+prefs.defaults['force_default_ai_on_next_open'] = False  # 配置页改默认AI后，下次打开 Ask 强制应用一次
 prefs.defaults['models'] = {
     'grok': {
         'auth_token': '',
@@ -2447,6 +2448,7 @@ class ConfigDialog(QWidget):
         panel_selections = prefs.get('panel_ai_selections', {}) or {}
         panel_selections['panel_0'] = model_id
         prefs['panel_ai_selections'] = panel_selections
+        prefs['force_default_ai_on_next_open'] = True
         
         prefs.commit()
         
@@ -3164,6 +3166,7 @@ class ConfigDialog(QWidget):
         logger = logging.getLogger(__name__)
         
         prefs = get_prefs()
+        previous_selected_model = prefs.get('selected_model')
         
         # 保存语言设置
         prefs['language'] = self.lang_combo.currentData()
@@ -3218,6 +3221,11 @@ class ConfigDialog(QWidget):
         selected_model = self.model_combo.currentData()
         if selected_model is not None:
             prefs['selected_model'] = selected_model
+            panel_selections = prefs.get('panel_ai_selections', {}) or {}
+            panel_selections['panel_0'] = selected_model
+            prefs['panel_ai_selections'] = panel_selections
+            if selected_model != previous_selected_model:
+                prefs['force_default_ai_on_next_open'] = True
         
         # 注意：模型配置现在在 AI Manager 弹窗中保存，不在这里处理
         # model_widgets 字典在新版中为空，保留此注释说明变更
