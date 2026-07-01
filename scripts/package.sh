@@ -17,12 +17,26 @@ rm -f "$DIST/$ZIP_NAME" "$DIST/$VERSIONED_ZIP"
 
 zip -r "$DIST/$ZIP_NAME" . \
   -x "*.git*" \
+  -x ".env" \
+  -x ".env.*" \
   -x ".cursor/*" \
   -x ".cursor/**" \
+  -x ".claude/*" \
+  -x ".claude/**" \
+  -x ".codex/*" \
+  -x ".codex/**" \
+  -x ".agent/*" \
+  -x ".agent/**" \
+  -x ".history/*" \
+  -x ".history/**" \
   -x "dist/*" \
   -x "dist/**" \
   -x "scripts/*" \
   -x "scripts/**" \
+  -x "tests/*" \
+  -x "tests/**" \
+  -x "bin/*" \
+  -x "bin/**" \
   -x "aiprovider/*" \
   -x "aiprovider/**" \
   -x "docs/*" \
@@ -41,10 +55,28 @@ zip -r "$DIST/$ZIP_NAME" . \
   -x ".vscode/**" \
   -x ".windsurf/*" \
   -x ".windsurf/**" \
+  -x "lib/bin/*" \
+  -x "lib/bin/**" \
+  -x "**/*.dist-info/*" \
+  -x "**/*.dist-info/**" \
+  -x "**/.pytest_cache/*" \
+  -x "**/.pytest_cache/**" \
+  -x "**/.mypy_cache/*" \
+  -x "**/.mypy_cache/**" \
   -x "**/__pycache__/*" \
+  -x "__pycache__/*" \
+  -x "__pycache__/**" \
+  -x "node_modules/*" \
+  -x "node_modules/**" \
+  -x "ask_ai_plugin_gif_preview.gif" \
+  -x "setup.py" \
+  -x "requirements.txt" \
   -x "**/*.py[cod]" \
   -x "**/.DS_Store" \
+  -x ".DS_Store" \
   -x "**/._*" \
+  -x "**/Thumbs.db" \
+  -x "**/Desktop.ini" \
   -x "*.zip" \
   -x "*.code-workspace" \
   > /dev/null

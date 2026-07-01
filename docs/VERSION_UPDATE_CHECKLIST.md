@@ -21,20 +21,20 @@ version='X.Y.Z'
 # VERSION_DISPLAY 从 version.py 自动导入
 ```
 
-当前版本示例（v1.4.5）：
+当前版本示例（v1.4.7）：
 
 ```bash
 # version.py:11
-VERSION = (1, 4, 5)
+VERSION = (1, 4, 7)
 
 # __init__.py:22
-VERSION = (1, 4, 5) # 版本号推送触发
+VERSION = (1, 4, 7) # 版本号推送触发
 
 # __init__.py:87
-version = (1, 4, 5)
+version = (1, 4, 7)
 
 # setup.py:15
-version='1.4.5',
+version='1.4.7',
 ```
 
 ---
@@ -50,10 +50,10 @@ grep -n "version.*= (" __init__.py
 grep -n "version=" setup.py
 
 # 应该看到：
-# version.py:11:VERSION = (1, 4, 5)
-# __init__.py:22:VERSION = (1, 4, 5) # 版本号推送触发
-# __init__.py:87:    version             = (1, 4, 5)
-# setup.py:15:    version='1.4.5',
+# version.py:11:VERSION = (1, 4, 7)
+# __init__.py:22:VERSION = (1, 4, 7) # 版本号推送触发
+# __init__.py:87:    version             = (1, 4, 7)
+# setup.py:15:    version='1.4.7',
 ```
 
 ---
@@ -73,7 +73,7 @@ calibre-debug -g
 # 检查：
 # 1. 插件能否正常加载
 # 2. 打开插件菜单 → About
-# 3. 确认版本号显示为 v1.4.5
+# 3. 确认版本号显示为 v1.4.7
 ```
 
 ---
@@ -87,7 +87,7 @@ chmod +x scripts/package.sh
 
 # 会生成：
 # dist/Ask AI Plugin.zip
-# dist/Ask AI Plugin-1.4.5.zip
+# dist/Ask AI Plugin-1.4.7.zip
 ```
 
 说明：
@@ -107,7 +107,7 @@ chmod +x scripts/package.sh
    ```bash
    # 在 docs/ 目录下创建新文件
    # 文件名格式：CHANGELOG_VX.Y.Z_EN.md
-   # 例如：docs/CHANGELOG_V1.4.5_EN.md
+   # 例如：docs/CHANGELOG_V1.4.7_EN.md
    ```
 
 2. **CHANGELOG 文档结构（包含两种格式）**
@@ -159,7 +159,7 @@ chmod +x scripts/package.sh
 4. **CHANGELOG 版本管理**
    - 始终保留最新两个版本的 CHANGELOG 文档
    - 创建新版本后，手动删除倒数第三个旧版本
-   - 例如：创建 V1.4.5 后，删除 V1.4.3（保留 V1.4.5 和 V1.4.4）
+   - 例如：创建 V1.4.7 后，删除倒数第三个旧版本（通常保留最新两个版本文档）
 
 5. **发布流程**
    - 第一部分（BBCode）：复制到 mobileread.com 论坛发布帖
@@ -179,7 +179,7 @@ chmod +x scripts/package.sh
    # 直接修改最新的 tutorial 文件
    # 例如：tutorial/tutorial_v0.8.md
    # 更新第 3 行：Latest updated: [当前日期], Ask AI Plugin v[当前版本]
-   # 示例：Latest updated: Jun 12, 2026, Ask AI Plugin v1.4.5
+   # 示例：Latest updated: Jul 1, 2026, Ask AI Plugin v1.4.7
    ```
 
 3. **如果需要升级 tutorial 版本**
@@ -204,7 +204,7 @@ chmod +x scripts/package.sh
    ```
 
 4. **Tutorial 版本号规则**
-   - Tutorial 版本号（如 v0.8）独立于插件版本号（如 v1.4.5）
+   - Tutorial 版本号（如 v0.8）独立于插件版本号（如 v1.4.7）
    - Tutorial 版本号只在教程内容有实质性变化时才递增
    - 一个 tutorial 版本可以对应多个插件版本
 

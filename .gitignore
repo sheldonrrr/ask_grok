@@ -203,3 +203,10 @@ backend/
 *.zip
 
 # See "Environments" above — .env holds local API keys (e.g. DEEPSEEK_API_KEY) and must not be committed.
+
+# Packaging hygiene (non-core runtime files)
+tests/
+bin/
+ask_ai_plugin_gif_preview.gif
+lib/bin/
+**/*.dist-info/
