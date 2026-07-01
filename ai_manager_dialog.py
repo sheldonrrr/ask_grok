@@ -11,6 +11,7 @@ AI Manager Dialogs - 独立弹窗用于管理 AI 服务商配置
 import copy
 import logging
 import uuid
+import re
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QStackedWidget, QWidget,
@@ -20,7 +21,15 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
-from .config import get_prefs, ModelConfigWidget, get_current_model_config
+from .config import (
+    get_prefs,
+    ModelConfigWidget,
+    get_current_model_config,
+    extract_provider_id,
+    is_ai_config_complete,
+    build_ai_display_text,
+    build_configured_ai_entries,
+)
 from .models.base import AIProvider, DEFAULT_MODELS
 from .i18n import get_translation
 from .widgets import apply_button_style
@@ -54,6 +63,28 @@ AI_PROVIDER_ORDER = [
 def generate_config_id():
     """生成唯一的配置 ID"""
     return str(uuid.uuid4())[:8]
+
+
+def _slugify_model_name(model_name):
+    """将模型名转换为可用于 config_id 的安全片段。"""
+    text = (model_name or '').strip()
+    if not text:
+        return ''
+    safe = re.sub(r'[^0-9A-Za-z._:-]+', '_', text).strip('_')
+    return safe.lower()
+
+
+def build_unique_config_id(provider_id, model_name, existing_ids):
+    """生成唯一 config_id，避免重复添加时覆盖已有配置。"""
+    slug = _slugify_model_name(model_name) or 'model'
+    base = f"{provider_id}_{slug}"
+    config_id = base
+    suffix = 2
+    existing = set(existing_ids or [])
+    while config_id in existing:
+        config_id = f"{base}_{suffix}"
+        suffix += 1
+    return config_id
 
 
 def get_display_name_with_model(provider_name, model_name):
@@ -293,27 +324,18 @@ class AddAIDialog(QDialog):
                 )
                 return
         
-        # 生成配置 ID（使用模型名称）
-        # 格式：provider_id 或 provider_id_model_name（如果有多个配置）
-        model_name = config.get('model', '').strip()
-        
-        # 检查是否已有同一 provider 的配置
         prefs = get_prefs()
         models_config = prefs.get('models', {})
-        existing_provider_configs = [k for k in models_config.keys() if k.startswith(f"{self.current_provider_id}_") or k == self.current_provider_id]
-        
-        if existing_provider_configs:
-            # 已有配置，使用 provider_model 格式
-            # 清理模型名称中的特殊字符，只保留字母、数字、点、冒号和连字符
-            safe_model_name = ''.join(c for c in model_name if c.isalnum() or c in '.:- ')
-            safe_model_name = safe_model_name.replace(' ', '_')
-            config_id = f"{self.current_provider_id}_{safe_model_name}"
-        else:
-            # 第一个配置，直接使用 provider_id
-            config_id = self.current_provider_id
-        
-        # 标记为已配置
-        config['is_configured'] = True
+
+        model_name = (config.get('model') or '').strip()
+        config_id = build_unique_config_id(
+            self.current_provider_id,
+            model_name,
+            models_config.keys(),
+        )
+
+        # 标记配置完整性（不再盲目强制 True）
+        config['is_configured'] = is_ai_config_complete(self.current_provider_id, config)
         config['provider_id'] = self.current_provider_id  # 记录原始 provider_id
         
         # 保存配置
@@ -321,7 +343,11 @@ class AddAIDialog(QDialog):
         prefs['models'] = models_config
         
         # 如果是第一个配置，设为默认
-        configured_count = sum(1 for c in models_config.values() if c.get('is_configured', False))
+        configured_count = sum(
+            1
+            for cid, cfg in models_config.items()
+            if is_ai_config_complete(extract_provider_id(cid, cfg), cfg)
+        )
         if configured_count == 1:
             prefs['selected_model'] = config_id
             panel_selections = prefs.get('panel_ai_selections', {}) or {}
@@ -511,54 +537,15 @@ class ManageAIDialog(QDialog):
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         selected_model = prefs.get('selected_model', '')
-        
-        # 收集已配置的 AI
-        configured_items = []
-        for config_id, config in models_config.items():
-            if not config.get('is_configured', False):
-                continue
-            
-            # 获取 provider_id（兼容旧数据）
-            provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
-            
-            # 获取显示名称
-            provider_name = config.get('display_name', provider_id)
-            model_name = config.get('model', '')
-            display_text = get_display_name_with_model(provider_name, model_name)
-            
-            configured_items.append((config_id, display_text, config_id == selected_model))
-        
-        # 按 provider 排序
-        def sort_key(item):
-            config_id = item[0]
-            provider_id = config_id.split('_')[0] if '_' in config_id else config_id
-            for i, (pid, _) in enumerate(AI_PROVIDER_ORDER):
-                if pid == provider_id:
-                    return i
-            return 999
-        
-        configured_items.sort(key=sort_key)
-        
-        # 检查重复名称，添加序号
-        name_counts = {}
-        for i, (config_id, display_text, is_default) in enumerate(configured_items):
-            if display_text in name_counts:
-                name_counts[display_text] += 1
-                new_display_text = f"{display_text} ({name_counts[display_text]})"
-                configured_items[i] = (config_id, new_display_text, is_default)
-            else:
-                name_counts[display_text] = 1
-        
-        # 如果有重复，第一个也需要加序号
-        for display_text, count in name_counts.items():
-            if count > 1:
-                for i, (config_id, text, is_default) in enumerate(configured_items):
-                    if text == display_text:
-                        configured_items[i] = (config_id, f"{display_text} (1)", is_default)
-                        break
+        configured_items = build_configured_ai_entries(
+            models_config,
+            selected_model=selected_model,
+            i18n=self.i18n,
+            include_model_placeholder=False,
+        )
         
         # 添加到列表（使用自定义 widget 实现两行显示）
-        for config_id, display_text, is_default in configured_items:
+        for config_id, display_text, _, is_default in configured_items:
             # 分离服务商和模型名
             if ' - ' in display_text:
                 parts = display_text.split(' - ', 1)
@@ -644,7 +631,7 @@ class ManageAIDialog(QDialog):
         self.config_container.setWidget(self.model_widget)
         
         # 更新标题
-        provider_name = config.get('display_name', provider_id)
+        provider_name = build_ai_display_text(config_id, config, i18n=self.i18n).split(' - ', 1)[0]
         config_text = self.i18n.get('configuration', 'Configuration')
         self.config_title.setText(f"{provider_name} {config_text}")
         
@@ -658,13 +645,17 @@ class ManageAIDialog(QDialog):
             return
         
         config = self.model_widget.get_config()
-        config['is_configured'] = True
         
         # 保留 provider_id
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         old_config = models_config.get(self.current_config_id, {})
-        config['provider_id'] = old_config.get('provider_id', self.current_config_id.split('_')[0])
+        provider_id = old_config.get(
+            'provider_id',
+            extract_provider_id(self.current_config_id, old_config),
+        )
+        config['provider_id'] = provider_id
+        config['is_configured'] = is_ai_config_complete(provider_id, config)
         
         models_config[self.current_config_id] = config
         prefs['models'] = models_config
@@ -716,7 +707,7 @@ class ManageAIDialog(QDialog):
         if self.current_config_id == selected_model:
             new_default = None
             for cid, cfg in models_config.items():
-                if cfg.get('is_configured', False):
+                if is_ai_config_complete(extract_provider_id(cid, cfg), cfg):
                     new_default = cid
                     break
             prefs['selected_model'] = new_default if new_default else ''

@@ -192,6 +192,9 @@ class ResponseHandler(QObject):
         self._last_scroll_value = 0  # 上次滚动位置
         self._scroll_resume_timer = None  # 恢复自动滚动的定时器
         self._last_html_update_time = 0  # 上次HTML更新时间
+        self._pending_html = None  # 节流期间待刷新的HTML
+        self._pending_html_timer = None  # 节流重试定时器
+        self._force_next_html_update = False  # 下一次 HTML 更新是否强制不节流
     
     def _process_think_tags_for_stream(self, text):
         """处理流式响应中的 think 标签
@@ -496,9 +499,9 @@ class ResponseHandler(QObject):
         
         # 设置超时检查：与设置里的「请求超时时间」(request_timeout) 一致，单位秒 → QTimer 毫秒
         try:
-            guard_sec = int(get_prefs().get('request_timeout', 60))
+            guard_sec = int(get_prefs().get('request_timeout', 120))
         except (TypeError, ValueError):
-            guard_sec = 60
+            guard_sec = 120
         guard_sec = max(1, min(guard_sec, 3600))
         self._ui_guard_timeout_sec = guard_sec
 
@@ -689,6 +692,9 @@ class ResponseHandler(QObject):
         """停止所有定时器"""
         # self._stop_loading_timer()
         self.stop_time_signal.emit()
+        if self._pending_html_timer:
+            self._pending_html_timer.stop()
+        self._pending_html = None
         
     def _setup_loading_animation(self, mode='requesting'):
         """设置加载动画定时器
@@ -842,6 +848,8 @@ class ResponseHandler(QObject):
         if self._markdown_worker:
             self._markdown_worker.cancel()
             
+        # 最终渲染阶段必须确保落盘到 UI，避免被节流吞掉最后一帧
+        self._force_next_html_update = True
         self._markdown_worker = MarkdownWorker(text)  # 不设置父对象
         self._markdown_worker.result.connect(self._set_html_response)
         self._markdown_worker.finished.connect(self._on_markdown_finished)
@@ -895,8 +903,25 @@ class ResponseHandler(QObject):
             if is_near_bottom:
                 self._user_is_scrolling = False
                 logger.info(f"[Smart Scroll] 用户停止滚动且接近底部，恢复自动更新")
+
+    def _schedule_pending_html_flush(self, delay_ms: int):
+        """调度延迟刷新，避免节流时丢失最后一帧。"""
+        if delay_ms <= 0:
+            delay_ms = 10
+        if self._pending_html_timer is None:
+            self._pending_html_timer = QTimer(self)
+            self._pending_html_timer.setSingleShot(True)
+            self._pending_html_timer.timeout.connect(self._flush_pending_html)
+        self._pending_html_timer.start(delay_ms)
+
+    def _flush_pending_html(self):
+        """刷新节流期间缓存的 HTML。"""
+        pending_html = self._pending_html
+        self._pending_html = None
+        if pending_html:
+            self._set_html_response(pending_html, force=True)
     
-    def _set_html_response(self, html):
+    def _set_html_response(self, html, force=False):
         """设置HTML响应并确保正确的样式"""
         import time
 
@@ -916,6 +941,7 @@ class ResponseHandler(QObject):
             if not scrollbar:
                 self.response_area.setHtml(html)
                 self.response_area.setAlignment(Qt.AlignLeft)
+                self._force_next_html_update = False
                 return
 
             old_value = scrollbar.value()
@@ -938,10 +964,15 @@ class ResponseHandler(QObject):
                 else:
                     min_interval = 0.1
 
-            if min_interval > 0 and current_time - self._last_html_update_time < min_interval:
-                return  # 跳过本次更新
+            if (not force and not self._force_next_html_update and min_interval > 0 and
+                    current_time - self._last_html_update_time < min_interval):
+                self._pending_html = html
+                remaining_ms = int((min_interval - (current_time - self._last_html_update_time)) * 1000)
+                self._schedule_pending_html_flush(remaining_ms)
+                return  # 延迟刷新，避免直接丢帧
             
             self._last_html_update_time = current_time
+            self._force_next_html_update = False
             
             # 临时断开滚动条信号，避免setHtml触发valueChanged导致误判
             scrollbar.valueChanged.disconnect(self._on_scroll_value_changed)

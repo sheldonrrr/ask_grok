@@ -22,6 +22,25 @@ from ..i18n import get_translation
 logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.perplexity')
 
 
+def merge_snapshot(full_text: str, snapshot_text: str):
+    """Merge final snapshot into streamed content without duplicating body."""
+    full_text = full_text or ""
+    snapshot_text = snapshot_text or ""
+    if not snapshot_text:
+        return full_text, "", "no_snapshot"
+    if not full_text:
+        return snapshot_text, snapshot_text, "init_from_snapshot"
+    if snapshot_text.startswith(full_text):
+        delta = snapshot_text[len(full_text):]
+        return snapshot_text, delta, "snapshot_extends_full"
+    if full_text.startswith(snapshot_text):
+        return full_text, "", "snapshot_shorter_ignore"
+    if snapshot_text in full_text:
+        return full_text, "", "snapshot_inside_full"
+    # Conservative fallback: keep stream content to avoid duplicate body.
+    return full_text, "", "conflict_keep_full"
+
+
 class PerplexityModel(BaseAIModel):
     """Perplexity Sonar model."""
 
@@ -143,6 +162,7 @@ class PerplexityModel(BaseAIModel):
                 last_chunk_time = time.time()
                 citations = []
                 search_results = []
+                latest_snapshot = ""
 
                 try:
                     with requests.post(
@@ -155,48 +175,66 @@ class PerplexityModel(BaseAIModel):
                         response.raise_for_status()
                         pending_event_lines = []
 
-                        def process_event_payload(payload_text: str):
-                            nonlocal citations, search_results
+                        def append_delta(new_text: str):
+                            """仅处理增量文本。"""
                             nonlocal chunk_count, full_content, last_chunk_time
-                            if not payload_text:
+                            if not new_text:
                                 return
+                            full_content += new_text
+                            stream_callback(new_text)
+                            chunk_count += 1
+                            last_chunk_time = time.time()
+
+                        def process_event_payload(payload_text: str) -> bool:
+                            nonlocal citations, search_results, latest_snapshot
+                            if not payload_text:
+                                return False
+                            payload_text = payload_text.strip()
+                            if not payload_text:
+                                return False
+                            if payload_text == '[DONE]':
+                                return True
                             try:
                                 chunk = json.loads(payload_text)
                             except json.JSONDecodeError:
-                                return
+                                return False
 
-                            if isinstance(chunk, dict):
-                                if isinstance(chunk.get('citations'), list):
-                                    citations = chunk.get('citations') or citations
-                                if isinstance(chunk.get('search_results'), list):
-                                    search_results = chunk.get('search_results') or search_results
+                            if not isinstance(chunk, dict):
+                                return True
 
-                            try:
-                                content = (
-                                    chunk.get('choices', [{}])[0]
-                                    .get('delta', {})
-                                    .get('content')
-                                )
-                            except Exception:
-                                content = None
+                            if isinstance(chunk.get('citations'), list):
+                                citations = chunk.get('citations') or citations
+                            if isinstance(chunk.get('search_results'), list):
+                                search_results = chunk.get('search_results') or search_results
 
-                            try:
-                                message_content = (
-                                    chunk.get('choices', [{}])[0]
-                                    .get('message', {})
-                                    .get('content')
-                                )
-                            except Exception:
-                                message_content = None
-                            # 回退兼容：某些返回把增量放在 message.content
-                            if not content and message_content:
-                                content = message_content
+                            event_name = chunk.get('event')
+                            choices = chunk.get('choices', [{}])[0]
+                            if not isinstance(choices, dict):
+                                choices = {}
+
+                            delta = choices.get('delta', {})
+                            content = delta.get('content') if isinstance(delta, dict) else None
+
+                            message = choices.get('message', {})
+                            message_content = (
+                                message.get('content') if isinstance(message, dict) else None
+                            )
 
                             if content:
-                                full_content += content
-                                stream_callback(content)
-                                chunk_count += 1
-                                last_chunk_time = time.time()
+                                append_delta(content)
+                            if message_content:
+                                latest_snapshot = message_content
+
+                            return True
+
+                        def flush_pending_event():
+                            nonlocal pending_event_lines
+                            if not pending_event_lines:
+                                return
+                            payload_text = '\n'.join(pending_event_lines)
+                            if not process_event_payload(payload_text):
+                                logger.warning("Skipped unparsable SSE payload from Perplexity stream")
+                            pending_event_lines = []
 
                         for raw_line in response.iter_lines(decode_unicode=False):
                             if isinstance(raw_line, bytes):
@@ -204,24 +242,30 @@ class PerplexityModel(BaseAIModel):
                             else:
                                 line_text = raw_line if isinstance(raw_line, str) else str(raw_line)
                             if not line_text:
-                                if pending_event_lines:
-                                    process_event_payload('\n'.join(pending_event_lines))
-                                    pending_event_lines = []
+                                flush_pending_event()
                                 continue
 
                             if line_text.startswith('event:'):
+                                flush_pending_event()
                                 continue
 
                             if line_text.startswith('data:'):
                                 chunk_data = line_text[len('data:'):].lstrip()
                                 if chunk_data == '[DONE]':
+                                    flush_pending_event()
                                     break
+                                # 大多数服务端每个 data 行就是独立 JSON 事件；先尝试直接解析。
+                                if process_event_payload(chunk_data):
+                                    continue
                                 pending_event_lines.append(chunk_data)
                                 continue
 
                             if pending_event_lines:
                                 # 容错：部分服务端会把同一event拆成首行data + 后续续行
                                 pending_event_lines.append(line_text)
+                                payload_text = '\n'.join(pending_event_lines)
+                                if process_event_payload(payload_text):
+                                    pending_event_lines = []
                                 continue
 
                             # Warn if no new data for 15 seconds
@@ -231,8 +275,16 @@ class PerplexityModel(BaseAIModel):
                                     f"No new data received for {current_time - last_chunk_time:.1f} seconds"
                                 )
 
-                        if pending_event_lines:
-                            process_event_payload('\n'.join(pending_event_lines))
+                        flush_pending_event()
+
+                        merged_content, merged_delta, _ = merge_snapshot(
+                            full_content,
+                            latest_snapshot,
+                        )
+                        if merged_delta:
+                            stream_callback(merged_delta)
+                            chunk_count += 1
+                        full_content = merged_content
 
                         logger.info(
                             f"Streaming completed, received {chunk_count} chunks, total length: {len(full_content)}"

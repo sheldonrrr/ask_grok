@@ -70,6 +70,115 @@ OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
+AI_PROVIDER_ORDER = [
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter', 'ollama', 'custom',
+]
+
+
+def extract_provider_id(config_id, config):
+    """从配置中提取 provider_id（兼容旧数据）。"""
+    provider_id = (config or {}).get('provider_id')
+    if provider_id:
+        return provider_id
+    if '_' in config_id:
+        return config_id.split('_', 1)[0]
+    return config_id
+
+
+def is_ai_config_complete(provider_id, model_config):
+    """统一判断 AI 配置是否完整。"""
+    provider_id = (provider_id or '').strip()
+    config = model_config or {}
+
+    if provider_id in ['ollama', 'custom', 'nvidia_free']:
+        has_auth = True
+    else:
+        api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
+        has_auth = bool((config.get(api_key_field) or '').strip())
+
+    has_model = bool((config.get('model') or '').strip())
+    return has_auth and has_model
+
+
+def get_provider_display_name(provider_id, config, i18n=None):
+    """获取服务商显示名，确保不为空。"""
+    if provider_id == 'nvidia_free':
+        free_text = (i18n or {}).get('free', 'Free')
+        return f"Nvidia AI ({free_text})"
+
+    provider_name = (config or {}).get('display_name')
+    if provider_name and str(provider_name).strip():
+        return str(provider_name).strip()
+
+    fallback = provider_id.replace('_', ' ').strip().title() if provider_id else ''
+    return fallback or 'AI'
+
+
+def build_ai_display_text(config_id, config, i18n=None, include_model_placeholder=False):
+    """构建 AI 显示文本，避免空白项。"""
+    provider_id = extract_provider_id(config_id, config or {})
+    provider_name = get_provider_display_name(provider_id, config or {}, i18n=i18n)
+    model_name = ((config or {}).get('model') or '').strip()
+
+    if model_name:
+        return f"{provider_name} - {model_name}"
+    if include_model_placeholder:
+        unspecified_text = (i18n or {}).get('unspecified_model', 'Unspecified model')
+        return f"{provider_name} - {unspecified_text}"
+    return provider_name
+
+
+def _stable_number_duplicate_labels(configured_items):
+    """为重复显示名添加稳定序号，输出顺序稳定。"""
+    grouped = {}
+    for item in configured_items:
+        grouped.setdefault(item['base_text'], []).append(item)
+
+    normalized = []
+    for base_text, items in grouped.items():
+        if len(items) == 1:
+            normalized.append((items[0]['config_id'], base_text, items[0]['sort_key'], items[0]['is_default']))
+            continue
+
+        items_sorted = sorted(items, key=lambda x: x['config_id'])
+        for idx, entry in enumerate(items_sorted, start=1):
+            normalized.append((
+                entry['config_id'],
+                f"{base_text} ({idx})",
+                entry['sort_key'],
+                entry['is_default'],
+            ))
+
+    normalized.sort(key=lambda x: (x[2], x[1].lower(), x[0]))
+    return normalized
+
+
+def build_configured_ai_entries(models_config, selected_model='', i18n=None, include_model_placeholder=False):
+    """构建已配置 AI 条目：统一过滤、显示与排序。"""
+    configured_items = []
+    for config_id, config in (models_config or {}).items():
+        provider_id = extract_provider_id(config_id, config or {})
+        if not is_ai_config_complete(provider_id, config or {}):
+            continue
+
+        base_text = build_ai_display_text(
+            config_id,
+            config or {},
+            i18n=i18n,
+            include_model_placeholder=include_model_placeholder,
+        )
+        sort_key = AI_PROVIDER_ORDER.index(provider_id) if provider_id in AI_PROVIDER_ORDER else 999
+        configured_items.append({
+            'config_id': config_id,
+            'base_text': base_text.strip() or 'AI',
+            'sort_key': sort_key,
+            'is_default': (config_id == selected_model),
+        })
+
+    configured_items.sort(key=lambda x: (x['sort_key'], x['base_text'].lower(), x['config_id']))
+    return _stable_number_duplicate_labels(configured_items)
+
 # 默认配置
 prefs.defaults['selected_model'] = 'nvidia_free'  # 当前选中的模型（默认使用免费通道）
 prefs.defaults['force_default_ai_on_next_open'] = False  # 配置页改默认AI后，下次打开 Ask 强制应用一次
@@ -171,7 +280,7 @@ prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (prompt template)
-prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
+prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 prefs.defaults['nvidia_free_first_use_shown'] = False  # Track if first use reminder has been shown
@@ -297,7 +406,7 @@ def get_prefs(force_reload=False):
     
     # 确保 request_timeout 键存在
     if 'request_timeout' not in prefs:
-        prefs['request_timeout'] = 60
+        prefs['request_timeout'] = 120
     
     # 确保 parallel_ai_count 键存在
     if 'parallel_ai_count' not in prefs:
@@ -412,25 +521,8 @@ def get_prefs(force_reload=False):
     # 自动判断并设置 is_configured 字段（用于已有配置的兼容性）
     for model_id, model_config in prefs['models'].items():
         if 'is_configured' not in model_config:
-            # 获取 provider_id（用于判断模型类型）
-            provider_id = model_config.get('provider_id')
-            if not provider_id:
-                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
-            
-            # 判断是否已配置
-            if provider_id in ['ollama', 'custom', 'nvidia_free']:
-                # Ollama、Custom 和 Nvidia Free 不需要用户提供 API Key
-                has_auth = True
-            else:
-                # 其他模型需要 API Key
-                api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
-                has_auth = bool(model_config.get(api_key_field, '').strip())
-            
-            # 检查是否有模型名称
-            has_model = bool(model_config.get('model', '').strip())
-            
-            # 设置 is_configured 标志
-            model_config['is_configured'] = has_auth and has_model
+            provider_id = extract_provider_id(model_id, model_config)
+            model_config['is_configured'] = is_ai_config_complete(provider_id, model_config)
     
     # ========== v1.3.9 兼容性迁移 ==========
     
@@ -929,17 +1021,7 @@ class ModelConfigWidget(QWidget):
         1. 有 API Key（Ollama 除外）
         2. 有模型名称
         """
-        # 检查 API Key（Ollama 不需要）
-        if self.model_id == 'ollama':
-            has_auth = True
-        else:
-            api_key_field = 'auth_token' if self.model_id == 'grok' else 'api_key'
-            has_auth = bool(config.get(api_key_field, '').strip())
-        
-        # 检查模型名称
-        has_model = bool(config.get('model', '').strip())
-        
-        return has_auth and has_model
+        return is_ai_config_complete(self.model_id, config)
     
     def on_api_key_changed(self):
         """API Key 变化时的处理"""
@@ -2074,8 +2156,8 @@ class ConfigDialog(QWidget):
         timeout_layout.addWidget(timeout_label)
         
         self.timeout_input = QLineEdit(self)
-        self.timeout_input.setText(str(get_prefs().get('request_timeout', 60)))
-        self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
+        self.timeout_input.setText(str(get_prefs().get('request_timeout', 120)))
+        self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '120'))
         self.timeout_input.setMaximumWidth(100)
         # 只允许输入数字
         from PyQt5.QtGui import QIntValidator
@@ -2321,62 +2403,12 @@ class ConfigDialog(QWidget):
         prefs = get_prefs(force_reload=True)
         models_config = prefs.get('models', {})
         selected_model = prefs.get('selected_model', '')
-        
-        # AI Provider 显示顺序（用于排序）
-        provider_order = ['openai', 'anthropic', 'gemini', 'grok', 'deepseek', 
-                          'nvidia', 'perplexity', 'openrouter', 'ollama', 'custom']
-        
-        # 收集已配置的 AI（支持新的 config_id 格式：provider_uuid）
-        configured_ais = []
-        for config_id, config in models_config.items():
-            if not config.get('is_configured', False):
-                continue
-            
-            # 获取 provider_id（兼容旧数据）
-            provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
-            
-            # 生成显示名称：Provider + Model
-            # 对于 nvidia_free，动态生成翻译后的名称
-            if provider_id == 'nvidia_free' or config_id == 'nvidia_free':
-                free_text = self.i18n.get('free', 'Free')
-                provider_name = f"Nvidia AI ({free_text})"
-            else:
-                provider_name = config.get('display_name', provider_id)
-            
-            model_name = config.get('model', '')
-            if model_name:
-                display_text = f"{provider_name} - {model_name}"
-            else:
-                display_text = provider_name
-            
-            # 排序键
-            try:
-                sort_key = provider_order.index(provider_id)
-            except ValueError:
-                sort_key = 999
-            
-            configured_ais.append((config_id, display_text, sort_key))
-        
-        # 按 provider 排序
-        configured_ais.sort(key=lambda x: x[2])
-        
-        # 检查重复名称，添加序号
-        name_counts = {}
-        for i, (config_id, display_text, sort_key) in enumerate(configured_ais):
-            if display_text in name_counts:
-                name_counts[display_text] += 1
-                new_display_text = f"{display_text} ({name_counts[display_text]})"
-                configured_ais[i] = (config_id, new_display_text, sort_key)
-            else:
-                name_counts[display_text] = 1
-        
-        # 如果有重复，第一个也需要加序号
-        for display_text, count in name_counts.items():
-            if count > 1:
-                for i, (config_id, text, sort_key) in enumerate(configured_ais):
-                    if text == display_text:
-                        configured_ais[i] = (config_id, f"{display_text} (1)", sort_key)
-                        break
+        configured_ais = build_configured_ai_entries(
+            models_config,
+            selected_model=selected_model,
+            i18n=self.i18n,
+            include_model_placeholder=False,
+        )
         
         # 更新空态提示
         has_configured = len(configured_ais) > 0
@@ -2384,7 +2416,7 @@ class ConfigDialog(QWidget):
         
         # 更新已配置 AI 列表（简洁显示，不使用自定义 widget）
         self.configured_ai_list.clear()
-        for config_id, display_text, _ in configured_ais:
+        for config_id, display_text, _, _ in configured_ais:
             item = QListWidgetItem(display_text)
             item.setData(Qt.UserRole, config_id)
             self.configured_ai_list.addItem(item)
@@ -2413,7 +2445,7 @@ class ConfigDialog(QWidget):
         self.model_combo.clear()
         
         if has_configured:
-            for config_id, display_text, _ in configured_ais:
+            for config_id, display_text, _, _ in configured_ais:
                 self.model_combo.addItem(display_text, config_id)
             
             # 选中当前默认 AI
@@ -2423,6 +2455,15 @@ class ConfigDialog(QWidget):
             elif self.model_combo.count() > 0:
                 # 如果当前默认 AI 不在已配置列表中，选择第一个
                 self.model_combo.setCurrentIndex(0)
+                fallback_model_id = self.model_combo.currentData()
+                if fallback_model_id:
+                    prefs['selected_model'] = fallback_model_id
+                    panel_selections = prefs.get('panel_ai_selections', {}) or {}
+                    panel_selections['panel_0'] = fallback_model_id
+                    prefs['panel_ai_selections'] = panel_selections
+                    prefs['force_default_ai_on_next_open'] = True
+                    prefs.commit()
+                    selected_model = fallback_model_id
         else:
             # 没有已配置 AI，添加占位符
             self.model_combo.addItem(self.i18n.get('no_configured_ai', 'No AI configured yet'), None)
@@ -2542,10 +2583,6 @@ class ConfigDialog(QWidget):
         """AI Manager 配置变更时的回调"""
         # 重新加载配置
         self.load_initial_values()
-        
-        # 更新 UI
-        self.refresh_ai_list()
-        self.update_model_name_display()
     
     def on_model_changed(self, index):
         """当选择的模型改变时（兼容性方法，现在直接调用 on_default_ai_changed）"""
@@ -2571,7 +2608,7 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'request_timeout': prefs.get('request_timeout', 60),
+            'request_timeout': prefs.get('request_timeout', 120),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
             'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
@@ -2594,9 +2631,11 @@ class ConfigDialog(QWidget):
         self.update_model_name_display()
         
         # 设置当前模型
+        self.model_combo.blockSignals(True)
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
+        self.model_combo.blockSignals(False)
         
         # 设置导出配置
         if hasattr(self, 'enable_default_folder_checkbox'):
@@ -2624,7 +2663,7 @@ class ConfigDialog(QWidget):
             logger.info(f"[Export Config] 设置浏览按钮状态: {button_enabled}")
 
         if hasattr(self, 'timeout_input'):
-            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 60)))
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 120)))
 
         if hasattr(self, 'custom_prompt_limit_checkbox'):
             checked = self.initial_values.get('enable_custom_prompt_limit', False)
@@ -2915,7 +2954,14 @@ class ConfigDialog(QWidget):
             # 获取已配置AI的数量
             prefs = get_prefs()
             models_config = prefs.get('models', {})
-            configured_count = sum(1 for config in models_config.values() if config.get('is_configured', False))
+            configured_count = len(
+                build_configured_ai_entries(
+                    models_config,
+                    selected_model=prefs.get('selected_model', ''),
+                    i18n=self.i18n,
+                    include_model_placeholder=False,
+                )
+            )
             
             if configured_count > 0:
                 button_text = self.i18n.get('manage_configured_ai_button', 'Manage Configured AI') + f' ({configured_count})'
@@ -2953,7 +2999,7 @@ class ConfigDialog(QWidget):
         
         # 更新超时输入框的placeholder
         if hasattr(self, 'timeout_input'):
-            self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
+            self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '120'))
             logger.debug("更新了超时输入框placeholder")
         
         # 更新多书提示词模板的默认内容（如果当前内容为空或为默认值）
@@ -3015,30 +3061,11 @@ class ConfigDialog(QWidget):
         models_config = prefs.get('models', {})
         configured_ais = []
         for model_id, config in models_config.items():
-            if config.get('enabled', False):
-                # 获取 provider_id（用于判断模型类型）
-                provider_id = config.get('provider_id')
-                if not provider_id:
-                    provider_id = model_id.split('_')[0] if '_' in model_id else model_id
-                
-                # 检查是否有API Key（Ollama和Custom不需要）
-                has_key = False
-                if provider_id in ['ollama', 'custom']:
-                    has_key = True
-                elif provider_id == 'grok':
-                    has_key = bool(config.get('auth_token', '').strip())
-                else:
-                    has_key = bool(config.get('api_key', '').strip())
-                
-                if has_key:
-                    # 构建显示文本：AI服务名 + 模型名
-                    display_name = config.get('display_name', model_id)
-                    model_name = config.get('model', '')
-                    if model_name:
-                        display_text = f"{display_name} ({model_name})"
-                    else:
-                        display_text = display_name
-                    configured_ais.append((model_id, display_text))
+            provider_id = extract_provider_id(model_id, config)
+            if not is_ai_config_complete(provider_id, config):
+                continue
+            display_text = build_ai_display_text(model_id, config, i18n=self.i18n)
+            configured_ais.append((model_id, display_text))
         
         # 读取当前的AI选择
         saved_selections = prefs.get('panel_ai_selections', {})
@@ -3179,7 +3206,7 @@ class ConfigDialog(QWidget):
             if timeout_value:
                 prefs['request_timeout'] = int(timeout_value)
             else:
-                prefs['request_timeout'] = 60  # 默认值
+                prefs['request_timeout'] = 120  # 默认值
 
         # 保存自定义提示词长度限制
         limit_normalized = False
@@ -3281,7 +3308,7 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'request_timeout': prefs.get('request_timeout', 60),
+            'request_timeout': prefs.get('request_timeout', 120),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
             'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
             'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
@@ -3443,7 +3470,7 @@ class ConfigDialog(QWidget):
             self.model_combo.setCurrentIndex(model_index)
 
         if hasattr(self, 'timeout_input'):
-            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 60)))
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 120)))
 
         if hasattr(self, 'custom_prompt_limit_checkbox'):
             checked = self.initial_values.get('enable_custom_prompt_limit', False)
