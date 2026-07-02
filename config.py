@@ -369,8 +369,6 @@ def get_prefs(force_reload=False):
                 prefs['multi_book_template'] = get_multi_book_template(plugin_lang)
                 prefs.commit()
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.warning(f"Failed to inherit Calibre language: {e}")
     
     # 确保模板不为空，如果为空则使用当前语言的默认模板
