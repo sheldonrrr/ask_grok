@@ -81,12 +81,11 @@ calibre-debug -g
 ### 第四步：打包发布 zip
 
 ```bash
-# 输出到 dist/ 目录（每次打包都会覆盖 dist/Ask AI Plugin.zip）
+# 输出到 dist/ 目录（每次打包都会覆盖当前版本 zip）
 chmod +x scripts/package.sh
 ./scripts/package.sh
 
 # 会生成：
-# dist/Ask AI Plugin.zip
 # dist/Ask AI Plugin-1.4.7.zip
 ```
 
@@ -164,7 +163,7 @@ chmod +x scripts/package.sh
 5. **发布流程**
    - 第一部分（BBCode）：复制到 mobileread.com 论坛发布帖
    - 第二部分（Markdown）：复制到 GitHub Release 页面
-   - 上传 `dist/Ask AI Plugin.zip` 或带版本号的 zip 到 GitHub Release
+   - 上传 `dist/Ask AI Plugin-X.Y.Z.zip` 到 GitHub Release
 
 #### 5.2 更新 Tutorial 文档（仅当内容有变化时）
 
@@ -235,7 +234,6 @@ chmod +x scripts/package.sh
 
 ### 打包发布
 - [ ] `./scripts/package.sh` 已执行
-- [ ] `dist/Ask AI Plugin.zip` 已生成
 - [ ] `dist/Ask AI Plugin-X.Y.Z.zip` 已生成
 
 ### 文档更新

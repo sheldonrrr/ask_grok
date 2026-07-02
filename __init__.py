@@ -85,7 +85,7 @@ class AskAIPlugin(InterfaceActionBase):
         else:
             # Otherwise search in sys.path
             for path in sys.path:
-                if 'Ask AI Plugin.zip' in path and os.path.exists(path):
+                if '.zip' in path and 'Ask AI Plugin' in path and os.path.exists(path):
                     plugin_zip = path
                     logger.info(f"[get_resources] 在sys.path找到插件zip: {plugin_zip}")
                     break
