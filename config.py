@@ -27,13 +27,15 @@ from .env_config import EnvironmentConfig
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
 from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
+from .prompt_limits import DEFAULT_CUSTOM_LIMIT
 from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
     TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
-    get_list_widget_style
+    get_list_widget_style,
+    setup_settings_tab_content, add_settings_section, configure_layout,
 )
 
 # 初始化日志
@@ -68,8 +70,118 @@ OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
 
+AI_PROVIDER_ORDER = [
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter', 'ollama', 'custom',
+]
+
+
+def extract_provider_id(config_id, config):
+    """从配置中提取 provider_id（兼容旧数据）。"""
+    provider_id = (config or {}).get('provider_id')
+    if provider_id:
+        return provider_id
+    if '_' in config_id:
+        return config_id.split('_', 1)[0]
+    return config_id
+
+
+def is_ai_config_complete(provider_id, model_config):
+    """统一判断 AI 配置是否完整。"""
+    provider_id = (provider_id or '').strip()
+    config = model_config or {}
+
+    if provider_id in ['ollama', 'custom', 'nvidia_free']:
+        has_auth = True
+    else:
+        api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
+        has_auth = bool((config.get(api_key_field) or '').strip())
+
+    has_model = bool((config.get('model') or '').strip())
+    return has_auth and has_model
+
+
+def get_provider_display_name(provider_id, config, i18n=None):
+    """获取服务商显示名，确保不为空。"""
+    if provider_id == 'nvidia_free':
+        free_text = (i18n or {}).get('free', 'Free')
+        return f"Nvidia AI ({free_text})"
+
+    provider_name = (config or {}).get('display_name')
+    if provider_name and str(provider_name).strip():
+        return str(provider_name).strip()
+
+    fallback = provider_id.replace('_', ' ').strip().title() if provider_id else ''
+    return fallback or 'AI'
+
+
+def build_ai_display_text(config_id, config, i18n=None, include_model_placeholder=False):
+    """构建 AI 显示文本，避免空白项。"""
+    provider_id = extract_provider_id(config_id, config or {})
+    provider_name = get_provider_display_name(provider_id, config or {}, i18n=i18n)
+    model_name = ((config or {}).get('model') or '').strip()
+
+    if model_name:
+        return f"{provider_name} - {model_name}"
+    if include_model_placeholder:
+        unspecified_text = (i18n or {}).get('unspecified_model', 'Unspecified model')
+        return f"{provider_name} - {unspecified_text}"
+    return provider_name
+
+
+def _stable_number_duplicate_labels(configured_items):
+    """为重复显示名添加稳定序号，输出顺序稳定。"""
+    grouped = {}
+    for item in configured_items:
+        grouped.setdefault(item['base_text'], []).append(item)
+
+    normalized = []
+    for base_text, items in grouped.items():
+        if len(items) == 1:
+            normalized.append((items[0]['config_id'], base_text, items[0]['sort_key'], items[0]['is_default']))
+            continue
+
+        items_sorted = sorted(items, key=lambda x: x['config_id'])
+        for idx, entry in enumerate(items_sorted, start=1):
+            normalized.append((
+                entry['config_id'],
+                f"{base_text} ({idx})",
+                entry['sort_key'],
+                entry['is_default'],
+            ))
+
+    normalized.sort(key=lambda x: (x[2], x[1].lower(), x[0]))
+    return normalized
+
+
+def build_configured_ai_entries(models_config, selected_model='', i18n=None, include_model_placeholder=False):
+    """构建已配置 AI 条目：统一过滤、显示与排序。"""
+    configured_items = []
+    for config_id, config in (models_config or {}).items():
+        provider_id = extract_provider_id(config_id, config or {})
+        if not is_ai_config_complete(provider_id, config or {}):
+            continue
+
+        base_text = build_ai_display_text(
+            config_id,
+            config or {},
+            i18n=i18n,
+            include_model_placeholder=include_model_placeholder,
+        )
+        sort_key = AI_PROVIDER_ORDER.index(provider_id) if provider_id in AI_PROVIDER_ORDER else 999
+        configured_items.append({
+            'config_id': config_id,
+            'base_text': base_text.strip() or 'AI',
+            'sort_key': sort_key,
+            'is_default': (config_id == selected_model),
+        })
+
+    configured_items.sort(key=lambda x: (x['sort_key'], x['base_text'].lower(), x['config_id']))
+    return _stable_number_duplicate_labels(configured_items)
+
 # 默认配置
 prefs.defaults['selected_model'] = 'nvidia_free'  # 当前选中的模型（默认使用免费通道）
+prefs.defaults['force_default_ai_on_next_open'] = False  # 配置页改默认AI后，下次打开 Ask 强制应用一次
 prefs.defaults['models'] = {
     'grok': {
         'auth_token': '',
@@ -168,7 +280,7 @@ prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (prompt template)
-prefs.defaults['request_timeout'] = 60  # Default timeout in seconds
+prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 prefs.defaults['nvidia_free_first_use_shown'] = False  # Track if first use reminder has been shown
@@ -192,6 +304,10 @@ prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON 
 prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
 prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
 prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
+
+# Prompt length settings
+prefs.defaults['enable_custom_prompt_limit'] = False
+prefs.defaults['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT  # Used when enable_custom_prompt_limit is True
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -290,11 +406,17 @@ def get_prefs(force_reload=False):
     
     # 确保 request_timeout 键存在
     if 'request_timeout' not in prefs:
-        prefs['request_timeout'] = 60
+        prefs['request_timeout'] = 120
     
     # 确保 parallel_ai_count 键存在
     if 'parallel_ai_count' not in prefs:
         prefs['parallel_ai_count'] = 1
+
+    # 确保提示词长度限制键存在
+    if 'enable_custom_prompt_limit' not in prefs:
+        prefs['enable_custom_prompt_limit'] = False
+    if 'max_prompt_length' not in prefs:
+        prefs['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT
     
     # 配置迁移：强制更新 nvidia_free 的 proxy_url 为当前环境配置
     # 这确保环境切换后配置能正确更新
@@ -399,25 +521,8 @@ def get_prefs(force_reload=False):
     # 自动判断并设置 is_configured 字段（用于已有配置的兼容性）
     for model_id, model_config in prefs['models'].items():
         if 'is_configured' not in model_config:
-            # 获取 provider_id（用于判断模型类型）
-            provider_id = model_config.get('provider_id')
-            if not provider_id:
-                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
-            
-            # 判断是否已配置
-            if provider_id in ['ollama', 'custom', 'nvidia_free']:
-                # Ollama、Custom 和 Nvidia Free 不需要用户提供 API Key
-                has_auth = True
-            else:
-                # 其他模型需要 API Key
-                api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
-                has_auth = bool(model_config.get(api_key_field, '').strip())
-            
-            # 检查是否有模型名称
-            has_model = bool(model_config.get('model', '').strip())
-            
-            # 设置 is_configured 标志
-            model_config['is_configured'] = has_auth and has_model
+            provider_id = extract_provider_id(model_id, model_config)
+            model_config['is_configured'] = is_ai_config_complete(provider_id, model_config)
     
     # ========== v1.3.9 兼容性迁移 ==========
     
@@ -612,13 +717,15 @@ class ModelConfigWidget(QWidget):
                 self.model_combo.addItems(hardcoded_models)
                 # Mark as loaded so the button becomes "Test Current Model"
                 self._models_loaded = True
-                # Default-select Sonar so user can test immediately (prefer saved model if valid)
+                # Default-select sonar-pro so user can test immediately (prefer saved model if valid)
                 saved_model = (self.config.get('model') or '').strip()
+                default_perplexity_model = 'sonar-pro'
+                default_idx = self.model_combo.findText(default_perplexity_model)
                 if saved_model and saved_model in hardcoded_models:
                     idx = self.model_combo.findText(saved_model)
-                    self.model_combo.setCurrentIndex(idx if idx >= 1 else 1)
+                    self.model_combo.setCurrentIndex(idx if idx >= 1 else (default_idx if default_idx >= 1 else 1))
                 else:
-                    self.model_combo.setCurrentIndex(1)
+                    self.model_combo.setCurrentIndex(default_idx if default_idx >= 1 else 1)
             elif self.model_id in cached_models and cached_models[self.model_id]:
                 self.model_combo.addItems(cached_models[self.model_id])
             else:
@@ -914,17 +1021,7 @@ class ModelConfigWidget(QWidget):
         1. 有 API Key（Ollama 除外）
         2. 有模型名称
         """
-        # 检查 API Key（Ollama 不需要）
-        if self.model_id == 'ollama':
-            has_auth = True
-        else:
-            api_key_field = 'auth_token' if self.model_id == 'grok' else 'api_key'
-            has_auth = bool(config.get(api_key_field, '').strip())
-        
-        # 检查模型名称
-        has_model = bool(config.get('model', '').strip())
-        
-        return has_auth and has_model
+        return is_ai_config_complete(self.model_id, config)
     
     def on_api_key_changed(self):
         """API Key 变化时的处理"""
@@ -1769,7 +1866,7 @@ class ModelConfigWidget(QWidget):
                 prefs['models'] = prefs_models
                 logger.info(f"已将 {self.model_id} 的 prefs 配置重置为默认值")
 
-            # 8.2 Perplexity：恢复硬编码模型列表并默认选中 sonar
+            # 8.2 Perplexity：恢复硬编码模型列表并默认选中默认模型（sonar-pro）
             if self.model_id == 'perplexity':
                 try:
                     self.model_combo.clear()
@@ -1922,34 +2019,22 @@ class ConfigDialog(QWidget):
         # 只为这个特定的 widget 设置样式，不影响子控件
         content_widget.setStyleSheet("QWidget#content_container { background: transparent; border: none; }")
         content_widget.setObjectName("content_container")
-        content_layout = QVBoxLayout()
-        # 使用统一的Tab布局规范
-        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, get_tab_scroll_area_style
-        content_layout.setSpacing(TAB_CONTENT_SPACING)
-        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        content_widget.setLayout(content_layout)
+        content_layout = setup_settings_tab_content(content_widget)
         
-        # 1. 顶部：语言选择
-        # Section Title（外部）- 第一个 section，顶部间距较小
-        from .ui_constants import get_first_section_title_style
-        lang_title = QLabel(self.i18n.get('language_settings', 'Language'))
+        # 1. 语言
+        lang_section, lang_title, lang_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('language_settings', 'Language'),
+            self.i18n.get('language_subtitle', 'Choose your preferred interface language'),
+        )
         lang_title.setObjectName('title_language')
-        lang_title.setStyleSheet(get_first_section_title_style())
-        content_layout.addWidget(lang_title)
-        
-        # Subtitle（外部）
-        lang_subtitle = QLabel(self.i18n.get('language_subtitle', 'Choose your preferred interface language'))
         lang_subtitle.setObjectName('subtitle_language')
-        lang_subtitle.setWordWrap(True)
-        lang_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(lang_subtitle)
         
-        # GroupBox（无标题）
         lang_group = QGroupBox()
         lang_group.setObjectName('groupbox_display')
         lang_group.setStyleSheet(get_groupbox_style())
         lang_layout = QVBoxLayout()
-        lang_layout.setSpacing(SPACING_SMALL)
+        configure_layout(lang_layout, 'settings_section')
         
         self.lang_combo = NoScrollComboBox(self)
         for code, name in SUPPORTED_LANGUAGES:
@@ -1962,28 +2047,22 @@ class ConfigDialog(QWidget):
         lang_layout.addWidget(language_label)
         lang_layout.addWidget(self.lang_combo)
         lang_group.setLayout(lang_layout)
-        content_layout.addWidget(lang_group)
+        lang_section.addWidget(lang_group)
 
-        # 2. 中部：AI模型选择和配置
-        # Section Title（外部）
-        ai_title = QLabel(self.i18n.get('ai_models', 'AI Providers'))
+        # 2. AI 模型
+        ai_section, ai_title, ai_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('ai_models', 'AI Providers'),
+            self.i18n.get('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
+        )
         ai_title.setObjectName('title_ai_providers')
-        ai_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(ai_title)
-        
-        # Subtitle（外部）
-        ai_subtitle = QLabel(self.i18n.get('ai_providers_subtitle', 'Configure AI providers and select your default AI'))
         ai_subtitle.setObjectName('subtitle_ai_providers')
-        ai_subtitle.setWordWrap(True)
-        ai_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(ai_subtitle)
         
-        # GroupBox（无标题）
         model_group = QGroupBox()
         model_group.setObjectName('groupbox_ai_models')
         model_group.setStyleSheet(get_groupbox_style())
         model_layout = QVBoxLayout()
-        model_layout.setSpacing(SPACING_MEDIUM)
+        configure_layout(model_layout, 'settings_section')
 
         # ========== 新版 AI 区域：列表概览 + 管理入口 ==========
         
@@ -2006,7 +2085,7 @@ class ConfigDialog(QWidget):
         
         # 默认 AI 选择行
         default_ai_layout = QHBoxLayout()
-        default_ai_layout.setSpacing(SPACING_SMALL)
+        configure_layout(default_ai_layout, 'form_row')
         
         default_ai_label = QLabel(self.i18n.get('default_ai_label', 'Default AI:'))
         default_ai_label.setObjectName('label_default_ai')
@@ -2037,7 +2116,7 @@ class ConfigDialog(QWidget):
         
         # AI 操作按钮区域
         ai_buttons_layout = QHBoxLayout()
-        ai_buttons_layout.setSpacing(SPACING_SMALL)
+        configure_layout(ai_buttons_layout, 'form_row')
         
         # 添加 AI 按钮（使用默认样式）
         self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
@@ -2071,14 +2150,14 @@ class ConfigDialog(QWidget):
         
         # 添加请求超时时间设置
         timeout_layout = QHBoxLayout()
-        timeout_layout.setSpacing(SPACING_SMALL)
+        configure_layout(timeout_layout, 'form_row')
         timeout_label = QLabel(self.i18n.get('request_timeout_label', 'Request Timeout'))
         timeout_label.setObjectName('label_request_timeout')
         timeout_layout.addWidget(timeout_label)
         
         self.timeout_input = QLineEdit(self)
-        self.timeout_input.setText(str(get_prefs().get('request_timeout', 60)))
-        self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
+        self.timeout_input.setText(str(get_prefs().get('request_timeout', 120)))
+        self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '120'))
         self.timeout_input.setMaximumWidth(100)
         # 只允许输入数字
         from PyQt5.QtGui import QIntValidator
@@ -2092,10 +2171,53 @@ class ConfigDialog(QWidget):
         timeout_layout.addStretch()
         
         model_layout.addLayout(timeout_layout)
+
+        # 自定义提示词长度限制（高级选项）
+        from calibre_plugins.ask_ai_plugin.prompt_limits import (
+            DEFAULT_CUSTOM_LIMIT, MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT,
+        )
+
+        self.custom_prompt_limit_checkbox = QCheckBox(self)
+        self.custom_prompt_limit_checkbox.setObjectName('checkbox_enable_custom_prompt_limit')
+        self.custom_prompt_limit_checkbox.setText(
+            self.i18n.get('enable_custom_prompt_limit_label', 'Custom prompt length limit'))
+        self.custom_prompt_limit_checkbox.setToolTip(
+            self.i18n.get('enable_custom_prompt_limit_tooltip',
+                'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '
+                'Most users do not need to change this. For library-wide searches, use AI Search.'))
+        self.custom_prompt_limit_checkbox.setChecked(
+            get_prefs().get('enable_custom_prompt_limit', False))
+        self.custom_prompt_limit_checkbox.toggled.connect(self._on_custom_prompt_limit_toggled)
+        self.custom_prompt_limit_checkbox.toggled.connect(self.on_config_changed)
+        model_layout.addWidget(self.custom_prompt_limit_checkbox)
+
+        prompt_limit_layout = QHBoxLayout()
+        configure_layout(prompt_limit_layout, 'form_row')
+        prompt_limit_label = QLabel(self.i18n.get('max_prompt_length_label', 'Max prompt length:'))
+        prompt_limit_label.setObjectName('label_max_prompt_length')
+        prompt_limit_label.setToolTip(self.i18n.get('max_prompt_length_tooltip',
+            'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
+            'Rough guide: 1 token ≈ 3–4 characters.'))
+        prompt_limit_layout.addWidget(prompt_limit_label)
+
+        self.max_prompt_length_input = QLineEdit(self)
+        self.max_prompt_length_input.setText(str(get_prefs().get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+        self.max_prompt_length_input.setMaximumWidth(120)
+        self.max_prompt_length_input.setValidator(
+            QIntValidator(MIN_CUSTOM_LIMIT, MAX_CUSTOM_LIMIT, self))
+        self.max_prompt_length_input.textChanged.connect(self.on_config_changed)
+        prompt_limit_layout.addWidget(self.max_prompt_length_input)
+
+        prompt_limit_unit = QLabel(self.i18n.get('max_prompt_length_unit', 'characters'))
+        prompt_limit_unit.setObjectName('label_max_prompt_length_unit')
+        prompt_limit_layout.addWidget(prompt_limit_unit)
+        prompt_limit_layout.addStretch()
+        model_layout.addLayout(prompt_limit_layout)
+        self._on_custom_prompt_limit_toggled(self.custom_prompt_limit_checkbox.isChecked())
         
         # 添加并行AI数量设置
         parallel_layout = QHBoxLayout()
-        parallel_layout.setSpacing(SPACING_SMALL)
+        configure_layout(parallel_layout, 'form_row')
         parallel_label = QLabel(self.i18n.get('parallel_ai_count_label', 'Parallel AI Count'))
         parallel_label.setObjectName('label_parallel_ai_count')
         parallel_label.setToolTip(self.i18n.get('parallel_ai_count_tooltip', 
@@ -2150,28 +2272,22 @@ class ConfigDialog(QWidget):
         model_layout.addWidget(parallel_notice)
         
         model_group.setLayout(model_layout)
-        content_layout.addWidget(model_group)
+        ai_section.addWidget(model_group)
         
         # 3. Export Settings
-        # Section Title（外部）
-        export_title = QLabel(self.i18n.get('export_settings', 'Export Settings'))
+        export_section, export_title, export_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('export_settings', 'Export Settings'),
+            self.i18n.get('export_settings_subtitle', 'Set default folder for exporting PDFs'),
+        )
         export_title.setObjectName('title_export_settings')
-        export_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(export_title)
-        
-        # Subtitle（外部）
-        export_subtitle = QLabel(self.i18n.get('export_settings_subtitle', 'Set default folder for exporting PDFs'))
         export_subtitle.setObjectName('subtitle_export_settings')
-        export_subtitle.setWordWrap(True)
-        export_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(export_subtitle)
         
-        # GroupBox（无标题）
         export_group = QGroupBox()
         export_group.setObjectName('groupbox_export_settings')
         export_group.setStyleSheet(get_groupbox_style())
         export_layout = QVBoxLayout()
-        export_layout.setSpacing(SPACING_SMALL)
+        configure_layout(export_layout, 'settings_section')
         
         # 复选框：导出到默认文件夹
         self.enable_default_folder_checkbox = QCheckBox(
@@ -2186,7 +2302,7 @@ class ConfigDialog(QWidget):
         
         # 文件夹选择区域
         folder_layout = QHBoxLayout()
-        folder_layout.setSpacing(SPACING_SMALL)
+        configure_layout(folder_layout, 'form_row')
         
         # 文件夹路径标签（显示当前选择的路径）
         saved_folder = self.initial_values.get('default_export_folder', '').strip()
@@ -2220,73 +2336,25 @@ class ConfigDialog(QWidget):
         export_layout.addLayout(folder_layout)
         
         export_group.setLayout(export_layout)
-        content_layout.addWidget(export_group)
+        export_section.addWidget(export_group)
         
-        # 5. Debug Logging Settings
-        # Section Title（外部）
-        debug_title = QLabel(self.i18n.get('debug_settings', 'Debug Settings'))
-        debug_title.setObjectName('title_debug_settings')
-        debug_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(debug_title)
-        
-        # Subtitle（外部）
-        debug_subtitle = QLabel(self.i18n.get('debug_settings_subtitle', 'Enable debug logging for troubleshooting'))
-        debug_subtitle.setObjectName('subtitle_debug_settings')
-        debug_subtitle.setWordWrap(True)
-        debug_subtitle.setStyleSheet(get_subtitle_style())
-        content_layout.addWidget(debug_subtitle)
-        
-        # GroupBox（无标题）
-        debug_group = QGroupBox()
-        debug_group.setObjectName('groupbox_debug_settings')
-        debug_group.setStyleSheet(get_groupbox_style())
-        debug_layout = QVBoxLayout()
-        debug_layout.setSpacing(SPACING_SMALL)
-        
-        # 复选框：启用调试日志
-        self.enable_debug_logging_checkbox = QCheckBox(
-            self.i18n.get('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)')
+        # 4. 重置所有数据
+        reset_subtitle_style = get_subtitle_style() + " color: #dc3545;"
+        reset_section, reset_title, reset_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('reset_all_data', 'Reset All Data'),
+            self.i18n.get('reset_all_data_subtitle',
+                'Warning: This will permanently delete all your settings and data'),
+            subtitle_style=reset_subtitle_style,
         )
-        self.enable_debug_logging_checkbox.setObjectName('checkbox_enable_debug_logging')
-        self.enable_debug_logging_checkbox.setChecked(
-            self.initial_values.get('enable_debug_logging', False)
-        )
-        self.enable_debug_logging_checkbox.stateChanged.connect(self.on_config_changed)
-        debug_layout.addWidget(self.enable_debug_logging_checkbox)
-        
-        # 说明文字
-        debug_hint = QLabel(self.i18n.get('debug_logging_hint', 
-            'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'))
-        debug_hint.setObjectName('label_debug_hint')
-        debug_hint.setWordWrap(True)
-        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
-        debug_hint.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 5px 0;")
-        debug_layout.addWidget(debug_hint)
-        
-        debug_group.setLayout(debug_layout)
-        content_layout.addWidget(debug_group)
-        
-        # 6. 危险区域：重置所有数据
-        # Section Title（外部）
-        reset_title = QLabel(self.i18n.get('reset_all_data', 'Reset All Data'))
         reset_title.setObjectName('title_reset_all_data')
-        reset_title.setStyleSheet(get_section_title_style())
-        content_layout.addWidget(reset_title)
-        
-        # Subtitle（外部，红色警告）
-        reset_subtitle = QLabel(self.i18n.get('reset_all_data_subtitle', 
-            'Warning: This will permanently delete all your settings and data'))
         reset_subtitle.setObjectName('subtitle_reset_all_data')
-        reset_subtitle.setWordWrap(True)
-        reset_subtitle.setStyleSheet("color: #dc3545; font-size: 1em; padding: 0; margin: 0 0 8px 0;")
-        content_layout.addWidget(reset_subtitle)
         
-        # GroupBox（无标题，无红色边框）
         reset_group = QGroupBox()
         reset_group.setObjectName('groupbox_reset_data')
         reset_group.setStyleSheet(get_groupbox_style())
         reset_layout = QVBoxLayout()
-        reset_layout.setSpacing(SPACING_SMALL)
+        configure_layout(reset_layout, 'settings_section')
         
         # 重置按钮（使用默认样式）
         self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
@@ -2295,13 +2363,10 @@ class ConfigDialog(QWidget):
         reset_layout.addWidget(self.reset_button)
         
         reset_group.setLayout(reset_layout)
-        content_layout.addWidget(reset_group)
+        reset_section.addWidget(reset_group)
         
-        # 底部添加固定间距和弹性空间
-        content_layout.addSpacing(SPACING_MEDIUM)
         content_layout.addStretch()
         
-        # 将内容容器设置到主滚动区域
         main_scroll.setWidget(content_widget)
         
         # 添加主滚动区域到主布局
@@ -2338,62 +2403,12 @@ class ConfigDialog(QWidget):
         prefs = get_prefs(force_reload=True)
         models_config = prefs.get('models', {})
         selected_model = prefs.get('selected_model', '')
-        
-        # AI Provider 显示顺序（用于排序）
-        provider_order = ['openai', 'anthropic', 'gemini', 'grok', 'deepseek', 
-                          'nvidia', 'perplexity', 'openrouter', 'ollama', 'custom']
-        
-        # 收集已配置的 AI（支持新的 config_id 格式：provider_uuid）
-        configured_ais = []
-        for config_id, config in models_config.items():
-            if not config.get('is_configured', False):
-                continue
-            
-            # 获取 provider_id（兼容旧数据）
-            provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
-            
-            # 生成显示名称：Provider + Model
-            # 对于 nvidia_free，动态生成翻译后的名称
-            if provider_id == 'nvidia_free' or config_id == 'nvidia_free':
-                free_text = self.i18n.get('free', 'Free')
-                provider_name = f"Nvidia AI ({free_text})"
-            else:
-                provider_name = config.get('display_name', provider_id)
-            
-            model_name = config.get('model', '')
-            if model_name:
-                display_text = f"{provider_name} - {model_name}"
-            else:
-                display_text = provider_name
-            
-            # 排序键
-            try:
-                sort_key = provider_order.index(provider_id)
-            except ValueError:
-                sort_key = 999
-            
-            configured_ais.append((config_id, display_text, sort_key))
-        
-        # 按 provider 排序
-        configured_ais.sort(key=lambda x: x[2])
-        
-        # 检查重复名称，添加序号
-        name_counts = {}
-        for i, (config_id, display_text, sort_key) in enumerate(configured_ais):
-            if display_text in name_counts:
-                name_counts[display_text] += 1
-                new_display_text = f"{display_text} ({name_counts[display_text]})"
-                configured_ais[i] = (config_id, new_display_text, sort_key)
-            else:
-                name_counts[display_text] = 1
-        
-        # 如果有重复，第一个也需要加序号
-        for display_text, count in name_counts.items():
-            if count > 1:
-                for i, (config_id, text, sort_key) in enumerate(configured_ais):
-                    if text == display_text:
-                        configured_ais[i] = (config_id, f"{display_text} (1)", sort_key)
-                        break
+        configured_ais = build_configured_ai_entries(
+            models_config,
+            selected_model=selected_model,
+            i18n=self.i18n,
+            include_model_placeholder=False,
+        )
         
         # 更新空态提示
         has_configured = len(configured_ais) > 0
@@ -2401,7 +2416,7 @@ class ConfigDialog(QWidget):
         
         # 更新已配置 AI 列表（简洁显示，不使用自定义 widget）
         self.configured_ai_list.clear()
-        for config_id, display_text, _ in configured_ais:
+        for config_id, display_text, _, _ in configured_ais:
             item = QListWidgetItem(display_text)
             item.setData(Qt.UserRole, config_id)
             self.configured_ai_list.addItem(item)
@@ -2430,7 +2445,7 @@ class ConfigDialog(QWidget):
         self.model_combo.clear()
         
         if has_configured:
-            for config_id, display_text, _ in configured_ais:
+            for config_id, display_text, _, _ in configured_ais:
                 self.model_combo.addItem(display_text, config_id)
             
             # 选中当前默认 AI
@@ -2440,6 +2455,15 @@ class ConfigDialog(QWidget):
             elif self.model_combo.count() > 0:
                 # 如果当前默认 AI 不在已配置列表中，选择第一个
                 self.model_combo.setCurrentIndex(0)
+                fallback_model_id = self.model_combo.currentData()
+                if fallback_model_id:
+                    prefs['selected_model'] = fallback_model_id
+                    panel_selections = prefs.get('panel_ai_selections', {}) or {}
+                    panel_selections['panel_0'] = fallback_model_id
+                    prefs['panel_ai_selections'] = panel_selections
+                    prefs['force_default_ai_on_next_open'] = True
+                    prefs.commit()
+                    selected_model = fallback_model_id
         else:
             # 没有已配置 AI，添加占位符
             self.model_combo.addItem(self.i18n.get('no_configured_ai', 'No AI configured yet'), None)
@@ -2465,6 +2489,7 @@ class ConfigDialog(QWidget):
         panel_selections = prefs.get('panel_ai_selections', {}) or {}
         panel_selections['panel_0'] = model_id
         prefs['panel_ai_selections'] = panel_selections
+        prefs['force_default_ai_on_next_open'] = True
         
         prefs.commit()
         
@@ -2558,10 +2583,6 @@ class ConfigDialog(QWidget):
         """AI Manager 配置变更时的回调"""
         # 重新加载配置
         self.load_initial_values()
-        
-        # 更新 UI
-        self.refresh_ai_list()
-        self.update_model_name_display()
     
     def on_model_changed(self, index):
         """当选择的模型改变时（兼容性方法，现在直接调用 on_default_ai_changed）"""
@@ -2587,11 +2608,12 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'request_timeout': prefs.get('request_timeout', 60),
+            'request_timeout': prefs.get('request_timeout', 120),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
+            'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
-            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
         # 调试日志
@@ -2609,9 +2631,11 @@ class ConfigDialog(QWidget):
         self.update_model_name_display()
         
         # 设置当前模型
+        self.model_combo.blockSignals(True)
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
+        self.model_combo.blockSignals(False)
         
         # 设置导出配置
         if hasattr(self, 'enable_default_folder_checkbox'):
@@ -2637,6 +2661,26 @@ class ConfigDialog(QWidget):
             button_enabled = self.initial_values.get('enable_default_export_folder', False)
             self.browse_folder_button.setEnabled(button_enabled)
             logger.info(f"[Export Config] 设置浏览按钮状态: {button_enabled}")
+
+        if hasattr(self, 'timeout_input'):
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 120)))
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            checked = self.initial_values.get('enable_custom_prompt_limit', False)
+            self.custom_prompt_limit_checkbox.setChecked(checked)
+            self._on_custom_prompt_limit_toggled(checked)
+
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setText(
+                str(self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+
+        if hasattr(self, 'parallel_ai_combo'):
+            parallel = self.initial_values.get('parallel_ai_count', 1)
+            if parallel > 2:
+                parallel = 2
+            index = self.parallel_ai_combo.findData(parallel)
+            if index >= 0:
+                self.parallel_ai_combo.setCurrentIndex(index)
             
     def on_language_changed(self, index):
         """语言改变时的处理函数"""
@@ -2813,27 +2857,26 @@ class ConfigDialog(QWidget):
             'title_ai_providers': ('ai_models', 'AI Providers'),
             'title_prompts': ('prompt_template', 'Prompts'),
             'title_export_settings': ('export_settings', 'Export Settings'),
-            'title_debug_settings': ('debug_settings', 'Debug Settings'),
             'title_reset_all_data': ('reset_all_data', 'Reset All Data'),
             # Section subtitles
             'subtitle_language': ('language_subtitle', 'Choose your preferred interface language'),
             'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
-            'subtitle_debug_settings': ('debug_settings_subtitle', 'Enable debug logging for troubleshooting'),
             'subtitle_reset_all_data': ('reset_all_data_subtitle', 'Warning: This will permanently delete all your settings and data'),
             # Other labels
             'label_language': ('language_label', 'Language'),
             'label_current_ai': ('current_ai', 'Current AI'),
             'label_request_timeout': ('request_timeout_label', 'Request Timeout'),
             'label_timeout_unit': ('seconds', 'seconds'),
+            'label_max_prompt_length': ('max_prompt_length_label', 'Max prompt length:'),
+            'label_max_prompt_length_unit': ('max_prompt_length_unit', 'characters'),
             'label_parallel_ai_count': ('parallel_ai_count_label', 'Parallel AI Count'),
             'label_parallel_ai_notice': ('parallel_ai_notice', 'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'),
             'label_ask_prompts': ('ask_prompts', 'Ask Prompts'),
             'label_random_questions_prompts': ('random_questions_prompts', 'Random Questions Prompts'),
             'label_multi_book_template': ('multi_book_template_label', 'Multi-Book Prompt Template'),
             'label_multi_book_placeholder_hint': ('multi_book_placeholder_hint', 'Use {books_metadata} for book information, {query} for user question'),
-            'label_debug_hint': ('debug_logging_hint', 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.'),
             'label_nvidia_free_info': ('nvidia_free_info', 'New users get 6 months free API access - No credit card required'),
         }
         
@@ -2850,7 +2893,8 @@ class ConfigDialog(QWidget):
         # 更新 CheckBox 文本（使用 ObjectName 映射）
         checkbox_map = {
             'checkbox_enable_default_folder': ('enable_default_export_folder', 'Export to default folder'),
-            'checkbox_enable_debug_logging': ('enable_debug_logging', 'Enable debug logging (ask_ai_plugin_debug.log)'),
+            'checkbox_enable_custom_prompt_limit': (
+                'enable_custom_prompt_limit_label', 'Custom prompt length limit'),
         }
         
         for checkbox in self.findChildren(QCheckBox):
@@ -2859,6 +2903,22 @@ class ConfigDialog(QWidget):
                 i18n_key, fallback = checkbox_map[obj_name]
                 checkbox.setText(self.i18n.get(i18n_key, fallback))
                 logger.debug(f"更新了复选框 [{obj_name}]: {checkbox.text()}")
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            self.custom_prompt_limit_checkbox.setToolTip(
+                self.i18n.get('enable_custom_prompt_limit_tooltip',
+                    'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '
+                    'Most users do not need to change this. For library-wide searches, use AI Search.'))
+
+        for label in self.findChildren(QLabel):
+            obj_name = label.objectName()
+            if obj_name == 'label_max_prompt_length':
+                label.setToolTip(self.i18n.get('max_prompt_length_tooltip',
+                    'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
+                    'Rough guide: 1 token ≈ 3–4 characters.'))
+            elif obj_name == 'label_parallel_ai_count':
+                label.setToolTip(self.i18n.get('parallel_ai_count_tooltip',
+                    'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
         
         # 更新所有按钮文本（使用ObjectName映射，避免硬编码文本检测）
         button_map = {
@@ -2894,7 +2954,14 @@ class ConfigDialog(QWidget):
             # 获取已配置AI的数量
             prefs = get_prefs()
             models_config = prefs.get('models', {})
-            configured_count = sum(1 for config in models_config.values() if config.get('is_configured', False))
+            configured_count = len(
+                build_configured_ai_entries(
+                    models_config,
+                    selected_model=prefs.get('selected_model', ''),
+                    i18n=self.i18n,
+                    include_model_placeholder=False,
+                )
+            )
             
             if configured_count > 0:
                 button_text = self.i18n.get('manage_configured_ai_button', 'Manage Configured AI') + f' ({configured_count})'
@@ -2932,7 +2999,7 @@ class ConfigDialog(QWidget):
         
         # 更新超时输入框的placeholder
         if hasattr(self, 'timeout_input'):
-            self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '60'))
+            self.timeout_input.setPlaceholderText(self.i18n.get('timeout_placeholder', '120'))
             logger.debug("更新了超时输入框placeholder")
         
         # 更新多书提示词模板的默认内容（如果当前内容为空或为默认值）
@@ -2994,30 +3061,11 @@ class ConfigDialog(QWidget):
         models_config = prefs.get('models', {})
         configured_ais = []
         for model_id, config in models_config.items():
-            if config.get('enabled', False):
-                # 获取 provider_id（用于判断模型类型）
-                provider_id = config.get('provider_id')
-                if not provider_id:
-                    provider_id = model_id.split('_')[0] if '_' in model_id else model_id
-                
-                # 检查是否有API Key（Ollama和Custom不需要）
-                has_key = False
-                if provider_id in ['ollama', 'custom']:
-                    has_key = True
-                elif provider_id == 'grok':
-                    has_key = bool(config.get('auth_token', '').strip())
-                else:
-                    has_key = bool(config.get('api_key', '').strip())
-                
-                if has_key:
-                    # 构建显示文本：AI服务名 + 模型名
-                    display_name = config.get('display_name', model_id)
-                    model_name = config.get('model', '')
-                    if model_name:
-                        display_text = f"{display_name} ({model_name})"
-                    else:
-                        display_text = display_name
-                    configured_ais.append((model_id, display_text))
+            provider_id = extract_provider_id(model_id, config)
+            if not is_ai_config_complete(provider_id, config):
+                continue
+            display_text = build_ai_display_text(model_id, config, i18n=self.i18n)
+            configured_ais.append((model_id, display_text))
         
         # 读取当前的AI选择
         saved_selections = prefs.get('panel_ai_selections', {})
@@ -3145,6 +3193,7 @@ class ConfigDialog(QWidget):
         logger = logging.getLogger(__name__)
         
         prefs = get_prefs()
+        previous_selected_model = prefs.get('selected_model')
         
         # 保存语言设置
         prefs['language'] = self.lang_combo.currentData()
@@ -3157,7 +3206,20 @@ class ConfigDialog(QWidget):
             if timeout_value:
                 prefs['request_timeout'] = int(timeout_value)
             else:
-                prefs['request_timeout'] = 60  # 默认值
+                prefs['request_timeout'] = 120  # 默认值
+
+        # 保存自定义提示词长度限制
+        limit_normalized = False
+        limit_value = DEFAULT_CUSTOM_LIMIT
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            prefs['enable_custom_prompt_limit'] = self.custom_prompt_limit_checkbox.isChecked()
+        if hasattr(self, 'max_prompt_length_input'):
+            from calibre_plugins.ask_ai_plugin.prompt_limits import parse_prompt_limit_text
+            limit_text = self.max_prompt_length_input.text().strip()
+            limit_value, limit_normalized = parse_prompt_limit_text(limit_text)
+            prefs['max_prompt_length'] = limit_value
+            if limit_normalized:
+                self.max_prompt_length_input.setText(str(limit_value))
         
         # 保存并行AI数量
         if hasattr(self, 'parallel_ai_combo'):
@@ -3182,15 +3244,15 @@ class ConfigDialog(QWidget):
                 prefs['default_export_folder'] = ''
                 logger.info(f"[Export Config Save] 保存空字符串（占位符）")
         
-        # 保存Debug Logging配置
-        if hasattr(self, 'enable_debug_logging_checkbox'):
-            prefs['enable_debug_logging'] = self.enable_debug_logging_checkbox.isChecked()
-            logger.info(f"[Debug Logging] 保存调试日志设置: {self.enable_debug_logging_checkbox.isChecked()}")
-        
         # 保存选中的模型（只有当 model_combo 有有效数据时才保存）
         selected_model = self.model_combo.currentData()
         if selected_model is not None:
             prefs['selected_model'] = selected_model
+            panel_selections = prefs.get('panel_ai_selections', {}) or {}
+            panel_selections['panel_0'] = selected_model
+            prefs['panel_ai_selections'] = panel_selections
+            if selected_model != previous_selected_model:
+                prefs['force_default_ai_on_next_open'] = True
         
         # 注意：模型配置现在在 AI Manager 弹窗中保存，不在这里处理
         # model_widgets 字典在新版中为空，保留此注释说明变更
@@ -3206,6 +3268,16 @@ class ConfigDialog(QWidget):
             self.save_success_label.setText(self.i18n.get('save_success', 'Settings saved successfully!'))
             self.save_success_label.show()
             QTimer.singleShot(2000, self.save_success_label.hide)
+
+        if limit_normalized:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('max_prompt_length_normalized_title', 'Prompt limit adjusted'),
+                self.i18n.get(
+                    'max_prompt_length_normalized',
+                    'Prompt length was normalized to {value} characters (separators removed).',
+                ).format(value=limit_value),
+            )
         
         # 发出保存成功信号
         self.settings_saved.emit()
@@ -3236,11 +3308,12 @@ class ConfigDialog(QWidget):
             'multi_book_template': prefs.get('multi_book_template', ''),
             'selected_model': prefs.get('selected_model', 'grok'),
             'models': copy.deepcopy(prefs.get('models', {})),
-            'request_timeout': prefs.get('request_timeout', 60),
+            'request_timeout': prefs.get('request_timeout', 120),
             'parallel_ai_count': prefs.get('parallel_ai_count', 1),
+            'enable_custom_prompt_limit': prefs.get('enable_custom_prompt_limit', False),
+            'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
-            'enable_debug_logging': prefs.get('enable_debug_logging', False)
         }
         
         # 注意：提示词模板的原始文本值现在在 Prompts Tab 中管理
@@ -3270,7 +3343,7 @@ class ConfigDialog(QWidget):
             self.initial_values = {}
         
         # 确保必要的键存在
-        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout', 'parallel_ai_count']:
+        for key in ['language', 'template', 'multi_book_template', 'selected_model', 'models', 'random_questions', 'request_timeout', 'parallel_ai_count', 'enable_custom_prompt_limit', 'max_prompt_length']:
             if key not in self.initial_values:
                 if key == 'language':
                     self.initial_values[key] = 'en'
@@ -3284,6 +3357,10 @@ class ConfigDialog(QWidget):
                     self.initial_values[key] = 60
                 elif key == 'parallel_ai_count':
                     self.initial_values[key] = 1
+                elif key == 'enable_custom_prompt_limit':
+                    self.initial_values[key] = False
+                elif key == 'max_prompt_length':
+                    self.initial_values[key] = DEFAULT_CUSTOM_LIMIT
         
         # 检查通用设置是否更改
         general_changed = False
@@ -3319,6 +3396,24 @@ class ConfigDialog(QWidget):
             if current_parallel != self.initial_values.get('parallel_ai_count', 1):
                 parallel_ai_changed = True
                 logger.debug(f"并行AI数量已更改: {current_parallel} != {self.initial_values.get('parallel_ai_count', 1)}")
+
+        # 检查自定义提示词长度限制是否更改
+        prompt_limit_changed = False
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            if self.custom_prompt_limit_checkbox.isChecked() != self.initial_values.get(
+                    'enable_custom_prompt_limit', False):
+                prompt_limit_changed = True
+        if hasattr(self, 'max_prompt_length_input'):
+            limit_text = self.max_prompt_length_input.text().strip()
+            try:
+                from calibre_plugins.ask_ai_plugin.prompt_limits import (
+                    DEFAULT_CUSTOM_LIMIT, parse_prompt_limit_text,
+                )
+                current_limit, _ = parse_prompt_limit_text(limit_text)
+                if current_limit != self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT):
+                    prompt_limit_changed = True
+            except ValueError:
+                prompt_limit_changed = True
         
         # 检查模型配置是否更改
         models_changed = False
@@ -3338,7 +3433,12 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or timeout_changed or parallel_ai_changed
+        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed
+    
+    def _on_custom_prompt_limit_toggled(self, checked):
+        """启用/禁用自定义提示词长度输入框"""
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setEnabled(bool(checked))
     
     def on_config_changed(self):
         """当任何配置发生改变时检查是否需要启用保存按钮"""
@@ -3368,6 +3468,26 @@ class ConfigDialog(QWidget):
         model_index = self.model_combo.findData(self.initial_values['selected_model'])
         if model_index >= 0:
             self.model_combo.setCurrentIndex(model_index)
+
+        if hasattr(self, 'timeout_input'):
+            self.timeout_input.setText(str(self.initial_values.get('request_timeout', 120)))
+
+        if hasattr(self, 'custom_prompt_limit_checkbox'):
+            checked = self.initial_values.get('enable_custom_prompt_limit', False)
+            self.custom_prompt_limit_checkbox.setChecked(checked)
+            self._on_custom_prompt_limit_toggled(checked)
+
+        if hasattr(self, 'max_prompt_length_input'):
+            self.max_prompt_length_input.setText(
+                str(self.initial_values.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT)))
+
+        if hasattr(self, 'parallel_ai_combo'):
+            parallel = self.initial_values.get('parallel_ai_count', 1)
+            if parallel > 2:
+                parallel = 2
+            index = self.parallel_ai_combo.findData(parallel)
+            if index >= 0:
+                self.parallel_ai_combo.setCurrentIndex(index)
         
         # 更新模型名称显示（会调用 refresh_ai_list）
         self.update_model_name_display()
@@ -3569,65 +3689,91 @@ class LibraryWidget(QWidget):
     
     def setup_ui(self):
         """设置UI"""
-        from .ui_constants import (setup_tab_widget_layout, TAB_CONTENT_MARGIN, 
-                                   TAB_CONTENT_SPACING, get_first_section_title_style)
+        from .ui_constants import (
+            setup_tab_widget_layout, get_first_section_title_style,
+            setup_settings_tab_content, add_settings_section, configure_layout,
+            PADDING_MEDIUM,
+        )
         
-        # 使用统一的 Tab 布局
         main_layout = setup_tab_widget_layout(self)
         
-        # 创建滚动区域
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
         
-        # 内容容器
         content = QWidget()
-        layout = QVBoxLayout(content)
-        layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, 
-                                  TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
-        layout.setSpacing(TAB_CONTENT_SPACING)
+        layout = setup_settings_tab_content(content)
+
+        feature_section, self.feature_title, self.feature_subtitle = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_feature_title', 'AI Search'),
+            self.i18n.get('ai_search_feature_subtitle',
+                'Search your entire library using natural language'),
+        )
+        self.feature_title.setObjectName('title_ai_search_feature')
+        self.feature_title.setStyleSheet(get_first_section_title_style())
+        if self.feature_subtitle:
+            self.feature_subtitle.setObjectName('subtitle_ai_search_feature')
+
+        self.feature_description = QLabel(self.i18n.get('ai_search_feature_description',
+            'AI Search helps you discover books across your whole Calibre library.\n\n'
+            '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
+            '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
+            '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
+            'embedding every book in verbose format\n'
+            '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
+            'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
+        self.feature_description.setObjectName('label_ai_search_feature')
+        self.feature_description.setWordWrap(True)
+        self.feature_description.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        feature_section.addWidget(self.feature_description)
+
+        self.usage_label = QLabel(self.i18n.get('ai_search_usage_hint',
+            'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
+            'select up to 30 books instead.'))
+        self.usage_label.setObjectName('label_ai_search_usage')
+        self.usage_label.setWordWrap(True)
+        self.usage_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
+        feature_section.addWidget(self.usage_label)
         
-        # Privacy alert section - 使用统一的第一个 section 标题样式
-        self.privacy_title = QLabel(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
-        self.privacy_title.setStyleSheet(get_first_section_title_style())
-        layout.addWidget(self.privacy_title)
+        search_section, self.privacy_title, _privacy_sub = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_privacy_title', 'Privacy Notice'),
+        )
+        self.privacy_title.setObjectName('title_ai_search_privacy')
         
         self.privacy_alert = QLabel(self.i18n.get('ai_search_privacy_alert', 
             'AI Search uses book metadata (titles and authors) from your library. '
             'This information will be sent to the AI provider you have configured to process your search queries.'))
+        self.privacy_alert.setObjectName('label_ai_search_privacy')
         self.privacy_alert.setWordWrap(True)
         self.privacy_alert.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; background-color: palette(alternate-base); border-left: 3px solid palette(mid);")
-        layout.addWidget(self.privacy_alert)
+        search_section.addWidget(self.privacy_alert)
+
+        data_section, self.data_title, self.data_subtitle = add_settings_section(
+            layout,
+            self.i18n.get('ai_search_data_title', 'Library Index'),
+            self.i18n.get('ai_search_data_subtitle',
+                'Refresh the compact book list sent to AI when you add or remove books'),
+        )
+        self.data_title.setObjectName('title_ai_search_data')
+        if self.data_subtitle:
+            self.data_subtitle.setObjectName('subtitle_ai_search_data')
         
-        layout.addSpacing(SPACING_MEDIUM)
-        
-        # AI搜索说明
-        self.info_label = QLabel(self.i18n.get('library_info', 
-            'AI Search is always enabled. When you don\'t select any books, '
-            'you can search your entire library using natural language.'))
-        self.info_label.setWordWrap(True)
-        self.info_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        layout.addWidget(self.info_label)
-        
-        layout.addSpacing(SPACING_SMALL)
-        
-        # 更新按钮
         self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
+        self.update_button.setObjectName('button_library_update')
         self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-            'Extract book titles and authors from your library'))
+            'Extract titles and authors for all books in your library (no 100-book limit)'))
         self.update_button.clicked.connect(self.on_update_library)
         apply_button_style(self.update_button)
-        layout.addWidget(self.update_button)
+        data_section.addWidget(self.update_button)
         
-        layout.addSpacing(SPACING_SMALL)
-        
-        # 状态标签
         self.status_label = QLabel()
+        self.status_label.setObjectName('label_library_status')
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        layout.addWidget(self.status_label)
+        data_section.addWidget(self.status_label)
         
-        # 添加弹性空间
         layout.addStretch()
         
         scroll.setWidget(content)
@@ -3647,7 +3793,25 @@ class LibraryWidget(QWidget):
         language = self.prefs.get('language', 'en')
         self.i18n = get_translation(language)
         
-        # 更新所有文本 - 使用实例变量直接更新
+        if hasattr(self, 'feature_title'):
+            self.feature_title.setText(self.i18n.get('ai_search_feature_title', 'AI Search'))
+        if hasattr(self, 'feature_subtitle'):
+            self.feature_subtitle.setText(self.i18n.get('ai_search_feature_subtitle',
+                'Search your entire library using natural language'))
+        if hasattr(self, 'feature_description'):
+            self.feature_description.setText(self.i18n.get('ai_search_feature_description',
+                'AI Search helps you discover books across your whole Calibre library.\n\n'
+                '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
+                '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
+                '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
+                'embedding every book in verbose format\n'
+                '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
+                'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
+        if hasattr(self, 'usage_label'):
+            self.usage_label.setText(self.i18n.get('ai_search_usage_hint',
+                'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
+                'select up to 30 books instead.'))
+
         if hasattr(self, 'privacy_title'):
             self.privacy_title.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
         
@@ -3655,17 +3819,17 @@ class LibraryWidget(QWidget):
             self.privacy_alert.setText(self.i18n.get('ai_search_privacy_alert', 
                 'AI Search uses book metadata (titles and authors) from your library. '
                 'This information will be sent to the AI provider you have configured to process your search queries.'))
+
+        if hasattr(self, 'data_title'):
+            self.data_title.setText(self.i18n.get('ai_search_data_title', 'Library Index'))
+        if hasattr(self, 'data_subtitle') and self.data_subtitle:
+            self.data_subtitle.setText(self.i18n.get('ai_search_data_subtitle',
+                'Refresh the compact book list sent to AI when you add or remove books'))
         
-        if hasattr(self, 'info_label'):
-            self.info_label.setText(self.i18n.get('library_info', 
-                'AI Search is always enabled. When you don\'t select any books, '
-                'you can search your entire library using natural language.'))
-        
-        # 更新按钮文本
         if hasattr(self, 'update_button'):
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
             self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-                'Extract book titles and authors from your library'))
+                'Extract titles and authors for all books in your library (no 100-book limit)'))
         
         # 更新状态显示
         self.update_status_display()

@@ -21,7 +21,7 @@ class DeepseekModel(BaseAIModel):
     Deepseek AI 模型实现类
     """
     # 默认模型名称，集中管理便于后续更新
-    DEFAULT_MODEL = "deepseek-chat"
+    DEFAULT_MODEL = "deepseek-v4-flash"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://api.deepseek.com"
     

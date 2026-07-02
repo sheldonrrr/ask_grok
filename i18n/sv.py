@@ -55,7 +55,6 @@ class SwedishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurera AI-leverantörer och välj din standard-AI',
             'prompts_subtitle': 'Anpassa hur frågor skickas till AI',
             'export_settings_subtitle': 'Ställ in standardmapp för export av PDF-filer',
-            'debug_settings_subtitle': 'Aktivera felloggning för felsökning',
             'reset_all_data_subtitle': 'Varning: Detta kommer permanent att radera alla dina inställningar och data',
 
             # Prompts tab
@@ -265,6 +264,53 @@ class SwedishTranslation(BaseTranslation):
             'request_failed': 'Begäran misslyckades',
             'request_stopped': 'Begäran stoppad',
             'question_too_long': 'Frågan är för lång',
+            'question_too_long_detail': (
+                'Prompten är för lång ({current} tecken, gräns {limit}, överskrider med {over}). '
+                'Du har valt {book_count} bok/böcker.'
+            ),
+            'question_too_long_detail_library': (
+                'Prompten är för lång ({current} tecken, gräns {limit}, överskrider med {over}). '
+                'Ditt biblioteksindex innehåller {book_count} bok/böcker.'
+            ),
+            'question_too_long_hint_ai_search': (
+                'För biblioteksomfattande sökningar, använd AI Search (fråga utan att välja böcker '
+                'eller använd AI Search-menyn) i stället för att välja många böcker.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Ditt biblioteksindex överskrider den aktuella promptgränsen. Aktivera anpassad promptlängdsgräns '
+                'under Plugin-konfiguration → General (föreslaget: 524288 tecken), '
+                'eller ställ en mer specifik fråga.'
+            ),
+            'question_too_long_reduce_books': (
+                'För att jämföra ett mindre urval på djupet, prova att avmarkera cirka {count} bok/böcker.'
+            ),
+            'question_too_long_hint_default': (
+                'Aktuell standardgräns: {limit} tecken ({mode}). '
+                'Standard för en bok är 128 000; för flera böcker 256 000. '
+                'Avancerade användare kan aktivera en anpassad gräns under Plugin-konfiguration → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'Du har aktiverat en anpassad promptgräns. Om förfrågningar får timeout, sänk gränsen '
+                'under Plugin-konfiguration → General, eller minska valda böcker / använd en mer specifik fråga.'
+            ),
+            'large_selection_dialog_title': 'Många böcker valda',
+            'large_selection_dialog_message': (
+                'Du har valt {count} böcker. För biblioteksomfattande frågor fungerar AI Search bättre '
+                'och söker i hela biblioteket med kompakt metadata.\n\n'
+                'Byta till AI Search, eller fortsätta med valda böcker i kompakt format?'
+            ),
+            'large_selection_use_ai_search': 'Använd AI Search',
+            'large_selection_continue': 'Fortsätt med valda',
+            'multi_book_truncation_note': (
+                'Obs: Endast de första {included} av {total} valda böcker ingår på grund av promptgränsen. '
+                'Använd AI Search för att söka i hela biblioteket, eller höj den anpassade gränsen '
+                'under Plugin-konfiguration → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Obs: Endast de första {included} av {total} indexerade böcker ingår på grund av promptgränsen. '
+                'Resultat kan vara ofullständiga för mycket stora bibliotek om du inte höjer den anpassade gränsen '
+                'under Plugin-konfiguration → General.'
+            ),
             'auth_token_required_title': 'AI-tjänst krävs',
             'auth_token_required_message': 'Vänligen konfigurera en giltig AI-tjänst i plugin-konfigurationen.',
             'open_configuration': 'Öppna konfiguration',
@@ -278,6 +324,7 @@ class SwedishTranslation(BaseTranslation):
             'book_title_check': 'Boktitel krävs',
             'avoid_repeat_question': 'Använd en annan fråga',
             'empty_answer': 'Tomt svar',
+            'invalid_json': 'Ogiltig JSON',
             'invalid_response': 'Ogiltigt svar',
             'auth_error_401': 'Obehörig',
             'auth_error_403': 'Åtkomst nekad',
@@ -292,9 +339,6 @@ class SwedishTranslation(BaseTranslation):
             'open_settings': 'Plugin-konfiguration',
             'ask_anyway': 'Fråga ändå',
             'later': 'Senare',
-            'debug_settings': 'Felsökningsinställningar',
-            'enable_debug_logging': 'Aktivera felloggning (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'När det är inaktiverat kommer felloggar inte att skrivas till fil. Detta kan förhindra att loggfilen blir för stor.',
             'reset_all_data': 'Återställ alla data',
             'reset_all_data_warning': 'Detta kommer att radera alla API-nycklar, promptmallar och lokala historikposter. Din språkpreferens kommer att bevaras. Fortsätt med försiktighet.',
             'reset_all_data_confirm_title': 'Bekräfta återställning',
@@ -384,6 +428,24 @@ class SwedishTranslation(BaseTranslation):
             'request_timeout_label': 'Begäran tidsinställning:',
             'seconds': 'sekunder',
             'request_timeout_error': 'Begäran tidsinställd. Aktuell tidsinställning: {timeout} sekunder',
+            'enable_custom_prompt_limit_label': 'Anpassad promptlängdsgräns',
+            'enable_custom_prompt_limit_tooltip': (
+                'Standardgränser är 128 000 tecken (en bok) och 256 000 (flera böcker). '
+                'De flesta användare behöver inte ändra detta. För biblioteksomfattande sökningar, använd AI Search. '
+                'Aktivera bara en anpassad gräns om din modell stöder mycket större kontext och '
+                'förfrågningar fortfarande når gränsen.'
+            ),
+            'max_prompt_length_label': 'Max. promptlängd:',
+            'max_prompt_length_unit': 'tecken',
+            'max_prompt_length_tooltip': (
+                'Gäller när anpassad gräns är aktiverad. Standardförslag: 524288 tecken. '
+                'Ungefärlig regel: 1 token ≈ 3–4 tecken. För Ollama, ställ även in num_ctx på modellsidan.'
+            ),
+            'max_prompt_length_normalized_title': 'Promptgräns justerad',
+            'max_prompt_length_normalized': (
+                'Promptlängden normaliserades till {value} tecken (avgränsare som kommatecken '
+                'eller mellanslag togs bort).'
+            ),
 
             # Parallel AI settings
             'parallel_ai_count_label': 'Antal parallella AI:',
@@ -511,6 +573,24 @@ class SwedishTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Inte tillräckligt med böcker',
             'ai_search_not_enough_books_message': 'AI-sökning kräver minst {min_books} böcker i ditt bibliotek.\n\nDitt nuvarande bibliotek har bara {book_count} bok/böcker.\n\nLägg till fler böcker för att använda AI-sökning.',
             'ai_search_mode_info': 'Söker i hela biblioteket',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Sök i hela biblioteket med naturligt språk',
+            'ai_search_feature_description': (
+                'AI Search hjälper dig hitta böcker i hela ditt Calibre-bibliotek.\n\n'
+                '• Utlös: öppna Ask utan att välja böcker, använd Verktyg → AI Search eller genväg\n'
+                '• Så fungerar det: pluginet skickar kompakt metadata (bok-ID, titel, författare) '
+                'för alla indexerade böcker\n'
+                '• Stora val: om du väljer fler än 50 böcker föreslår Ask AI Search i stället för '
+                'att bädda in varje bok i detaljerat format\n'
+                '• Håll data uppdaterad: klicka "Uppdatera biblioteksdata" efter att ha lagt till eller tagit bort böcker\n\n'
+                'Exempel: "Hitta böcker om Python", "Visa böcker av Isaac Asimov".'
+            ),
+            'ai_search_usage_hint': (
+                'Tips: AI Search fungerar bäst för biblioteksomfattande upptäckt. För djupgående '
+                'jämförelse av få böcker, välj upp till 30 böcker.'
+            ),
+            'ai_search_data_title': 'Biblioteksindex',
+            'ai_search_data_subtitle': 'Uppdatera den kompakta boklistan som skickas till AI när du lägger till eller tar bort böcker',
             'library_prompt_template': 'Du har tillgång till användarens bokbibliotek. Här är alla böcker: {metadata} Användarfråga: {query} Vänligen hitta matchande böcker i det aktuella biblioteket och returnera dem i detta format (**VIKTIGT**: Använd HTML-länkformat så att användare kan klicka på boktitlar för att öppna dem direkt): - <a href="calibre://book/BOOK_ID">Boktitel</a> - Författarnamn Exempel: - <a href="calibre://book/123">Lär dig Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praktiken</a> - Peter Harrington Obs: Vissa författare kan listas som "unknown". Detta är normala data, vänligen returnera alla matchande resultat normalt. Returnera endast böcker som matchar frågan. Maximalt 5 resultat.',
             'ai_search_privacy_title': 'Integritetsmeddelande',
             'ai_search_privacy_alert': 'AI-sökning använder bokmetadata (titlar och författare). Denna information skickas till den AI-leverantör du har konfigurerat för att behandla dina sökningar.',

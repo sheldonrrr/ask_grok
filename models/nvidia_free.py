@@ -301,9 +301,10 @@ class NvidiaFreeModel(NvidiaModel):
         """
         return [
             "openai/gpt-oss-120b",
+            "meta/llama-4-maverick-17b-128e-instruct",
+            "meta/llama-4-scout-17b-16e-instruct",
             "meta/llama-3.3-70b-instruct",
-            "meta/llama-3.1-405b-instruct",
-            "nvidia/llama-3.1-nemotron-70b-instruct",
+            "deepseek-ai/deepseek-r1",
         ]
     
     def verify_api_key_with_test_request(self):

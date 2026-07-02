@@ -9,7 +9,7 @@ DeepSeek 遵循 OpenAI 的 API 格式，配置相对直接。
 
 ## 获取模型列表
 
-- **端点**: `${baseUrl}/v1/models`
+- **端点**: `${baseUrl}/models`
 - **方法**: `GET`
 - **认证**: 
   ```json
@@ -20,7 +20,7 @@ DeepSeek 遵循 OpenAI 的 API 格式，配置相对直接。
 
 ## 发送聊天请求
 
-- **端点**: `${baseUrl}/v1/chat/completions`
+- **端点**: `${baseUrl}/chat/completions`
 - **方法**: `POST`
 - **认证**: 
   ```json
@@ -31,7 +31,7 @@ DeepSeek 遵循 OpenAI 的 API 格式，配置相对直接。
 - **请求体 (Body)**:
   ```json
   {
-    "model": "deepseek-chat",
+    "model": "deepseek-v4-flash",
     "messages": [
       {
         "role": "user",

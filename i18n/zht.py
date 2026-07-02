@@ -36,7 +36,7 @@ class TraditionalChineseTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
         # 插件信息
-        'plugin_name': 'Ask AI Plugin',
+        'plugin_name': 'Ask AI 插件',
         'plugin_desc': '使用AI提問關於書籍的問題',
         
         # UI - 標籤和區域
@@ -55,7 +55,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_providers_subtitle': '配置AI服務商並選擇預設AI',
         'prompts_subtitle': '自定義向AI發送問題的方式',
         'export_settings_subtitle': '設定匯出PDF的預設資料夾',
-        'debug_settings_subtitle': '啟用除錯日誌以排查問題',
         'reset_all_data_subtitle': '警告：這將永久刪除所有設定和資料',
         
         # Prompts tab
@@ -215,6 +214,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'metadata_title': '標題',
         'metadata_authors': '作者',
         'metadata_publisher': '出版社',
+        'metadata_pubdate': '出版日期',
         'metadata_pubyear': '出版日期',
         'metadata_language': '語言',
         'metadata_series': '系列',
@@ -245,6 +245,50 @@ class TraditionalChineseTranslation(BaseTranslation):
         'request_failed': '請求失敗',
         'request_stopped': '請求已停止',
         'question_too_long': '問題過長',
+        'question_too_long_detail': (
+            '提示詞過長（目前 {current} 字元，限制 {limit} 字元，超出 {over} 字元）。'
+            '您選取了 {book_count} 本書。'
+        ),
+        'question_too_long_detail_library': (
+            '提示詞過長（目前 {current} 字元，限制 {limit} 字元，超出 {over} 字元）。'
+            '書庫索引共 {book_count} 本書。'
+        ),
+        'question_too_long_hint_ai_search': (
+            '書庫級篩選請使用 AI Search（不選書直接提問，或使用 AI Search 選單），'
+            '而不是一次選取大量書籍。'
+        ),
+        'question_too_long_hint_library_search': (
+            '書庫索引超出目前提示詞限制。請在「外掛程式配置 → General」中啟用自訂提示詞長度限制'
+            '（建議 524288 字元），或提出更具體的問題。'
+        ),
+        'question_too_long_reduce_books': (
+            '若需對少量書深度比對，請嘗試取消選取約 {count} 本書。'
+        ),
+        'question_too_long_hint_default': (
+            '目前預設限制：{limit} 字元（{mode}）。'
+            '單書預設 128,000 字元，多書預設 256,000 字元。'
+            '進階使用者可在「外掛程式配置 → General」中啟用自訂提示詞長度限制。'
+        ),
+        'question_too_long_hint_custom': (
+            '您已啟用自訂提示詞長度限制。若請求逾時，請在「外掛程式配置 → General」中調低限制，'
+            '或減少選取書籍 / 提出更具體的問題。'
+        ),
+        'large_selection_dialog_title': '選取書籍過多',
+        'large_selection_dialog_message': (
+            '您選取了 {count} 本書。書庫級問題更適合使用 AI Search，'
+            '將以精簡格式搜尋整個書庫。\n\n'
+            '是否切換到 AI Search，還是繼續用目前選取書籍（精簡格式）？'
+        ),
+        'large_selection_use_ai_search': '使用 AI Search',
+        'large_selection_continue': '繼續用目前選取',
+        'multi_book_truncation_note': (
+            '注意：因提示詞長度限制，僅包含前 {included} / {total} 本選取書籍。'
+            '請使用 AI Search 搜尋整個書庫，或在「外掛程式配置 → General」中提高自訂限制。'
+        ),
+        'library_metadata_truncation_note': (
+            '注意：因提示詞長度限制，僅包含前 {included} / {total} 本已索引書籍。'
+            '超大書庫的結果可能不完整，可在「外掛程式配置 → General」中提高自訂限制。'
+        ),
         'auth_token_required_title': '需要AI服務',
         'auth_token_required_message': '請在外掛程式配置中設定有效的AI服務。',
         'open_configuration': '打開配置',
@@ -311,9 +355,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'open_settings': '外掛程式配置',
         'ask_anyway': '仍要詢問',
         'later': '稍後',
-        'debug_settings': '調試設定',
-        'enable_debug_logging': '啟用調試日誌 (ask_ai_plugin_debug.log)',
-        'debug_logging_hint': '禁用後，調試日誌將不會寫入文件。這可以防止日誌文件變得過大。',
         'reset_all_data': '重置所有資料',
         'reset_all_data_warning': '這將會刪除所有API密鑰、提示詞模板和本地歷史記錄。您的語言偏好將被保留。請慎重操作。',
         'reset_all_data_confirm_title': '確認重置',
@@ -384,6 +425,19 @@ class TraditionalChineseTranslation(BaseTranslation):
         'request_timeout_label': '請求超時時間：',
         'seconds': '秒',
         'request_timeout_error': '請求超時，當前超時時間為：{timeout} 秒',
+        'max_prompt_length_normalized_title': '提示詞長度已調整',
+        'max_prompt_length_normalized': '提示詞長度已規範為 {value} 字元（已移除逗號、空格等分隔符）。',
+        'enable_custom_prompt_limit_label': '自訂提示詞長度限制',
+        'enable_custom_prompt_limit_tooltip': (
+            '預設限制為單書 128,000 字元、多書 256,000 字元，大多數使用者無需修改。'
+            '書庫級搜尋請使用 AI Search。僅在模型支援更大上下文且仍遇到長度限制時啟用自訂。'
+        ),
+        'max_prompt_length_label': '最大提示詞長度：',
+        'max_prompt_length_unit': '字元',
+        'max_prompt_length_tooltip': (
+            '啟用自訂限制後生效。建議預設值：524288 字元。'
+            '粗略參考：1 token ≈ 3–4 字元。使用 Ollama 時還需在模型側配置 num_ctx。'
+        ),
         
         # 並行AI設置
         'parallel_ai_count_label': '並行AI數量：',
@@ -513,6 +567,21 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_search_not_enough_books_title': '書籍數量不足',
         'ai_search_not_enough_books_message': 'AI 搜尋需要您的書庫中至少有 {min_books} 本書。\n\n您目前的書庫只有 {book_count} 本書。\n\n請新增更多書籍後再使用 AI 搜尋。',
         'ai_search_mode_info': '正在搜尋整個書庫',
+        'ai_search_feature_title': 'AI 搜尋',
+        'ai_search_feature_subtitle': '用自然語言搜尋整個書庫',
+        'ai_search_feature_description': (
+            'AI 搜尋幫助您在整本 Calibre 書庫中發現書籍。\n\n'
+            '• 觸發方式：不選書開啟 Ask、使用「工具 → AI 搜尋」或快捷鍵\n'
+            '• 工作原理：外掛程式以精簡格式（書籍 ID、書名、作者）傳送已索引的全部書籍元數據\n'
+            '• 大量選書：選取超過 50 本時，Ask 會建議使用 AI 搜尋，而不是把每本書的詳細元數據塞進提示詞\n'
+            '• 保持資料最新：新增或刪除書籍後，請點擊「更新書庫資料」\n\n'
+            '範例問題：「有沒有 Python 相關的書？」「給我看看阿西莫夫的書」。'
+        ),
+        'ai_search_usage_hint': (
+            '提示：AI 搜尋最適合書庫級發現。若需深度比對少量書籍，請直接選取不超過 30 本書。'
+        ),
+        'ai_search_data_title': '書庫索引',
+        'ai_search_data_subtitle': '新增或刪除書籍後，請刷新傳送給 AI 的精簡書單',
         'library_prompt_template': '您可以存取使用者的書庫。以下是所有書籍：{metadata} 使用者查詢：{query} 請在當前書庫目錄中找出符合的書籍並以以下格式回傳（**重要**：使用 HTML 連結格式，讓使用者可以點擊書名直接開啟書籍）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，這是正常資料，請正常回傳所有符合結果，不要被此誤導。只回傳符合查詢的書籍。最多 5 個結果。',
         'ai_search_privacy_title': '隱私權聲明',
         'ai_search_privacy_alert': 'AI 搜尋會使用您書庫中的書籍元數據（書名與作者）。這些資訊將傳送至您設定的 AI 供應商，以處理您的搜尋請求。',

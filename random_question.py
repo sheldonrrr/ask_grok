@@ -490,7 +490,7 @@ class SuggestionHandler(QObject):
         
         # 从配置中获取超时时间
         prefs = get_prefs()
-        timeout_sec = prefs.get('request_timeout', 60)
+        timeout_sec = prefs.get('request_timeout', 120)
         timeout_ms = timeout_sec * 1000
         
         

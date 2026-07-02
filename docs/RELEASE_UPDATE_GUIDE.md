@@ -52,8 +52,10 @@ Relevant locations to check:
 
 ## 4) Build + Smoke Test
 
-- Build plugin:
+- Build plugin locally:
   - `calibre-customize -b .`
+- Package release zip to `dist/`:
+  - `./scripts/package.sh`
 - Run GUI:
   - `calibre-debug -g`
 
@@ -71,8 +73,11 @@ Verify:
 
 Before shipping, confirm the new files are included in the plugin package:
 
-- `docs/CHANGELOG_VX.Y.Z_EN.md`
 - `tutorial/tutorial_v0.N.md`
-- Any new provider docs under `aiprovider/`
+
+Keep reference docs in GitHub only (not bundled in the zip):
+
+- `aiprovider/` (excluded by `./scripts/package.sh`)
+- `docs/` including `CHANGELOG_VX.Y.Z_EN.md` (excluded by `./scripts/package.sh`)
 
 If a file is missing from the built plugin zip, the UI fallback logic should still work.

@@ -49,10 +49,13 @@ try:
 except ImportError:
     charset_normalizer_version = None
 
-try:
-    from chardet import __version__ as chardet_version
-except ImportError:
-    chardet_version = None
+# Prefer vendored charset_normalizer; skip global chardet (e.g. Calibre 6.x) when present.
+chardet_version = None
+if charset_normalizer_version is None:
+    try:
+        from chardet import __version__ as chardet_version
+    except ImportError:
+        chardet_version = None
 
 
 def check_compatibility(urllib3_version, chardet_version, charset_normalizer_version):
@@ -71,23 +74,39 @@ def check_compatibility(urllib3_version, chardet_version, charset_normalizer_ver
     if major == 1:
         assert minor >= 21
 
-    # Check charset_normalizer for compatibility.
-    if chardet_version:
-        major, minor, patch = chardet_version.split(".")[:3]
-        major, minor, patch = int(major), int(minor), int(patch)
-        # chardet_version >= 3.0.2, < 6.0.0
-        assert (3, 0, 2) <= (major, minor, patch) < (6, 0, 0)
-    elif charset_normalizer_version:
-        major, minor, patch = charset_normalizer_version.split(".")[:3]
-        major, minor, patch = int(major), int(minor), int(patch)
+    # Prefer charset_normalizer (bundled with this plugin) over host chardet.
+    if charset_normalizer_version:
+        major, minor, patch = _parse_version_triple(charset_normalizer_version)
         # charset_normalizer >= 2.0.0 < 4.0.0
         assert (2, 0, 0) <= (major, minor, patch) < (4, 0, 0)
+    elif chardet_version:
+        major, minor, patch = _parse_version_triple(chardet_version)
+        # chardet_version >= 3.0.2 (no upper bound; host may ship 6.x)
+        assert (3, 0, 2) <= (major, minor, patch)
     else:
         warnings.warn(
             "Unable to find acceptable character detection dependency "
             "(chardet or charset_normalizer).",
             RequestsDependencyWarning,
         )
+
+
+def _parse_version_triple(version_string):
+    """Parse major.minor.patch from a PEP 440 version string."""
+    parts = []
+    for segment in version_string.split(".")[:3]:
+        digits = []
+        for char in segment:
+            if char.isdigit():
+                digits.append(char)
+            else:
+                break
+        if not digits:
+            break
+        parts.append(int("".join(digits)))
+    while len(parts) < 3:
+        parts.append(0)
+    return parts[0], parts[1], parts[2]
 
 
 def _check_cryptography(cryptography_version):

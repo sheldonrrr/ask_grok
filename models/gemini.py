@@ -21,7 +21,7 @@ class GeminiModel(BaseAIModel):
     Google Gemini 模型实现类
     """
     # 默认模型名称，集中管理便于后续更新
-    DEFAULT_MODEL = "gemini-2.5-flash"
+    DEFAULT_MODEL = "google/gemini-3.5-flash"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
     

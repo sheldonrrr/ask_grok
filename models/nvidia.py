@@ -20,7 +20,7 @@ class NvidiaModel(BaseAIModel):
     Note: Free tier available with 40 RPM rate limit
     """
     # Default model name
-    DEFAULT_MODEL = "openai/gpt-oss-120b"
+    DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://integrate.api.nvidia.com/v1"
     

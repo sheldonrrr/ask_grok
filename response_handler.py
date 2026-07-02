@@ -18,8 +18,6 @@ from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor.bleach.css_sanitizer
     CSSSanitizer,
 )
 
-# 使用 Calibre 配置目录存储日志
-from calibre.utils.config import config_dir
 
 # 导入历史记录管理器
 from .history_manager import HistoryManager
@@ -28,30 +26,26 @@ from .history_manager import HistoryManager
 from .config import get_prefs
 
 # 导入UI常量
-from .ui_constants import FONT_SIZE_MEDIUM
-
-# 配置日志目录
-log_dir = os.path.join(config_dir, 'plugins', 'ask_ai_plugin_logs')
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, 'ask_ai_plugin_response.log')
-
-# 使用已配置的日志系统，不再重复配置根日志记录器
-# 只创建当前模块的日志记录器
+from .ui_constants import get_reasoning_process_html
 
 logger = logging.getLogger(__name__)
 
 # markdown2：与流式/非流式渲染共用；cuddled-lists 减少「段落后紧贴 * 列表」未被识别为列表的情况
-_MARKDOWN2_EXTRAS = [
-    'fenced-code-blocks',
-    'tables',
-    'break-on-newline',
-    'header-ids',
-    'strike',
-    'task_list',
-    'markdown-in-html',
-    'html-classes',
-    'cuddled-lists',
-]
+_MARKDOWN2_EXTRAS = {
+    'fenced-code-blocks': None,
+    'tables': None,
+    'break-on-newline': None,
+    'header-ids': None,
+    'strike': None,
+    'task_list': None,
+    'markdown-in-html': None,
+    'cuddled-lists': None,
+    'html-classes': {
+        'pre': 'code-block',
+        'code': 'inline-code',
+        'table': 'md-table',
+    },
+}
 
 # bleach：允许 style 时必须提供 css_sanitizer，否则告警且 style 会被置空（见 vendor bleach sanitizer）
 _EXTRA_BLEACH_CSS_PROPERTIES = frozenset({
@@ -143,7 +137,8 @@ class MarkdownWorker(QThread):
             
             # 将占位符替换回 think 块的 HTML
             for i, think_content in enumerate(think_blocks):
-                think_html = f'<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;"><div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px;">[推理过程]</div><div style="white-space: pre-wrap; font-family: monospace;">{think_content}</div></div>'
+                body = f'<div class="reasoning-process-body">{think_content}</div>'
+                think_html = get_reasoning_process_html('[推理过程]', body)
                 html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
             
             if self._is_cancelled:
@@ -197,6 +192,9 @@ class ResponseHandler(QObject):
         self._last_scroll_value = 0  # 上次滚动位置
         self._scroll_resume_timer = None  # 恢复自动滚动的定时器
         self._last_html_update_time = 0  # 上次HTML更新时间
+        self._pending_html = None  # 节流期间待刷新的HTML
+        self._pending_html_timer = None  # 节流重试定时器
+        self._force_next_html_update = False  # 下一次 HTML 更新是否强制不节流
     
     def _process_think_tags_for_stream(self, text):
         """处理流式响应中的 think 标签
@@ -288,6 +286,9 @@ class ResponseHandler(QObject):
         
         # 停止加载动画
         self._stop_loading_timer()
+
+        # 显示明确的停止提示（保留已返回内容）
+        self._prepend_stopped_notice()
         
         # 如果有正在运行的请求线程，等待它结束
         if hasattr(self, '_request_thread') and self._request_thread and self._request_thread.is_alive():
@@ -295,6 +296,61 @@ class ResponseHandler(QObject):
         
         # 清理资源
         self._cleanup_request()
+
+    def _get_stopped_notice_text(self):
+        """停止提示文案：默认英文（含回退），仅额外支持简体中文。"""
+        lang_code = str(get_prefs().get('language', 'en') or 'en').lower()
+        if lang_code in ('zh', 'zh_cn', 'zh-hans', 'zh-hans-cn'):
+            return '请求已停止。'
+        return 'Request stopped.'
+
+    def _prepend_stopped_notice(self):
+        """在响应区顶部追加停止提示与分隔线，并保留已渲染格式。"""
+        if not self.response_area:
+            return
+
+        stopped_text = self._get_stopped_notice_text()
+        existing_text = (self.response_area.toPlainText() or '').strip()
+
+        # 避免重复追加（用户连续点击停止）
+        if existing_text.startswith(stopped_text):
+            return
+
+        notice_text = f"{stopped_text}\n----\n"
+        requesting_text = self.i18n.get('requesting', 'Requesting, please wait')
+        formatting_text = self.i18n.get('formatting', 'Request successful, formatting')
+        # 如果当前只有加载占位文本，则不保留它，直接展示停止提示
+        if existing_text and (requesting_text in existing_text or formatting_text in existing_text):
+            self.response_area.setPlainText(notice_text.rstrip('\n'))
+            self.response_area.setAlignment(Qt.AlignLeft)
+            applied_mode = 'replace_loading_plain'
+        else:
+            # 保留已渲染 Markdown：在文档起始处插入纯文本提示，不回退整个文档
+            from PyQt5.QtGui import QTextCursor, QTextCharFormat, QTextBlockFormat, QFont
+            cursor = self.response_area.textCursor()
+            move_start = getattr(getattr(QTextCursor, 'MoveOperation', QTextCursor), 'Start', None)
+            if move_start is None:
+                move_start = getattr(QTextCursor, 'Start')
+            cursor.movePosition(move_start)
+
+            # 使用显式普通文本格式，避免继承首块（例如 h1/h2）样式
+            normal_char = QTextCharFormat()
+            normal_weight = getattr(QFont, 'Normal', None)
+            if normal_weight is None:
+                normal_weight = getattr(getattr(QFont, 'Weight', QFont), 'Normal', 50)
+            normal_char.setFontWeight(int(normal_weight))
+            normal_char.setFontItalic(False)
+            normal_char.setFontUnderline(False)
+
+            normal_block = QTextBlockFormat()
+            cursor.beginEditBlock()
+            cursor.insertText(stopped_text, normal_char)
+            cursor.insertBlock(normal_block, normal_char)
+            cursor.insertText('----', normal_char)
+            cursor.insertBlock(normal_block, normal_char)
+            cursor.endEditBlock()
+            self.response_area.setTextCursor(cursor)
+            self.response_area.setAlignment(Qt.AlignLeft)
 
     def start_request(self, prompt):
         """开始一个新的请求，使用非流式 API"""
@@ -443,9 +499,9 @@ class ResponseHandler(QObject):
         
         # 设置超时检查：与设置里的「请求超时时间」(request_timeout) 一致，单位秒 → QTimer 毫秒
         try:
-            guard_sec = int(get_prefs().get('request_timeout', 60))
+            guard_sec = int(get_prefs().get('request_timeout', 120))
         except (TypeError, ValueError):
-            guard_sec = 60
+            guard_sec = 120
         guard_sec = max(1, min(guard_sec, 3600))
         self._ui_guard_timeout_sec = guard_sec
 
@@ -487,16 +543,6 @@ class ResponseHandler(QObject):
         self._stream_response += chunk
         self._stream_buffer += chunk
         
-        # 检测推理标签（用于调试）
-        if '<' in chunk and any(tag in chunk for tag in ['think', 'reasoning', 'ds-think', 'thinking']):
-            logger.warning(f"[Response Handler Debug] 检测到可能的推理标签，chunk内容: {repr(chunk[:200])}")
-        
-        # 只在每1000个字符时记录一次日志
-        if len(self._stream_response) % 1000 < len(chunk):
-            logger.info(f"[Stream Update] 累积响应长度: {len(self._stream_response)} 字符 (~{len(self._stream_response)//4} tokens)")
-            # 输出累积内容的前500字符用于调试
-            logger.debug(f"[Response Handler Debug] 累积内容（前500字符）: {repr(self._stream_response[:500])}")
-        
         # 停止加载动画，因为我们已经开始收到响应
         self._stop_loading_timer()
         
@@ -529,7 +575,7 @@ class ResponseHandler(QObject):
         # 只在缓冲区较大时记录日志
         if len(self._stream_buffer) > 100:
             logger.debug(f"[Stream Process] 处理缓冲区: {len(self._stream_buffer)} 字符，新增: {current_length - self._last_processed_length} 字符")
-        
+
         self._stream_buffer = ""  # 清空缓冲区
         self._last_update_time = time.time()
         self._last_processed_length = current_length  # 更新已处理长度
@@ -554,25 +600,14 @@ class ResponseHandler(QObject):
                     extras=_MARKDOWN2_EXTRAS,
                 )
                 
-                # 完整的 think 块 - 添加结束标识
-                think_html = f'''<div class="reasoning-process" style="background-color: #f0f8ff; border-left: 4px solid #4a90e2; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
-                    <div style="font-weight: bold; color: #4a90e2; margin-bottom: 8px; display: flex; align-items: center;">
-                        <span>[推理过程]</span>
-                    </div>
-                    <div style="line-height: 1.6;">{think_html_content}</div>
-                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #d0e8ff; font-size: 0.85em; color: #888; text-align: right;">
-                        [推理完成]
-                    </div>
-                </div>'''
+                think_html = get_reasoning_process_html(
+                    '[推理过程]', think_html_content, footer='[推理完成]',
+                )
                 html = html.replace(f'<!--THINK_BLOCK_{i}-->', think_html)
-                
-                # 未完成的 think 块
-                incomplete_html = f'''<div class="reasoning-process" style="background-color: #fff9e6; border-left: 4px solid #ffa500; padding: 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em; color: #555;">
-                    <div style="font-weight: bold; color: #ffa500; margin-bottom: 8px; display: flex; align-items: center;">
-                        <span>[正在思考...]</span>
-                    </div>
-                    <div style="line-height: 1.6;">{think_html_content}</div>
-                </div>'''
+
+                incomplete_html = get_reasoning_process_html(
+                    '[正在思考...]', think_html_content, incomplete=True,
+                )
                 html = html.replace(f'<!--THINK_BLOCK_INCOMPLETE_{i}-->', incomplete_html)
             
             safe_html = _sanitize_response_html(html)
@@ -657,6 +692,9 @@ class ResponseHandler(QObject):
         """停止所有定时器"""
         # self._stop_loading_timer()
         self.stop_time_signal.emit()
+        if self._pending_html_timer:
+            self._pending_html_timer.stop()
+        self._pending_html = None
         
     def _setup_loading_animation(self, mode='requesting'):
         """设置加载动画定时器
@@ -784,9 +822,8 @@ class ResponseHandler(QObject):
         else:
             self.send_button.setText('Send')
         
-        # 恢复按钮的原始样式（使用标准样式）
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-        self.send_button.setStyleSheet(get_standard_button_style())
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
+        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""
@@ -811,6 +848,8 @@ class ResponseHandler(QObject):
         if self._markdown_worker:
             self._markdown_worker.cancel()
             
+        # 最终渲染阶段必须确保落盘到 UI，避免被节流吞掉最后一帧
+        self._force_next_html_update = True
         self._markdown_worker = MarkdownWorker(text)  # 不设置父对象
         self._markdown_worker.result.connect(self._set_html_response)
         self._markdown_worker.finished.connect(self._on_markdown_finished)
@@ -864,11 +903,31 @@ class ResponseHandler(QObject):
             if is_near_bottom:
                 self._user_is_scrolling = False
                 logger.info(f"[Smart Scroll] 用户停止滚动且接近底部，恢复自动更新")
+
+    def _schedule_pending_html_flush(self, delay_ms: int):
+        """调度延迟刷新，避免节流时丢失最后一帧。"""
+        if delay_ms <= 0:
+            delay_ms = 10
+        if self._pending_html_timer is None:
+            self._pending_html_timer = QTimer(self)
+            self._pending_html_timer.setSingleShot(True)
+            self._pending_html_timer.timeout.connect(self._flush_pending_html)
+        self._pending_html_timer.start(delay_ms)
+
+    def _flush_pending_html(self):
+        """刷新节流期间缓存的 HTML。"""
+        pending_html = self._pending_html
+        self._pending_html = None
+        if pending_html:
+            self._set_html_response(pending_html, force=True)
     
-    def _set_html_response(self, html):
+    def _set_html_response(self, html, force=False):
         """设置HTML响应并确保正确的样式"""
         import time
-        
+
+        if html and 'class="response-body"' not in html:
+            html = f'<div class="response-body">{html}</div>'
+
         # 只在HTML长度较大时记录日志（每1000字符记录一次）
         if not hasattr(self, '_last_html_log_size'):
             self._last_html_log_size = 0
@@ -882,20 +941,38 @@ class ResponseHandler(QObject):
             if not scrollbar:
                 self.response_area.setHtml(html)
                 self.response_area.setAlignment(Qt.AlignLeft)
+                self._force_next_html_update = False
                 return
-            
-            # 如果用户正在滚动，降低更新频率（500ms一次）
-            current_time = time.time()
-            if self._user_is_scrolling:
-                if current_time - self._last_html_update_time < 0.5:
-                    return  # 跳过本次更新
-            
-            self._last_html_update_time = current_time
-            
-            # 保存当前滚动位置和状态
+
             old_value = scrollbar.value()
             old_maximum = scrollbar.maximum()
             was_at_bottom = old_value >= old_maximum - 5
+            
+            # 自适应刷新节流：
+            # - 用户主动滚动：500ms（保持阅读稳定）
+            # - 用户在底部且长文本：提高间隔，降低全量 setHtml 引发的闪屏
+            current_time = time.time()
+            min_interval = 0.0
+            if self._user_is_scrolling:
+                min_interval = 0.5
+            elif was_at_bottom:
+                html_len = len(html or '')
+                if html_len >= 4000:
+                    min_interval = 0.33
+                elif html_len >= 2500:
+                    min_interval = 0.25
+                else:
+                    min_interval = 0.1
+
+            if (not force and not self._force_next_html_update and min_interval > 0 and
+                    current_time - self._last_html_update_time < min_interval):
+                self._pending_html = html
+                remaining_ms = int((min_interval - (current_time - self._last_html_update_time)) * 1000)
+                self._schedule_pending_html_flush(remaining_ms)
+                return  # 延迟刷新，避免直接丢帧
+            
+            self._last_html_update_time = current_time
+            self._force_next_html_update = False
             
             # 临时断开滚动条信号，避免setHtml触发valueChanged导致误判
             scrollbar.valueChanged.disconnect(self._on_scroll_value_changed)
@@ -1092,9 +1169,8 @@ class ResponseHandler(QObject):
             
         # 处理非响应状态（如加载中）
         self.send_button.setText(text)
-        # 设置固定宽度，避免文字变化导致按钮忽大忽小
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_standard_button_style
-        self.send_button.setStyleSheet(get_standard_button_style())
+        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
+        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
         self.send_button.setEnabled(False)
         
         # 根据文本内容判断当前状态

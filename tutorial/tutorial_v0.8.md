@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v0.8
-Latest updated: Mar 24, 2026, Ask AI Plugin v1.4.4
+Latest updated: Jun 12, 2026, Ask AI Plugin v1.4.5
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -222,7 +222,6 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
-- Debug Logging: Enable/disable debug log file (thanks to Comfy.n for feedback)
 
 AI Provider Settings:
 - API Key: Your authentication key

@@ -19,7 +19,7 @@ class OpenAIModel(BaseAIModel):
     Supports GPT-4, GPT-3.5, and other OpenAI models
     """
     # Default model name
-    DEFAULT_MODEL = "gpt-4o-mini"
+    DEFAULT_MODEL = "gpt-5.4"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.openai.com/v1"
     

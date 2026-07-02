@@ -55,7 +55,6 @@ class PortugueseTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configure os provedores de IA e selecione sua IA padrão',
             'prompts_subtitle': 'Personalize como as perguntas são enviadas à IA',
             'export_settings_subtitle': 'Defina a pasta padrão para exportar PDFs',
-            'debug_settings_subtitle': 'Ativar o registro de depuração para solucionar problemas',
             'reset_all_data_subtitle': 'Aviso: Isso excluirá permanentemente todas as suas configurações e dados',
 
             # Prompts tab
@@ -265,6 +264,56 @@ class PortugueseTranslation(BaseTranslation):
             'request_failed': 'Solicitação falhou',
             'request_stopped': 'Solicitação interrompida',
             'question_too_long': 'Pergunta muito longa',
+            'question_too_long_detail': (
+                'O prompt é muito longo ({current} caracteres, limite {limit}, excede em {over}). '
+                'Você selecionou {book_count} livro(s).'
+            ),
+            'question_too_long_detail_library': (
+                'O prompt é muito longo ({current} caracteres, limite {limit}, excede em {over}). '
+                'O índice da sua biblioteca contém {book_count} livro(s).'
+            ),
+            'question_too_long_hint_ai_search': (
+                'Para pesquisas em toda a biblioteca, use AI Search (pergunte sem selecionar livros '
+                'ou use o menu AI Search) em vez de selecionar muitos livros.'
+            ),
+            'question_too_long_hint_library_search': (
+                'O índice da biblioteca excede o limite de prompt atual. Ative Limite de comprimento '
+                'de prompt personalizado em Configuração do plugin → General (sugestão: 524288 '
+                'caracteres), ou faça uma pergunta mais específica.'
+            ),
+            'question_too_long_reduce_books': (
+                'Para comparar um conjunto menor em profundidade, tente desmarcar cerca de {count} livro(s).'
+            ),
+            'question_too_long_hint_default': (
+                'Limite padrão atual: {limit} caracteres ({mode}). '
+                'Padrão para um livro: 128.000; para vários livros: 256.000. '
+                'Usuários avançados podem ativar um limite personalizado em '
+                'Configuração do plugin → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'Você ativou um limite de prompt personalizado. Se as solicitações expirarem, '
+                'reduza o limite em Configuração do plugin → General, selecione menos livros '
+                'ou faça uma pergunta mais específica.'
+            ),
+            'large_selection_dialog_title': 'Muitos livros selecionados',
+            'large_selection_dialog_message': (
+                'Você selecionou {count} livros. Para perguntas em toda a biblioteca, AI Search '
+                'funciona melhor e pesquisa toda a biblioteca com metadados compactos.\n\n'
+                'Mudar para AI Search ou continuar com os livros selecionados em formato compacto?'
+            ),
+            'large_selection_use_ai_search': 'Usar AI Search',
+            'large_selection_continue': 'Continuar com a seleção',
+            'multi_book_truncation_note': (
+                'Nota: devido ao limite de prompt, apenas os primeiros {included} de {total} livros '
+                'selecionados estão incluídos. Use AI Search para consultar toda a biblioteca ou '
+                'aumente o limite personalizado em Configuração do plugin → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Nota: devido ao limite de prompt, apenas os primeiros {included} de {total} livros '
+                'indexados estão incluídos. Os resultados podem estar incompletos para bibliotecas '
+                'muito grandes, a menos que aumente o limite personalizado em '
+                'Configuração do plugin → General.'
+            ),
             'auth_token_required_title': 'Serviço de IA Necessário',
             'auth_token_required_message': 'Por favor, configure um serviço de IA válido na Configuração do Plugin.',
             'open_configuration': 'Abrir Configuração',
@@ -278,6 +327,7 @@ class PortugueseTranslation(BaseTranslation):
             'book_title_check': 'Título do livro obrigatório',
             'avoid_repeat_question': 'Por favor, use uma pergunta diferente',
             'empty_answer': 'Resposta vazia',
+            'invalid_json': 'JSON inválido',
             'invalid_response': 'Resposta inválida',
             'auth_error_401': 'Não autorizado',
             'auth_error_403': 'Acesso negado',
@@ -292,9 +342,6 @@ class PortugueseTranslation(BaseTranslation):
             'open_settings': 'Configuração do Plugin',
             'ask_anyway': 'Perguntar Mesmo Assim',
             'later': 'Mais Tarde',
-            'debug_settings': 'Configurações de Depuração',
-            'enable_debug_logging': 'Ativar registro de depuração (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Quando desativado, os logs de depuração não serão gravados em arquivo. Isso pode evitar que o arquivo de log cresça demais.',
             'reset_all_data': 'Redefinir Todos os Dados',
             'reset_all_data_warning': 'Isso excluirá todas as Chaves API, modelos de prompt e registros de histórico local. Sua preferência de idioma será preservada. Prossiga com cautela.',
             'reset_all_data_confirm_title': 'Confirmar Redefinição',
@@ -384,6 +431,25 @@ class PortugueseTranslation(BaseTranslation):
             'request_timeout_label': 'Tempo limite da Solicitação:',
             'seconds': 'segundos',
             'request_timeout_error': 'Tempo limite da solicitação. Tempo limite atual: {timeout} segundos',
+            'max_prompt_length_normalized_title': 'Limite de prompt ajustado',
+            'max_prompt_length_normalized': (
+                'O comprimento do prompt foi normalizado para {value} caracteres (separadores como vírgulas '
+                'ou espaços foram removidos).'
+            ),
+            'enable_custom_prompt_limit_label': 'Limite de comprimento de prompt personalizado',
+            'enable_custom_prompt_limit_tooltip': (
+                'Os limites padrão são 128.000 caracteres (um livro) e 256.000 (vários livros). '
+                'A maioria dos usuários não precisa alterar isso. Para pesquisas em toda a '
+                'biblioteca, use AI Search. Ative um limite personalizado apenas se o seu modelo '
+                'suportar um contexto muito maior e as solicitações ainda atingirem o limite.'
+            ),
+            'max_prompt_length_label': 'Comprimento máx. do prompt:',
+            'max_prompt_length_unit': 'caracteres',
+            'max_prompt_length_tooltip': (
+                'Aplica-se quando o limite personalizado está ativado. Sugestão padrão: 524288 '
+                'caracteres. Regra aproximada: 1 token ≈ 3–4 caracteres. Para Ollama, configure '
+                'também num_ctx no lado do modelo.'
+            ),
 
             # Parallel AI settings
             'parallel_ai_count_label': 'Contagem de IA Paralela:',
@@ -511,6 +577,27 @@ class PortugueseTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Livros insuficientes',
             'ai_search_not_enough_books_message': 'A pesquisa IA requer pelo menos {min_books} livros na sua biblioteca.\n\nSua biblioteca atual tem apenas {book_count} livro(s).\n\nPor favor, adicione mais livros para usar a pesquisa IA.',
             'ai_search_mode_info': 'Pesquisando em toda a sua biblioteca',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Pesquise toda a sua biblioteca em linguagem natural',
+            'ai_search_feature_description': (
+                'AI Search ajuda você a descobrir livros em toda a sua biblioteca Calibre.\n\n'
+                '• Ativar: abrir Ask sem selecionar livros, Ferramentas → AI Search ou atalho de teclado\n'
+                '• Como funciona: o plugin envia metadados compactos (ID, título, autor) de todos '
+                'os livros indexados\n'
+                '• Grandes seleções: se selecionar mais de 50 livros, Ask sugere AI Search em vez '
+                'de incluir cada livro em formato detalhado\n'
+                '• Manter dados atualizados: clique em "Atualizar dados da biblioteca" após '
+                'adicionar ou remover livros\n\n'
+                'Exemplos: "Encontre livros sobre Python", "Mostre-me livros de Isaac Asimov".'
+            ),
+            'ai_search_usage_hint': (
+                'Dica: AI Search funciona melhor para descoberta em toda a biblioteca. Para comparar '
+                'alguns livros em profundidade, selecione até 30 livros.'
+            ),
+            'ai_search_data_title': 'Índice da biblioteca',
+            'ai_search_data_subtitle': (
+                'Atualize a lista compacta de livros enviada à IA ao adicionar ou remover livros'
+            ),
             'library_prompt_template': 'Você tem acesso à biblioteca de livros do usuário. Aqui estão todos os livros: {metadata} Consulta do usuário: {query} Por favor, encontre livros correspondentes na biblioteca atual e retorne-os neste formato (**IMPORTANTE**: Use o formato de link HTML para que os usuários possam clicar nos títulos dos livros para abri-los diretamente): - <a href="calibre://book/BOOK_ID">Título do livro</a> - Nome do autor Exemplo: - <a href="calibre://book/123">Aprendendo Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning em ação</a> - Peter Harrington Nota: Alguns autores podem aparecer como "unknown". Estes são dados normais, por favor retorne todos os resultados correspondentes normalmente. Retorne apenas livros que correspondam à consulta. Máximo 5 resultados.',
             'ai_search_privacy_title': 'Aviso de Privacidade',
             'ai_search_privacy_alert': 'A Busca IA utiliza metadados dos livros (títulos e autores). Esta informação será enviada para o fornecedor de IA que configurou para processar as suas pesquisas.',

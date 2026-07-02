@@ -57,11 +57,11 @@ Note: For Perplexity, when the API returns citations/search results, the plugin 
 Recently, Nvidia released a free API key for llama, Deepseek-r1, you can get free API key from [here](https://build.nvidia.com/).
 
 Available models:
-- meta/llama-4-maverick-17b-128e-instruct",
+- openai/gpt-oss-120b
+- meta/llama-4-maverick-17b-128e-instruct
 - meta/llama-4-scout-17b-16e-instruct
 - meta/llama-3.3-70b-instruct
 - deepseek-ai/deepseek-r1
-- qwen/qwen2.5-coder-32b-instruct
 
 Base URL:
 `https://integrate.api.nvidia.com/v1`
@@ -165,7 +165,6 @@ Delete Ask AI Plugin and related configuration files:
 About Ask AI Plugin Configuration Files:
 - Ask AI Plugin.zip/Ask AI Plugin folder: Plugin folder, delete it to remove the plugin
 - ask_ai_plugin.json: Plugin configuration file, delete it to remove the plugin's configuration information
-- ask_ai_plugin_logs folder: Plugin log folder, delete it to remove the plugin's log information
 - ask_ai_plugin_latest_history.json: Plugin recent query history file, delete it to remove the plugin's recent query history information
 
 Note!

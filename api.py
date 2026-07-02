@@ -63,7 +63,7 @@ class APIClient:
         if timeout is None:
             from .config import get_prefs
             prefs = get_prefs()
-            timeout = prefs.get('request_timeout', 60)
+            timeout = prefs.get('request_timeout', 120)
         
         self._timeout = timeout
         self._ai_model = None  # 当前使用的 AI 模型实例
@@ -191,19 +191,43 @@ class APIClient:
             if use_library_chat:
                 from .utils import is_library_chat_enabled, build_library_prompt
                 from .config import get_prefs
+                from .prompt_limits import validate_prompt_length, count_books_in_library_metadata
                 
                 prefs = get_prefs()
                 if is_library_chat_enabled(prefs):
                     # 使用build_library_prompt包装用户查询，传入i18n支持多语言
                     prompt = build_library_prompt(prompt, prefs, self.i18n)
                     logger.info("Library Chat enabled, injected library metadata into prompt")
+
+                    book_count = count_books_in_library_metadata(prefs)
+                    length_error = validate_prompt_length(
+                        prompt, True, prefs, self.i18n, book_count,
+                        is_library_search=True,
+                    )
+                    if length_error:
+                        raise AIAPIError(length_error, error_type="prompt_too_long")
             
             # 准备请求参数
             kwargs = {
                 'temperature': 0.7,
-                'max_tokens': 2000,
                 'timeout': self._timeout  # 使用配置的超时时间
             }
+
+            # 仅在模型配置显式设置时透传 max_tokens，避免全局硬编码截断长回复
+            configured_max_tokens = self._ai_model.config.get('max_tokens')
+            if configured_max_tokens not in (None, ''):
+                try:
+                    max_tokens = int(configured_max_tokens)
+                    if max_tokens > 0:
+                        kwargs['max_tokens'] = max_tokens
+                    else:
+                        logger.warning(
+                            f"忽略无效 max_tokens 配置(<=0): {configured_max_tokens}"
+                        )
+                except (TypeError, ValueError):
+                    logger.warning(
+                        f"忽略无法解析的 max_tokens 配置: {configured_max_tokens}"
+                    )
             
             # 检查模型是否支持流式传输以及是否在配置中启用了流式传输
             model_supports_streaming = hasattr(self._ai_model, 'supports_streaming') and self._ai_model.supports_streaming()

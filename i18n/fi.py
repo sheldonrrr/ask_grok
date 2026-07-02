@@ -55,7 +55,6 @@ class FinnishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Määritä tekoälypalveluntarjoajat ja valitse oletustekoäly',
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
-            'debug_settings_subtitle': 'Ota käyttöön debug-lokikirjaus vianmääritystä varten',
             'reset_all_data_subtitle': 'Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
             
             # Prompts tab
@@ -265,6 +264,54 @@ class FinnishTranslation(BaseTranslation):
             'request_failed': 'Pyyntö epäonnistui',
             'request_stopped': 'Pyyntö pysäytetty',
             'question_too_long': 'Kysymys liian pitkä',
+            'question_too_long_detail': (
+                'Kehote on liian pitkä ({current} merkkiä, raja {limit}, yli {over}). '
+                'Olet valinnut {book_count} kirjaa.'
+            ),
+            'question_too_long_detail_library': (
+                'Kehote on liian pitkä ({current} merkkiä, raja {limit}, yli {over}). '
+                'Kirjastoindeksissäsi on {book_count} kirjaa.'
+            ),
+            'question_too_long_hint_ai_search': (
+                'Kirjastonlaajuisiin hakuun käytä AI Search -toimintoa (kysy valitsematta kirjoja '
+                'tai käytä AI Search -valikkoa) sen sijaan, että valitsisit monta kirjaa.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Kirjastoindeksisi ylittää nykyisen kehotteen rajan. Ota käyttöön mukautettu kehotteen '
+                'pituusraja kohdassa Lisäosan asetukset → General (suositus: 524288 merkkiä), '
+                'tai esitä tarkempi kysymys.'
+            ),
+            'question_too_long_reduce_books': (
+                'Vertaillaksesi pienempää joukkoa syvällisesti, kokeile poistaa valinta noin {count} kirjasta.'
+            ),
+            'question_too_long_hint_default': (
+                'Nykyinen oletusraja: {limit} merkkiä ({mode}). '
+                'Yhden kirjan oletus on 128 000; usean kirjan oletus on 256 000. '
+                'Edistyneet käyttäjät voivat ottaa mukautetun rajan käyttöön kohdassa Lisäosan asetukset → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'Olet ottanut mukautetun kehotteen rajan käyttöön. Jos pyynnöt aikakatkaistaan, '
+                'laske rajaa kohdassa Lisäosan asetukset → General tai vähennä valittuja kirjoja / '
+                'käytä tarkempaa kyselyä.'
+            ),
+            'large_selection_dialog_title': 'Monta kirjaa valittu',
+            'large_selection_dialog_message': (
+                'Olet valinnut {count} kirjaa. Kirjastonlaajuisiin kysymyksiin AI Search sopii paremmin '
+                'ja hakee koko kirjastostasi tiiviillä metatiedoilla.\n\n'
+                'Vaihdetaanko AI Searchiin vai jatketaanko valituilla kirjoilla tiiviissä muodossa?'
+            ),
+            'large_selection_use_ai_search': 'Käytä AI Search',
+            'large_selection_continue': 'Jatka valinnalla',
+            'multi_book_truncation_note': (
+                'Huom: Vain ensimmäiset {included}/{total} valittua kirjaa sisältyvät kehotteen rajan vuoksi. '
+                'Käytä AI Search -hakua koko kirjastoon tai nosta mukautettua rajaa kohdassa '
+                'Lisäosan asetukset → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Huom: Vain ensimmäiset {included}/{total} indeksoitua kirjaa sisältyvät kehotteen rajan vuoksi. '
+                'Tulokset voivat olla puutteellisia hyvin suurissa kirjastoissa, ellei mukautettua rajaa '
+                'nosteta kohdassa Lisäosan asetukset → General.'
+            ),
             'auth_token_required_title': 'Tekoälypalvelu vaaditaan',
             'auth_token_required_message': 'Määritä kelvollinen tekoälypalvelu lisäosan asetuksissa.',
             'open_configuration': 'Avaa asetukset',
@@ -278,6 +325,7 @@ class FinnishTranslation(BaseTranslation):
             'book_title_check': 'Kirjan nimi vaaditaan',
             'avoid_repeat_question': 'Käytä eri kysymystä',
             'empty_answer': 'Tyhjä vastaus',
+            'invalid_json': 'Virheellinen JSON',
             'invalid_response': 'Virheellinen vastaus',
             'auth_error_401': 'Luvaton',
             'auth_error_403': 'Pääsy kielletty',
@@ -292,9 +340,6 @@ class FinnishTranslation(BaseTranslation):
             'open_settings': 'Lisäosan asetukset',
             'ask_anyway': 'Kysy silti',
             'later': 'Myöhemmin',
-            'debug_settings': 'Virheenkorjausasetukset',
-            'enable_debug_logging': 'Ota käyttöön virheenkorjausloki (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Kun pois käytöstä, virheenkorjauslokeja ei kirjoiteta tiedostoon. Tämä voi estää lokitiedoston kasvamisen liian suureksi.',
             'reset_all_data': 'Nollaa kaikki tiedot',
             'reset_all_data_warning': 'Tämä poistaa kaikki API-avaimet, kehotemallit ja paikalliset historiatietueet. Kieliasetuksesi säilytetään. Ole varovainen.',
             'reset_all_data_confirm_title': 'Vahvista nollaus',
@@ -384,6 +429,24 @@ class FinnishTranslation(BaseTranslation):
             'request_timeout_label': 'Pyynnön aikakatkaisu:',
             'seconds': 'sekuntia',
             'request_timeout_error': 'Pyynnön aikakatkaisu. Nykyinen aikakatkaisu: {timeout} sekuntia',
+            'enable_custom_prompt_limit_label': 'Mukautettu kehotteen pituusraja',
+            'enable_custom_prompt_limit_tooltip': (
+                'Oletusrajat ovat 128 000 merkkiä (yksi kirja) ja 256 000 (useita kirjoja). '
+                'Useimmat käyttäjät eivät tarvitse muutosta. Kirjastonlaajuisiin hakuun käytä AI Search -toimintoa. '
+                'Ota mukautettu raja käyttöön vain, jos mallisi tukee paljon suurempaa kontekstia ja '
+                'pyynnöt yhä osuvat rajaan.'
+            ),
+            'max_prompt_length_label': 'Kehotteen enimmäispituus:',
+            'max_prompt_length_unit': 'merkkiä',
+            'max_prompt_length_tooltip': (
+                'Voimassa, kun mukautettu raja on käytössä. Oletussuositus: 524288 merkkiä. '
+                'Karkea ohje: 1 token ≈ 3–4 merkkiä. Ollamalla aseta myös num_ctx mallipuolella.'
+            ),
+            'max_prompt_length_normalized_title': 'Kehotteen raja säädetty',
+            'max_prompt_length_normalized': (
+                'Kehotteen pituus normalisoitiin arvoon {value} merkkiä (erottimet kuten pilkut '
+                'tai välilyönnit poistettiin).'
+            ),
             
             # Parallel AI settings
             'parallel_ai_count_label': 'Rinnakkaisten tekoälyjen määrä:',
@@ -511,6 +574,24 @@ class FinnishTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
             'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
             'ai_search_mode_info': 'Haetaan koko kirjastosta',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Hae koko kirjastostasi luonnollisella kielellä',
+            'ai_search_feature_description': (
+                'AI Search auttaa löytämään kirjoja koko Calibre-kirjastostasi.\n\n'
+                '• Käynnistys: avaa Ask valitsematta kirjoja, käytä Työkalut → AI Search tai pikanäppäin\n'
+                '• Toiminta: lisäosa lähettää tiiviit metatiedot (kirja-ID, otsikko, tekijä) '
+                'kaikista indeksoiduista kirjoista\n'
+                '• Suuret valinnat: yli 50 kirjan valinta ehdottaa AI Search -toimintoa sen sijaan, '
+                'että jokainen kirja upotettaisiin yksityiskohtaisessa muodossa\n'
+                '• Pidä tiedot ajan tasalla: napsauta "Päivitä kirjastotiedot" lisättyäsi tai poistettuasi kirjoja\n\n'
+                'Esimerkkejä: "Etsi kirjoja Pythonista", "Näytä Isaac Asimovin kirjoja".'
+            ),
+            'ai_search_usage_hint': (
+                'Vinkki: AI Search sopii parhaiten koko kirjaston löytämiseen. Vertaillaksesi '
+                'muutamaa kirjaa syvällisesti, valitse enintään 30 kirjaa.'
+            ),
+            'ai_search_data_title': 'Kirjastoindeksi',
+            'ai_search_data_subtitle': 'Päivitä tekoälylle lähetettävä tiivis kirjalista, kun lisäät tai poistat kirjoja',
             'library_prompt_template': 'Sinulla on pääsy käyttäjän kirjakirjastoon. Tässä ovat kaikki kirjat: {metadata} Käyttäjän kysely: {query} Etsi vastaavat kirjat nykyisestä kirjastosta ja palauta ne tässä muodossa (**TÄRKEÄÄ**: Käytä HTML-linkkimuotoa, jotta käyttäjät voivat napsauttaa kirjojen nimiä avatakseen ne suoraan): - <a href="calibre://book/BOOK_ID">Kirjan nimi</a> - Kirjailijan nimi Esimerkki: - <a href="calibre://book/123">Opi Python</a> - Mark Lutz - <a href="calibre://book/456">Koneoppiminen käytännössä</a> - Peter Harrington Huomautus: Jotkut kirjailijat voivat olla merkitty "unknown". Tämä on normaalia dataa, palauta kaikki vastaavat tulokset normaalisti. Palauta vain kyselyä vastaavat kirjat. Enintään 5 tulosta.',
             'ai_search_privacy_title': 'Tietosuojailmoitus',
             'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',

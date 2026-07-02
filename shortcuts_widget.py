@@ -26,33 +26,32 @@ class ShortcutsWidget(QWidget):
         
     def init_ui(self):
         """初始化界面"""
-        from .ui_constants import TAB_CONTENT_MARGIN, TAB_CONTENT_SPACING, setup_tab_widget_layout, get_tab_scroll_area_style, SPACING_SMALL, TEXT_COLOR_SECONDARY_STRONG
+        from .ui_constants import (
+            setup_tab_widget_layout, get_tab_scroll_area_style,
+            SPACING_SMALL, TEXT_COLOR_SECONDARY_STRONG,
+            setup_settings_tab_content, configure_layout, get_groupbox_style,
+        )
         
-        # 创建主布局 - 使用统一的 Tab 布局函数
         main_layout = setup_tab_widget_layout(self)
         
-        # 创建滚动区域以支持内容过多时滚动
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.NoFrame)
         scroll_area.setObjectName("shortcuts_scroll")
         scroll_area.setStyleSheet(get_tab_scroll_area_style("shortcuts_scroll"))
-        # 直接设置 viewport 的边距
         if scroll_area.viewport():
             scroll_area.viewport().setContentsMargins(0, 0, 0, 0)
         
-        # 创建内容容器
         content_widget = QWidget()
         content_widget.setStyleSheet("QWidget#shortcuts_container { background: transparent; border: none; }")
         content_widget.setObjectName("shortcuts_container")
-        content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(TAB_CONTENT_SPACING)
-        content_layout.setContentsMargins(TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN, TAB_CONTENT_MARGIN)
+        content_layout = setup_settings_tab_content(content_widget)
         
-        # 添加说明标签
         self.note_label = QLabel()
         self.note_label.setWordWrap(True)
-        self.note_label.setStyleSheet(f"QLabel {{ color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 0.95em; padding: {SPACING_SMALL}px 0; }}")
+        self.note_label.setStyleSheet(
+            f"QLabel {{ color: {TEXT_COLOR_SECONDARY_STRONG}; font-size: 0.95em; padding: 0; margin: 0; }}"
+        )
         self.note_label.setText(self.i18n.get(
             'shortcuts_note',
             "You can customize these shortcuts in calibre: Preferences -> Shortcuts (search 'Ask AI').\n"
@@ -60,12 +59,11 @@ class ShortcutsWidget(QWidget):
         ))
         content_layout.addWidget(self.note_label)
         
-        # 创建单个快捷键组 - 使用虚线边框而不是内阴影
         shortcuts_group = QGroupBox()
-        shortcuts_group.setStyleSheet("QGroupBox { border: 1px dashed #cccccc; padding: 10px; }")
+        shortcuts_group.setStyleSheet(get_groupbox_style("dashed"))
         shortcuts_layout = QGridLayout(shortcuts_group)
         shortcuts_layout.setColumnStretch(1, 1)
-        shortcuts_layout.setSpacing(10)
+        configure_layout(shortcuts_layout, 'settings_section')
         content_layout.addWidget(shortcuts_group)
         self.shortcuts_group = shortcuts_group
         self.shortcuts_layout = shortcuts_layout

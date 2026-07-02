@@ -55,7 +55,6 @@ class EnglishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configure AI providers and select your default AI',
             'prompts_subtitle': 'Customize how questions are sent to AI',
             'export_settings_subtitle': 'Set default folder for exporting PDFs',
-            'debug_settings_subtitle': 'Enable debug logging for troubleshooting',
             'reset_all_data_subtitle': 'Warning: This will permanently delete all your settings and data',
             
             # Prompts tab
@@ -266,6 +265,53 @@ class EnglishTranslation(BaseTranslation):
             'request_failed': 'Request failed',
             'request_stopped': 'Request stopped',
             'question_too_long': 'Question too long',
+            'question_too_long_detail': (
+                'Prompt is too long ({current} characters, limit {limit}, over by {over}). '
+                'You selected {book_count} book(s).'
+            ),
+            'question_too_long_detail_library': (
+                'Prompt is too long ({current} characters, limit {limit}, over by {over}). '
+                'Your library index contains {book_count} book(s).'
+            ),
+            'question_too_long_hint_ai_search': (
+                'For library-wide searches, use AI Search (ask without selecting books, '
+                'or use the AI Search menu) instead of selecting many books.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Your library index exceeds the current prompt limit. Enable Custom prompt length limit '
+                'in Plugin Configuration → General (suggested: 524288 characters), or ask a more '
+                'specific question.'
+            ),
+            'question_too_long_reduce_books': (
+                'To compare a smaller set in depth, try deselecting about {count} book(s).'
+            ),
+            'question_too_long_hint_default': (
+                'Current default limit: {limit} characters ({mode}). '
+                'Single-book default is 128,000; multi-book default is 256,000. '
+                'Advanced users can enable a custom limit in Plugin Configuration → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'You enabled a custom prompt limit. If requests time out, lower the limit in '
+                'Plugin Configuration → General, or reduce selected books / use a more specific query.'
+            ),
+            'large_selection_dialog_title': 'Many Books Selected',
+            'large_selection_dialog_message': (
+                'You selected {count} books. For library-wide questions, AI Search works better '
+                'and searches your entire library with compact metadata.\n\n'
+                'Switch to AI Search, or continue with the selected books in compact format?'
+            ),
+            'large_selection_use_ai_search': 'Use AI Search',
+            'large_selection_continue': 'Continue with Selection',
+            'multi_book_truncation_note': (
+                'Note: Only the first {included} of {total} selected books are included due to the '
+                'prompt limit. Use AI Search to query your entire library, or raise the custom limit '
+                'in Plugin Configuration → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Note: Only the first {included} of {total} indexed books are included due to the '
+                'prompt limit. Results may be incomplete for very large libraries unless you raise '
+                'the custom limit in Plugin Configuration → General.'
+            ),
             'auth_token_required_title': 'AI Service Required',
             'auth_token_required_message': 'Please configure a valid AI service in Plugin Configuration.',
             'open_configuration': 'Open Configuration',
@@ -280,6 +326,7 @@ class EnglishTranslation(BaseTranslation):
             'book_title_check': 'Book title required',
             'avoid_repeat_question': 'Please use a different question',
             'empty_answer': 'Empty answer',
+            'invalid_json': 'Invalid JSON',
             'invalid_response': 'Invalid response',
             'auth_error_401': 'Unauthorized',
             'auth_error_403': 'Access denied',
@@ -294,9 +341,6 @@ class EnglishTranslation(BaseTranslation):
             'open_settings': 'Plugin Configuration',
             'ask_anyway': 'Ask Anyway',
             'later': 'Later',
-            'debug_settings': 'Debug Settings',
-            'enable_debug_logging': 'Enable debug logging (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'When disabled, debug logs will not be written to file. This can prevent the log file from growing too large.',
             'reset_all_data': 'Reset All Data',
             'reset_all_data_warning': 'This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.',
             'reset_all_data_confirm_title': 'Confirm Reset',
@@ -386,6 +430,24 @@ class EnglishTranslation(BaseTranslation):
             'request_timeout_label': 'Request Timeout:',
             'seconds': 'seconds',
             'request_timeout_error': 'Request timeout. Current timeout: {timeout} seconds',
+            'enable_custom_prompt_limit_label': 'Custom prompt length limit',
+            'enable_custom_prompt_limit_tooltip': (
+                'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '
+                'Most users do not need to change this. For library-wide searches, use AI Search. '
+                'Enable a custom limit only if your model supports a much larger context and '
+                'requests still hit the limit.'
+            ),
+            'max_prompt_length_label': 'Max prompt length:',
+            'max_prompt_length_unit': 'characters',
+            'max_prompt_length_tooltip': (
+                'Applies when custom limit is enabled. Default suggestion: 524288 characters. '
+                'Rough guide: 1 token ≈ 3–4 characters. For Ollama, also set num_ctx on the model side.'
+            ),
+            'max_prompt_length_normalized_title': 'Prompt limit adjusted',
+            'max_prompt_length_normalized': (
+                'Prompt length was normalized to {value} characters (separators such as commas '
+                'or spaces were removed).'
+            ),
             
             # Parallel AI settings
             'parallel_ai_count_label': 'Parallel AI Count:',
@@ -500,7 +562,7 @@ class EnglishTranslation(BaseTranslation):
             'library_enable': 'Enable AI Search',
             'library_enable_tooltip': 'When enabled, you can search your library using AI when no books are selected',
             'library_update': 'Update Library Data',
-            'library_update_tooltip': 'Extract book titles and authors from your library',
+            'library_update_tooltip': 'Index titles and authors for all books in your library (full library, compact format)',
             'library_updating': 'Updating...',
             'library_status': 'Status: {count} books, last update: {time}',
             'library_status_empty': 'Status: No data. Click "Update Library Data" to start.',
@@ -516,6 +578,23 @@ class EnglishTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Not Enough Books',
             'ai_search_not_enough_books_message': 'AI Search requires at least {min_books} books in your library.\n\nYour current library has only {book_count} book(s).\n\nPlease add more books to your library to use AI Search.',
             'ai_search_mode_info': 'Searching across your entire library',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Search your entire library using natural language',
+            'ai_search_feature_description': (
+                'AI Search helps you discover books across your whole Calibre library.\n\n'
+                '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
+                '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
+                '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
+                'embedding every book in verbose format\n'
+                '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
+                'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'
+            ),
+            'ai_search_usage_hint': (
+                'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
+                'select up to 30 books instead.'
+            ),
+            'ai_search_data_title': 'Library Index',
+            'ai_search_data_subtitle': 'Refresh the compact book list sent to AI when you add or remove books',
             'library_prompt_template': 'You have access to the user\'s book library. Here are all the books: {metadata} User query: {query} Please find matching books in the current library and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): - <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington Note: Some authors may be listed as "unknown". This is normal data, please return all matching results normally without being misled by this. Only return books that match the query. Maximum 5 results.',
             'ai_search_privacy_title': 'Privacy Notice',
             'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',

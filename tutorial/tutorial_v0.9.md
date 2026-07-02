@@ -1,6 +1,6 @@
 
-# Ask AI Plugin User Manual v0.7
-Latest updated: January 20, 2026, Ask AI Plugin v1.4.1
+# Ask AI Plugin User Manual v0.9
+Latest updated: Jul 1, 2026, Ask AI Plugin v1.4.7
 
 ToC of this tutorial:
 - Explain: Why & What is API Keys
@@ -8,11 +8,13 @@ ToC of this tutorial:
 - Installation
 - First Time Setup an AI Service
 - How to Use
+- AI Search
 - Keyboard Shortcuts
 - Random Questions
 - Prompts
 - Other Features
 - Configuration
+- Custom Prompt Length (New)
 - Troubleshooting
 - Privacy
 - Tips
@@ -95,7 +97,7 @@ Done!
 1. Select a book or multiple books in calibre
 2. Open Ask dialog:
    - Click Ask AI Plugin button in toolbar, or
-   - Use the global shortcut (default: Ctrl+L)
+   - Use the global shortcut (default: Ctrl+K)
 3. Type your question
 4. Click Send (or use Ctrl+Enter / Cmd+Enter)
 
@@ -106,6 +108,48 @@ The plugin automatically includes book metadata. You don't need to type title or
 Perplexity is useful when you want answers with sources.
 
 When Perplexity returns citations/search results, the plugin appends a plain-text "Citations" / "Search Results" section (with full URLs) at the end of the answer, so you can copy/paste the links.
+
+## AI Search
+
+AI Search lets you search your entire library using natural language, without selecting any books first.
+
+### How to Use AI Search
+
+**Open AI Search**:
+- Click "AI Search" in the plugin menu, or
+- Use the shortcut Ctrl+Shift+L, or
+- Simply open the Ask dialog without selecting any books
+
+**Ask questions about your library**:
+- "Do you have any books about Python programming?"
+- "Show me books by Isaac Asimov"
+- "Find books about machine learning"
+- "What science fiction books do I have?"
+
+**Open the book in response**
+
+AI will search through your library metadata and recommend relevant books, and you can open the book in response by clicking the book title.
+
+**Update your library index** (recommended):
+- Open Configuration -> Search tab
+- Click "Update Library Data" to index titles and authors for **all books** in your library
+- Run this again after adding or removing books
+
+### Features
+
+- **Natural Language Search**: Ask in plain language, no special syntax needed
+- **Library-Wide**: Indexes and searches your full calibre library (compact metadata: book ID, title, author)
+- **Smart Matching**: AI understands context and can find related books
+- **Click to Open**: Click on book titles in the results to open them directly
+- **Large Selection Helper**: If you select more than 50 books, Ask suggests AI Search instead of stuffing verbose metadata into the prompt
+
+### Tips for AI Search
+
+- Be specific about what you're looking for
+- You can ask about genres, authors, topics, or any metadata
+- AI Search works best with well-organized library metadata
+- For library-wide discovery, use AI Search — do not select thousands of books manually
+- For comparing a few books in depth, select up to about 30 books instead
 
 ## Keyboard Shortcuts
 
@@ -118,8 +162,9 @@ How to customize:
 4. Edit the shortcuts you want
 
 Common shortcuts (defaults):
-- Ask AI: Ask (global): Ctrl+L
+- Ask AI: Ask (global): Ctrl+K
 - Ask AI: Open Configuration: F2
+- Ask AI: AI Search: Ctrl+Shift+L
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
 - Ask AI: Random Question (in dialog): Ctrl+Shift+R (Cmd+Shift+R on macOS)
 
@@ -185,13 +230,17 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
-- Debug Logging: Enable/disable debug log file (thanks to Comfy.n for feedback)
+- Request Timeout: How long to wait for an AI response
+- Custom Prompt Length: Optional advanced limit (see chapter below)
 
 AI Provider Settings:
 - API Key: Your authentication key
 - Base URL: Usually pre-filled
 - Model: Select from dropdown or enter custom
 - Enable Streaming: Get responses word-by-word
+
+Search Tab:
+- AI Search overview, privacy notice, and **Update Library Data** (full-library index)
 
 Prompts Tab (separate tab for better management):
 - Persona: Define your research background and goals to help AI provide more relevant responses
@@ -201,7 +250,50 @@ Prompts Tab (separate tab for better management):
 Export Settings:
 - Set default PDF save location
 
+## Custom Prompt Length (New)
+
+The plugin limits how much text is sent to the AI in a single request. This protects against timeouts and confusing errors when a prompt grows too large.
+
+### Default limits (most users)
+
+You do **not** need to change anything unless you hit a limit or use a large-context local model.
+
+| Mode | Default limit |
+|------|----------------|
+| Single book | 128,000 characters |
+| Multi-book (selected titles) | 256,000 characters |
+| AI Search (full library index) | Uses compact format; see Search tab |
+
+If the prompt is too long, the plugin shows a detailed message with the current size, the limit, and how many books were selected — plus guidance to use **AI Search** for library-wide questions.
+
+### When to use a custom limit
+
+Enable this only if you know your model supports a larger context window — for example **Ollama** with `num_ctx` set to 128k on the model side.
+
+**Do not** select thousands of books manually and raise the limit to “make it fit.” Use **AI Search** instead. Custom limits are an advanced fallback, not the main way to search a large library.
+
+### How to enable
+
+1. Open Configuration -> **General**
+2. Check **Custom prompt length limit**
+3. Enter **Max prompt length** in characters (default suggestion: 524288)
+4. Click **Save**
+
+Rough guide: 1 token ≈ 3–4 characters. For Ollama, also configure `num_ctx` in your model settings.
+
+### Multi-book behavior
+
+- **Up to 30 books**: verbose metadata (title, author, publisher, etc.) for deeper comparison
+- **More than 30 books**: compact one-line metadata per book
+- **More than 50 books**: Ask offers to switch to **AI Search** automatically
+
 ## Troubleshooting
+
+Question Too Long / Prompt Too Long:
+- For library-wide questions: use **AI Search** (no books selected) or accept the switch when selecting 50+ books
+- For multi-book comparison: up to 30 books use detailed metadata; larger selections switch to compact format automatically
+- Very large libraries may truncate the index at the prompt limit — enable **Custom prompt length limit** in General if needed (suggested: 524288)
+- Read the error message — it shows current length, limit, and suggested actions
 
 Request Failed:
 - Check internet connection
@@ -246,6 +338,8 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 3. Be specific in questions for better answers.
 4. Set up a detailed persona for more relevant responses.
 5. Use Perplexity for research questions that need citations.
+6. Use AI Search to quickly find books in your library without browsing.
+7. If you see "Question too long", switch to AI Search, use compact mode (30+ books), or raise the custom limit for very large libraries.
 
 ## Getting Help
 

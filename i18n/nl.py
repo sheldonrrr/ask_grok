@@ -36,7 +36,7 @@ class DutchTranslation(BaseTranslation):
     def translations(self) -> dict:
         return {
             # Plugin information
-            'plugin_name': 'Ask AI Plugin',
+            'plugin_name': 'Ask AI-plugin',
             'plugin_desc': 'Stel vragen over een boek met behulp van AI',
 
             # UI - Tabs and sections
@@ -55,7 +55,6 @@ class DutchTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configureer AI-aanbieders en selecteer uw standaard-AI',
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
-            'debug_settings_subtitle': 'Schakel debug-logging in voor probleemoplossing',
             'reset_all_data_subtitle': 'Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
 
             # Prompts tab
@@ -265,6 +264,52 @@ class DutchTranslation(BaseTranslation):
             'request_failed': 'Verzoek mislukt',
             'request_stopped': 'Verzoek gestopt',
             'question_too_long': 'Vraag te lang',
+            'question_too_long_detail': (
+                'Prompt is te lang ({current} tekens, limiet {limit}, {over} te veel). '
+                'U heeft {book_count} boek/boeken geselecteerd.'
+            ),
+            'question_too_long_detail_library': (
+                'Prompt is te lang ({current} tekens, limiet {limit}, {over} te veel). '
+                'Uw bibliotheekindex bevat {book_count} boek/boeken.'
+            ),
+            'question_too_long_hint_ai_search': (
+                'Gebruik voor bibliotheekbrede zoekopdrachten AI Search (vraag zonder boeken te selecteren '
+                'of gebruik het AI Search-menu) in plaats van veel boeken te selecteren.'
+            ),
+            'question_too_long_hint_library_search': (
+                'Uw bibliotheekindex overschrijdt de huidige promptlimiet. Schakel aangepaste promptlengtelimiet in '
+                'onder Plugin-configuratie → General (aanbevolen: 524288 tekens), of stel een specifiekere vraag.'
+            ),
+            'question_too_long_reduce_books': (
+                'Om een kleinere set diepgaand te vergelijken, probeer ongeveer {count} boek/boeken te deselecteren.'
+            ),
+            'question_too_long_hint_default': (
+                'Huidige standaardlimiet: {limit} tekens ({mode}). '
+                'Standaard enkel boek is 128.000; meerdere boeken 256.000. '
+                'Gevorderde gebruikers kunnen een aangepaste limiet inschakelen onder Plugin-configuratie → General.'
+            ),
+            'question_too_long_hint_custom': (
+                'U heeft een aangepaste promptlimiet ingeschakeld. Als verzoeken time-out krijgen, verlaag de limiet '
+                'onder Plugin-configuratie → General, of verminder geselecteerde boeken / gebruik een specifiekere query.'
+            ),
+            'large_selection_dialog_title': 'Veel boeken geselecteerd',
+            'large_selection_dialog_message': (
+                'U heeft {count} boeken geselecteerd. Voor bibliotheekbrede vragen werkt AI Search beter '
+                'en doorzoekt uw hele bibliotheek met compacte metadata.\n\n'
+                'Overschakelen naar AI Search, of doorgaan met de geselecteerde boeken in compact formaat?'
+            ),
+            'large_selection_use_ai_search': 'AI Search gebruiken',
+            'large_selection_continue': 'Doorgaan met selectie',
+            'multi_book_truncation_note': (
+                'Let op: vanwege de promptlimiet zijn alleen de eerste {included} van {total} geselecteerde boeken opgenomen. '
+                'Gebruik AI Search om uw hele bibliotheek te doorzoeken, of verhoog de aangepaste limiet '
+                'onder Plugin-configuratie → General.'
+            ),
+            'library_metadata_truncation_note': (
+                'Let op: vanwege de promptlimiet zijn alleen de eerste {included} van {total} geïndexeerde boeken opgenomen. '
+                'Resultaten kunnen onvolledig zijn voor zeer grote bibliotheken tenzij u de aangepaste limiet '
+                'verhoogt onder Plugin-configuratie → General.'
+            ),
             'auth_token_required_title': 'AI-service vereist',
             'auth_token_required_message': 'Configureer alstublieft een geldige AI-service in de Plugin Configuratie.',
             'open_configuration': 'Open configuratie',
@@ -278,6 +323,7 @@ class DutchTranslation(BaseTranslation):
             'book_title_check': 'Boektitel vereist',
             'avoid_repeat_question': 'Gebruik alstublieft een andere vraag',
             'empty_answer': 'Leeg antwoord',
+            'invalid_json': 'Ongeldige JSON',
             'invalid_response': 'Ongeldig antwoord',
             'auth_error_401': 'Ongeautoriseerd',
             'auth_error_403': 'Toegang geweigerd',
@@ -292,9 +338,6 @@ class DutchTranslation(BaseTranslation):
             'open_settings': 'Plugin Configuratie',
             'ask_anyway': 'Vraag toch',
             'later': 'Later',
-            'debug_settings': 'Debug-instellingen',
-            'enable_debug_logging': 'Schakel debug-logging in (ask_ai_plugin_debug.log)',
-            'debug_logging_hint': 'Indien uitgeschakeld, worden debug-logs niet naar een bestand geschreven. Dit kan voorkomen dat het logbestand te groot wordt.',
             'reset_all_data': 'Reset alle gegevens',
             'reset_all_data_warning': 'Dit zal alle API-sleutels, promptsjablonen en lokale geschiedenisrecords verwijderen. Uw taalvoorkeur blijft behouden. Ga voorzichtig te werk.',
             'reset_all_data_confirm_title': 'Bevestig reset',
@@ -384,6 +427,24 @@ class DutchTranslation(BaseTranslation):
             'request_timeout_label': 'Verzoektime-out:',
             'seconds': 'seconden',
             'request_timeout_error': 'Verzoektime-out. Huidige time-out: {timeout} seconden',
+            'enable_custom_prompt_limit_label': 'Aangepaste promptlengtelimiet',
+            'enable_custom_prompt_limit_tooltip': (
+                'Standaardlimieten zijn 128.000 tekens (enkel boek) en 256.000 (meerdere boeken). '
+                'De meeste gebruikers hoeven dit niet te wijzigen. Gebruik AI Search voor bibliotheekbrede zoekopdrachten. '
+                'Schakel alleen een aangepaste limiet in als uw model een veel grotere context ondersteunt en '
+                'verzoeken nog steeds de limiet bereiken.'
+            ),
+            'max_prompt_length_label': 'Max. promptlengte:',
+            'max_prompt_length_unit': 'tekens',
+            'max_prompt_length_tooltip': (
+                'Geldt wanneer aangepaste limiet is ingeschakeld. Standaard suggestie: 524288 tekens. '
+                'Ruwe richtlijn: 1 token ≈ 3–4 tekens. Stel bij Ollama ook num_ctx in aan modelzijde.'
+            ),
+            'max_prompt_length_normalized_title': 'Promptlimiet aangepast',
+            'max_prompt_length_normalized': (
+                "Promptlengte is genormaliseerd naar {value} tekens (scheidingstekens zoals komma's "
+                'of spaties zijn verwijderd).'
+            ),
 
             # Parallel AI settings
             'parallel_ai_count_label': 'Aantal parallelle AI\'s:',
@@ -511,6 +572,24 @@ class DutchTranslation(BaseTranslation):
             'ai_search_not_enough_books_title': 'Niet genoeg boeken',
             'ai_search_not_enough_books_message': 'AI Zoeken vereist minimaal {min_books} boeken in uw bibliotheek.\n\nUw huidige bibliotheek heeft slechts {book_count} boek(en).\n\nVoeg meer boeken toe om AI Zoeken te gebruiken.',
             'ai_search_mode_info': 'Zoeken door uw hele bibliotheek',
+            'ai_search_feature_title': 'AI Search',
+            'ai_search_feature_subtitle': 'Doorzoek uw hele bibliotheek met natuurlijke taal',
+            'ai_search_feature_description': (
+                'AI Search helpt u boeken te ontdekken in uw hele Calibre-bibliotheek.\n\n'
+                '• Activeren: open Ask zonder boeken te selecteren, gebruik Extra → AI Search of een sneltoets\n'
+                '• Werking: de plugin stuurt compacte metadata (boek-ID, titel, auteur) '
+                'van alle geïndexeerde boeken\n'
+                '• Grote selecties: bij meer dan 50 boeken stelt Ask AI Search voor in plaats van '
+                'elk boek in uitgebreid formaat in te sluiten\n'
+                '• Houd gegevens actueel: klik "Bibliotheekgegevens bijwerken" na toevoegen of verwijderen van boeken\n\n'
+                'Voorbeelden: "Vind boeken over Python", "Toon boeken van Isaac Asimov".'
+            ),
+            'ai_search_usage_hint': (
+                'Tip: AI Search werkt het best voor bibliotheekbrede ontdekking. Voor diepgaande vergelijking '
+                'van enkele boeken, selecteer maximaal 30 boeken.'
+            ),
+            'ai_search_data_title': 'Bibliotheekindex',
+            'ai_search_data_subtitle': 'Vernieuw de compacte boekenlijst die naar AI wordt gestuurd wanneer u boeken toevoegt of verwijdert',
             'library_prompt_template': 'U heeft toegang tot de boekenbibliotheek van de gebruiker. Hier zijn alle boeken: {metadata} Gebruikersvraag: {query} Vind alstublieft overeenkomende boeken in de huidige bibliotheek en retourneer ze in dit formaat (**BELANGRIJK**: Gebruik HTML-linkformaat zodat gebruikers op boektitels kunnen klikken om ze direct te openen): - <a href="calibre://book/BOOK_ID">Boektitel</a> - Auteursnaam Voorbeeld: - <a href="calibre://book/123">Python leren</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in actie</a> - Peter Harrington Opmerking: Sommige auteurs kunnen worden vermeld als "unknown". Dit zijn normale gegevens, retourneer alstublieft alle overeenkomende resultaten normaal. Retourneer alleen boeken die overeenkomen met de vraag. Maximaal 5 resultaten.',
             'ai_search_privacy_title': 'Privacyverklaring',
             'ai_search_privacy_alert': 'AI Zoeken gebruikt metadata van boeken (titels en auteurs). Deze informatie wordt verzonden naar de door u geconfigureerde AI-provider om uw zoekopdrachten te verwerken.',

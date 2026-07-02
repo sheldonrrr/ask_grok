@@ -74,9 +74,66 @@ def safe_log_config(config, keys_to_mask=None):
     
     return safe_config
 
+
+def _sanitize_metadata_field(text):
+    """Normalize title/author text for compact TSV (cross-platform line endings)."""
+    text = str(text)
+    text = text.replace('\r\n', ' ').replace('\r', ' ')
+    text = text.replace('\u2028', ' ').replace('\u2029', ' ')
+    text = text.replace('|', '/').replace('\n', ' ')
+    return text
+
+
+def split_compact_tsv_lines(tsv_text):
+    """Split compact TSV into non-empty lines, tolerating CRLF."""
+    if not tsv_text:
+        return []
+    return [line for line in tsv_text.splitlines() if line.strip()]
+
+
+def format_books_compact_tsv(books):
+    """
+    Format book entries as compact TSV lines: id|title|authors
+
+    :param books: list of dicts (id, title, authors) or Calibre Metadata objects
+    :return: compact TSV string
+    """
+    lines = []
+    for book in books:
+        if isinstance(book, dict):
+            book_id = book.get('id', '')
+            title = book.get('title', 'Unknown') or 'Unknown'
+            authors = book.get('authors', 'Unknown') or 'Unknown'
+        else:
+            book_id = getattr(book, 'id', '')
+            title = getattr(book, 'title', None) or 'Unknown'
+            author_list = getattr(book, 'authors', None) or ['Unknown']
+            authors = ', '.join(author_list) if author_list else 'Unknown'
+
+        title = _sanitize_metadata_field(title)
+        authors = _sanitize_metadata_field(authors)
+        lines.append(f"{book_id}|{title}|{authors}")
+    return '\n'.join(lines)
+
+
+def format_library_metadata_for_prompt(prefs):
+    """Convert cached library JSON metadata to compact TSV for prompts."""
+    cached_metadata = get_library_metadata(prefs)
+    if not cached_metadata:
+        return ''
+    try:
+        import json
+        books = json.loads(cached_metadata)
+        if not isinstance(books, list):
+            return cached_metadata
+        return format_books_compact_tsv(books)
+    except (json.JSONDecodeError, TypeError):
+        return cached_metadata
+
+
 def update_library_metadata(db, prefs):
     """
-    提取图书馆元数据（仅书名和作者名）
+    提取图书馆元数据（仅书名和作者名），索引全库
     
     :param db: Calibre数据库对象
     :param prefs: 插件配置对象
@@ -86,13 +143,12 @@ def update_library_metadata(db, prefs):
         import json
         from datetime import datetime
         
-        # 获取所有书籍ID，最多100本
-        # 使用new_api.all_book_ids()获取所有书籍ID
+        # 获取所有书籍ID（全库，无上限）
         try:
-            book_ids = list(db.new_api.all_book_ids())[:100]
+            book_ids = list(db.new_api.all_book_ids())
         except AttributeError:
             # 如果new_api不可用，尝试使用旧API
-            book_ids = list(db.data.search_getting_ids('', db.FIELD_MAP['search']))[:100]
+            book_ids = list(db.data.search_getting_ids('', db.FIELD_MAP['search']))
         
         books = []
         for book_id in book_ids:
@@ -189,7 +245,44 @@ def build_library_prompt(user_query, prefs, i18n=None):
     else:
         template = default_template
     
-    # 使用format填充模板
-    prompt = template.format(metadata=cached_metadata, query=user_query)
+    # 使用紧凑 TSV 格式填充模板（id|title|authors 每行一本）
+    compact_metadata = format_library_metadata_for_prompt(prefs)
+    if not compact_metadata:
+        compact_metadata = cached_metadata
+
+    try:
+        from .prompt_limits import get_max_prompt_length
+    except ImportError:
+        from prompt_limits import get_max_prompt_length
+
+    compact_lines = split_compact_tsv_lines(compact_metadata)
+    total_books = len(compact_lines)
+    max_length = get_max_prompt_length(True, prefs)
+    overhead = len(template.format(metadata='', query=user_query)) + 200
+
+    included_lines = []
+    current_len = 0
+    for line in compact_lines:
+        add_len = len(line) + (1 if included_lines else 0)
+        if included_lines and current_len + add_len > max_length - overhead:
+            break
+        included_lines.append(line)
+        current_len += add_len
+
+    metadata_for_prompt = '\n'.join(included_lines)
+    if total_books and len(included_lines) < total_books:
+        note = (
+            'Note: Only the first {included} of {total} indexed books are included due to the prompt limit. '
+            'Results may be incomplete for very large libraries.'
+        )
+        if i18n:
+            note = i18n.get('library_metadata_truncation_note', note).format(
+                included=len(included_lines), total=total_books,
+            )
+        else:
+            note = note.format(included=len(included_lines), total=total_books)
+        metadata_for_prompt = f"{metadata_for_prompt}\n\n{note}"
+
+    prompt = template.format(metadata=metadata_for_prompt, query=user_query)
     
     return prompt

@@ -31,7 +31,7 @@ xAI (Grok) 的 API 同样与 OpenAI 兼容。
 - **请求体 (Body)**:
   ```json
   {
-    "model": "grok-4-latest",
+    "model": "grok-4.3",
     "messages": [
       {
         "role": "user",
