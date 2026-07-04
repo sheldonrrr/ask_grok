@@ -5,17 +5,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DIST="$ROOT/dist"
 VERSION="$(python3 -c "import sys; sys.path.insert(0, '$ROOT'); from version import VERSION_STRING; print(VERSION_STRING)")"
-ZIP_NAME="Ask AI Plugin.zip"
-VERSIONED_ZIP="Ask AI Plugin-${VERSION}.zip"
+VERSIONED_ZIP="Ask_AI_Plugin_v${VERSION}.zip"
 
 mkdir -p "$DIST"
 cd "$ROOT"
 
 echo "Packaging Ask AI Plugin v${VERSION}..."
 
-rm -f "$DIST/$ZIP_NAME" "$DIST/$VERSIONED_ZIP"
+rm -f "$DIST/Ask AI Plugin.zip" "$DIST/Ask AI Plugin-${VERSION}.zip" "$DIST/$VERSIONED_ZIP"
 
-zip -r "$DIST/$ZIP_NAME" . \
+zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "*.git*" \
   -x ".env" \
   -x ".env.*" \
@@ -82,8 +81,10 @@ zip -r "$DIST/$ZIP_NAME" . \
   -x "*.code-workspace" \
   > /dev/null
 
-cp "$DIST/$ZIP_NAME" "$DIST/$VERSIONED_ZIP"
+# Keep sample env template in release package (align with .gitignore: !.env.example)
+if [ -f "$ROOT/.env.example" ]; then
+  zip -qj "$DIST/$VERSIONED_ZIP" "$ROOT/.env.example"
+fi
 
 echo "Created:"
-echo "  $DIST/$ZIP_NAME"
 echo "  $DIST/$VERSIONED_ZIP"
