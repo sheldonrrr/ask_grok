@@ -405,6 +405,17 @@ class DutchTranslation(BaseTranslation):
             'about_plugin': 'Over Ask AI Plugin',
             'learn_how_to_use': 'Hoe te gebruiken',
             'email': 'iMessage',
+            'about_title': 'Over Ask AI Plugin',
+            'about_version_label': 'Versie',
+            'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
+            'about_related_plugins': 'Gerelateerde plugins',
+            'about_markdown_title': 'Markdown voor calibre',
+            'about_markdown_desc': 'Exporteer boeken als Markdown-tekstbestanden.',
+            'about_tradsimp_title': 'Chinese tekstconversie voor calibre',
+            'about_tradsimp_desc': 'Converteer traditioneel en vereenvoudigd Chinees in ebooks.',
+            'about_open_mobileread': 'MobileRead openen',
+            'about_open_nowtiny': 'Nowtiny openen',
+            'about_nowtiny_note': 'Meer tools en pluginstatus staan op Nowtiny.',
 
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

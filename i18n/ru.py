@@ -405,6 +405,17 @@ class RussianTranslation(BaseTranslation):
             'about_plugin': 'О плагине Ask AI',
             'learn_how_to_use': 'Как использовать',
             'email': 'iMessage',
+            'about_title': 'О плагине Ask AI',
+            'about_version_label': 'Версия',
+            'about_description': 'Задавайте вопросы о книгах calibre с помощью выбранных вами сервисов ИИ.',
+            'about_related_plugins': 'Связанные плагины',
+            'about_markdown_title': 'Markdown для calibre',
+            'about_markdown_desc': 'Экспортируйте книги как текстовые файлы Markdown.',
+            'about_tradsimp_title': 'Преобразование китайского текста для calibre',
+            'about_tradsimp_desc': 'Преобразуйте традиционный и упрощенный китайский в электронных книгах.',
+            'about_open_mobileread': 'Открыть MobileRead',
+            'about_open_nowtiny': 'Открыть Nowtiny',
+            'about_nowtiny_note': 'Другие инструменты и статус плагинов доступны на Nowtiny.',
 
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

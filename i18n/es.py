@@ -407,6 +407,17 @@ class SpanishTranslation(BaseTranslation):
             'about_plugin': 'Acerca del Plugin Ask AI',
             'learn_how_to_use': 'Cómo usarlo',
             'email': 'iMessage',
+            'about_title': 'Acerca de Ask AI Plugin',
+            'about_version_label': 'Versión',
+            'about_description': 'Haz preguntas sobre libros de calibre con los servicios de IA que elijas.',
+            'about_related_plugins': 'Plugins relacionados',
+            'about_markdown_title': 'Markdown para calibre',
+            'about_markdown_desc': 'Exporta libros como archivos de texto Markdown.',
+            'about_tradsimp_title': 'Conversión de chino para calibre',
+            'about_tradsimp_desc': 'Convierte chino tradicional y simplificado en ebooks.',
+            'about_open_mobileread': 'Abrir MobileRead',
+            'about_open_nowtiny': 'Abrir Nowtiny',
+            'about_nowtiny_note': 'Más herramientas y el estado de los plugins están en Nowtiny.',
             
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

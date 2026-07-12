@@ -407,6 +407,17 @@ class FinnishTranslation(BaseTranslation):
             'about_plugin': 'Tietoja Ask AI -lisäosasta',
             'learn_how_to_use': 'Miten käyttää',
             'email': 'iMessage',
+            'about_title': 'Tietoja Ask AI -lisäosasta',
+            'about_version_label': 'Versio',
+            'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
+            'about_related_plugins': 'Aiheeseen liittyvät lisäosat',
+            'about_markdown_title': 'Markdown calibre-ohjelmalle',
+            'about_markdown_desc': 'Vie kirjat Markdown-tekstitiedostoiksi.',
+            'about_tradsimp_title': 'Kiinankielisen tekstin muunnos calibre-ohjelmalle',
+            'about_tradsimp_desc': 'Muunna perinteistä ja yksinkertaistettua kiinaa e-kirjoissa.',
+            'about_open_mobileread': 'Avaa MobileRead',
+            'about_open_nowtiny': 'Avaa Nowtiny',
+            'about_nowtiny_note': 'Lisää työkaluja ja lisäosien tila löytyy Nowtiny-sivustolta.',
             
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

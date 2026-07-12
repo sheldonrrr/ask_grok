@@ -404,6 +404,17 @@ class NorwegianTranslation(BaseTranslation):
             'about_plugin': 'Om Ask AI Plugin',
             'learn_how_to_use': 'Hvordan bruke',
             'email': 'iMessage',
+            'about_title': 'Om Ask AI Plugin',
+            'about_version_label': 'Versjon',
+            'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
+            'about_related_plugins': 'Relaterte programtillegg',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': 'Eksporter bøker som Markdown-tekstfiler.',
+            'about_tradsimp_title': 'Kinesisk tekstkonvertering for calibre',
+            'about_tradsimp_desc': 'Konverter tradisjonell og forenklet kinesisk i ebøker.',
+            'about_open_mobileread': 'Åpne MobileRead',
+            'about_open_nowtiny': 'Åpne Nowtiny',
+            'about_nowtiny_note': 'Flere verktøy og programtilleggstatus finnes på Nowtiny.',
 
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

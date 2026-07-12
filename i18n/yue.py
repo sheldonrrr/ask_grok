@@ -383,6 +383,17 @@ class CantoneseTranslation(BaseTranslation):
             'about_plugin': '關於 Ask AI 插件', # Why Ask AI Plugin?
             'learn_how_to_use': '點樣用', # How to Use
             'email': 'iMessage', # iMessage
+            'about_title': '關於 Ask AI 插件',
+            'about_version_label': '版本',
+            'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
+            'about_related_plugins': '相關插件',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': '將書本匯出做 Markdown 文字檔。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': '喺電子書入面轉換繁體同簡體中文。',
+            'about_open_mobileread': '開啟 MobileRead',
+            'about_open_nowtiny': '開啟 Nowtiny',
+            'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
             'model_display_name_grok': 'Grok(x.AI)', # Grok(x.AI)

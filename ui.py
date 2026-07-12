@@ -33,6 +33,7 @@ from calibre.utils.resources import get_path as I
 import sys
 import os
 import time
+import html
 
 NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
 NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
@@ -742,49 +743,37 @@ class AboutWidget(QWidget):
         """Render the local About page."""
         self.text_browser.setHtml(self._local_about_html())
 
-    def _is_chinese_ui(self):
-        return (self.language or '').lower() in ('zh', 'zht', 'yue')
-
     def _local_about_html(self):
-        if self._is_chinese_ui():
-            title = '关于 Ask AI Plugin'
-            version_label = '当前版本'
-            description = (
-                'Ask AI Plugin 是 calibre 的 AI 问答插件，可在阅读、管理书库和多书检索时，'
-                '调用你配置的 AI 服务来理解书籍内容。'
-            )
-            rec_heading = 'Nowtiny calibre 插件推荐'
-            rec_intro = '推荐另外两个 calibre 插件：'
-            markdown_title = 'Markdown（for calibre）'
-            markdown_desc = '将图书转换为 Markdown 文本文件，并导出到指定目录。'
-            tradsimp_title = 'Chinese Text Conversion / 简繁转换（for calibre）'
-            tradsimp_desc = '在电子书流程中进行简繁转换，支持 EPUB/AZW3 和离线处理。'
-            open_text = '打开 MobileRead'
-            nowtiny_text = '在 Nowtiny 查看更多工具与插件状态'
-            status_note = '所有插件的状态会汇总到 Nowtiny 线上页面。'
-        else:
-            title = 'About Ask AI Plugin'
-            version_label = 'Current version'
-            description = (
-                'Ask AI Plugin is a calibre plugin for asking AI questions while reading, '
-                'managing your library, and searching across books.'
-            )
-            rec_heading = 'Nowtiny calibre plugin recommendations'
-            rec_intro = 'Recommended calibre plugins from the same Nowtiny collection:'
-            markdown_title = 'Markdown (for calibre)'
-            markdown_desc = 'Convert books to Markdown text files and export them to a target folder.'
-            tradsimp_title = 'Chinese Text Conversion (for calibre)'
-            tradsimp_desc = 'Convert Traditional/Simplified Chinese in ebook workflows, offline for EPUB/AZW3.'
-            open_text = 'Open MobileRead'
-            nowtiny_text = 'Explore more tools and plugin status on Nowtiny'
-            status_note = 'All plugin status is summarized on the Nowtiny site.'
+        def tr(key, fallback):
+            return html.escape(str(self.i18n.get(key, fallback)))
+
+        title = tr('about_title', self.i18n.get('about_plugin', 'About Ask AI Plugin'))
+        version_label = tr('about_version_label', 'Version')
+        description = tr(
+            'about_description',
+            'Ask AI Plugin helps you ask questions about books in calibre.',
+        )
+        rec_heading = tr('about_related_plugins', 'Related plugins')
+        markdown_title = tr('about_markdown_title', 'Markdown for calibre')
+        markdown_desc = tr(
+            'about_markdown_desc',
+            'Export books as Markdown text files.',
+        )
+        tradsimp_title = tr('about_tradsimp_title', 'Chinese Text Conversion for calibre')
+        tradsimp_desc = tr(
+            'about_tradsimp_desc',
+            'Convert Traditional and Simplified Chinese in ebooks.',
+        )
+        open_text = tr('about_open_mobileread', 'Open MobileRead')
+        nowtiny_text = tr('about_open_nowtiny', 'Open Nowtiny')
+        status_note = tr('about_nowtiny_note', 'More tools and plugin status are on Nowtiny.')
 
         return f"""
         <style>
             body {{
                 font-family: Arial, sans-serif;
                 line-height: 1.55;
-                padding: 18px;
+                padding: 16px;
                 color: palette(window-text);
                 background: transparent;
             }}
@@ -794,7 +783,7 @@ class AboutWidget(QWidget):
                 color: palette(window-text);
             }}
             h2 {{
-                margin-top: 1.2em;
+                margin-top: 1.1em;
                 font-size: 1.15em;
                 color: palette(window-text);
             }}
@@ -803,11 +792,11 @@ class AboutWidget(QWidget):
             }}
             .version {{
                 color: palette(mid);
-                margin-bottom: 1em;
+                margin-bottom: 0.9em;
             }}
             .card {{
-                margin: 10px 0;
-                padding: 12px;
+                margin: 8px 0;
+                padding: 10px;
                 border: 1px solid palette(mid);
                 border-radius: 8px;
                 background: palette(base);
@@ -821,8 +810,8 @@ class AboutWidget(QWidget):
                 text-decoration: none;
             }}
             .footer {{
-                margin-top: 18px;
-                padding-top: 12px;
+                margin-top: 14px;
+                padding-top: 10px;
                 border-top: 1px solid palette(mid);
             }}
         </style>
@@ -830,7 +819,6 @@ class AboutWidget(QWidget):
         <p class="version">{version_label}: {VERSION_DISPLAY}</p>
         <p>{description}</p>
         <h2>{rec_heading}</h2>
-        <p>{rec_intro}</p>
         <div class="card">
             <div class="card-title">{markdown_title}</div>
             <p>{markdown_desc}</p>
@@ -1300,6 +1288,11 @@ class TabDialog(QDialog):
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
         button_layout.addWidget(self.save_button)
+
+        # About 放在保存按钮旁边，便于发现且保持为标准按钮样式
+        self.about_button = QPushButton(self.i18n.get('about', 'About'))
+        self.about_button.clicked.connect(self.show_about_dialog)
+        button_layout.addWidget(self.about_button)
         
         # 创建保存成功提示标签
         self.save_feedback_label = QLabel("")
@@ -1326,19 +1319,6 @@ class TabDialog(QDialog):
         self.online_tutorial_link.setAlignment(Qt.AlignVCenter)
         self.online_tutorial_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         button_layout.addWidget(self.online_tutorial_link, 0, Qt.AlignVCenter)
-        button_layout.addSpacing(12)
-
-        # 添加 About 链接
-        self.about_link = QLabel()
-        self.about_link.setTextFormat(Qt.RichText)
-        self.about_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        self.about_link.setOpenExternalLinks(False)
-        self.about_link.setCursor(Qt.PointingHandCursor)
-        self.about_link.setText(f'<a href="about:ask-ai">{self.i18n.get("about", "About")}</a>')
-        self.about_link.linkActivated.connect(self.show_about_dialog)
-        self.about_link.setAlignment(Qt.AlignVCenter)
-        self.about_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        button_layout.addWidget(self.about_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
         # 添加 Reddit 链接（关闭按钮左侧）
@@ -1408,8 +1388,8 @@ class TabDialog(QDialog):
         # 更新底部链接文本
         if hasattr(self, 'online_tutorial_link'):
             self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
-        if hasattr(self, 'about_link'):
-            self.about_link.setText(f'<a href="about:ask-ai">{self.i18n.get("about", "About")}</a>')
+        if hasattr(self, 'about_button'):
+            self.about_button.setText(self.i18n.get('about', 'About'))
         logger.debug("已更新底部链接文本")
         
         # 更新 Prompts Widget 的 i18n

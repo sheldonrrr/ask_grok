@@ -410,6 +410,17 @@ class JapaneseTranslation(BaseTranslation):
             'about_plugin': 'Ask AI Pluginの特徴',
             'learn_how_to_use': '使い方',
             'email': 'iMessage',
+            'about_title': 'Ask AI Pluginについて',
+            'about_version_label': 'バージョン',
+            'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
+            'about_related_plugins': '関連プラグイン',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': '本をMarkdownテキストファイルとしてエクスポートします。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': '電子書籍内の繁体字中国語と簡体字中国語を変換します。',
+            'about_open_mobileread': 'MobileReadを開く',
+            'about_open_nowtiny': 'Nowtinyを開く',
+            'about_nowtiny_note': 'その他のツールとプラグインの状態はNowtinyで確認できます。',
             
             # モデル固有の設定
             'model_display_name_grok': 'Grok(x.AI)',

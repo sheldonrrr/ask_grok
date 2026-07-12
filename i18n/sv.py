@@ -406,6 +406,17 @@ class SwedishTranslation(BaseTranslation):
             'about_plugin': 'Om Fråga AI-plugin',
             'learn_how_to_use': 'Hur man använder',
             'email': 'iMessage',
+            'about_title': 'Om Ask AI Plugin',
+            'about_version_label': 'Version',
+            'about_description': 'Ställ frågor om calibre-böcker med de AI-tjänster du väljer.',
+            'about_related_plugins': 'Relaterade tillägg',
+            'about_markdown_title': 'Markdown för calibre',
+            'about_markdown_desc': 'Exportera böcker som Markdown-textfiler.',
+            'about_tradsimp_title': 'Kinesisk textkonvertering för calibre',
+            'about_tradsimp_desc': 'Konvertera traditionell och förenklad kinesiska i e-böcker.',
+            'about_open_mobileread': 'Öppna MobileRead',
+            'about_open_nowtiny': 'Öppna Nowtiny',
+            'about_nowtiny_note': 'Fler verktyg och tilläggsstatus finns på Nowtiny.',
 
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',

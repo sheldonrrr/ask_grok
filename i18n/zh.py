@@ -403,6 +403,17 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_plugin': '关于 Ask AI Plugin',
             'learn_how_to_use': '如何使用',
             'email': 'iMessage',
+            'about_title': '关于 Ask AI Plugin',
+            'about_version_label': '版本',
+            'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
+            'about_related_plugins': '相关插件',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': '将书籍导出为 Markdown 文本文件。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': '在电子书中转换简体中文与繁体中文。',
+            'about_open_mobileread': '打开 MobileRead',
+            'about_open_nowtiny': '打开 Nowtiny',
+            'about_nowtiny_note': '更多工具与插件状态可在 Nowtiny 查看。',
             
             # 模型特定配置
             'model_display_name_grok': 'Grok(x.AI)',

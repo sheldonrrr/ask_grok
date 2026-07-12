@@ -404,6 +404,17 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_plugin': '為何使用 Ask AI Plugin？',
         'learn_how_to_use': '如何使用',
         'email': 'iMessage',
+        'about_title': '關於 Ask AI Plugin',
+        'about_version_label': '版本',
+        'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
+        'about_related_plugins': '相關插件',
+        'about_markdown_title': 'Markdown for calibre',
+        'about_markdown_desc': '將書籍匯出為 Markdown 文字檔。',
+        'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+        'about_tradsimp_desc': '在電子書中轉換繁體中文與簡體中文。',
+        'about_open_mobileread': '開啟 MobileRead',
+        'about_open_nowtiny': '開啟 Nowtiny',
+        'about_nowtiny_note': '更多工具與插件狀態可在 Nowtiny 查看。',
         
         # 模型特定配置
         'model_display_name_grok': 'Grok(x.AI)',
