@@ -70,6 +70,7 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "ask_ai_plugin_gif_preview.gif" \
   -x "setup.py" \
   -x "requirements.txt" \
+  -x "AGENTS.md" \
   -x "**/*.py[cod]" \
   -x "**/.DS_Store" \
   -x ".DS_Store" \
