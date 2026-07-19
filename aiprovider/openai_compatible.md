@@ -1,11 +1,13 @@
-# OpenAI 及其兼容提供商配置指南
+# OpenAI 兼容提供商配置指南
 
-此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, xAI, Nvidia, Custom**。
+此指南适用于遵循 **Chat Completions** 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, xAI, Nvidia, Custom, Mistral, Kimi** 等。
+
+> 插件内置的 **OpenAI (ChatGPT)** 提供商已改用 Responses API，请看 [openai.md](./openai.md)。
 
 ## 核心配置
 
 - **API Key**: 必需。在请求头中作为 Bearer Token 发送。
-- **Base URL**: 必需。这是 API 的根地址，例如 `https://api.openai.com/v1`。
+- **Base URL**: 必需。这是 API 的根地址，例如 `https://api.deepseek.com`。
 
 ## 获取模型列表
 
@@ -45,4 +47,4 @@
 
 ## 总结
 
-这类提供商遵循了统一的 API 标准，配置相对简单。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。
+这类提供商遵循 Chat Completions API 标准，配置相对简单。真正的 OpenAI/ChatGPT 官方接口请改用 Responses API。
