@@ -1,6 +1,8 @@
 # OpenAI 及其兼容提供商配置指南
 
-此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, xAI, Nvidia, Custom**。
+此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, Nvidia, Custom**。
+
+> **SpaceXAI (Grok)** 已改为推荐的 **Responses API**（`/v1/responses`），详见 [xai.md](xai.md)，不在下文 Chat Completions 说明范围内。
 
 ## 核心配置
 
@@ -20,7 +22,7 @@
 - **注意事项**:
   - **Nvidia**: 直接从浏览器请求此端点会遇到 CORS 跨域问题。需要通过本地服务器代理该请求。
 
-## 发送聊天请求
+## 发送聊天请求（Chat Completions）
 
 - **端点**: `${baseUrl}/chat/completions`
 - **方法**: `POST`
@@ -45,4 +47,4 @@
 
 ## 总结
 
-这类提供商遵循了统一的 API 标准，配置相对简单。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。
+Chat Completions 兼容提供商遵循统一 API 标准，配置相对简单。SpaceXAI Grok 请改用 [xai.md](xai.md)。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。

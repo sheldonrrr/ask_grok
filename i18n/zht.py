@@ -406,7 +406,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'email': 'iMessage',
         
         # 模型特定配置
-        'model_display_name_grok': 'Grok(x.AI)',
+        'model_display_name_grok': 'Grok(SpaceXAI)',
         'model_display_name_gemini': 'Gemini(Google)',
         'model_display_name_deepseek': 'Deepseek',
         'model_display_name_custom': '自定義',
