@@ -383,12 +383,31 @@ class CantoneseTranslation(BaseTranslation):
             'about_plugin': '關於 Ask AI 插件', # Why Ask AI Plugin?
             'learn_how_to_use': '點樣用', # How to Use
             'email': 'iMessage', # iMessage
+            'about_title': '關於 Ask AI 插件',
+            'about_version_label': '版本',
+            'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
+            'about_related_plugins': '相關插件',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': '將書本匯出做 Markdown 文字檔。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': '喺電子書入面轉換繁體同簡體中文。',
+            'about_open_mobileread': '開啟 MobileRead',
+            'about_open_nowtiny': '開啟 Nowtiny',
+            'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
             'model_display_name_grok': 'Grok(x.AI)', # Grok(x.AI)
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
+            'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
             'model_display_name_custom': '自訂', # Custom
+            'model_display_name_ollama': 'Ollama(本地)',
+            'model_display_name_lmstudio': 'LM Studio(本地)',
+            'model_display_name_koboldcpp': 'KoboldCpp(本地)',
+            'local_openai_compat_no_api_key_notice': '提示：呢個本地 OpenAI 兼容服務通常唔使 API Key。請先啟動本地服務，再刷新模型列表。',
+            'lmstudio_no_api_key_notice': '提示：LM Studio 本地用 OpenAI 兼容接口，通常唔使 API Key。',
+            'koboldcpp_no_api_key_notice': '提示：KoboldCpp 本地用 OpenAI 兼容接口，通常唔使 API Key。',
+            'local_service_not_running': '連唔上本地 AI 服務。請確認服務已啟動同 Base URL 正確。',
             'model_enable_streaming': '啟用串流', # Enable Streaming
 
             # AI Switcher
@@ -443,6 +462,7 @@ class CantoneseTranslation(BaseTranslation):
             'remove_ai_config': '移除', # Remove
             'delete_ai': '刪除', # Delete
             'add_ai_button': '新增 AI', # Add AI
+            'ai_manager_window_hint': '「新增 / 管理」會開可調大小嘅獨立視窗（可以最大化）。雙擊已配置嘅 AI 可以直接編輯。',
             'edit_ai_button': '編輯 AI', # Edit AI
             'manage_configured_ai_button': '管理已設定嘅 AI', # Manage Configured AI
             'manage_ai_button': '管理 AI', # Manage AI
@@ -469,7 +489,7 @@ class CantoneseTranslation(BaseTranslation):
 
             # 服務供應商特定提示
             'perplexity_model_notice': '注意：Perplexity 冇提供公開嘅模型列表 API，所以模型係硬編碼嘅。', # Note: Perplexity does not provide a public model list API, so models are hardcoded.
-            'ollama_no_api_key_notice': '注意：Ollama 係一個本地模型，唔需要 API 金鑰。', # Note: Ollama is a local model that does not require an API key.
+            'ollama_no_api_key_notice': '提示：Ollama 本地用 OpenAI 兼容接口，通常唔使 API Key。', # OpenAI-compatible local Ollama
             'nvidia_free_credits_notice': '注意：新用戶有免費 API 額度 - 唔使信用卡。', # Note: New users get free API credits - No credit card required.
 
             # Nvidia 免費方案錯誤消息

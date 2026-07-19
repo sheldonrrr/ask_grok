@@ -408,12 +408,31 @@ class EnglishTranslation(BaseTranslation):
             'about_plugin': 'Why Ask AI Plugin?',
             'learn_how_to_use': 'How to Use',
             'email': 'iMessage',
+            'about_title': 'About Ask AI Plugin',
+            'about_version_label': 'Version',
+            'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
+            'about_related_plugins': 'Related plugins',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': 'Export books as Markdown text files.',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': 'Convert Traditional and Simplified Chinese in ebooks.',
+            'about_open_mobileread': 'Open MobileRead',
+            'about_open_nowtiny': 'Open Nowtiny',
+            'about_nowtiny_note': 'More tools and plugin status are on Nowtiny.',
             
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
+            'model_display_name_kimi': 'Kimi (Moonshot)',
             'model_display_name_custom': 'Custom',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Enable Streaming',
             
             # AI Switcher
@@ -481,6 +500,7 @@ class EnglishTranslation(BaseTranslation):
             'close_button': 'Close',
             'cancel': 'Cancel',
             'add_ai_button': 'Add AI',
+            'ai_manager_window_hint': 'Add / Manage opens a resizable window (you can maximize it). Double-click a configured AI to edit it.',
             'edit_ai_button': 'Edit AI',
             'manage_configured_ai_button': 'Manage Configured AI',
             'manage_ai_button': 'Manage AI',
@@ -508,7 +528,7 @@ class EnglishTranslation(BaseTranslation):
             
             # Provider-specific notices
             'perplexity_model_notice': 'Note: Perplexity does not provide a public model list API, so models are hardcoded.',
-            'ollama_no_api_key_notice': 'Note: Ollama is a local model that does not require an API key.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Note: New users get free API credits - No credit card required.',
             
             # Nvidia Free error messages

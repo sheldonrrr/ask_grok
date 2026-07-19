@@ -321,6 +321,7 @@ class FrenchTranslation(BaseTranslation):
             'delete_ai': 'Supprimer',
             'close_button': 'Fermer',
             'add_ai_button': 'Ajouter IA',
+            'ai_manager_window_hint': '« Ajouter / Gérer » ouvre une fenêtre redimensionnable (maximisable). Double-cliquez une IA configurée pour l’éditer.',
             'edit_ai_button': 'Modifier IA',
             'manage_configured_ai_button': 'Gérer l\'IA Configurée',
             'manage_ai_button': 'Gérer IA',
@@ -421,12 +422,31 @@ class FrenchTranslation(BaseTranslation):
             'about_plugin': 'Pourquoi Ask AI Plugin?',
             'learn_how_to_use': 'Comment Utiliser',
             'email': 'iMessage',
+            'about_title': 'À propos de Ask AI Plugin',
+            'about_version_label': 'Version',
+            'about_description': "Posez des questions sur vos livres calibre avec les services d'IA que vous choisissez.",
+            'about_related_plugins': 'Plugins associés',
+            'about_markdown_title': 'Markdown pour calibre',
+            'about_markdown_desc': 'Exportez les livres en fichiers texte Markdown.',
+            'about_tradsimp_title': 'Conversion du chinois pour calibre',
+            'about_tradsimp_desc': 'Convertissez le chinois traditionnel et simplifié dans les ebooks.',
+            'about_open_mobileread': 'Ouvrir MobileRead',
+            'about_open_nowtiny': 'Ouvrir Nowtiny',
+            'about_nowtiny_note': "Plus d'outils et l'état des plugins sont sur Nowtiny.",
 
             # Configurations spécifiques au modèle
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
+            'model_display_name_kimi': 'Kimi (Moonshot)',
             'model_display_name_custom': 'Personnalisé',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Activer le streaming',
             
             # AI Switcher
@@ -529,7 +549,7 @@ class FrenchTranslation(BaseTranslation):
             
             # Provider-specific notices
             'perplexity_model_notice': 'Remarque: Perplexity ne fournit pas d\'API publique de liste de modèles, les modèles sont donc codés en dur.',
-            'ollama_no_api_key_notice': 'Remarque: Ollama est un modèle local qui ne nécessite pas de clé API.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Remarque: Les nouveaux utilisateurs obtiennent des crédits API gratuits - aucune carte de crédit requise.',
             
             # Messages d'erreur Nvidia Free

@@ -311,6 +311,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'delete_ai': '刪除',
         'close_button': '關閉',
         'add_ai_button': '新增 AI',
+            'ai_manager_window_hint': '「新增 / 管理」會開啟可調整大小的獨立視窗（可最大化）。雙擊已設定的 AI 可直接編輯。',
         'edit_ai_button': '編輯 AI',
         'manage_configured_ai_button': '管理已配置 AI',
         'manage_ai_button': '管理 AI',
@@ -404,12 +405,31 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_plugin': '為何使用 Ask AI Plugin？',
         'learn_how_to_use': '如何使用',
         'email': 'iMessage',
+        'about_title': '關於 Ask AI Plugin',
+        'about_version_label': '版本',
+        'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
+        'about_related_plugins': '相關插件',
+        'about_markdown_title': 'Markdown for calibre',
+        'about_markdown_desc': '將書籍匯出為 Markdown 文字檔。',
+        'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+        'about_tradsimp_desc': '在電子書中轉換繁體中文與簡體中文。',
+        'about_open_mobileread': '開啟 MobileRead',
+        'about_open_nowtiny': '開啟 Nowtiny',
+        'about_nowtiny_note': '更多工具與插件狀態可在 Nowtiny 查看。',
         
         # 模型特定配置
         'model_display_name_grok': 'Grok(x.AI)',
         'model_display_name_gemini': 'Gemini(Google)',
         'model_display_name_deepseek': 'Deepseek',
+        'model_display_name_kimi': 'Kimi（月之暗面）',
         'model_display_name_custom': '自定義',
+            'model_display_name_ollama': 'Ollama(本地)',
+            'model_display_name_lmstudio': 'LM Studio(本地)',
+            'model_display_name_koboldcpp': 'KoboldCpp(本地)',
+            'local_openai_compat_no_api_key_notice': '提示：此本地 OpenAI 相容服務通常不需要 API Key。請先啟動本地服務，再重新整理模型清單。',
+            'lmstudio_no_api_key_notice': '提示：LM Studio 本地使用 OpenAI 相容介面，通常不需要 API Key。',
+            'koboldcpp_no_api_key_notice': '提示：KoboldCpp 本地使用 OpenAI 相容介面，通常不需要 API Key。',
+            'local_service_not_running': '無法連線本地 AI 服務。請確認服務已啟動且 Base URL 正確。',
         'model_enable_streaming': '啟用串流傳輸',
         
         # AI Switcher
@@ -514,7 +534,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         
         # Provider-specific notices
         'perplexity_model_notice': '注意：Perplexity 沒有提供公開的模型清單API，因此模型名稱為硬編碼。',
-        'ollama_no_api_key_notice': '注意：Ollama 是本地模型，無需配置API金鑰。',
+        'ollama_no_api_key_notice': '提示：Ollama 本地使用 OpenAI 相容介面，通常不需要 API Key。',
         'nvidia_free_credits_notice': '注意：新用戶可獲得免費API額度，無需信用卡。',
         
         # Nvidia Free 錯誤訊息

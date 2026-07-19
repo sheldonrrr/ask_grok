@@ -24,6 +24,22 @@ class AnthropicModel(BaseAIModel):
     DEFAULT_API_BASE_URL = "https://api.anthropic.com/v1"
     # Required Anthropic API version
     ANTHROPIC_VERSION = "2023-06-01"
+
+    @staticmethod
+    def omits_sampling_params(model_name: str) -> bool:
+        """
+        Newer Claude models (Opus 4.7+) reject temperature/top_p/top_k.
+        """
+        name = (model_name or '').lower()
+        markers = (
+            'opus-4-7',
+            'opus-4-8',
+            'opus-4.7',
+            'opus-4.8',
+            'claude-opus-4-7',
+            'claude-opus-4-8',
+        )
+        return any(marker in name for marker in markers)
     
     def _validate_config(self):
         """
@@ -94,8 +110,9 @@ class AnthropicModel(BaseAIModel):
         translations = get_translation(self.config.get('language', 'en'))
         system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
+        model_name = kwargs.get('model') or self.config.get('model', self.DEFAULT_MODEL)
         data = {
-            "model": self.config.get('model', self.DEFAULT_MODEL),
+            "model": model_name,
             "max_tokens": kwargs.get('max_tokens', 4096),  # Required field for Anthropic
             "messages": [
                 {
@@ -103,8 +120,14 @@ class AnthropicModel(BaseAIModel):
                     "content": prompt
                 }
             ],
-            "temperature": kwargs.get('temperature', 0.7)
         }
+
+        # Opus 4.7+ rejects sampling params; omit them for those models
+        if not self.omits_sampling_params(model_name):
+            if kwargs.get('temperature') is not None:
+                data['temperature'] = kwargs.get('temperature')
+            elif 'temperature' not in kwargs:
+                data['temperature'] = 0.7
         
         # Add system message if provided (Anthropic uses separate system field)
         if system_message:

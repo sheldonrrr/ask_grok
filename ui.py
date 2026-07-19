@@ -19,6 +19,10 @@ from calibre.gui2 import info_dialog
 from calibre.gui2.keyboard import NameConflict
 from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_ai_plugin.api import APIClient
+from calibre_plugins.ask_ai_plugin.models.base import (
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    extract_provider_id,
+)
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
@@ -33,6 +37,11 @@ from calibre.utils.resources import get_path as I
 import sys
 import os
 import time
+import html
+
+NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
+NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
+NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?t=373788'
 
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
@@ -711,11 +720,12 @@ class AskGrokConfigWidget(QWidget):
         self.language_changed.emit(lang_code)
 
 class AboutWidget(QWidget):
-    """关于页面组件 - 显示 about.md 内容"""
+    """Local About page with version info and related calibre plugins."""
     def __init__(self, parent=None):
         super().__init__(parent)
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.language = language
         self.i18n = get_translation(language)
         
         # 创建主布局 - 使用统一的 Tab 布局函数
@@ -725,7 +735,7 @@ class AboutWidget(QWidget):
         # 创建文本浏览器
         from PyQt5.QtWidgets import QTextBrowser, QFrame
         self.text_browser = QTextBrowser()
-        self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击链接
+        self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击推荐与 Nowtiny 链接
         self.text_browser.setReadOnly(True)
         self.text_browser.setFrameShape(QFrame.NoFrame)  # 移除边框，与其他 Tab 保持一致
         layout.addWidget(self.text_browser)
@@ -734,39 +744,100 @@ class AboutWidget(QWidget):
         self.load_content()
         
     def load_content(self):
-        """加载 about.md 内容"""
-        import logging
-        logger = logging.getLogger(__name__)
-        
-        try:
-            # 从插件资源读取 about.md
-            from calibre.customize.ui import find_plugin
-            plugin = find_plugin('Ask AI Plugin')
-            
-            if not plugin:
-                self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
-                return
-            
-            # 读取 about.md
-            about_data = plugin.get_resources('tutorial/about.md')
-            
-            if not about_data:
-                self.text_browser.setHtml("<h2>Error: About file not found</h2>")
-                return
-            
-            about_content = about_data.decode('utf-8')
-            
-            # 转换 markdown 到 HTML（复用 TutorialWidget 的方法）
-            html_content = self._markdown_to_html(about_content)
-            
-            # 设置 HTML 内容
-            self.text_browser.setHtml(html_content)
-            
-            logger.info(f"About content loaded: {len(about_content)} bytes")
-            
-        except Exception as e:
-            logger.error(f"Failed to load about content: {str(e)}")
-            self.text_browser.setHtml(f"<h2>Error loading about content</h2><p>{str(e)}</p>")
+        """Render the local About page."""
+        self.text_browser.setHtml(self._local_about_html())
+
+    def _local_about_html(self):
+        def tr(key, fallback):
+            return html.escape(str(self.i18n.get(key, fallback)))
+
+        title = tr('about_title', self.i18n.get('about_plugin', 'About Ask AI Plugin'))
+        version_label = tr('about_version_label', 'Version')
+        description = tr(
+            'about_description',
+            'Ask AI Plugin helps you ask questions about books in calibre.',
+        )
+        rec_heading = tr('about_related_plugins', 'Related plugins')
+        markdown_title = tr('about_markdown_title', 'Markdown for calibre')
+        markdown_desc = tr(
+            'about_markdown_desc',
+            'Export books as Markdown text files.',
+        )
+        tradsimp_title = tr('about_tradsimp_title', 'Chinese Text Conversion for calibre')
+        tradsimp_desc = tr(
+            'about_tradsimp_desc',
+            'Convert Traditional and Simplified Chinese in ebooks.',
+        )
+        open_text = tr('about_open_mobileread', 'Open MobileRead')
+        nowtiny_text = tr('about_open_nowtiny', 'Open Nowtiny')
+        status_note = tr('about_nowtiny_note', 'More tools and plugin status are on Nowtiny.')
+
+        return f"""
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                line-height: 1.55;
+                padding: 16px;
+                color: palette(window-text);
+                background: transparent;
+            }}
+            h1 {{
+                margin-top: 0;
+                font-size: 1.5em;
+                color: palette(window-text);
+            }}
+            h2 {{
+                margin-top: 1.1em;
+                font-size: 1.15em;
+                color: palette(window-text);
+            }}
+            p {{
+                margin: 0.45em 0;
+            }}
+            .version {{
+                color: palette(mid);
+                margin-bottom: 0.9em;
+            }}
+            .card {{
+                margin: 8px 0;
+                padding: 10px;
+                border: 1px solid palette(mid);
+                border-radius: 8px;
+                background: palette(base);
+            }}
+            .card-title {{
+                font-weight: bold;
+                margin-bottom: 4px;
+            }}
+            a {{
+                color: palette(link);
+                text-decoration: none;
+            }}
+            .footer {{
+                margin-top: 14px;
+                padding-top: 10px;
+                border-top: 1px solid palette(mid);
+            }}
+        </style>
+        <h1>{title}</h1>
+        <p class="version">{version_label}: {VERSION_DISPLAY}</p>
+        <p>{description}</p>
+        <h2>{rec_heading}</h2>
+        <div class="card">
+            <div class="card-title">{markdown_title}</div>
+            <p>{markdown_desc}</p>
+            <p><a href="{NOWTINY_PLUGIN_MARKDOWN_URL}">{open_text}</a></p>
+        </div>
+        <div class="card">
+            <div class="card-title">{tradsimp_title}</div>
+            <p>{tradsimp_desc}</p>
+            <p><a href="{NOWTINY_PLUGIN_TRADSIMP_URL}">{open_text}</a></p>
+        </div>
+        <div class="footer">
+            <p>{status_note}</p>
+            <p><a href="{NOWTINY_SITE_URL}">{nowtiny_text}</a></p>
+        </div>
+        """
     
     def _markdown_to_html(self, markdown_text):
         """简单的 markdown 转 HTML - 极简风格（复用 TutorialWidget 逻辑）"""
@@ -853,6 +924,9 @@ class AboutWidget(QWidget):
         
     def update_content(self):
         """更新内容（语言切换时调用）"""
+        prefs = get_prefs()
+        self.language = prefs.get('language', self.language) if hasattr(prefs, 'get') and callable(prefs.get) else self.language
+        self.i18n = get_translation(self.language)
         self.load_content()
 
 
@@ -1218,6 +1292,11 @@ class TabDialog(QDialog):
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
         button_layout.addWidget(self.save_button)
+
+        # About 放在保存按钮旁边，便于发现且保持为标准按钮样式
+        self.about_button = QPushButton(self.i18n.get('about', 'About'))
+        self.about_button.clicked.connect(self.show_about_dialog)
+        button_layout.addWidget(self.about_button)
         
         # 创建保存成功提示标签
         self.save_feedback_label = QLabel("")
@@ -1244,18 +1323,6 @@ class TabDialog(QDialog):
         self.online_tutorial_link.setAlignment(Qt.AlignVCenter)
         self.online_tutorial_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         button_layout.addWidget(self.online_tutorial_link, 0, Qt.AlignVCenter)
-        button_layout.addSpacing(12)
-
-        # 添加 About 链接
-        self.about_link = QLabel()
-        self.about_link.setTextFormat(Qt.RichText)
-        self.about_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        self.about_link.setOpenExternalLinks(True)
-        self.about_link.setCursor(Qt.PointingHandCursor)
-        self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
-        self.about_link.setAlignment(Qt.AlignVCenter)
-        self.about_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        button_layout.addWidget(self.about_link, 0, Qt.AlignVCenter)
         button_layout.addSpacing(12)
 
         # 添加 Reddit 链接（关闭按钮左侧）
@@ -1285,6 +1352,21 @@ class TabDialog(QDialog):
         # 连接配置组件的信号
         self.config_widget.settings_saved.connect(self.on_settings_saved)
         self.config_widget.language_changed.connect(self.on_language_changed)
+
+    def show_about_dialog(self, _url=None):
+        """Open the local About page instead of a remote story URL."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self.i18n.get('about_plugin', self.i18n.get('about', 'About')))
+        dialog.resize(620, 520)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(AboutWidget(dialog))
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button = button_box.button(QDialogButtonBox.Ok)
+        if ok_button is not None:
+            ok_button.setText(self.i18n.get('close_button', 'Close'))
+        button_box.accepted.connect(dialog.accept)
+        layout.addWidget(button_box)
+        dialog.exec_()
     
     def on_language_changed(self, new_language):
         """当语言改变时更新所有组件"""
@@ -1310,8 +1392,8 @@ class TabDialog(QDialog):
         # 更新底部链接文本
         if hasattr(self, 'online_tutorial_link'):
             self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
-        if hasattr(self, 'about_link'):
-            self.about_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/posts/story.html">{self.i18n.get("about", "About")}</a>')
+        if hasattr(self, 'about_button'):
+            self.about_button.setText(self.i18n.get('about', 'About'))
         logger.debug("已更新底部链接文本")
         
         # 更新 Prompts Widget 的 i18n
@@ -1709,11 +1791,9 @@ class TabDialog(QDialog):
             
             # 检查是否有有效配置
             # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
-            provider_id = config.get('provider_id')
-            if not provider_id:
-                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            provider_id = extract_provider_id(ai_id, config)
             
-            if provider_id == 'ollama':
+            if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
@@ -3161,12 +3241,10 @@ Please answer the question based on the above book information.""")
             
             # 检查是否有API Key（Ollama除外，它是本地服务）
             # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
-            provider_id = config.get('provider_id')
-            if not provider_id:
-                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            provider_id = extract_provider_id(ai_id, config)
             
-            if provider_id == 'ollama':
-                # Ollama特殊处理：需要有api_base_url和model
+            if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                # 本地 OpenAI 兼容服务：需要有 api_base_url
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
@@ -3521,8 +3599,9 @@ Please answer the question based on the above book information.""")
         for model_id, config in models_config.items():
             if model_id != 'nvidia_free' and config.get('enabled', False):
                 # 检查是否真正配置了（有 API key 或其他必要配置）
-                if model_id == 'ollama':
-                    # Ollama 不需要 API key，只要启用就算配置了
+                provider_id = extract_provider_id(model_id, config)
+                if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                    # 本地 OpenAI 兼容服务不需要 API key
                     configured_ais.append(model_id)
                 elif config.get('api_key') or config.get('auth_token'):
                     configured_ais.append(model_id)
@@ -3831,14 +3910,10 @@ Please answer the question based on the above book information.""")
         models_config = prefs.get('models', {})
         model_config = models_config.get(selected_model, {})
         
-        # 获取 provider_id（从 config 中获取，或从 selected_model 中提取）
-        provider_id = model_config.get('provider_id')
-        if not provider_id:
-            # 向后兼容：从 selected_model 中提取 provider_id
-            provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
+        provider_id = extract_provider_id(selected_model, model_config)
         
-        # 如果是Ollama或Custom模型，不强制要求API Key（本地服务）
-        if provider_id in ['ollama', 'custom']:
+        # 本地 OpenAI 兼容服务 / Custom / nvidia_free 不强制要求用户 API Key
+        if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS or provider_id in ('custom', 'nvidia_free'):
             return True
         
         # 获取token字段名，根据 provider_id 判断

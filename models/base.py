@@ -13,6 +13,7 @@ class AIProvider(Enum):
     AI_GROK = auto()      # x.AI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
+    AI_KIMI = auto()      # Kimi (Moonshot)
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
@@ -20,7 +21,48 @@ class AIProvider(Enum):
     AI_NVIDIA_FREE = auto() # Nvidia AI (Free proxy)
     AI_OPENROUTER = auto() # OpenRouter (Model aggregator)
     AI_PERPLEXITY = auto() # Perplexity (Sonar)
-    AI_OLLAMA = auto()    # Ollama (Local models)
+    AI_OLLAMA = auto()    # Ollama (Local, OpenAI-compatible)
+    AI_LMSTUDIO = auto()  # LM Studio (Local, OpenAI-compatible)
+    AI_KOBOLDCPP = auto() # KoboldCpp (Local, OpenAI-compatible)
+
+
+# Local providers that use OpenAI Chat Completions and typically need no API key
+LOCAL_OPENAI_COMPAT_PROVIDER_IDS = ('ollama', 'lmstudio', 'koboldcpp')
+
+# Registered provider ids (include underscore ids like nvidia_free for longest-prefix match)
+KNOWN_PROVIDER_IDS = frozenset({
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
+    'ollama', 'lmstudio', 'koboldcpp', 'custom',
+})
+
+
+def extract_provider_id(config_id, config=None):
+    """
+    Resolve provider id from config or config_id.
+
+    Handles underscore ids correctly (nvidia_free_xxx -> nvidia_free, not nvidia).
+    """
+    provider_id = (config or {}).get('provider_id')
+    if provider_id:
+        return provider_id
+
+    config_id = (config_id or '').strip()
+    if not config_id:
+        return ''
+    if config_id in KNOWN_PROVIDER_IDS:
+        return config_id
+
+    matches = [
+        pid for pid in KNOWN_PROVIDER_IDS
+        if config_id == pid or config_id.startswith(pid + '_')
+    ]
+    if matches:
+        return max(matches, key=len)
+
+    if '_' in config_id:
+        return config_id.split('_', 1)[0]
+    return config_id
 
 
 class ModelConfig:
@@ -62,7 +104,7 @@ DEFAULT_MODELS = {
         display_name="Google Gemini",
         api_key_label="API Key:",
         default_api_base_url="https://generativelanguage.googleapis.com/v1beta",
-        default_model_name="google/gemini-3.5-flash"
+        default_model_name="gemini-3.5-flash"
     ),
     AIProvider.AI_DEEPSEEK: ModelConfig(
         provider=AIProvider.AI_DEEPSEEK,
@@ -70,6 +112,13 @@ DEFAULT_MODELS = {
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
         default_model_name="deepseek-v4-flash"
+    ),
+    AIProvider.AI_KIMI: ModelConfig(
+        provider=AIProvider.AI_KIMI,
+        display_name="Kimi (Moonshot)",
+        api_key_label="Kimi API Key:",
+        default_api_base_url="https://api.moonshot.ai/v1",
+        default_model_name="kimi-k3"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,
@@ -117,8 +166,22 @@ DEFAULT_MODELS = {
         provider=AIProvider.AI_OLLAMA,
         display_name="Ollama (Local)",
         api_key_label="API Key (Optional):",
-        default_api_base_url="http://localhost:11434",
-        default_model_name="minimax-m3"
+        default_api_base_url="http://localhost:11434/v1",
+        default_model_name=""
+    ),
+    AIProvider.AI_LMSTUDIO: ModelConfig(
+        provider=AIProvider.AI_LMSTUDIO,
+        display_name="LM Studio (Local)",
+        api_key_label="API Key (Optional):",
+        default_api_base_url="http://localhost:1234/v1",
+        default_model_name=""
+    ),
+    AIProvider.AI_KOBOLDCPP: ModelConfig(
+        provider=AIProvider.AI_KOBOLDCPP,
+        display_name="KoboldCpp (Local)",
+        api_key_label="API Key (Optional):",
+        default_api_base_url="http://localhost:5001/v1",
+        default_model_name=""
     ),
     AIProvider.AI_NVIDIA_FREE: ModelConfig(
         provider=AIProvider.AI_NVIDIA_FREE,

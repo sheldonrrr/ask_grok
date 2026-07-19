@@ -314,6 +314,7 @@ class JapaneseTranslation(BaseTranslation):
             'delete_ai': '削除',
             'close_button': '閉じる',
             'add_ai_button': 'AIを追加',
+            'ai_manager_window_hint': '「追加 / 管理」はリサイズ可能な別ウィンドウで開きます（最大化可）。設定済み AI をダブルクリックで編集できます。',
             'edit_ai_button': 'AIを編集',
             'manage_configured_ai_button': '設定済みAIを管理',
             'manage_ai_button': 'AIを管理',
@@ -410,12 +411,31 @@ class JapaneseTranslation(BaseTranslation):
             'about_plugin': 'Ask AI Pluginの特徴',
             'learn_how_to_use': '使い方',
             'email': 'iMessage',
+            'about_title': 'Ask AI Pluginについて',
+            'about_version_label': 'バージョン',
+            'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
+            'about_related_plugins': '関連プラグイン',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': '本をMarkdownテキストファイルとしてエクスポートします。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': '電子書籍内の繁体字中国語と簡体字中国語を変換します。',
+            'about_open_mobileread': 'MobileReadを開く',
+            'about_open_nowtiny': 'Nowtinyを開く',
+            'about_nowtiny_note': 'その他のツールとプラグインの状態はNowtinyで確認できます。',
             
             # モデル固有の設定
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
+            'model_display_name_kimi': 'Kimi (Moonshot)',
             'model_display_name_custom': 'カスタム',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'ストリーミングを有効にする',
             
             # AIスイッチャー
@@ -565,7 +585,7 @@ class JapaneseTranslation(BaseTranslation):
             
             # Provider-specific notices
             'perplexity_model_notice': '注意：Perplexityは公開モデルリストAPIを提供していないため、モデルはハードコードされています。',
-            'ollama_no_api_key_notice': '注意：OllamaはローカルモデルでAPIキーは不要です。',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': '注意：新規ユーザーは無料のAPIクレジットを取得できます - クレジットカード不要。',
             
             # Nvidia Free エラーメッセージ

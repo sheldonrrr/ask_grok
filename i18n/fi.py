@@ -407,12 +407,31 @@ class FinnishTranslation(BaseTranslation):
             'about_plugin': 'Tietoja Ask AI -lisäosasta',
             'learn_how_to_use': 'Miten käyttää',
             'email': 'iMessage',
+            'about_title': 'Tietoja Ask AI -lisäosasta',
+            'about_version_label': 'Versio',
+            'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
+            'about_related_plugins': 'Aiheeseen liittyvät lisäosat',
+            'about_markdown_title': 'Markdown calibre-ohjelmalle',
+            'about_markdown_desc': 'Vie kirjat Markdown-tekstitiedostoiksi.',
+            'about_tradsimp_title': 'Kiinankielisen tekstin muunnos calibre-ohjelmalle',
+            'about_tradsimp_desc': 'Muunna perinteistä ja yksinkertaistettua kiinaa e-kirjoissa.',
+            'about_open_mobileread': 'Avaa MobileRead',
+            'about_open_nowtiny': 'Avaa Nowtiny',
+            'about_nowtiny_note': 'Lisää työkaluja ja lisäosien tila löytyy Nowtiny-sivustolta.',
             
             # Model specific configurations
             'model_display_name_grok': 'Grok(x.AI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
+            'model_display_name_kimi': 'Kimi (Moonshot)',
             'model_display_name_custom': 'Mukautettu',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Ota suoratoisto käyttöön',
             
             # AI Switcher
@@ -478,6 +497,7 @@ class FinnishTranslation(BaseTranslation):
             'remove_ai_config': 'Poista',
             'delete_ai': 'Poista',
             'add_ai_button': 'Lisää tekoäly',
+            'ai_manager_window_hint': '“Lisää / Hallitse” avaa kokoa muutettavan ikkunan (voi maximoida). Kaksoisnapsauta määritettyä tekoälyä muokataksesi.',
             'edit_ai_button': 'Muokkaa tekoälyä',
             'manage_configured_ai_button': 'Hallitse määritettyä tekoälyä',
             'manage_ai_button': 'Hallitse tekoälyä',
@@ -504,7 +524,7 @@ class FinnishTranslation(BaseTranslation):
             
             # Provider-specific notices
             'perplexity_model_notice': 'Huomautus: Perplexity ei tarjoa julkista mallilista-API:a, joten mallit ovat kovakoodattuja.',
-            'ollama_no_api_key_notice': 'Huomautus: Ollama on paikallinen malli, joka ei vaadi API-avainta.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Huomautus: Uudet käyttäjät saavat ilmaisia API-krediittejä - Luottokorttia ei vaadita.',
             
             # Nvidia Free error messages
