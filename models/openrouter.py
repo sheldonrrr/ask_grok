@@ -19,7 +19,7 @@ class OpenRouterModel(BaseAIModel):
     OpenRouter 使用 OpenAI 兼容的 API 格式，但支持额外的可选请求头
     """
     # 默认模型名称
-    DEFAULT_MODEL = "x-ai/grok-4.3"
+    DEFAULT_MODEL = "x-ai/grok-4.5"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://openrouter.ai/api/v1"
     

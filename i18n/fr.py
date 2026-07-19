@@ -423,7 +423,7 @@ class FrenchTranslation(BaseTranslation):
             'email': 'iMessage',
 
             # Configurations spécifiques au modèle
-            'model_display_name_grok': 'Grok(x.AI)',
+            'model_display_name_grok': 'Grok(SpaceXAI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Personnalisé',

@@ -10,7 +10,7 @@ from enum import Enum, auto
 
 class AIProvider(Enum):
     """AI 服务提供商枚举类型"""
-    AI_GROK = auto()      # x.AI (Grok)
+    AI_GROK = auto()      # SpaceXAI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
@@ -52,10 +52,10 @@ class ModelConfig:
 DEFAULT_MODELS = {
     AIProvider.AI_GROK: ModelConfig(
         provider=AIProvider.AI_GROK,
-        display_name="x.AI (Grok)",
-        api_key_label="X.AI API Key:",
+        display_name="SpaceXAI (Grok)",
+        api_key_label="SpaceXAI API Key:",
         default_api_base_url="https://api.x.ai/v1",
-        default_model_name="grok-4.3"
+        default_model_name="grok-4.5"
     ),
     AIProvider.AI_GEMINI: ModelConfig(
         provider=AIProvider.AI_GEMINI,
@@ -104,7 +104,7 @@ DEFAULT_MODELS = {
         display_name="OpenRouter",
         api_key_label="OpenRouter API Key:",
         default_api_base_url="https://openrouter.ai/api/v1",
-        default_model_name="x-ai/grok-4.3"
+        default_model_name="x-ai/grok-4.5"
     ),
     AIProvider.AI_PERPLEXITY: ModelConfig(
         provider=AIProvider.AI_PERPLEXITY,

@@ -912,7 +912,7 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GROK
             # API Key字段名称为auth_token
             config['auth_token'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'x.AI (Grok)'  # 设置固定的显示名称
+            config['display_name'] = 'SpaceXAI (Grok)'  # 设置固定的显示名称
         elif self.model_id == 'gemini':
             provider = AIProvider.AI_GEMINI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
