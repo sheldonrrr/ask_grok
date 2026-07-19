@@ -15,6 +15,7 @@ from .models.base import (
     DEFAULT_MODELS,
     DEFAULT_PROVIDER,
     LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    extract_provider_id,
 )
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 
@@ -335,12 +336,7 @@ class APIClient:
                 model_config['language'] = prefs.get('language', 'en')
                 logger.debug(f"Added language to model config: {model_config['language']}")
             
-            # 从配置中获取 provider_id，如果没有则从 model_id 中提取
-            # 配置 ID 格式：provider_id 或 provider_id_xxxxx
-            provider_id = model_config.get('provider_id')
-            if not provider_id:
-                # 从 model_id 中提取 provider_id（取第一个下划线之前的部分）
-                provider_id = model_id.split('_')[0] if '_' in model_id else model_id
+            provider_id = extract_provider_id(model_id, model_config)
             
             # 创建模型实例（使用 provider_id）
             self._model_name = model_id
@@ -382,12 +378,7 @@ class APIClient:
                     model_config['language'] = prefs.get('language', 'en')
                     logger.debug(f"Added language to model config: {model_config['language']}")
                 
-                # 从配置中获取 provider_id，如果没有则从 selected_model 中提取
-                # 配置 ID 格式：provider_id 或 provider_id_xxxxx
-                provider_id = model_config.get('provider_id')
-                if not provider_id:
-                    # 从 selected_model 中提取 provider_id（取第一个下划线之前的部分）
-                    provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
+                provider_id = extract_provider_id(selected_model, model_config)
                 
                 self._model_name = selected_model
                 self._ai_model = AIModelFactory.create_model(provider_id, model_config)
@@ -665,10 +656,7 @@ class APIClient:
                 logger.error(f"fetch_available_models: {error_msg}")
                 return False, error_msg
             
-            # Resolve provider id (config id may be provider_xxx)
-            provider_id = config.get('provider_id') or (
-                model_name.split('_', 1)[0] if '_' in model_name else model_name
-            )
+            provider_id = extract_provider_id(model_name, config)
 
             # 2. 验证 API Key（本地 OpenAI 兼容服务不需要）
             # 先确定 API Key 字段名称
@@ -750,9 +738,7 @@ class APIClient:
                 prefs = get_prefs()
                 config['language'] = prefs.get('language', 'en')
             
-            provider_id = config.get('provider_id') or (
-                model_name.split('_', 1)[0] if '_' in model_name else model_name
-            )
+            provider_id = extract_provider_id(model_name, config)
 
             # 创建临时模型实例
             logger.info(f"[{provider_id}] 创建模型实例进行测试")

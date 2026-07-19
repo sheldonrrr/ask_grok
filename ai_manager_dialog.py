@@ -706,8 +706,8 @@ class ManageAIDialog(QDialog):
         config = models_config.get(config_id, {})
         selected_model = prefs.get('selected_model', '')
         
-        # 获取 provider_id
-        provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
+        # 获取 provider_id（正确处理 nvidia_free 等带下划线的 id）
+        provider_id = extract_provider_id(config_id, config)
         
         # 创建 ModelConfigWidget
         if self.model_widget:

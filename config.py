@@ -35,6 +35,8 @@ from .models.base import (
     AIModelFactory,
     BaseAIModel,
     LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    KNOWN_PROVIDER_IDS,
+    extract_provider_id,
 )
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from .prompt_limits import DEFAULT_CUSTOM_LIMIT
@@ -91,16 +93,6 @@ AI_PROVIDER_ORDER = [
 
 # Providers that hide API key UI / skip key validation (local OpenAI-compat + free proxy)
 NO_API_KEY_PROVIDER_IDS = set(LOCAL_OPENAI_COMPAT_PROVIDER_IDS) | {'nvidia_free'}
-
-
-def extract_provider_id(config_id, config):
-    """从配置中提取 provider_id（兼容旧数据）。"""
-    provider_id = (config or {}).get('provider_id')
-    if provider_id:
-        return provider_id
-    if '_' in config_id:
-        return config_id.split('_', 1)[0]
-    return config_id
 
 
 def is_ai_config_complete(provider_id, model_config):
@@ -495,6 +487,23 @@ def get_prefs(force_reload=False):
             _cfg['api_base_url'] = f'{base}/v1'
             ollama_migrated = True
     if ollama_migrated:
+        prefs.commit()
+
+    # Gemini：旧默认模型带 google/ 前缀，原生 API 不接受，迁移到无前缀 ID
+    gemini_migrated = False
+    for _cid, _cfg in (prefs.get('models') or {}).items():
+        if not isinstance(_cfg, dict):
+            continue
+        if extract_provider_id(_cid, _cfg) != 'gemini':
+            continue
+        model_val = (_cfg.get('model') or '').strip()
+        if model_val.startswith('google/'):
+            _cfg['model'] = model_val[len('google/'):]
+            gemini_migrated = True
+        elif model_val == 'google/gemini-3.5-flash':
+            _cfg['model'] = GEMINI_CONFIG.default_model_name
+            gemini_migrated = True
+    if gemini_migrated:
         prefs.commit()
 
     # 确保本地 OpenAI 兼容提供商默认配置存在
@@ -1237,6 +1246,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_KOBOLDCPP
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
         
         if not default_model_name:
             return 1  # 返回第一个实际模型
@@ -1790,6 +1803,9 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'koboldcpp':
                 from .models import KoboldCppModel
                 model_config = KoboldCppModel
+            elif self.model_id == 'nvidia_free':
+                from .models import NvidiaFreeModel
+                model_config = NvidiaFreeModel
                 
             if model_config:
                 default_api_base_url = getattr(model_config, 'DEFAULT_API_BASE_URL', '')
@@ -1894,6 +1910,8 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_LMSTUDIO
         elif self.model_id == 'koboldcpp':
             provider = AIProvider.AI_KOBOLDCPP
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
         else:
             # 未知模型，无法重置
             logger.warning(f"未知模型 ID: {self.model_id}，无法重置")
@@ -1905,8 +1923,8 @@ class ModelConfigWidget(QWidget):
         if model_config:
             logger.info(f"开始重置模型 {self.model_id} 的参数")
             
-            # 1. 清除 API Key / Auth Token（本地 OpenAI 兼容服务除外）
-            if self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+            # 1. 清除 API Key / Auth Token（本地 OpenAI 兼容服务 / nvidia_free 除外）
+            if self.model_id not in NO_API_KEY_PROVIDER_IDS:
                 if hasattr(self, 'api_key_edit') and self.api_key_edit:
                     self.api_key_edit.clear()
                     logger.info(f"已清除 {self.model_id} 的 API Key")
@@ -2078,6 +2096,7 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('ollama', OllamaModel)
         AIModelFactory.register_model('lmstudio', LMStudioModel)
         AIModelFactory.register_model('koboldcpp', KoboldCppModel)
+        AIModelFactory.register_model('nvidia_free', NvidiaFreeModel)
         
         self.setup_ui()
         self.load_initial_values()

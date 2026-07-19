@@ -21,7 +21,7 @@ class GeminiModel(BaseAIModel):
     Google Gemini 模型实现类
     """
     # 默认模型名称，集中管理便于后续更新
-    DEFAULT_MODEL = "google/gemini-3.5-flash"
+    DEFAULT_MODEL = "gemini-3.5-flash"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
     
@@ -100,53 +100,45 @@ class GeminiModel(BaseAIModel):
         translations = get_translation(self.config.get('language', 'en'))
         system_message = kwargs.get('system_message', translations.get('default_system_message', 'You are an expert in book analysis. Your task is to help users understand books better by providing insightful questions and analysis.'))
         
-        # 构建基本请求数据结构，严格按照 Gemini API 要求格式化
-        data = {
-            "contents": []
-        }
-        
-        # 如果有系统消息，添加为第一条消息
-        if system_message and system_message.strip():
-            data["contents"].append({
-                "role": "user",  # Gemini 2.5 支持 role，但使用 user 而非 system
-                "parts": [
-                    {"text": system_message}
-                ]
-            })
-        
-        # 添加用户提示
-        data["contents"].append({
-            "role": "user",  # 明确指定角色
-            "parts": [
-                {"text": prompt}
+        # 构建基本请求数据结构（用户内容走 contents；系统提示走 systemInstruction）
+        data: Dict[str, Any] = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": prompt}],
+                }
             ]
-        })
-        
-        # 添加生成配置
-        generation_config = {}
-        
-        # 温度参数
-        if 'temperature' in kwargs:
-            generation_config["temperature"] = kwargs.get('temperature')
-        
-        # 最大输出令牌数 (如果用户指定了，则覆盖默认值)
-        if 'max_tokens' in kwargs:
-            generation_config["maxOutputTokens"] = kwargs.get('max_tokens')
-        
-        # 最大输出令牌数为 128000
-        generation_config["maxOutputTokens"] = 128000
+        }
 
-        # 采样参数
-        if 'top_p' in kwargs:
+        if system_message and system_message.strip():
+            data["systemInstruction"] = {
+                "parts": [{"text": system_message}]
+            }
+
+        generation_config = {}
+        if 'temperature' in kwargs and kwargs.get('temperature') is not None:
+            generation_config["temperature"] = kwargs.get('temperature')
+        if 'max_tokens' in kwargs and kwargs.get('max_tokens') is not None:
+            generation_config["maxOutputTokens"] = kwargs.get('max_tokens')
+        if 'top_p' in kwargs and kwargs.get('top_p') is not None:
             generation_config["topP"] = kwargs.get('top_p')
-        
-        if 'top_k' in kwargs:
+        if 'top_k' in kwargs and kwargs.get('top_k') is not None:
             generation_config["topK"] = kwargs.get('top_k')
-        
-        # 添加生成配置 (现在总是会添加，因为我们有默认的 maxOutputTokens)
-        data['generationConfig'] = generation_config
-            
+
+        if generation_config:
+            data['generationConfig'] = generation_config
+
         return data
+
+    @staticmethod
+    def normalize_model_name(model_name: str) -> str:
+        """Strip OpenRouter-style provider prefixes for native Gemini API."""
+        name = (model_name or '').strip()
+        if name.startswith('models/'):
+            name = name[len('models/'):]
+        if name.startswith('google/'):
+            name = name[len('google/'):]
+        return name
     
     def mask_api_key(self, text: str) -> str:
         """
@@ -180,9 +172,17 @@ class GeminiModel(BaseAIModel):
         Returns:
             模型回复的文本
         """
-        # 获取模型名称和API基础URL
-        model_name = kwargs.get('model', self.DEFAULT_MODEL)
-        api_base_url = kwargs.get('api_base_url', self.DEFAULT_API_BASE_URL)
+        # Prefer configured model/base URL; kwargs can override for tests
+        model_name = self.normalize_model_name(
+            kwargs.get('model')
+            or self.config.get('model')
+            or self.DEFAULT_MODEL
+        )
+        api_base_url = (
+            kwargs.get('api_base_url')
+            or self.config.get('api_base_url')
+            or self.DEFAULT_API_BASE_URL
+        ).rstrip('/')
         
         # 准备请求头和请求体
         headers = self.prepare_headers()
@@ -473,27 +473,19 @@ class GeminiModel(BaseAIModel):
     
     def prepare_models_request_headers(self) -> Dict[str, str]:
         """
-        准备获取模型列表的请求头
-        Gemini 获取模型列表时不需要在请求头中添加 API key
-        API key 通过 URL 参数传递
-        
-        GET 请求不需要 Content-Type 头
-        
-        :return: 请求头字典
+        准备获取模型列表的请求头（使用 x-goog-api-key，与 ask 路径一致）
         """
-        return {}
+        headers: Dict[str, str] = {}
+        api_key = self.get_token()
+        if api_key:
+            headers["x-goog-api-key"] = api_key
+        return headers
     
     def prepare_models_request_url(self, base_url: str, endpoint: str) -> str:
         """
-        准备获取模型列表的完整 URL
-        Gemini 将 API key 作为 URL 参数
-        
-        :param base_url: API 基础 URL
-        :param endpoint: API 端点路径
-        :return: 完整的请求 URL
+        准备获取模型列表的完整 URL（API key 走请求头，不再放 query）
         """
-        api_key = self.config.get('api_key', '')
-        return f"{base_url}{endpoint}?key={api_key}"
+        return self.build_api_url(base_url, endpoint)
     
     def parse_models_response(self, data: Dict[str, Any]) -> list:
         """
@@ -526,26 +518,25 @@ class GeminiModel(BaseAIModel):
         
         try:
             # Gemini 的验证：发送一个最小的 generateContent 请求
-            api_key = self.config.get('api_key', '')
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
-            model_name = self.DEFAULT_MODEL
-            
-            # Gemini 的 API Key 通过 URL 参数传递
-            url = f"{api_base_url}/models/{model_name}:generateContent?key={api_key}"
-            
-            # 最小的测试请求
+            api_base_url = (
+                self.config.get('api_base_url') or self.DEFAULT_API_BASE_URL
+            ).rstrip('/')
+            model_name = self.normalize_model_name(
+                self.config.get('model') or self.DEFAULT_MODEL
+            )
+            url = f"{api_base_url}/models/{model_name}:generateContent"
+
             test_data = {
                 "contents": [{
                     "parts": [{"text": "hi"}]
                 }],
                 "generationConfig": {
-                    "maxOutputTokens": 1
+                    "maxOutputTokens": 16
                 }
             }
-            
-            headers = {"Content-Type": "application/json"}
-            
-            
+
+            headers = self.prepare_headers()
+
             # 在线模型超时时间（15秒）
             timeout_seconds = 15
             response = requests.post(

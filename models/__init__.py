@@ -4,7 +4,13 @@ AI 模型模块初始化文件
 此包包含所有 AI 模型的实现，包括基础模型抽象类和具体模型实现。
 """
 
-from .base import BaseAIModel, AIModelFactory, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
+from .base import (
+    BaseAIModel,
+    AIModelFactory,
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    KNOWN_PROVIDER_IDS,
+    extract_provider_id,
+)
 from .grok import GrokModel
 from .gemini import GeminiModel
 from .deepseek import DeepseekModel
@@ -41,6 +47,8 @@ __all__ = [
     'BaseAIModel',
     'AIModelFactory',
     'LOCAL_OPENAI_COMPAT_PROVIDER_IDS',
+    'KNOWN_PROVIDER_IDS',
+    'extract_provider_id',
     'GrokModel',
     'GeminiModel',
     'DeepseekModel',
