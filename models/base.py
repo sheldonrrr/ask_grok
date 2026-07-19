@@ -62,7 +62,7 @@ DEFAULT_MODELS = {
         display_name="Google Gemini",
         api_key_label="API Key:",
         default_api_base_url="https://generativelanguage.googleapis.com/v1beta",
-        default_model_name="google/gemini-3.5-flash"
+        default_model_name="gemini-3.5-flash"
     ),
     AIProvider.AI_DEEPSEEK: ModelConfig(
         provider=AIProvider.AI_DEEPSEEK,

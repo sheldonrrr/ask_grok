@@ -2,119 +2,107 @@
 
 ## 核心配置
 
-- **API Key**: 必需。作为 URL 查询参数发送。
-- **Base URL**: 必需。这是 API 的根地址，例如 `https://generativelanguage.googleapis.com/v1beta`。
+- **API Key**: 必需。通过请求头 `x-goog-api-key` 发送（推荐；旧的 `?key=` 查询参数仍可用但不推荐）。
+- **Base URL**: 必需。例如 `https://generativelanguage.googleapis.com/v1beta`。
+- **Model**: 使用 Google AI 原生名称，例如 `gemini-3.5-flash`（不要使用 OpenRouter 风格的 `google/gemini-...`）。
 
 ## 获取模型列表
 
 ### REST API 方式
-- **完整 URL**: `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-- **端点**: `/v1beta/models`
+- **URL**: `https://generativelanguage.googleapis.com/v1beta/models`
 - **方法**: `GET`
-- **认证**: API Key 作为 URL 查询参数 `key` 传递
+- **认证**:
+  ```http
+  x-goog-api-key: ${apiKey}
+  ```
+- **请求头**: GET 请求不要带 `Content-Type`
 - **响应格式**:
   ```json
   {
     "models": [
       {
-        "name": "models/gemini-2.5-flash",
-        "displayName": "Gemini 2.5 Flash",
-        "supportedActions": ["generateContent", "embedContent"]
+        "name": "models/gemini-3.5-flash",
+        "displayName": "Gemini 3.5 Flash",
+        "supportedGenerationMethods": ["generateContent", "countTokens"]
       }
     ]
   }
   ```
 - **注意事项**:
-  1. 响应中的模型名称包含 `models/` 前缀，需要移除后使用
-  2. 可以通过 `supportedActions` 字段过滤支持特定功能的模型
-  3. 只返回支持 `generateContent` 的模型用于对话
-
-### Python SDK 方式（参考）
-```python
-from google import genai
-
-client = genai.Client()
-
-# 列出支持 generateContent 的模型
-print("List of models that support generateContent:\n")
-for m in client.models.list():
-    for action in m.supported_actions:
-        if action == "generateContent":
-            print(m.name)
-
-# 列出支持 embedContent 的模型
-print("List of models that support embedContent:\n")
-for m in client.models.list():
-    for action in m.supported_actions:
-        if action == "embedContent":
-            print(m.name)
-```
+  1. 响应中的模型名称包含 `models/` 前缀，使用前需要移除
+  2. 建议只保留 `supportedGenerationMethods` 包含 `generateContent` 的模型
 
 ## 发送聊天请求
 
-- **端点**: `${baseUrl}/${model_name}:generateContent?key=${apiKey}`
+- **端点**: `${baseUrl}/models/${model_name}:generateContent`
+- **流式端点**: `${baseUrl}/models/${model_name}:streamGenerateContent?alt=sse`
 - **方法**: `POST`
-- **认证**: API Key 同样附加在 URL 的查询参数中。
+- **认证**:
+  ```http
+  x-goog-api-key: ${apiKey}
+  Content-Type: application/json
+  ```
 - **请求体 (Body)**:
   ```json
   {
+    "systemInstruction": {
+      "parts": [
+        {
+          "text": "<系统提示词>"
+        }
+      ]
+    },
     "contents": [
       {
+        "role": "user",
         "parts": [
           {
             "text": "<用户提示词>"
           }
         ]
       }
-    ]
+    ],
+    "generationConfig": {
+      "temperature": 0.7
+    }
   }
   ```
 
 ## 实现要点
 
-### 获取模型列表的特殊处理
-1. **认证方式**: API Key 必须作为 URL 查询参数 `key` 传递，不能放在请求头中
-2. **请求头**: GET 请求不应包含 `Content-Type` 头，否则可能导致 400 错误
-3. **响应处理**: 模型名称包含 `models/` 前缀（如 `models/gemini-2.5-flash`），使用时需要移除前缀
-4. **模型过滤**: 建议只返回 `supportedActions` 包含 `generateContent` 的模型
+1. **认证**: 优先使用 `x-goog-api-key` 请求头，不要把 Key 放进 URL
+2. **系统提示**: 使用顶层字段 `systemInstruction`，不要再伪装成 `role: user` 的 contents
+3. **模型名**: URL 中使用 `gemini-3.5-flash`，不要带 `models/`；也不要带 `google/`
+4. **流式**: `streamGenerateContent` + `alt=sse`，按 `data: {...}` 解析 `candidates[0].content.parts[].text`
 
-### 常见问题
+## 常见问题
 
-#### 400 Bad Request 错误
-**原因**: 
-- GET 请求包含了不必要的 `Content-Type: application/json` 头
-- API Key 格式错误或包含特殊字符未正确编码
+### 404 Not Found
+**原因**: 模型名错误（例如误用 `google/gemini-3.5-flash`）
 
 **解决方案**:
-- 移除 GET 请求的 Content-Type 头
-- 确保 API Key 正确 URL 编码
+- 改成 `gemini-3.5-flash`
+- 或在设置里刷新模型列表后重新选择
 
-#### 400 Bad Request - 地理位置限制
+### 400 Bad Request - 地理位置限制
 **错误信息**: `User location is not supported for the API use.`
 
-**原因**: Gemini API 在某些地区不可用（如中国大陆）
-
 **解决方案**:
-1. **使用 VPN**: 连接到支持的地区（如美国、欧洲等）
-2. **切换提供商**: 使用其他 AI 提供商
-   - OpenAI (GPT-4)
-   - Anthropic (Claude)
-   - DeepSeek
-   - Nvidia AI
-   - Ollama (本地运行)
-3. **查看可用性**: 访问 [Google AI Studio](https://aistudio.google.com/) 查看您所在地区的可用性
+1. 使用 VPN 连接到支持地区
+2. 切换到其他 AI 提供商
+3. 在 [Google AI Studio](https://aistudio.google.com/) 查看地区可用性
 
-#### 401 Unauthorized 错误
-**原因**: API Key 无效或已过期
+### 401 / 403 Unauthorized
+**原因**: API Key 无效或权限不足
 
 **解决方案**:
 - 在 Google AI Studio 重新生成 API Key
-- 确认 API Key 已启用 Gemini API 访问权限
+- 确认 Key 已启用 Gemini API 访问
 
 ## 总结
 
-Gemini 的 API 设计比较独特：
-1. **认证方式**: API Key 通过 URL 参数传递，而非请求头
-2. **端点格式**: 聊天请求需要动态拼接模型名称，格式为 `${model_name}:generateContent`
-3. **模型名称**: 响应中的模型名称包含 `models/` 前缀，需要移除
-4. **请求头**: GET 请求（如获取模型列表）不需要 Content-Type 头
+最新 Gemini REST 请求格式的关键点：
+1. Header 认证：`x-goog-api-key`
+2. 系统提示：`systemInstruction`
+3. 对话内容：`contents[].role` + `parts[].text`
+4. 模型名：原生 ID（如 `gemini-3.5-flash`）
