@@ -19,6 +19,7 @@ from calibre.gui2 import info_dialog
 from calibre.gui2.keyboard import NameConflict
 from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_ai_plugin.api import APIClient
+from calibre_plugins.ask_ai_plugin.models.base import LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
@@ -1713,7 +1714,7 @@ class TabDialog(QDialog):
             if not provider_id:
                 provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
             
-            if provider_id == 'ollama':
+            if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
@@ -3165,8 +3166,8 @@ Please answer the question based on the above book information.""")
             if not provider_id:
                 provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
             
-            if provider_id == 'ollama':
-                # Ollama特殊处理：需要有api_base_url和model
+            if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                # 本地 OpenAI 兼容服务：需要有 api_base_url
                 has_valid_config = bool(config.get('api_base_url', '').strip())
                 if not has_valid_config:
                     continue
@@ -3521,8 +3522,11 @@ Please answer the question based on the above book information.""")
         for model_id, config in models_config.items():
             if model_id != 'nvidia_free' and config.get('enabled', False):
                 # 检查是否真正配置了（有 API key 或其他必要配置）
-                if model_id == 'ollama':
-                    # Ollama 不需要 API key，只要启用就算配置了
+                provider_id = config.get('provider_id') or (
+                    model_id.split('_', 1)[0] if '_' in model_id else model_id
+                )
+                if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                    # 本地 OpenAI 兼容服务不需要 API key
                     configured_ais.append(model_id)
                 elif config.get('api_key') or config.get('auth_token'):
                     configured_ais.append(model_id)

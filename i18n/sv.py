@@ -412,6 +412,13 @@ class SwedishTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Anpassad',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Aktivera strömning',
 
             # AI Switcher
@@ -503,7 +510,7 @@ class SwedishTranslation(BaseTranslation):
 
             # Provider-specific notices
             'perplexity_model_notice': 'Obs: Perplexity tillhandahåller inte en publik modelllista API, så modeller är hårdkodade.',
-            'ollama_no_api_key_notice': 'Obs: Ollama är en lokal modell som inte kräver en API-nyckel.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Obs: Nya användare får gratis API-krediter - Inget kreditkort krävs.',
 
             # Nvidia Free error messages

@@ -21,11 +21,20 @@ from .models.nvidia_free import NvidiaFreeModel
 from .models.openrouter import OpenRouterModel
 from .models.perplexity import PerplexityModel
 from .models.ollama import OllamaModel
+from .models.lmstudio import LMStudioModel
+from .models.koboldcpp import KoboldCppModel
 from calibre.utils.config import JSONConfig
 from .env_config import EnvironmentConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
-from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
+from .models.base import (
+    AIProvider,
+    ModelConfig,
+    DEFAULT_MODELS,
+    AIModelFactory,
+    BaseAIModel,
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+)
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from .prompt_limits import DEFAULT_CUSTOM_LIMIT
 from .widgets import NoScrollComboBox, apply_button_style
@@ -69,11 +78,17 @@ NVIDIA_FREE_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA_FREE)
 OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
+LMSTUDIO_CONFIG = get_current_model_config(AIProvider.AI_LMSTUDIO)
+KOBOLDCPP_CONFIG = get_current_model_config(AIProvider.AI_KOBOLDCPP)
 
 AI_PROVIDER_ORDER = [
     'openai', 'anthropic', 'gemini', 'grok', 'deepseek',
-    'nvidia', 'nvidia_free', 'perplexity', 'openrouter', 'ollama', 'custom',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
+    'ollama', 'lmstudio', 'koboldcpp', 'custom',
 ]
+
+# Providers that hide API key UI / skip key validation (local OpenAI-compat + free proxy)
+NO_API_KEY_PROVIDER_IDS = set(LOCAL_OPENAI_COMPAT_PROVIDER_IDS) | {'nvidia_free'}
 
 
 def extract_provider_id(config_id, config):
@@ -91,7 +106,7 @@ def is_ai_config_complete(provider_id, model_config):
     provider_id = (provider_id or '').strip()
     config = model_config or {}
 
-    if provider_id in ['ollama', 'custom', 'nvidia_free']:
+    if provider_id in NO_API_KEY_PROVIDER_IDS or provider_id == 'custom':
         has_auth = True
     else:
         api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
@@ -255,12 +270,28 @@ prefs.defaults['models'] = {
         'enabled': False  # 默认不启用，需要用户配置
     },
     'ollama': {
-        'api_key': '',  # Optional for Ollama (local service)
+        'api_key': '',  # Optional for local OpenAI-compatible services
         'api_base_url': OLLAMA_CONFIG.default_api_base_url,
         'model': OLLAMA_CONFIG.default_model_name,
         'display_name': OLLAMA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
+    },
+    'lmstudio': {
+        'api_key': '',
+        'api_base_url': LMSTUDIO_CONFIG.default_api_base_url,
+        'model': LMSTUDIO_CONFIG.default_model_name,
+        'display_name': LMSTUDIO_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False
+    },
+    'koboldcpp': {
+        'api_key': '',
+        'api_base_url': KOBOLDCPP_CONFIG.default_api_base_url,
+        'model': KOBOLDCPP_CONFIG.default_model_name,
+        'display_name': KOBOLDCPP_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False
     },
     'nvidia_free': {
         'api_key': 'free-tier',  # 免费通道不需要真实 API Key
@@ -435,6 +466,38 @@ def get_prefs(force_reload=False):
         nv = prefs['models']['nvidia']
         if isinstance(nv, dict) and nv.get('model') == 'meta/llama-3.3-70b-instruct':
             nv['model'] = NVIDIA_CONFIG.default_model_name
+            prefs.commit()
+
+    # Ollama 默认改为 OpenAI 兼容路径：旧 base URL 无 /v1 时自动补齐
+    ollama_migrated = False
+    for _cid, _cfg in (prefs.get('models') or {}).items():
+        if not isinstance(_cfg, dict):
+            continue
+        _pid = extract_provider_id(_cid, _cfg)
+        if _pid != 'ollama':
+            continue
+        base = (_cfg.get('api_base_url') or '').rstrip('/')
+        if base in ('http://localhost:11434', 'http://127.0.0.1:11434'):
+            _cfg['api_base_url'] = f'{base}/v1'
+            ollama_migrated = True
+    if ollama_migrated:
+        prefs.commit()
+
+    # 确保本地 OpenAI 兼容提供商默认配置存在
+    for _pid, _model_cfg in (
+        ('lmstudio', LMSTUDIO_CONFIG),
+        ('koboldcpp', KOBOLDCPP_CONFIG),
+        ('ollama', OLLAMA_CONFIG),
+    ):
+        if _pid not in prefs['models']:
+            prefs['models'][_pid] = {
+                'api_key': '',
+                'api_base_url': _model_cfg.default_api_base_url,
+                'model': _model_cfg.default_model_name,
+                'display_name': _model_cfg.display_name,
+                'enable_streaming': True,
+                'enabled': False,
+            }
             prefs.commit()
     
     # 配置迁移：删除已废弃的 openrouter_free 配置（旧版本遗留数据）
@@ -612,6 +675,12 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            model_config = get_current_model_config(provider)
         elif self.model_id == 'nvidia_free':
             provider = AIProvider.AI_NVIDIA_FREE
             model_config = get_current_model_config(provider)
@@ -619,7 +688,7 @@ class ModelConfigWidget(QWidget):
         if model_config:
             from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
             
-            # API Key/Token 输入框（Ollama 和 nvidia_free 不需要）
+            # API Key/Token 输入框（本地 OpenAI 兼容服务和 nvidia_free 不需要）
             if self.model_id == 'nvidia_free':
                 # Nvidia 免费通道：显示纯文字提示
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
@@ -642,7 +711,7 @@ class ModelConfigWidget(QWidget):
                 
                 # 创建空的占位符以保持代码兼容性
                 self.api_key_edit = None
-            elif self.model_id != 'ollama':
+            elif self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 # API Key 标签
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
@@ -663,7 +732,7 @@ class ModelConfigWidget(QWidget):
                 api_key_desc.setWordWrap(True)
                 main_layout.addWidget(api_key_desc)
             else:
-                # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
+                # 本地 OpenAI 兼容服务通常不需要 API Key
                 self.api_key_edit = None
             
             # API Base URL 标签
@@ -858,10 +927,17 @@ class ModelConfigWidget(QWidget):
                 notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 notice_label.setWordWrap(True)
                 main_layout.addWidget(notice_label)
-            elif self.model_id == 'ollama':
-                notice_label = QLabel(self.i18n.get('ollama_no_api_key_notice', 
-                    'Note: Ollama is a local model that does not require an API key.'))
-                notice_label.setObjectName('label_ollama_notice')
+            elif self.model_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                notice_key = f'{self.model_id}_no_api_key_notice'
+                notice_label = QLabel(self.i18n.get(
+                    notice_key,
+                    self.i18n.get(
+                        'local_openai_compat_no_api_key_notice',
+                        'Note: This local OpenAI-compatible service usually does not require an API key. '
+                        'Start the local server, then refresh the model list.',
+                    ),
+                ))
+                notice_label.setObjectName(f'label_{self.model_id}_notice')
                 notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 notice_label.setWordWrap(True)
                 main_layout.addWidget(notice_label)
@@ -876,8 +952,8 @@ class ModelConfigWidget(QWidget):
     
     def update_button_states(self):
         """更新刷新和测试按钮的启用状态"""
-        # 刷新按钮：需要 API Key（Ollama 和 nvidia_free 除外）
-        if self.model_id in ['ollama', 'nvidia_free']:
+        # 刷新按钮：需要 API Key（本地 OpenAI 兼容服务和 nvidia_free 除外）
+        if self.model_id in NO_API_KEY_PROVIDER_IDS:
             self.refresh_models_button.setEnabled(True)
         elif self.api_key_edit is not None:
             # QTextEdit 使用 toPlainText()，QLineEdit 使用 text()
@@ -958,9 +1034,16 @@ class ModelConfigWidget(QWidget):
                 config['x_title'] = self.x_title_edit.text().strip()
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
-            # Ollama 不需要 API Key
             config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
-            config['display_name'] = 'Ollama (Local)'  # 设置固定的显示名称
+            config['display_name'] = 'Ollama (Local)'
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
+            config['display_name'] = 'LM Studio (Local)'
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
+            config['display_name'] = 'KoboldCpp (Local)'
         elif self.model_id == 'nvidia_free':
             provider = AIProvider.AI_NVIDIA_FREE
             # Nvidia 免费通道不需要用户提供 API Key
@@ -1121,6 +1204,14 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_OLLAMA
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
         
         if not default_model_name:
             return 1  # 返回第一个实际模型
@@ -1191,8 +1282,8 @@ class ModelConfigWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 1. 验证 API Key（Ollama 和 nvidia_free 不需要）
-        if self.model_id not in ['ollama', 'nvidia_free']:
+        # 1. 验证 API Key（本地 OpenAI 兼容服务和 nvidia_free 不需要）
+        if self.model_id not in NO_API_KEY_PROVIDER_IDS:
             api_key = self.get_api_key()
             if not api_key:
                 QMessageBox.warning(
@@ -1665,6 +1756,12 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'ollama':
                 from .models import OllamaModel
                 model_config = OllamaModel
+            elif self.model_id == 'lmstudio':
+                from .models import LMStudioModel
+                model_config = LMStudioModel
+            elif self.model_id == 'koboldcpp':
+                from .models import KoboldCppModel
+                model_config = KoboldCppModel
                 
             if model_config:
                 default_api_base_url = getattr(model_config, 'DEFAULT_API_BASE_URL', '')
@@ -1689,6 +1786,8 @@ class ModelConfigWidget(QWidget):
             'openrouter': AIProvider.AI_OPENROUTER,
             'perplexity': AIProvider.AI_PERPLEXITY,
             'ollama': AIProvider.AI_OLLAMA,
+            'lmstudio': AIProvider.AI_LMSTUDIO,
+            'koboldcpp': AIProvider.AI_KOBOLDCPP,
             'nvidia_free': AIProvider.AI_NVIDIA_FREE,
         }
         
@@ -1760,6 +1859,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_PERPLEXITY
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
         else:
             # 未知模型，无法重置
             logger.warning(f"未知模型 ID: {self.model_id}，无法重置")
@@ -1771,8 +1874,8 @@ class ModelConfigWidget(QWidget):
         if model_config:
             logger.info(f"开始重置模型 {self.model_id} 的参数")
             
-            # 1. 清除 API Key / Auth Token（Ollama 除外）
-            if self.model_id != 'ollama':
+            # 1. 清除 API Key / Auth Token（本地 OpenAI 兼容服务除外）
+            if self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 if hasattr(self, 'api_key_edit') and self.api_key_edit:
                     self.api_key_edit.clear()
                     logger.info(f"已清除 {self.model_id} 的 API Key")
@@ -1846,7 +1949,7 @@ class ModelConfigWidget(QWidget):
                             del current['api_key']
                         except Exception:
                             pass
-                elif self.model_id != 'ollama':
+                elif self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                     current['api_key'] = ''
                 current['enable_streaming'] = True
                 current['enabled'] = False
@@ -1941,6 +2044,8 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('perplexity', PerplexityModel)
         AIModelFactory.register_model('openrouter', OpenRouterModel)
         AIModelFactory.register_model('ollama', OllamaModel)
+        AIModelFactory.register_model('lmstudio', LMStudioModel)
+        AIModelFactory.register_model('koboldcpp', KoboldCppModel)
         
         self.setup_ui()
         self.load_initial_values()

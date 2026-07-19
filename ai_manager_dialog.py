@@ -30,7 +30,7 @@ from .config import (
     build_ai_display_text,
     build_configured_ai_entries,
 )
-from .models.base import AIProvider, DEFAULT_MODELS
+from .models.base import AIProvider, DEFAULT_MODELS, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation
 from .widgets import apply_button_style
 from .ui_constants import (
@@ -56,6 +56,8 @@ AI_PROVIDER_ORDER = [
     ('perplexity', AIProvider.AI_PERPLEXITY),
     ('openrouter', AIProvider.AI_OPENROUTER),
     ('ollama', AIProvider.AI_OLLAMA),
+    ('lmstudio', AIProvider.AI_LMSTUDIO),
+    ('koboldcpp', AIProvider.AI_KOBOLDCPP),
     ('custom', AIProvider.AI_CUSTOM),
 ]
 
@@ -311,8 +313,8 @@ class AddAIDialog(QDialog):
         # 获取配置
         config = self.model_widget.get_config()
         
-        # 验证必填字段（Ollama 不需要 API Key）
-        if self.current_provider_id != 'ollama':
+        # 验证必填字段（本地 OpenAI 兼容服务不需要 API Key）
+        if self.current_provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
             # Grok 使用 auth_token，其他使用 api_key
             key_field = 'auth_token' if self.current_provider_id == 'grok' else 'api_key'
             api_key = config.get(key_field, '').strip()

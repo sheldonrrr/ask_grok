@@ -1,37 +1,35 @@
-# Ollama (本地大模型) 配置指南
+# Ollama (Local) 配置指南
 
-Ollama 用于在本地运行大语言模型，其配置方式与其他云服务提供商有显著不同。
+Ollama 在本地运行大语言模型。Ask AI Plugin 通过其 **OpenAI 兼容接口** 接入。
 
 ## 核心配置
 
-- **API Key**: 不需要。
-- **Base URL**: 必需。通常是本地服务的地址，例如 `http://localhost:11434`。
+- **API Key**: 通常不需要（可选）
+- **Base URL**: 默认 `http://localhost:11434/v1`
+- **Model**: 点击刷新从本地拉取；也可手动填写已 `ollama pull` 的模型名
 
 ## 获取模型列表
 
-- **端点**: `${baseUrl}/api/tags`
+- **端点**: `${baseUrl}/models`（即 `http://localhost:11434/v1/models`）
 - **方法**: `GET`
-- **认证**: 无。
+- **认证**: 无（除非自建反向代理要求）
 
 ## 发送聊天请求
 
-- **端点**: `${baseUrl}/api/chat`
+- **端点**: `${baseUrl}/chat/completions`
 - **方法**: `POST`
-- **认证**: 无。
-- **请求体 (Body)**:
+- **请求体**:
   ```json
   {
     "model": "<模型名称>",
     "messages": [
-      {
-        "role": 'user',
-        "content": "<用户提示词>"
-      }
+      {"role": "system", "content": "<系统提示词>"},
+      {"role": "user", "content": "<用户提示词>"}
     ],
-    "stream": false // 在本项目中，我们使用非流式响应
+    "stream": true
   }
   ```
 
 ## 总结
 
-Ollama 的配置非常简单，因为它在本地运行，无需 API Key 进行认证。所有操作都通过访问本地的 Base URL 完成。
+请先启动 Ollama 服务，再在插件中刷新模型列表。旧版原生 `/api/chat` 路径已不再使用；请使用带 `/v1` 的 OpenAI 兼容 Base URL。
