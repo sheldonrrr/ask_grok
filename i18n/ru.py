@@ -483,6 +483,7 @@ class RussianTranslation(BaseTranslation):
             'remove_ai_config': 'Удалить',
             'delete_ai': 'Удалить',
             'add_ai_button': 'Добавить ИИ',
+            'ai_manager_window_hint': '«Добавить / Управление» открывает изменяемое окно (можно развернуть). Двойной щелчок по ИИ — редактирование.',
             'edit_ai_button': 'Редактировать ИИ',
             'manage_configured_ai_button': 'Управление настроенным ИИ',
             'manage_ai_button': 'Управление ИИ',

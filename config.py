@@ -310,6 +310,10 @@ prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
+prefs.defaults['add_ai_dialog_width'] = 920
+prefs.defaults['add_ai_dialog_height'] = 760
+prefs.defaults['manage_ai_dialog_width'] = 960
+prefs.defaults['manage_ai_dialog_height'] = 760
 prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (prompt template)
 prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
@@ -2202,41 +2206,54 @@ class ConfigDialog(QWidget):
         default_ai_layout.addStretch()
         
         model_layout.addLayout(default_ai_layout)
-        
-        # 已配置 AI 列表（简洁显示）
-        from PyQt5.QtWidgets import QListWidget, QListWidgetItem
-        from PyQt5.QtCore import QEvent
-        self.configured_ai_list = QListWidget()
-        self.configured_ai_list.setObjectName('list_configured_ai_summary')
-        self.configured_ai_list.setMaximumHeight(120)
-        self.configured_ai_list.setStyleSheet(get_list_widget_style())
-        self.configured_ai_list.itemDoubleClicked.connect(self._on_ai_list_double_clicked)
-        
-        # 安装事件过滤器，实现鼠标滚动互斥
-        self.configured_ai_list.viewport().installEventFilter(self)
-        
-        model_layout.addWidget(self.configured_ai_list)
-        
-        # AI 操作按钮区域
+
+        # AI 操作按钮放在列表上方，避免被外层滚动/矮列表挤到看不见
         ai_buttons_layout = QHBoxLayout()
         configure_layout(ai_buttons_layout, 'form_row')
-        
-        # 添加 AI 按钮（使用默认样式）
+
         self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
         self.add_ai_button.setObjectName('button_add_ai')
         self.add_ai_button.clicked.connect(self._on_add_ai_clicked)
         ai_buttons_layout.addWidget(self.add_ai_button)
-        
-        # 管理已配置 AI 按钮（使用默认样式）
-        self.manage_ai_button = QPushButton(self.i18n.get('manage_configured_ai_button', 'Manage Configured AI'))
+
+        self.manage_ai_button = QPushButton(
+            self.i18n.get('manage_configured_ai_button', 'Manage Configured AI')
+        )
         self.manage_ai_button.setObjectName('button_manage_ai')
         self.manage_ai_button.clicked.connect(self._on_manage_ai_clicked)
         ai_buttons_layout.addWidget(self.manage_ai_button)
-        
         ai_buttons_layout.addStretch()
-        
         model_layout.addLayout(ai_buttons_layout)
-        
+
+        ai_manager_hint = QLabel(
+            self.i18n.get(
+                'ai_manager_window_hint',
+                'Add / Manage opens a resizable window (you can maximize it). '
+                'Double-click a configured AI to edit it.',
+            )
+        )
+        ai_manager_hint.setObjectName('label_ai_manager_hint')
+        ai_manager_hint.setWordWrap(True)
+        ai_manager_hint.setStyleSheet(
+            f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;"
+        )
+        model_layout.addWidget(ai_manager_hint)
+
+        # 已配置 AI 摘要列表（加大可视高度，减少内外滚动打架）
+        from PyQt5.QtWidgets import QListWidget, QListWidgetItem
+        from PyQt5.QtCore import QEvent
+        self.configured_ai_list = QListWidget()
+        self.configured_ai_list.setObjectName('list_configured_ai_summary')
+        self.configured_ai_list.setMinimumHeight(160)
+        self.configured_ai_list.setMaximumHeight(260)
+        self.configured_ai_list.setStyleSheet(get_list_widget_style())
+        self.configured_ai_list.itemDoubleClicked.connect(self._on_ai_list_double_clicked)
+
+        # 安装事件过滤器，实现鼠标滚动互斥
+        self.configured_ai_list.viewport().installEventFilter(self)
+
+        model_layout.addWidget(self.configured_ai_list)
+
         # 初始化 AI 列表显示
         self.refresh_ai_list()
         
@@ -2639,14 +2656,14 @@ class ConfigDialog(QWidget):
         return super(ConfigDialog, self).eventFilter(obj, event)
     
     def _on_ai_list_double_clicked(self, item):
-        """双击 AI 列表项时打开管理弹窗"""
+        """双击 AI 列表项时打开管理弹窗并定位到该项"""
         model_id = item.data(Qt.UserRole)
         if model_id is None:
             return
-        self._on_manage_ai_clicked()
+        self._on_manage_ai_clicked(initial_config_id=model_id)
     
     def _on_add_ai_clicked(self):
-        """点击添加 AI 按钮时打开弹窗"""
+        """点击添加 AI 按钮时打开可最大化的独立配置窗口"""
         from .ai_manager_dialog import AddAIDialog
         
         dialog = AddAIDialog(self)
@@ -2658,11 +2675,11 @@ class ConfigDialog(QWidget):
         
         dialog.exec_()
     
-    def _on_manage_ai_clicked(self):
-        """点击管理 AI 按钮时打开弹窗"""
+    def _on_manage_ai_clicked(self, initial_config_id=None):
+        """点击管理 AI 按钮时打开可最大化的独立配置窗口"""
         from .ai_manager_dialog import ManageAIDialog
         
-        dialog = ManageAIDialog(self)
+        dialog = ManageAIDialog(self, initial_config_id=initial_config_id)
         dialog.config_changed.connect(self._on_ai_manager_config_changed)
         
         # 连接语言切换信号

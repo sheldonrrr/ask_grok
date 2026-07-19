@@ -458,6 +458,7 @@ class GermanTranslation(BaseTranslation):
             'remove_ai_config': 'Entfernen',
             'delete_ai': 'Löschen',
             'add_ai_button': 'KI hinzufügen',
+            'ai_manager_window_hint': '„Hinzufügen / Verwalten“ öffnet ein skalierbares Fenster (maximierbar). Doppelklick auf eine konfigurierte KI zum Bearbeiten.',
             'edit_ai_button': 'KI bearbeiten',
             'manage_configured_ai_button': 'Konfigurierte KI verwalten',
             'manage_ai_button': 'KI verwalten',

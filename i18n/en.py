@@ -488,6 +488,7 @@ class EnglishTranslation(BaseTranslation):
             'close_button': 'Close',
             'cancel': 'Cancel',
             'add_ai_button': 'Add AI',
+            'ai_manager_window_hint': 'Add / Manage opens a resizable window (you can maximize it). Double-click a configured AI to edit it.',
             'edit_ai_button': 'Edit AI',
             'manage_configured_ai_button': 'Manage Configured AI',
             'manage_ai_button': 'Manage AI',

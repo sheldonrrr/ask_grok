@@ -483,6 +483,7 @@ class DutchTranslation(BaseTranslation):
             'remove_ai_config': 'Verwijderen',
             'delete_ai': 'Verwijderen',
             'add_ai_button': 'AI toevoegen',
+            'ai_manager_window_hint': '‘Toevoegen / Beheren’ opent een herschaalbaar venster (maximaliseren mogelijk). Dubbelklik een geconfigureerde AI om te bewerken.',
             'edit_ai_button': 'AI bewerken',
             'manage_configured_ai_button': 'Beheer geconfigureerde AI',
             'manage_ai_button': 'Beheer AI',

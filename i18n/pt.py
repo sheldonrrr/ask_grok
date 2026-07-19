@@ -488,6 +488,7 @@ class PortugueseTranslation(BaseTranslation):
             'remove_ai_config': 'Remover',
             'delete_ai': 'Excluir',
             'add_ai_button': 'Adicionar IA',
+            'ai_manager_window_hint': '“Adicionar / Gerenciar” abre uma janela redimensionável (maximizar). Clique duas vezes em uma IA configurada para editar.',
             'edit_ai_button': 'Editar IA',
             'manage_configured_ai_button': 'Gerenciar IA Configurada',
             'manage_ai_button': 'Gerenciar IA',

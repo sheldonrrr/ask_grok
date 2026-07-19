@@ -484,6 +484,7 @@ class SwedishTranslation(BaseTranslation):
             'remove_ai_config': 'Ta bort',
             'delete_ai': 'Radera',
             'add_ai_button': 'Lägg till AI',
+            'ai_manager_window_hint': '“Lägg till / Hantera” öppnar ett storleksändringsbart fönster (kan maximeras). Dubbelklicka en konfigurerad AI för att redigera.',
             'edit_ai_button': 'Redigera AI',
             'manage_configured_ai_button': 'Hantera konfigurerad AI',
             'manage_ai_button': 'Hantera AI',

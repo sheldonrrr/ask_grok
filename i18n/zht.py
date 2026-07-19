@@ -311,6 +311,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'delete_ai': '刪除',
         'close_button': '關閉',
         'add_ai_button': '新增 AI',
+            'ai_manager_window_hint': '「新增 / 管理」會開啟可調整大小的獨立視窗（可最大化）。雙擊已設定的 AI 可直接編輯。',
         'edit_ai_button': '編輯 AI',
         'manage_configured_ai_button': '管理已配置 AI',
         'manage_ai_button': '管理 AI',

@@ -321,6 +321,7 @@ class FrenchTranslation(BaseTranslation):
             'delete_ai': 'Supprimer',
             'close_button': 'Fermer',
             'add_ai_button': 'Ajouter IA',
+            'ai_manager_window_hint': '« Ajouter / Gérer » ouvre une fenêtre redimensionnable (maximisable). Double-cliquez une IA configurée pour l’éditer.',
             'edit_ai_button': 'Modifier IA',
             'manage_configured_ai_button': 'Gérer l\'IA Configurée',
             'manage_ai_button': 'Gérer IA',

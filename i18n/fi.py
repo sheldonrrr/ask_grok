@@ -485,6 +485,7 @@ class FinnishTranslation(BaseTranslation):
             'remove_ai_config': 'Poista',
             'delete_ai': 'Poista',
             'add_ai_button': 'Lisää tekoäly',
+            'ai_manager_window_hint': '“Lisää / Hallitse” avaa kokoa muutettavan ikkunan (voi maximoida). Kaksoisnapsauta määritettyä tekoälyä muokataksesi.',
             'edit_ai_button': 'Muokkaa tekoälyä',
             'manage_configured_ai_button': 'Hallitse määritettyä tekoälyä',
             'manage_ai_button': 'Hallitse tekoälyä',

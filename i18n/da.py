@@ -481,6 +481,7 @@ class DanishTranslation(BaseTranslation):
             'remove_ai_config': 'Fjern',
             'delete_ai': 'Slet',
             'add_ai_button': 'Tilføj AI',
+            'ai_manager_window_hint': '“Tilføj / Administrer” åbner et størrelsesændringsbart vindue (kan maksimeres). Dobbeltklik en konfigureret AI for at redigere.',
             'edit_ai_button': 'Rediger AI',
             'manage_configured_ai_button': 'Administrer konfigurerede AI\'er',
             'manage_ai_button': 'Administrer AI',

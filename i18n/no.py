@@ -482,6 +482,7 @@ class NorwegianTranslation(BaseTranslation):
             'remove_ai_config': 'Fjern',
             'delete_ai': 'Slett',
             'add_ai_button': 'Legg til AI',
+            'ai_manager_window_hint': '«Legg til / Administrer» åpner et størrelsesjusterbart vindu (kan maksimeres). Dobbeltklikk en konfigurert AI for å redigere.',
             'edit_ai_button': 'Rediger AI',
             'manage_configured_ai_button': 'Administrer konfigurert AI',
             'manage_ai_button': 'Administrer AI',

@@ -314,6 +314,7 @@ class JapaneseTranslation(BaseTranslation):
             'delete_ai': '削除',
             'close_button': '閉じる',
             'add_ai_button': 'AIを追加',
+            'ai_manager_window_hint': '「追加 / 管理」はリサイズ可能な別ウィンドウで開きます（最大化可）。設定済み AI をダブルクリックで編集できます。',
             'edit_ai_button': 'AIを編集',
             'manage_configured_ai_button': '設定済みAIを管理',
             'manage_ai_button': 'AIを管理',

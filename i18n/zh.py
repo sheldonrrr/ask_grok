@@ -479,6 +479,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'close_button': '关闭',
             'cancel': '取消',
             'add_ai_button': '添加 AI',
+            'ai_manager_window_hint': '「添加 / 管理」会打开可调整大小的独立窗口（可最大化）。双击已配置的 AI 可直接编辑。',
             'edit_ai_button': '编辑 AI',
             'manage_configured_ai_button': '管理已配置 AI',
             'manage_ai_button': '管理 AI',

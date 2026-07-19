@@ -450,6 +450,7 @@ class CantoneseTranslation(BaseTranslation):
             'remove_ai_config': '移除', # Remove
             'delete_ai': '刪除', # Delete
             'add_ai_button': '新增 AI', # Add AI
+            'ai_manager_window_hint': '「新增 / 管理」會開可調大小嘅獨立視窗（可以最大化）。雙擊已配置嘅 AI 可以直接編輯。',
             'edit_ai_button': '編輯 AI', # Edit AI
             'manage_configured_ai_button': '管理已設定嘅 AI', # Manage Configured AI
             'manage_ai_button': '管理 AI', # Manage AI
