@@ -55,7 +55,7 @@ DEFAULT_MODELS = {
         display_name="SpaceXAI (Grok)",
         api_key_label="SpaceXAI API Key:",
         default_api_base_url="https://api.x.ai/v1",
-        default_model_name="grok-4.5"
+        default_model_name="grok-4.3"
     ),
     AIProvider.AI_GEMINI: ModelConfig(
         provider=AIProvider.AI_GEMINI,
@@ -104,7 +104,7 @@ DEFAULT_MODELS = {
         display_name="OpenRouter",
         api_key_label="OpenRouter API Key:",
         default_api_base_url="https://openrouter.ai/api/v1",
-        default_model_name="x-ai/grok-4.5"
+        default_model_name="x-ai/grok-4.3"
     ),
     AIProvider.AI_PERPLEXITY: ModelConfig(
         provider=AIProvider.AI_PERPLEXITY,

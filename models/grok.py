@@ -26,7 +26,7 @@ class GrokModel(BaseAIModel):
     SpaceXAI (Grok) AI Model Implementation Class
     """
     # Default model name (SpaceXAI flagship)
-    DEFAULT_MODEL = "grok-4.5"
+    DEFAULT_MODEL = "grok-4.3"
     # Default API base URL (unchanged host)
     DEFAULT_API_BASE_URL = "https://api.x.ai/v1"
 
