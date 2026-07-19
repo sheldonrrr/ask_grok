@@ -4,7 +4,7 @@ AI 模型模块初始化文件
 此包包含所有 AI 模型的实现，包括基础模型抽象类和具体模型实现。
 """
 
-from .base import BaseAIModel, AIModelFactory
+from .base import BaseAIModel, AIModelFactory, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .grok import GrokModel
 from .gemini import GeminiModel
 from .deepseek import DeepseekModel
@@ -16,6 +16,8 @@ from .nvidia_free import NvidiaFreeModel
 from .openrouter import OpenRouterModel
 from .perplexity import PerplexityModel
 from .ollama import OllamaModel
+from .lmstudio import LMStudioModel
+from .koboldcpp import KoboldCppModel
 
 # 注册模型到工厂类
 AIModelFactory.register_model('grok', GrokModel)
@@ -29,6 +31,25 @@ AIModelFactory.register_model('nvidia_free', NvidiaFreeModel)
 AIModelFactory.register_model('openrouter', OpenRouterModel)
 AIModelFactory.register_model('perplexity', PerplexityModel)
 AIModelFactory.register_model('ollama', OllamaModel)
+AIModelFactory.register_model('lmstudio', LMStudioModel)
+AIModelFactory.register_model('koboldcpp', KoboldCppModel)
 
 # 导出公共接口
-__all__ = ['BaseAIModel', 'AIModelFactory', 'GrokModel', 'GeminiModel', 'DeepseekModel', 'CustomModel', 'OpenAIModel', 'AnthropicModel', 'NvidiaModel', 'NvidiaFreeModel', 'OpenRouterModel', 'PerplexityModel', 'OllamaModel']
+__all__ = [
+    'BaseAIModel',
+    'AIModelFactory',
+    'LOCAL_OPENAI_COMPAT_PROVIDER_IDS',
+    'GrokModel',
+    'GeminiModel',
+    'DeepseekModel',
+    'CustomModel',
+    'OpenAIModel',
+    'AnthropicModel',
+    'NvidiaModel',
+    'NvidiaFreeModel',
+    'OpenRouterModel',
+    'PerplexityModel',
+    'OllamaModel',
+    'LMStudioModel',
+    'KoboldCppModel',
+]

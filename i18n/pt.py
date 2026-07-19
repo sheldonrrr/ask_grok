@@ -426,6 +426,13 @@ class PortugueseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Personalizado',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Ativar Streaming',
 
             # AI Switcher
@@ -492,6 +499,7 @@ class PortugueseTranslation(BaseTranslation):
             'remove_ai_config': 'Remover',
             'delete_ai': 'Excluir',
             'add_ai_button': 'Adicionar IA',
+            'ai_manager_window_hint': '“Adicionar / Gerenciar” abre uma janela redimensionável (maximizar). Clique duas vezes em uma IA configurada para editar.',
             'edit_ai_button': 'Editar IA',
             'manage_configured_ai_button': 'Gerenciar IA Configurada',
             'manage_ai_button': 'Gerenciar IA',
@@ -518,7 +526,7 @@ class PortugueseTranslation(BaseTranslation):
 
             # Provider-specific notices
             'perplexity_model_notice': 'Nota: Perplexity não fornece uma API pública de lista de modelos, então os modelos são codificados.',
-            'ollama_no_api_key_notice': 'Nota: Ollama é um modelo local que não requer uma chave API.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Nota: Novos usuários obtêm créditos de API gratuitos - Não é necessário cartão de crédito.',
 
             # Nvidia Free error messages

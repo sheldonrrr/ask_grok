@@ -421,6 +421,13 @@ class NorwegianTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'Egendefinert',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'Aktiver strømming',
 
             # AI Switcher
@@ -486,6 +493,7 @@ class NorwegianTranslation(BaseTranslation):
             'remove_ai_config': 'Fjern',
             'delete_ai': 'Slett',
             'add_ai_button': 'Legg til AI',
+            'ai_manager_window_hint': '«Legg til / Administrer» åpner et størrelsesjusterbart vindu (kan maksimeres). Dobbeltklikk en konfigurert AI for å redigere.',
             'edit_ai_button': 'Rediger AI',
             'manage_configured_ai_button': 'Administrer konfigurert AI',
             'manage_ai_button': 'Administrer AI',
@@ -512,7 +520,7 @@ class NorwegianTranslation(BaseTranslation):
 
             # Provider-specific notices
             'perplexity_model_notice': 'Merk: Perplexity tilbyr ikke en offentlig API for modellister, så modellene er hardkodet.',
-            'ollama_no_api_key_notice': 'Merk: Ollama er en lokal modell som ikke krever en API-nøkkel.',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': 'Merk: Nye brukere får gratis API-kreditter - ingen kredittkort kreves.',
 
             # Nvidia Free error messages
