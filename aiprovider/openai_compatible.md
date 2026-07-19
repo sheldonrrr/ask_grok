@@ -1,6 +1,6 @@
 # OpenAI 及其兼容提供商配置指南
 
-此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, xAI, Nvidia, Custom**。
+此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, Nvidia, Custom**，以及本地的 **Ollama / LM Studio / KoboldCpp**（各自有专用入口，默认走 Chat Completions）。
 
 ## 核心配置
 

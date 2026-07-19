@@ -20,7 +20,13 @@ class AIProvider(Enum):
     AI_NVIDIA_FREE = auto() # Nvidia AI (Free proxy)
     AI_OPENROUTER = auto() # OpenRouter (Model aggregator)
     AI_PERPLEXITY = auto() # Perplexity (Sonar)
-    AI_OLLAMA = auto()    # Ollama (Local models)
+    AI_OLLAMA = auto()    # Ollama (Local, OpenAI-compatible)
+    AI_LMSTUDIO = auto()  # LM Studio (Local, OpenAI-compatible)
+    AI_KOBOLDCPP = auto() # KoboldCpp (Local, OpenAI-compatible)
+
+
+# Local providers that use OpenAI Chat Completions and typically need no API key
+LOCAL_OPENAI_COMPAT_PROVIDER_IDS = ('ollama', 'lmstudio', 'koboldcpp')
 
 
 class ModelConfig:
@@ -117,8 +123,22 @@ DEFAULT_MODELS = {
         provider=AIProvider.AI_OLLAMA,
         display_name="Ollama (Local)",
         api_key_label="API Key (Optional):",
-        default_api_base_url="http://localhost:11434",
-        default_model_name="minimax-m3"
+        default_api_base_url="http://localhost:11434/v1",
+        default_model_name=""
+    ),
+    AIProvider.AI_LMSTUDIO: ModelConfig(
+        provider=AIProvider.AI_LMSTUDIO,
+        display_name="LM Studio (Local)",
+        api_key_label="API Key (Optional):",
+        default_api_base_url="http://localhost:1234/v1",
+        default_model_name=""
+    ),
+    AIProvider.AI_KOBOLDCPP: ModelConfig(
+        provider=AIProvider.AI_KOBOLDCPP,
+        display_name="KoboldCpp (Local)",
+        api_key_label="API Key (Optional):",
+        default_api_base_url="http://localhost:5001/v1",
+        default_model_name=""
     ),
     AIProvider.AI_NVIDIA_FREE: ModelConfig(
         provider=AIProvider.AI_NVIDIA_FREE,

@@ -30,7 +30,7 @@ from .config import (
     build_ai_display_text,
     build_configured_ai_entries,
 )
-from .models.base import AIProvider, DEFAULT_MODELS
+from .models.base import AIProvider, DEFAULT_MODELS, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation
 from .widgets import apply_button_style
 from .ui_constants import (
@@ -56,6 +56,8 @@ AI_PROVIDER_ORDER = [
     ('perplexity', AIProvider.AI_PERPLEXITY),
     ('openrouter', AIProvider.AI_OPENROUTER),
     ('ollama', AIProvider.AI_OLLAMA),
+    ('lmstudio', AIProvider.AI_LMSTUDIO),
+    ('koboldcpp', AIProvider.AI_KOBOLDCPP),
     ('custom', AIProvider.AI_CUSTOM),
 ]
 
@@ -94,6 +96,46 @@ def get_display_name_with_model(provider_name, model_name):
     return provider_name
 
 
+def _resolve_dialog_parent(parent):
+    """Prefer the top-level window so manager dialogs are not clipped by nested config pages."""
+    if parent is None:
+        return None
+    try:
+        top = parent.window()
+        return top if top is not None else parent
+    except Exception:
+        return parent
+
+
+def _apply_resizable_dialog_chrome(dialog, prefs_width_key, prefs_height_key, default_size, min_size):
+    """
+    Make Add/Manage dialogs independently resizable/maximizable and restore last size.
+    """
+    dialog.setWindowFlags(
+        Qt.Dialog
+        | Qt.WindowTitleHint
+        | Qt.WindowSystemMenuHint
+        | Qt.WindowCloseButtonHint
+        | Qt.WindowMinimizeButtonHint
+        | Qt.WindowMaximizeButtonHint
+    )
+    dialog.setMinimumSize(*min_size)
+    prefs = get_prefs()
+    width = int(prefs.get(prefs_width_key, default_size[0]) or default_size[0])
+    height = int(prefs.get(prefs_height_key, default_size[1]) or default_size[1])
+    dialog.resize(max(width, min_size[0]), max(height, min_size[1]))
+    dialog._size_prefs_keys = (prefs_width_key, prefs_height_key)
+
+
+def _persist_dialog_size(dialog):
+    keys = getattr(dialog, '_size_prefs_keys', None)
+    if not keys:
+        return
+    prefs = get_prefs()
+    prefs[keys[0]] = dialog.width()
+    prefs[keys[1]] = dialog.height()
+
+
 # ============================================================
 # AddAIDialog - 添加新的 AI 配置
 # ============================================================
@@ -103,7 +145,7 @@ class AddAIDialog(QDialog):
     config_changed = pyqtSignal()
     
     def __init__(self, parent=None, i18n=None):
-        super().__init__(parent)
+        super().__init__(_resolve_dialog_parent(parent))
         
         if i18n is None:
             prefs = get_prefs()
@@ -125,8 +167,13 @@ class AddAIDialog(QDialog):
     def setup_ui(self):
         """设置 UI"""
         self.setWindowTitle(self.i18n.get('add_ai_title', 'Add AI Provider'))
-        self.setMinimumSize(700, 600)
-        self.resize(750, 680)
+        _apply_resizable_dialog_chrome(
+            self,
+            'add_ai_dialog_width',
+            'add_ai_dialog_height',
+            default_size=(920, 760),
+            min_size=(780, 640),
+        )
         
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(SPACING_MEDIUM)
@@ -209,6 +256,18 @@ class AddAIDialog(QDialog):
         
         main_layout.addLayout(button_layout)
     
+    def closeEvent(self, event):
+        _persist_dialog_size(self)
+        super().closeEvent(event)
+
+    def accept(self):
+        _persist_dialog_size(self)
+        super().accept()
+
+    def reject(self):
+        _persist_dialog_size(self)
+        super().reject()
+
     def retranslate_ui(self):
         """更新界面文字（语言切换时调用）"""
         self.setWindowTitle(self.i18n.get('add_ai_title', 'Add AI Provider'))
@@ -311,8 +370,8 @@ class AddAIDialog(QDialog):
         # 获取配置
         config = self.model_widget.get_config()
         
-        # 验证必填字段（Ollama 不需要 API Key）
-        if self.current_provider_id != 'ollama':
+        # 验证必填字段（本地 OpenAI 兼容服务不需要 API Key）
+        if self.current_provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
             # Grok 使用 auth_token，其他使用 api_key
             key_field = 'auth_token' if self.current_provider_id == 'grok' else 'api_key'
             api_key = config.get(key_field, '').strip()
@@ -374,8 +433,8 @@ class ManageAIDialog(QDialog):
     
     config_changed = pyqtSignal()
     
-    def __init__(self, parent=None, i18n=None):
-        super().__init__(parent)
+    def __init__(self, parent=None, i18n=None, initial_config_id=None):
+        super().__init__(_resolve_dialog_parent(parent))
         
         if i18n is None:
             prefs = get_prefs()
@@ -386,19 +445,33 @@ class ManageAIDialog(QDialog):
         
         self.current_config_id = None
         self.model_widget = None
+        self.initial_config_id = initial_config_id
         
         self.setup_ui()
         self.load_configured_list()
         
-        # 默认选中第一项
-        if self.config_list.count() > 0:
+        # Prefer the requested config; otherwise first row
+        selected = False
+        if self.initial_config_id:
+            for i in range(self.config_list.count()):
+                item = self.config_list.item(i)
+                if item and item.data(Qt.UserRole) == self.initial_config_id:
+                    self.config_list.setCurrentRow(i)
+                    selected = True
+                    break
+        if not selected and self.config_list.count() > 0:
             self.config_list.setCurrentRow(0)
     
     def setup_ui(self):
         """设置 UI"""
         self.setWindowTitle(self.i18n.get('manage_ai_title', 'Manage Configured AI'))
-        self.setMinimumSize(750, 600)
-        self.resize(800, 680)
+        _apply_resizable_dialog_chrome(
+            self,
+            'manage_ai_dialog_width',
+            'manage_ai_dialog_height',
+            default_size=(960, 760),
+            min_size=(820, 640),
+        )
         
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(SPACING_MEDIUM)
@@ -491,6 +564,18 @@ class ManageAIDialog(QDialog):
         bottom_layout.addWidget(close_button)
         
         main_layout.addLayout(bottom_layout)
+
+    def closeEvent(self, event):
+        _persist_dialog_size(self)
+        super().closeEvent(event)
+
+    def accept(self):
+        _persist_dialog_size(self)
+        super().accept()
+
+    def reject(self):
+        _persist_dialog_size(self)
+        super().reject()
     
     def retranslate_ui(self):
         """更新界面文字（语言切换时调用）"""

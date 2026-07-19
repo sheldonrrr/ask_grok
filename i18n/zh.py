@@ -409,6 +409,13 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': '自定义',
+            'model_display_name_ollama': 'Ollama(本地)',
+            'model_display_name_lmstudio': 'LM Studio(本地)',
+            'model_display_name_koboldcpp': 'KoboldCpp(本地)',
+            'local_openai_compat_no_api_key_notice': '提示：此本地 OpenAI 兼容服务通常不需要 API Key。请先启动本地服务，再刷新模型列表。',
+            'lmstudio_no_api_key_notice': '提示：LM Studio 本地使用 OpenAI 兼容接口，通常不需要 API Key。',
+            'koboldcpp_no_api_key_notice': '提示：KoboldCpp 本地使用 OpenAI 兼容接口，通常不需要 API Key。',
+            'local_service_not_running': '无法连接本地 AI 服务。请确认服务已启动且 Base URL 正确。',
             'model_enable_streaming': '启用流式传输',
             
             # AI Switcher
@@ -472,6 +479,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'close_button': '关闭',
             'cancel': '取消',
             'add_ai_button': '添加 AI',
+            'ai_manager_window_hint': '「添加 / 管理」会打开可调整大小的独立窗口（可最大化）。双击已配置的 AI 可直接编辑。',
             'edit_ai_button': '编辑 AI',
             'manage_configured_ai_button': '管理已配置 AI',
             'manage_ai_button': '管理 AI',
@@ -499,7 +507,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # 服务商特定提示
             'perplexity_model_notice': '注意：Perplexity 没有提供公开的模型列表接口，因此模型名称为硬编码。',
-            'ollama_no_api_key_notice': '注意：Ollama 是本地模型，无需配置 API Key。',
+            'ollama_no_api_key_notice': '提示：Ollama 本地使用 OpenAI 兼容接口，通常不需要 API Key。',
             'nvidia_free_credits_notice': '注意：新用户可获得免费 API 额度，无需信用卡。',
             
             # Nvidia Free 错误消息

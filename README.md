@@ -47,7 +47,9 @@ Import the file to calibre custom plugins:
 - **Nvidia AI** - https://build.nvidia.com/ (Free tier available)
 - **Perplexity (Sonar)** - https://docs.perplexity.ai/ (Great for research-style answers with citations)
 - **OpenRouter** - https://openrouter.ai/
-- **Ollama** - https://ollama.ai/ (Local AI models)
+- **Ollama** - https://ollama.ai/ (Local, OpenAI-compatible `/v1`)
+- **LM Studio** - https://lmstudio.ai/ (Local, OpenAI-compatible `/v1`)
+- **KoboldCpp** - https://github.com/LostRuins/koboldcpp (Local, OpenAI-compatible `/v1`)
 - **Custom** - Any OpenAI-compatible API endpoint
 
 Note: For Perplexity, when the API returns citations/search results, the plugin appends a plain-text reference section with full URLs at the end of the answer for easy copy/paste.
@@ -72,7 +74,7 @@ API Key:
 ## Configure API Key
 
   - Click the Ask AI Plugin dropdown menu in the menu bar, select `Configure`
-  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Nvidia, OpenRouter, Ollama, or Custom)
+  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Nvidia, OpenRouter, Ollama, LM Studio, KoboldCpp, or Custom)
   - Enter the corresponding API Key into the API Key input box
   - Click the `Save` button
   - Done

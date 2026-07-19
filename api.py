@@ -10,7 +10,12 @@ from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
 from .i18n import get_translation
 from .models import AIModelFactory, BaseAIModel
-from .models.base import AIProvider, DEFAULT_MODELS, DEFAULT_PROVIDER
+from .models.base import (
+    AIProvider,
+    DEFAULT_MODELS,
+    DEFAULT_PROVIDER,
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+)
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 
 # 添加一个 logger
@@ -47,7 +52,9 @@ class APIClient:
         'nvidia_free': AIProvider.AI_NVIDIA_FREE,
         'openrouter': AIProvider.AI_OPENROUTER,
         'perplexity': AIProvider.AI_PERPLEXITY,
-        'ollama': AIProvider.AI_OLLAMA
+        'ollama': AIProvider.AI_OLLAMA,
+        'lmstudio': AIProvider.AI_LMSTUDIO,
+        'koboldcpp': AIProvider.AI_KOBOLDCPP,
     }
     
     def __init__(self, i18n: Dict[str, str] = None, 
@@ -657,22 +664,27 @@ class APIClient:
                 logger.error(f"fetch_available_models: {error_msg}")
                 return False, error_msg
             
-            # 2. 验证 API Key（Ollama 不需要）
+            # Resolve provider id (config id may be provider_xxx)
+            provider_id = config.get('provider_id') or (
+                model_name.split('_', 1)[0] if '_' in model_name else model_name
+            )
+
+            # 2. 验证 API Key（本地 OpenAI 兼容服务不需要）
             # 先确定 API Key 字段名称
-            api_key_field = 'auth_token' if model_name == 'grok' else 'api_key'
+            api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
             
-            if model_name != 'ollama':
+            if provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 api_key = config.get(api_key_field, '').strip()
-                logger.info(f"[{model_name}] API 客户端接收到的 API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
+                logger.info(f"[{provider_id}] API 客户端接收到的 API Key 状态: {'存在' if api_key else '为空'}, 长度: {len(api_key) if api_key else 0}")
                 if not api_key:
                     error_msg = self.i18n.get('api_key_required', 'API Key is required')
                     logger.warning(f"fetch_available_models: {error_msg}")
                     return False, error_msg
             else:
-                logger.info(f"[{model_name}] Ollama 是本地服务，跳过 API Key 验证")
+                logger.info(f"[{provider_id}] 本地 OpenAI 兼容服务，跳过 API Key 验证")
             
             # 3. 创建临时模型实例（添加语言设置）
-            logger.debug(f"Creating temporary model instance for {model_name}")
+            logger.debug(f"Creating temporary model instance for {provider_id}")
             # 确保配置中包含语言设置，用于错误信息国际化
             if 'language' not in config:
                 from .config import get_prefs
@@ -680,16 +692,16 @@ class APIClient:
                 config['language'] = prefs.get('language', 'en')
                 logger.debug(f"Added language to config: {config['language']}")
             
-            if model_name != 'ollama':
-                logger.info(f"[{model_name}] 创建模型实例前的配置 - API Key: {'存在' if config.get(api_key_field) else '为空'}")
-            temp_model = AIModelFactory.create_model(model_name, config)
-            if model_name != 'ollama':
-                logger.info(f"[{model_name}] 模型实例创建成功，config 中的 API Key: {'存在' if temp_model.config.get(api_key_field) else '为空'}")
+            if provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                logger.info(f"[{provider_id}] 创建模型实例前的配置 - API Key: {'存在' if config.get(api_key_field) else '为空'}")
+            temp_model = AIModelFactory.create_model(provider_id, config)
+            if provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                logger.info(f"[{provider_id}] 模型实例创建成功，config 中的 API Key: {'存在' if temp_model.config.get(api_key_field) else '为空'}")
             else:
-                logger.info(f"[{model_name}] 模型实例创建成功")
+                logger.info(f"[{provider_id}] 模型实例创建成功")
             
             # 4. 调用模型的 fetch_available_models 方法
-            logger.info(f"Fetching available models for {model_name}, skip_verification={skip_verification}")
+            logger.info(f"Fetching available models for {provider_id}, skip_verification={skip_verification}")
             models = temp_model.fetch_available_models(skip_verification=skip_verification)
             
             # 5. 返回成功结果
@@ -737,20 +749,22 @@ class APIClient:
                 prefs = get_prefs()
                 config['language'] = prefs.get('language', 'en')
             
+            provider_id = config.get('provider_id') or (
+                model_name.split('_', 1)[0] if '_' in model_name else model_name
+            )
+
             # 创建临时模型实例
-            logger.info(f"[{model_name}] 创建模型实例进行测试")
-            temp_model = AIModelFactory.create_model(model_name, config)
+            logger.info(f"[{provider_id}] 创建模型实例进行测试")
+            temp_model = AIModelFactory.create_model(provider_id, config)
             
             # 调用验证方法
-            if model_name == 'ollama':
-                # Ollama 需要指定测试模型
+            if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 if test_model_name is None:
                     test_model_name = config.get('model', temp_model.DEFAULT_MODEL)
-                logger.info(f"[Ollama] 测试模型: {test_model_name}")
+                logger.info(f"[{provider_id}] 测试本地模型: {test_model_name}")
                 temp_model.verify_api_key_with_test_request(test_model=test_model_name)
             else:
-                # 其他模型使用默认验证
-                logger.info(f"[{model_name}] 测试 API Key 有效性")
+                logger.info(f"[{provider_id}] 测试 API Key 有效性")
                 temp_model.verify_api_key_with_test_request()
             
             # 测试成功

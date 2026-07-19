@@ -314,6 +314,7 @@ class JapaneseTranslation(BaseTranslation):
             'delete_ai': '削除',
             'close_button': '閉じる',
             'add_ai_button': 'AIを追加',
+            'ai_manager_window_hint': '「追加 / 管理」はリサイズ可能な別ウィンドウで開きます（最大化可）。設定済み AI をダブルクリックで編集できます。',
             'edit_ai_button': 'AIを編集',
             'manage_configured_ai_button': '設定済みAIを管理',
             'manage_ai_button': 'AIを管理',
@@ -416,6 +417,13 @@ class JapaneseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_custom': 'カスタム',
+            'model_display_name_ollama': 'Ollama(Local)',
+            'model_display_name_lmstudio': 'LM Studio(Local)',
+            'model_display_name_koboldcpp': 'KoboldCpp(Local)',
+            'local_openai_compat_no_api_key_notice': 'Note: This local OpenAI-compatible service usually does not require an API key. Start the local server, then refresh the model list.',
+            'lmstudio_no_api_key_notice': 'Note: LM Studio uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'koboldcpp_no_api_key_notice': 'Note: KoboldCpp uses the OpenAI-compatible API locally and usually does not require an API key.',
+            'local_service_not_running': 'Cannot connect to the local AI service. Please confirm it is running and the Base URL is correct.',
             'model_enable_streaming': 'ストリーミングを有効にする',
             
             # AIスイッチャー
@@ -565,7 +573,7 @@ class JapaneseTranslation(BaseTranslation):
             
             # Provider-specific notices
             'perplexity_model_notice': '注意：Perplexityは公開モデルリストAPIを提供していないため、モデルはハードコードされています。',
-            'ollama_no_api_key_notice': '注意：OllamaはローカルモデルでAPIキーは不要です。',
+            'ollama_no_api_key_notice': 'Note: Ollama uses the OpenAI-compatible API locally and usually does not require an API key.',
             'nvidia_free_credits_notice': '注意：新規ユーザーは無料のAPIクレジットを取得できます - クレジットカード不要。',
             
             # Nvidia Free エラーメッセージ
