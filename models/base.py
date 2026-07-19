@@ -13,6 +13,7 @@ class AIProvider(Enum):
     AI_GROK = auto()      # x.AI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
+    AI_MISTRAL = auto()   # Mistral AI
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
@@ -70,6 +71,13 @@ DEFAULT_MODELS = {
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
         default_model_name="deepseek-v4-flash"
+    ),
+    AIProvider.AI_MISTRAL: ModelConfig(
+        provider=AIProvider.AI_MISTRAL,
+        display_name="Mistral",
+        api_key_label="Mistral API Key:",
+        default_api_base_url="https://api.mistral.ai/v1",
+        default_model_name="mistral-large-latest"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,
