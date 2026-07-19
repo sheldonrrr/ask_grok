@@ -51,6 +51,7 @@ AI_PROVIDER_ORDER = [
     ('gemini', AIProvider.AI_GEMINI),
     ('grok', AIProvider.AI_GROK),
     ('deepseek', AIProvider.AI_DEEPSEEK),
+    ('mistral', AIProvider.AI_MISTRAL),
     ('nvidia', AIProvider.AI_NVIDIA),
     ('nvidia_free', AIProvider.AI_NVIDIA_FREE),  # 免费通道放在 Nvidia 后面
     ('perplexity', AIProvider.AI_PERPLEXITY),

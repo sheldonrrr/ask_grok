@@ -40,6 +40,7 @@ class APIClient:
         'grok': AIProvider.AI_GROK,
         'gemini': AIProvider.AI_GEMINI,
         'deepseek': AIProvider.AI_DEEPSEEK,
+        'mistral': AIProvider.AI_MISTRAL,
         'custom': AIProvider.AI_CUSTOM,
         'openai': AIProvider.AI_OPENAI,
         'anthropic': AIProvider.AI_ANTHROPIC,
