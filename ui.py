@@ -19,7 +19,10 @@ from calibre.gui2 import info_dialog
 from calibre.gui2.keyboard import NameConflict
 from calibre_plugins.ask_ai_plugin.config import ConfigDialog, get_prefs
 from calibre_plugins.ask_ai_plugin.api import APIClient
-from calibre_plugins.ask_ai_plugin.models.base import LOCAL_OPENAI_COMPAT_PROVIDER_IDS
+from calibre_plugins.ask_ai_plugin.models.base import (
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    extract_provider_id,
+)
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
@@ -1788,9 +1791,7 @@ class TabDialog(QDialog):
             
             # 检查是否有有效配置
             # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
-            provider_id = config.get('provider_id')
-            if not provider_id:
-                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            provider_id = extract_provider_id(ai_id, config)
             
             if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 has_valid_config = bool(config.get('api_base_url', '').strip())
@@ -3240,9 +3241,7 @@ Please answer the question based on the above book information.""")
             
             # 检查是否有API Key（Ollama除外，它是本地服务）
             # 获取 provider_id（从 config 中获取，或从 ai_id 中提取）
-            provider_id = config.get('provider_id')
-            if not provider_id:
-                provider_id = ai_id.split('_')[0] if '_' in ai_id else ai_id
+            provider_id = extract_provider_id(ai_id, config)
             
             if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 # 本地 OpenAI 兼容服务：需要有 api_base_url
@@ -3600,9 +3599,7 @@ Please answer the question based on the above book information.""")
         for model_id, config in models_config.items():
             if model_id != 'nvidia_free' and config.get('enabled', False):
                 # 检查是否真正配置了（有 API key 或其他必要配置）
-                provider_id = config.get('provider_id') or (
-                    model_id.split('_', 1)[0] if '_' in model_id else model_id
-                )
+                provider_id = extract_provider_id(model_id, config)
                 if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                     # 本地 OpenAI 兼容服务不需要 API key
                     configured_ais.append(model_id)
@@ -3913,14 +3910,10 @@ Please answer the question based on the above book information.""")
         models_config = prefs.get('models', {})
         model_config = models_config.get(selected_model, {})
         
-        # 获取 provider_id（从 config 中获取，或从 selected_model 中提取）
-        provider_id = model_config.get('provider_id')
-        if not provider_id:
-            # 向后兼容：从 selected_model 中提取 provider_id
-            provider_id = selected_model.split('_')[0] if '_' in selected_model else selected_model
+        provider_id = extract_provider_id(selected_model, model_config)
         
-        # 如果是Ollama或Custom模型，不强制要求API Key（本地服务）
-        if provider_id in ['ollama', 'custom']:
+        # 本地 OpenAI 兼容服务 / Custom / nvidia_free 不强制要求用户 API Key
+        if provider_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS or provider_id in ('custom', 'nvidia_free'):
             return True
         
         # 获取token字段名，根据 provider_id 判断

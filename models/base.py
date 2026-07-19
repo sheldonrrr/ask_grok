@@ -29,6 +29,41 @@ class AIProvider(Enum):
 # Local providers that use OpenAI Chat Completions and typically need no API key
 LOCAL_OPENAI_COMPAT_PROVIDER_IDS = ('ollama', 'lmstudio', 'koboldcpp')
 
+# Registered provider ids (include underscore ids like nvidia_free for longest-prefix match)
+KNOWN_PROVIDER_IDS = frozenset({
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
+    'ollama', 'lmstudio', 'koboldcpp', 'custom',
+})
+
+
+def extract_provider_id(config_id, config=None):
+    """
+    Resolve provider id from config or config_id.
+
+    Handles underscore ids correctly (nvidia_free_xxx -> nvidia_free, not nvidia).
+    """
+    provider_id = (config or {}).get('provider_id')
+    if provider_id:
+        return provider_id
+
+    config_id = (config_id or '').strip()
+    if not config_id:
+        return ''
+    if config_id in KNOWN_PROVIDER_IDS:
+        return config_id
+
+    matches = [
+        pid for pid in KNOWN_PROVIDER_IDS
+        if config_id == pid or config_id.startswith(pid + '_')
+    ]
+    if matches:
+        return max(matches, key=len)
+
+    if '_' in config_id:
+        return config_id.split('_', 1)[0]
+    return config_id
+
 
 class ModelConfig:
     """特定 AI 模型的配置类"""
@@ -69,7 +104,7 @@ DEFAULT_MODELS = {
         display_name="Google Gemini",
         api_key_label="API Key:",
         default_api_base_url="https://generativelanguage.googleapis.com/v1beta",
-        default_model_name="google/gemini-3.5-flash"
+        default_model_name="gemini-3.5-flash"
     ),
     AIProvider.AI_DEEPSEEK: ModelConfig(
         provider=AIProvider.AI_DEEPSEEK,

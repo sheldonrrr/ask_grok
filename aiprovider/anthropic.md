@@ -27,7 +27,8 @@
   ```json
   {
     "model": "<模型名称>",
-    "max_tokens": 4096, // 建议设置一个最大输出长度
+    "max_tokens": 4096,
+    "system": "<系统提示词>",
     "messages": [
       {
         "role": "user",
@@ -36,6 +37,11 @@
     ]
   }
   ```
+
+### 采样参数注意
+
+Claude Opus 4.7 / 4.8（以及同类新模型）**不能**发送 `temperature` / `top_p` / `top_k`，否则会 400。  
+插件对这类模型会自动省略采样参数；默认模型为 `claude-opus-4-8`。
 
 ## 总结
 
