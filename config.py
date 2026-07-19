@@ -13,6 +13,7 @@ from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
 from .models.gemini import GeminiModel
 from .models.deepseek import DeepseekModel
+from .models.kimi import KimiModel
 from .models.custom import CustomModel
 from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
@@ -70,6 +71,7 @@ def get_current_model_config(provider: AIProvider) -> ModelConfig:
 GROK_CONFIG = get_current_model_config(AIProvider.AI_GROK)
 GEMINI_CONFIG = get_current_model_config(AIProvider.AI_GEMINI)
 DEEPSEEK_CONFIG = get_current_model_config(AIProvider.AI_DEEPSEEK)
+KIMI_CONFIG = get_current_model_config(AIProvider.AI_KIMI)
 CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
@@ -82,7 +84,7 @@ LMSTUDIO_CONFIG = get_current_model_config(AIProvider.AI_LMSTUDIO)
 KOBOLDCPP_CONFIG = get_current_model_config(AIProvider.AI_KOBOLDCPP)
 
 AI_PROVIDER_ORDER = [
-    'openai', 'anthropic', 'gemini', 'grok', 'deepseek',
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi',
     'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
     'ollama', 'lmstudio', 'koboldcpp', 'custom',
 ]
@@ -217,6 +219,14 @@ prefs.defaults['models'] = {
         'api_base_url': DEEPSEEK_CONFIG.default_api_base_url,
         'model': DEEPSEEK_CONFIG.default_model_name,
         'display_name': DEEPSEEK_CONFIG.display_name,        
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'kimi': {
+        'api_key': '',
+        'api_base_url': KIMI_CONFIG.default_api_base_url,
+        'model': KIMI_CONFIG.default_model_name,
+        'display_name': KIMI_CONFIG.display_name,
+        'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
     },
     'custom': {
@@ -658,6 +668,9 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+            model_config = get_current_model_config(provider)
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             model_config = get_current_model_config(provider)
@@ -1001,6 +1014,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_DEEPSEEK
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
             config['display_name'] = 'Deepseek'  # 设置固定的显示名称
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Kimi (Moonshot)'  # 设置固定的显示名称
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -1182,6 +1199,10 @@ class ModelConfigWidget(QWidget):
             default_model_name = model_config.default_model_name if model_config else None
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
         elif self.model_id == 'openai':
@@ -1739,6 +1760,9 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'deepseek':
                 from .models import DeepseekModel
                 model_config = DeepseekModel
+            elif self.model_id == 'kimi':
+                from .models import KimiModel
+                model_config = KimiModel
             elif self.model_id == 'custom':
                 from .models import CustomModel
                 model_config = CustomModel
@@ -1783,6 +1807,7 @@ class ModelConfigWidget(QWidget):
             'grok': AIProvider.AI_GROK,
             'gemini': AIProvider.AI_GEMINI,
             'deepseek': AIProvider.AI_DEEPSEEK,
+            'kimi': AIProvider.AI_KIMI,
             'custom': AIProvider.AI_CUSTOM,
             'openai': AIProvider.AI_OPENAI,
             'anthropic': AIProvider.AI_ANTHROPIC,
@@ -1849,6 +1874,8 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GEMINI
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
         elif self.model_id == 'openai':
@@ -2041,6 +2068,7 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('grok', GrokModel)
         AIModelFactory.register_model('gemini', GeminiModel)
         AIModelFactory.register_model('deepseek', DeepseekModel)
+        AIModelFactory.register_model('kimi', KimiModel)
         AIModelFactory.register_model('custom', CustomModel)
         AIModelFactory.register_model('openai', OpenAIModel)
         AIModelFactory.register_model('anthropic', AnthropicModel)

@@ -25,7 +25,7 @@ PLUGIN_NAME = 'Ask AI Plugin'
 PLUGIN_DESCRIPTION = 'Ask questions about books using multiple AI providers'
 AUTHOR = 'Sheldon'
 AUTHOR_EMAIL = 'sheldonrrr@gmail.com'
-KEYWORDS = 'bookAI readingAI multiAI OpenAI Anthropic Gemini DeepSeek Nvidia Ollama'
+KEYWORDS = 'bookAI readingAI multiAI OpenAI Anthropic Gemini DeepSeek Kimi Moonshot Nvidia Ollama'
 
 logger = logging.getLogger(__name__)
 
