@@ -13,6 +13,7 @@ class AIProvider(Enum):
     AI_GROK = auto()      # x.AI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
+    AI_KIMI = auto()      # Kimi (Moonshot)
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
@@ -70,6 +71,13 @@ DEFAULT_MODELS = {
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
         default_model_name="deepseek-v4-flash"
+    ),
+    AIProvider.AI_KIMI: ModelConfig(
+        provider=AIProvider.AI_KIMI,
+        display_name="Kimi (Moonshot)",
+        api_key_label="Kimi API Key:",
+        default_api_base_url="https://api.moonshot.ai/v1",
+        default_model_name="kimi-k3"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,

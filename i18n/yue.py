@@ -388,6 +388,7 @@ class CantoneseTranslation(BaseTranslation):
             'model_display_name_grok': 'Grok(x.AI)', # Grok(x.AI)
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
+            'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
             'model_display_name_custom': '自訂', # Custom
             'model_enable_streaming': '啟用串流', # Enable Streaming
 
