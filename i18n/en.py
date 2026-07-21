@@ -522,6 +522,11 @@ class EnglishTranslation(BaseTranslation):
             # Field descriptions
             'api_key_desc': 'Your API key for authentication. Keep it secure and do not share.',
             'base_url_desc': 'The API endpoint URL. Use default unless you have a custom endpoint.',
+            'base_url_desc_kimi': 'International keys use https://api.moonshot.ai/v1; China-platform keys use https://api.moonshot.cn/v1. Do not mix them.',
+            'kimi_region_label': 'Platform',
+            'kimi_region_global': 'International',
+            'kimi_region_china': 'China',
+            'kimi_base_url_readonly_tip': 'Base URL is determined by the selected platform.',
             'model_desc': 'Select a model from the list or use a custom model name.',
             'streaming_desc': 'Enable real-time response streaming for faster feedback.',
             'advanced_section': 'Advanced',

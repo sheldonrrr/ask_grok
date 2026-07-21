@@ -528,6 +528,11 @@ class TraditionalChineseTranslation(BaseTranslation):
         # Field descriptions
         'api_key_desc': '您的API金鑰用於身份驗證。請妥善保管，不要分享。',
         'base_url_desc': 'API端點URL。除非您有自訂端點，否則請使用預設值。',
+        'base_url_desc_kimi': '國際站 Key 使用 https://api.moonshot.ai/v1；中國站 Key 使用 https://api.moonshot.cn/v1。兩者不可混用。',
+        'kimi_region_label': '平台',
+        'kimi_region_global': '國際版',
+        'kimi_region_china': '國內版',
+        'kimi_base_url_readonly_tip': 'Base URL 由所選平台決定。',
         'model_desc': '從清單中選擇模型或使用自訂模型名稱。',
         'streaming_desc': '啟用即時回應串流以獲得更快的回饋。',
         'advanced_section': '進階',

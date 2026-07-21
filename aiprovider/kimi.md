@@ -5,9 +5,10 @@ Kimi 遵循 OpenAI 的 API 格式，配置相对直接。
 ## 核心配置
 
 - **API Key**: 必需。在请求头中作为 Bearer Token 发送。
-- **Base URL**: 必需。根据 API Key 所属区域选择：
-  - **国际**: `https://api.moonshot.ai/v1`（插件默认）
-  - **中国大陆**: `https://api.moonshot.cn/v1`
+- **平台**: 添加/编辑 Kimi 时选择 **国际版** 或 **国内版**（决定 Base URL）：
+  - **国际版**: `https://api.moonshot.ai/v1`
+  - **国内版**: `https://api.moonshot.cn/v1`
+- Base URL 由平台选项决定（只读显示），Key 与平台不可混用。
 
 ## 获取模型列表
 
@@ -42,6 +43,17 @@ Kimi 遵循 OpenAI 的 API 格式，配置相对直接。
     ]
   }
   ```
+
+### 参数注意
+
+- `kimi-k*`（如 `kimi-k3`、`kimi-k2.5`）**temperature 只能为 1**（或不传）。传 `0.7` 会返回 `400 invalid temperature`。
+- 经典 `moonshot-v1-*` 模型仍可使用常规 temperature。
+
+## 常见失败原因
+
+若 Key 来自中国站（platform.moonshot.cn）却选择了国际版，加载模型会返回 `401 Invalid Authentication`。在添加弹窗中切换到 **国内版** 即可。
+
+界面语言为中文时，默认选中国内版；否则默认国际版。加载/测试时若鉴权失败，仍会自动尝试另一区域一次并回写平台选项。
 
 ## 总结
 

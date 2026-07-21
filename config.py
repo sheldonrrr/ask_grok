@@ -7,7 +7,7 @@ import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
-                            QFrame, QCheckBox, QMessageBox, QApplication)
+                            QFrame, QCheckBox, QMessageBox, QApplication, QRadioButton, QButtonGroup)
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
@@ -761,28 +761,34 @@ class ModelConfigWidget(QWidget):
                 # 本地 OpenAI 兼容服务通常不需要 API Key
                 self.api_key_edit = None
             
-            # API Base URL 标签
-            base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
-            base_url_label.setObjectName(f'label_base_url_{self.model_id}')
-            main_layout.addWidget(base_url_label)
-            
-            # API Base URL 输入框
-            self.api_base_edit = QLineEdit(self)
-            self.api_base_edit.setText(self.config.get('api_base_url', model_config.default_api_base_url))
-            self.api_base_edit.textChanged.connect(self.on_config_changed)
-            self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
-                default_api_base_url=model_config.default_api_base_url
-            ))
-            self.api_base_edit.setMinimumHeight(25)
-            self.api_base_edit.setMinimumWidth(base_width)
-            main_layout.addWidget(self.api_base_edit)
-            
-            # Base URL 说明
-            base_url_desc = QLabel(self.i18n.get('base_url_desc', 'The API endpoint URL. Use default unless you have a custom endpoint.'))
-            base_url_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
-            base_url_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
-            base_url_desc.setWordWrap(True)
-            main_layout.addWidget(base_url_desc)
+            # Kimi：国际版 / 国内版（决定 Base URL）
+            if self.model_id == 'kimi':
+                self._setup_kimi_region_selector(main_layout, TEXT_COLOR_SECONDARY_STRONG)
+            else:
+                # API Base URL 标签
+                base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+                base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+                main_layout.addWidget(base_url_label)
+
+                # API Base URL 输入框
+                self.api_base_edit = QLineEdit(self)
+                self.api_base_edit.setText(self.config.get('api_base_url', model_config.default_api_base_url))
+                self.api_base_edit.textChanged.connect(self.on_config_changed)
+                self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
+                    default_api_base_url=model_config.default_api_base_url
+                ))
+                self.api_base_edit.setMinimumHeight(25)
+                self.api_base_edit.setMinimumWidth(base_width)
+                main_layout.addWidget(self.api_base_edit)
+
+                base_url_desc = QLabel(self.i18n.get(
+                    'base_url_desc',
+                    'The API endpoint URL. Use default unless you have a custom endpoint.',
+                ))
+                base_url_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
+                base_url_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+                base_url_desc.setWordWrap(True)
+                main_layout.addWidget(base_url_desc)
             
             # 模型下拉框
             self.model_combo = NoScrollComboBox(self)
@@ -1026,7 +1032,16 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'kimi':
             provider = AIProvider.AI_KIMI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'Kimi (Moonshot)'  # 设置固定的显示名称
+            region = self._current_kimi_region() if hasattr(self, 'kimi_region_group') else (
+                self.config.get('kimi_region')
+                or KimiModel.region_from_base_url(self.config.get('api_base_url', ''))
+            )
+            config['kimi_region'] = region
+            if region == KimiModel.REGION_CHINA:
+                region_label = self.i18n.get('kimi_region_china', 'China')
+            else:
+                region_label = self.i18n.get('kimi_region_global', 'International')
+            config['display_name'] = f'Kimi (Moonshot) · {region_label}'
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -1086,6 +1101,10 @@ class ModelConfigWidget(QWidget):
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
+        if self.model_id == 'kimi':
+            region = config.get('kimi_region') or self._current_kimi_region()
+            config['kimi_region'] = region
+            config['api_base_url'] = KimiModel.base_url_for_region(region)
         
         # 模型名称配置（新逻辑：支持下拉框或自定义输入）
         if hasattr(self, 'use_custom_model_checkbox') and self.use_custom_model_checkbox.isChecked():
@@ -1148,6 +1167,161 @@ class ModelConfigWidget(QWidget):
             prefs['cached_models'] = cached_models
         
         # 触发配置变更信号
+        self.on_config_changed()
+
+    def _default_kimi_region(self):
+        """Infer initial Kimi region from saved config or UI language."""
+        saved_region = (self.config.get('kimi_region') or '').strip().lower()
+        if saved_region in (KimiModel.REGION_GLOBAL, KimiModel.REGION_CHINA):
+            return saved_region
+
+        # Add-AI blank form always carries the provider default URL (.ai).
+        # Prefer UI language until the user has a configured region/URL intent.
+        if not self.config.get('is_configured'):
+            lang = ''
+            try:
+                lang = (get_prefs().get('language') or '').lower()
+            except Exception:
+                lang = ''
+            if lang.startswith('zh') or lang in ('yue', 'zht'):
+                return KimiModel.REGION_CHINA
+            return KimiModel.REGION_GLOBAL
+
+        saved_url = (self.config.get('api_base_url') or '').strip()
+        if saved_url:
+            return KimiModel.region_from_base_url(saved_url)
+
+        return KimiModel.REGION_GLOBAL
+
+    def _setup_kimi_region_selector(self, main_layout, secondary_color):
+        """Build International / China radios and read-only Base URL for Kimi."""
+        region_label = QLabel(self.i18n.get('kimi_region_label', 'Platform'))
+        region_label.setObjectName(f'label_kimi_region_{self.model_id}')
+        main_layout.addWidget(region_label)
+
+        region_row = QHBoxLayout()
+        region_row.setSpacing(SPACING_MEDIUM)
+
+        self.kimi_region_group = QButtonGroup(self)
+        self.kimi_region_global_radio = QRadioButton(
+            self.i18n.get('kimi_region_global', 'International')
+        )
+        self.kimi_region_global_radio.setObjectName('radio_kimi_region_global')
+        self.kimi_region_china_radio = QRadioButton(
+            self.i18n.get('kimi_region_china', 'China')
+        )
+        self.kimi_region_china_radio.setObjectName('radio_kimi_region_china')
+        self.kimi_region_group.addButton(self.kimi_region_global_radio)
+        self.kimi_region_group.addButton(self.kimi_region_china_radio)
+        region_row.addWidget(self.kimi_region_global_radio)
+        region_row.addWidget(self.kimi_region_china_radio)
+        region_row.addStretch()
+        main_layout.addLayout(region_row)
+
+        base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+        base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+        main_layout.addWidget(base_url_label)
+
+        initial_region = self._default_kimi_region()
+        initial_url = KimiModel.base_url_for_region(initial_region)
+        self.api_base_edit = QLineEdit(self)
+        self.api_base_edit.setText(initial_url)
+        self.api_base_edit.setReadOnly(True)
+        self.api_base_edit.setMinimumHeight(25)
+        self.api_base_edit.setToolTip(
+            self.i18n.get(
+                'kimi_base_url_readonly_tip',
+                'Base URL is determined by the selected platform.',
+            )
+        )
+        main_layout.addWidget(self.api_base_edit)
+
+        region_desc = QLabel(self.i18n.get(
+            'base_url_desc_kimi',
+            'International keys use https://api.moonshot.ai/v1; '
+            'China-platform keys use https://api.moonshot.cn/v1. Do not mix them.',
+        ))
+        region_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
+        region_desc.setStyleSheet(
+            f"color: {secondary_color}; font-style: italic; padding: 2px 0;"
+        )
+        region_desc.setWordWrap(True)
+        main_layout.addWidget(region_desc)
+
+        if initial_region == KimiModel.REGION_CHINA:
+            self.kimi_region_china_radio.setChecked(True)
+        else:
+            self.kimi_region_global_radio.setChecked(True)
+
+        self.kimi_region_global_radio.toggled.connect(self._on_kimi_region_toggled)
+        self.kimi_region_china_radio.toggled.connect(self._on_kimi_region_toggled)
+
+    def _current_kimi_region(self):
+        if hasattr(self, 'kimi_region_china_radio') and self.kimi_region_china_radio.isChecked():
+            return KimiModel.REGION_CHINA
+        return KimiModel.REGION_GLOBAL
+
+    def _sync_kimi_region_controls(self, api_base_url=None, region=None):
+        """Keep radios + Base URL aligned with resolved region/URL."""
+        if self.model_id != 'kimi' or not hasattr(self, 'kimi_region_group'):
+            return
+        if region not in (KimiModel.REGION_GLOBAL, KimiModel.REGION_CHINA):
+            region = KimiModel.region_from_base_url(api_base_url or self.api_base_edit.text())
+        url = KimiModel.base_url_for_region(region)
+
+        radios = (self.kimi_region_global_radio, self.kimi_region_china_radio)
+        for radio in radios:
+            radio.blockSignals(True)
+        try:
+            if region == KimiModel.REGION_CHINA:
+                self.kimi_region_china_radio.setChecked(True)
+            else:
+                self.kimi_region_global_radio.setChecked(True)
+            if self.api_base_edit.text().strip() != url:
+                self.api_base_edit.setText(url)
+        finally:
+            for radio in radios:
+                radio.blockSignals(False)
+
+    def _reset_kimi_model_list_ui(self):
+        """Clear loaded models after switching Kimi platform."""
+        if not hasattr(self, 'model_combo'):
+            return
+        self._models_loaded = False
+        self.model_combo.clear()
+        placeholder_text = self.i18n.get('select_model', '-- No Model --')
+        self.model_combo.addItem(placeholder_text)
+        self.model_combo.setItemData(0, 'select_model')
+        hint_text = self.i18n.get('request_model_list', 'Please request model list')
+        self.model_combo.addItem(hint_text)
+        self.model_combo.setItemData(1, 'request_model_list')
+        try:
+            model = self.model_combo.model()
+            item = model.item(1)
+            if item:
+                item.setEnabled(False)
+        except Exception:
+            pass
+        self.model_combo.setCurrentIndex(0)
+        if hasattr(self, 'use_custom_model_checkbox'):
+            self.use_custom_model_checkbox.setChecked(False)
+        if hasattr(self, 'update_button_states'):
+            self.update_button_states()
+
+    def _on_kimi_region_toggled(self, checked):
+        if not checked:
+            return
+        region = self._current_kimi_region()
+        url = KimiModel.base_url_for_region(region)
+        if self.api_base_edit.text().strip() != url:
+            self.api_base_edit.setText(url)
+        # Platform changed: previous model list belongs to the other endpoint
+        prefs = get_prefs()
+        cached_models = prefs.get('cached_models', {}) or {}
+        if 'kimi' in cached_models:
+            del cached_models['kimi']
+            prefs['cached_models'] = cached_models
+        self._reset_kimi_model_list_ui()
         self.on_config_changed()
     
     def on_config_changed(self):
@@ -1360,6 +1534,21 @@ class ModelConfigWidget(QWidget):
             if success:
                 # 成功：填充下拉框
                 models = result
+
+                # Kimi 等提供商可能在请求中自动纠正区域 Base URL，同步回控件
+                resolved_base_url = (config.get('api_base_url') or '').strip()
+                resolved_region = (config.get('kimi_region') or '').strip()
+                if self.model_id == 'kimi':
+                    self._sync_kimi_region_controls(
+                        api_base_url=resolved_base_url,
+                        region=resolved_region or None,
+                    )
+                elif (
+                    resolved_base_url
+                    and hasattr(self, 'api_base_edit')
+                    and resolved_base_url != self.api_base_edit.text().strip()
+                ):
+                    self.api_base_edit.setText(resolved_base_url)
                 
                 self.model_combo.clear()
                 # 先添加占位符
@@ -1476,6 +1665,21 @@ class ModelConfigWidget(QWidget):
             
             # 停止测试动画
             self.test_model_animation.stop()
+
+            # 区域回退后同步纠正后的 Base URL / 平台选项
+            resolved_base_url = (config.get('api_base_url') or '').strip()
+            resolved_region = (config.get('kimi_region') or '').strip()
+            if self.model_id == 'kimi':
+                self._sync_kimi_region_controls(
+                    api_base_url=resolved_base_url,
+                    region=resolved_region or None,
+                )
+            elif (
+                resolved_base_url
+                and hasattr(self, 'api_base_edit')
+                and resolved_base_url != self.api_base_edit.text().strip()
+            ):
+                self.api_base_edit.setText(resolved_base_url)
             
             if success:
                 # 测试成功
@@ -1697,6 +1901,23 @@ class ModelConfigWidget(QWidget):
             if obj_name in checkbox_map:
                 i18n_key, fallback = checkbox_map[obj_name]
                 checkbox.setText(self.i18n.get(i18n_key, fallback))
+
+        # Kimi 平台单选
+        if hasattr(self, 'kimi_region_global_radio'):
+            self.kimi_region_global_radio.setText(
+                self.i18n.get('kimi_region_global', 'International')
+            )
+        if hasattr(self, 'kimi_region_china_radio'):
+            self.kimi_region_china_radio.setText(
+                self.i18n.get('kimi_region_china', 'China')
+            )
+        if hasattr(self, 'api_base_edit') and self.model_id == 'kimi':
+            self.api_base_edit.setToolTip(
+                self.i18n.get(
+                    'kimi_base_url_readonly_tip',
+                    'Base URL is determined by the selected platform.',
+                )
+            )
         
         # 使用 objectName 映射更新 Button
         button_map = {
@@ -1737,6 +1958,16 @@ class ModelConfigWidget(QWidget):
             f'label_api_key_{self.model_id}': ('api_key_label', 'API Key'),
             f'label_base_url_{self.model_id}': ('base_url_label', 'Base URL'),
             f'label_model_{self.model_id}': ('model_label', 'Model'),
+            f'label_kimi_region_{self.model_id}': ('kimi_region_label', 'Platform'),
+            f'label_base_url_desc_{self.model_id}': (
+                'base_url_desc_kimi' if self.model_id == 'kimi' else 'base_url_desc',
+                (
+                    'International keys use https://api.moonshot.ai/v1; '
+                    'China-platform keys use https://api.moonshot.cn/v1. Do not mix them.'
+                    if self.model_id == 'kimi'
+                    else 'The API endpoint URL. Use default unless you have a custom endpoint.'
+                ),
+            ),
         }
         
         for label in self.findChildren(QLabel):
@@ -1929,9 +2160,20 @@ class ModelConfigWidget(QWidget):
                     self.api_key_edit.clear()
                     logger.info(f"已清除 {self.model_id} 的 API Key")
             
-            # 2. 重置 API Base URL
-            self.api_base_edit.setText(model_config.default_api_base_url)
-            logger.info(f"已重置 API Base URL 为: {model_config.default_api_base_url}")
+            # 2. 重置 API Base URL / Kimi 平台
+            if self.model_id == 'kimi' and hasattr(self, 'kimi_region_group'):
+                # 重置时忽略已保存配置，按界面语言给默认平台
+                lang = (get_prefs().get('language') or '').lower()
+                default_region = (
+                    KimiModel.REGION_CHINA
+                    if lang.startswith('zh') or lang in ('yue', 'zht')
+                    else KimiModel.REGION_GLOBAL
+                )
+                self._sync_kimi_region_controls(region=default_region)
+                logger.info(f"已重置 Kimi 平台为: {default_region}")
+            else:
+                self.api_base_edit.setText(model_config.default_api_base_url)
+                logger.info(f"已重置 API Base URL 为: {model_config.default_api_base_url}")
             
             # 3. 重置模型名称：清空下拉框，添加占位符，清空自定义输入框
             self.model_combo.clear()
@@ -1947,6 +2189,7 @@ class ModelConfigWidget(QWidget):
             if item:
                 item.setEnabled(False)
             self.model_combo.setCurrentIndex(0)  # 选中占位符
+            self._models_loaded = False
             
             # 取消自定义模式，清空自定义输入框
             self.use_custom_model_checkbox.setChecked(False)
@@ -2430,7 +2673,6 @@ class ConfigDialog(QWidget):
         self._update_panel_ai_selectors()
         
         # 添加并行AI提示信息
-        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
             'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
         parallel_notice.setObjectName('label_parallel_ai_notice')

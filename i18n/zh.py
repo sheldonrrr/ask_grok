@@ -513,6 +513,11 @@ class SimplifiedChineseTranslation(BaseTranslation):
             # 字段说明
             'api_key_desc': '用于身份验证的 API 密钥。请妥善保管，不要分享。',
             'base_url_desc': 'API 端点地址。除非有自定义端点，否则使用默认值。',
+            'base_url_desc_kimi': '国际站 Key 使用 https://api.moonshot.ai/v1；中国站 Key 使用 https://api.moonshot.cn/v1。两者不可混用。',
+            'kimi_region_label': '平台',
+            'kimi_region_global': '国际版',
+            'kimi_region_china': '国内版',
+            'kimi_base_url_readonly_tip': 'Base URL 由所选平台决定。',
             'model_desc': '从列表中选择模型，或使用自定义模型名称。',
             'streaming_desc': '启用实时响应流式传输，获得更快的反馈。',
             'advanced_section': '高级',

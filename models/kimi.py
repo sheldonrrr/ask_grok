@@ -4,11 +4,14 @@ Kimi (Moonshot) AI Model Implementation
 Kimi API is OpenAI Chat Completions compatible.
 Base URL (global): https://api.moonshot.ai/v1
 Base URL (China):  https://api.moonshot.cn/v1
+
+API keys are region-bound: a China-platform key only works with .cn,
+and a global-platform key only works with .ai.
 """
 import json
 import time
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
@@ -25,6 +28,84 @@ class KimiModel(BaseAIModel):
     DEFAULT_MODEL = "kimi-k3"
     # Default API base URL (global; China keys may use https://api.moonshot.cn/v1)
     DEFAULT_API_BASE_URL = "https://api.moonshot.ai/v1"
+    GLOBAL_API_BASE_URL = "https://api.moonshot.ai/v1"
+    CHINA_API_BASE_URL = "https://api.moonshot.cn/v1"
+    REGION_GLOBAL = "global"
+    REGION_CHINA = "china"
+
+    @classmethod
+    def base_url_for_region(cls, region: str) -> str:
+        """Map region id to Moonshot API base URL."""
+        if region == cls.REGION_CHINA:
+            return cls.CHINA_API_BASE_URL
+        return cls.GLOBAL_API_BASE_URL
+
+    @classmethod
+    def region_from_base_url(cls, api_base_url: str) -> str:
+        """Infer region id from API base URL (defaults to global)."""
+        current = (api_base_url or "").rstrip("/").lower()
+        china = cls.CHINA_API_BASE_URL.rstrip("/").lower()
+        if current == china or current == "https://api.moonshot.cn":
+            return cls.REGION_CHINA
+        return cls.REGION_GLOBAL
+
+    @classmethod
+    def peer_base_url(cls, api_base_url: str) -> Optional[str]:
+        """Return the other regional Moonshot endpoint, if applicable."""
+        current = (api_base_url or "").rstrip("/")
+        global_url = cls.GLOBAL_API_BASE_URL.rstrip("/")
+        china_url = cls.CHINA_API_BASE_URL.rstrip("/")
+        if current == global_url:
+            return cls.CHINA_API_BASE_URL
+        if current == china_url:
+            return cls.GLOBAL_API_BASE_URL
+        # Tolerate missing /v1 suffix
+        if current in ("https://api.moonshot.ai",):
+            return cls.CHINA_API_BASE_URL
+        if current in ("https://api.moonshot.cn",):
+            return cls.GLOBAL_API_BASE_URL
+        return None
+
+    def _switch_to_peer_base_url(self) -> Optional[str]:
+        current = self.config.get("api_base_url", self.DEFAULT_API_BASE_URL)
+        peer = self.peer_base_url(current)
+        if not peer:
+            return None
+        logger = logging.getLogger(self.get_logger_name())
+        logger.warning(
+            "Kimi auth failed for %s; retrying with regional peer %s",
+            current,
+            peer,
+        )
+        self.config["api_base_url"] = peer
+        self.config["kimi_region"] = self.region_from_base_url(peer)
+        return peer
+
+    @staticmethod
+    def _is_auth_failure(error: Exception) -> bool:
+        text = str(error).lower()
+        if "401" in text or "invalid authentication" in text or "invalid_authentication" in text:
+            return True
+        response = getattr(error, "response", None)
+        return bool(response is not None and getattr(response, "status_code", None) == 401)
+
+    def fetch_available_models(self, skip_verification: bool = False) -> List[str]:
+        """Fetch models, auto-falling back between .ai and .cn on 401."""
+        try:
+            return super().fetch_available_models(skip_verification=skip_verification)
+        except Exception as e:
+            if not self._is_auth_failure(e) or not self._switch_to_peer_base_url():
+                raise
+            return super().fetch_available_models(skip_verification=skip_verification)
+
+    def verify_api_key_with_test_request(self) -> None:
+        """Verify API key, auto-falling back between .ai and .cn on 401."""
+        try:
+            super().verify_api_key_with_test_request()
+        except Exception as e:
+            if not self._is_auth_failure(e) or not self._switch_to_peer_base_url():
+                raise
+            super().verify_api_key_with_test_request()
 
     def _validate_config(self):
         """
@@ -100,6 +181,15 @@ class KimiModel(BaseAIModel):
             "Authorization": token,
         }
 
+    @classmethod
+    def _model_requires_fixed_temperature(cls, model_name: str) -> bool:
+        """
+        Newer Kimi thinking models (kimi-k*) reject temperature values other than 1.
+        Classic moonshot-v1-* models still accept the usual 0-1 range.
+        """
+        name = (model_name or "").strip().lower()
+        return name.startswith("kimi-k")
+
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
         Prepare Kimi API request data
@@ -117,8 +207,9 @@ class KimiModel(BaseAIModel):
             ),
         )
 
+        model_name = self.config.get('model', self.DEFAULT_MODEL)
         data = {
-            "model": self.config.get('model', self.DEFAULT_MODEL),
+            "model": model_name,
             "messages": [
                 {
                     "role": "system",
@@ -129,9 +220,15 @@ class KimiModel(BaseAIModel):
                     "content": prompt,
                 },
             ],
-            "temperature": kwargs.get('temperature', 0.7),
             "max_tokens": kwargs.get('max_tokens', 4096),
         }
+
+        # kimi-k3 / kimi-k2.5+ only allow temperature=1 (or omit). Sending 0.7 -> HTTP 400.
+        if self._model_requires_fixed_temperature(model_name):
+            if kwargs.get('temperature') is not None:
+                data['temperature'] = 1.0
+        else:
+            data['temperature'] = kwargs.get('temperature', 0.7)
 
         if kwargs.get('stream', False):
             data['stream'] = True
@@ -147,120 +244,151 @@ class KimiModel(BaseAIModel):
         :return: AI model response text
         :raises Exception: When request fails
         """
-        headers = self.prepare_headers()
-        data = self.prepare_request_data(prompt, **kwargs)
-
         use_stream = kwargs.get('stream', self.config.get('enable_streaming', True))
         stream_callback = kwargs.get('stream_callback', None)
         logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.kimi')
 
-        try:
-            if use_stream and stream_callback:
-                full_content = ""
-                chunk_count = 0
-                last_chunk_time = time.time()
-
-                api_url = f"{self.config['api_base_url']}/chat/completions"
-
+        def _raise_request_failed(err: Exception) -> None:
+            detail = str(err)
+            response = getattr(err, "response", None)
+            if response is not None:
                 try:
-                    with requests.post(
-                        api_url,
-                        headers=headers,
-                        json=data,
-                        timeout=kwargs.get('timeout', 300),
-                        stream=True,
-                    ) as response:
-                        response.raise_for_status()
-
-                        for line in response.iter_lines():
-                            if line:
-                                line_str = line.decode('utf-8')
-                                if line_str.startswith('data: '):
-                                    try:
-                                        if line_str == 'data: [DONE]':
-                                            break
-                                        line_data = json.loads(line_str[6:])
-                                        if 'choices' in line_data and line_data['choices']:
-                                            choice = line_data['choices'][0]
-                                            if 'delta' in choice and 'content' in choice['delta']:
-                                                chunk_text = choice['delta']['content']
-                                                if chunk_text:
-                                                    full_content += chunk_text
-                                                    stream_callback(chunk_text)
-                                                    chunk_count += 1
-                                                    last_chunk_time = time.time()
-                                    except json.JSONDecodeError as je:
-                                        logger.error(
-                                            f"JSON parse error: {str(je)}, line content: {line_str[:50]}..."
-                                        )
-                                        continue
-
-                                current_time = time.time()
-                                if current_time - last_chunk_time > 15:
-                                    logger.warning(
-                                        f"No new data received for {current_time - last_chunk_time:.1f} seconds"
-                                    )
-
-                                if current_time - last_chunk_time > 60 and full_content:
-                                    logger.warning(
-                                        "No response for over 60 seconds, triggering recovery mechanism"
-                                    )
-                                    translations = get_translation(
-                                        self.config.get('language', 'en')
-                                    )
-                                    raise requests.exceptions.ReadTimeout(
-                                        translations.get(
-                                            'stream_timeout_error',
-                                            "Streaming timeout after 60 seconds with no new content, possible connection issue",
-                                        )
-                                    )
-
-                        logger.info(
-                            f"Streaming completed, received {chunk_count} chunks, total length: {len(full_content)}"
-                        )
-                        return full_content
-
-                except requests.exceptions.RequestException as e:
-                    logger.error(f"Kimi API request error: {str(e)}")
-                    translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(
-                        translations.get(
-                            'api_request_failed',
-                            'API request failed: {error}',
-                        ).format(error=str(e))
-                    )
-
-            else:
-                api_url = f"{self.config['api_base_url']}/chat/completions"
-                response = requests.post(
-                    api_url,
-                    headers=headers,
-                    json=data,
-                    timeout=kwargs.get('timeout', 60),
-                )
-                response.raise_for_status()
-
-                result = response.json()
-                if 'choices' in result and result['choices']:
-                    return result['choices'][0]['message']['content']
-                else:
-                    translations = get_translation(self.config.get('language', 'en'))
-                    raise Exception(
-                        translations.get(
-                            'invalid_response',
-                            'Invalid API response format',
-                        )
-                    )
-
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Kimi API request error: {str(e)}")
+                    body = (response.text or "").strip()
+                    if body:
+                        detail = f"{detail} | {body[:500]}"
+                        logger.error("Kimi API error body: %s", body[:500])
+                except Exception:
+                    pass
+            logger.error(f"Kimi API request error: {detail}")
             translations = get_translation(self.config.get('language', 'en'))
             raise Exception(
                 translations.get(
                     'api_request_failed',
                     'API request failed: {error}',
-                ).format(error=str(e))
+                ).format(error=detail)
             )
+
+        def _do_stream_request() -> str:
+            full_content = ""
+            chunk_count = 0
+            last_chunk_time = time.time()
+            api_url = f"{self.config['api_base_url']}/chat/completions"
+            # Refresh headers/data in case base URL or model config changed
+            req_headers = self.prepare_headers()
+            req_data = self.prepare_request_data(prompt, **kwargs)
+
+            with requests.post(
+                api_url,
+                headers=req_headers,
+                json=req_data,
+                timeout=kwargs.get('timeout', 300),
+                stream=True,
+            ) as response:
+                response.raise_for_status()
+
+                for line in response.iter_lines():
+                    if line:
+                        line_str = line.decode('utf-8')
+                        if line_str.startswith('data: '):
+                            try:
+                                if line_str == 'data: [DONE]':
+                                    break
+                                line_data = json.loads(line_str[6:])
+                                if 'choices' in line_data and line_data['choices']:
+                                    choice = line_data['choices'][0]
+                                    if 'delta' in choice and 'content' in choice['delta']:
+                                        chunk_text = choice['delta']['content']
+                                        if chunk_text:
+                                            full_content += chunk_text
+                                            stream_callback(chunk_text)
+                                            chunk_count += 1
+                                            last_chunk_time = time.time()
+                            except json.JSONDecodeError as je:
+                                logger.error(
+                                    f"JSON parse error: {str(je)}, line content: {line_str[:50]}..."
+                                )
+                                continue
+
+                        current_time = time.time()
+                        if current_time - last_chunk_time > 15:
+                            logger.warning(
+                                f"No new data received for {current_time - last_chunk_time:.1f} seconds"
+                            )
+
+                        if current_time - last_chunk_time > 60 and full_content:
+                            logger.warning(
+                                "No response for over 60 seconds, triggering recovery mechanism"
+                            )
+                            translations = get_translation(
+                                self.config.get('language', 'en')
+                            )
+                            raise requests.exceptions.ReadTimeout(
+                                translations.get(
+                                    'stream_timeout_error',
+                                    "Streaming timeout after 60 seconds with no new content, possible connection issue",
+                                )
+                            )
+
+                logger.info(
+                    f"Streaming completed, received {chunk_count} chunks, total length: {len(full_content)}"
+                )
+                return full_content
+
+        def _do_non_stream_request() -> str:
+            api_url = f"{self.config['api_base_url']}/chat/completions"
+            req_headers = self.prepare_headers()
+            req_data = self.prepare_request_data(prompt, **kwargs)
+            response = requests.post(
+                api_url,
+                headers=req_headers,
+                json=req_data,
+                timeout=kwargs.get('timeout', 60),
+            )
+            response.raise_for_status()
+
+            result = response.json()
+            if 'choices' in result and result['choices']:
+                message = result['choices'][0].get('message') or {}
+                content = message.get('content')
+                if content:
+                    return content
+                # Thinking models may briefly return empty content with reasoning_content
+                reasoning = message.get('reasoning_content')
+                if reasoning:
+                    logger.warning(
+                        "Kimi returned empty content with reasoning_content "
+                        "(len=%s); returning empty string",
+                        len(reasoning),
+                    )
+                    return ""
+            translations = get_translation(self.config.get('language', 'en'))
+            raise Exception(
+                translations.get(
+                    'invalid_response',
+                    'Invalid API response format',
+                )
+            )
+
+        try:
+            if use_stream and stream_callback:
+                try:
+                    return _do_stream_request()
+                except requests.exceptions.HTTPError as e:
+                    if self._is_auth_failure(e) and self._switch_to_peer_base_url():
+                        return _do_stream_request()
+                    _raise_request_failed(e)
+                except requests.exceptions.RequestException as e:
+                    _raise_request_failed(e)
+            else:
+                try:
+                    return _do_non_stream_request()
+                except requests.exceptions.HTTPError as e:
+                    if self._is_auth_failure(e) and self._switch_to_peer_base_url():
+                        return _do_non_stream_request()
+                    _raise_request_failed(e)
+
+        except requests.exceptions.RequestException as e:
+            _raise_request_failed(e)
 
     def send_message(self, prompt: str, callback: callable) -> None:
         """
@@ -320,5 +448,3 @@ class KimiModel(BaseAIModel):
             "model": cls.DEFAULT_MODEL,
             "enable_streaming": True,
         }
-
-    # Kimi 使用基类的默认实现，无需重写 fetch_available_models
