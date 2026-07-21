@@ -113,6 +113,7 @@ class CantoneseTranslation(BaseTranslation):
             'set_default_ai_title': '設定預設 AI', # Set Default AI
             'set_default_ai_message': '你已經轉咗去「{0}」。想唔想將佢設為以後查詢嘅預設 AI 呀？', # You have switched to "{0}". Would you like to set it as the default AI for future queries?
             'set_default_ai_success': '預設 AI 已經設定為「{0}」。', # Default AI has been set to "{0}".
+            'set_default_ai_after_add_message': '已成功新增「{0}」。想唔想將佢設為預設 AI 呀？', # You have successfully added "{0}". Would you like to set it as the default AI?
             'default_ai_mismatch_title': '預設 AI 已更改', # Default AI Changed
             'default_ai_mismatch_message': '設定中嘅預設 AI 已經改咗做「{default_ai}」，\n但係目前對話用緊「{current_ai}」。\n\n想唔想轉用新嘅預設 AI 呀？', # The default AI in configuration has been changed to "{default_ai}",\nbut the current dialog is using "{current_ai}".\n\nWould you like to switch to the new default AI?
             'copied': '已複製！', # Copied!
@@ -386,12 +387,15 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_related_plugins': '相關插件',
+            'about_mobileread_link_text': 'MobileRead',
+            'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown for calibre',
-            'about_markdown_desc': '將書本匯出做 Markdown 文字檔。',
+            'about_markdown_desc': 'Calibre 插件 · Python\n將書本匯出做 Markdown 文字檔。',
             'about_tradsimp_title': 'Chinese Text Conversion for calibre',
-            'about_tradsimp_desc': '喺電子書入面轉換繁體同簡體中文。',
+            'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
+            'about_open_button': 'MobileRead',
             'about_open_mobileread': '開啟 MobileRead',
+            'about_mobileread_note': '注：MobileRead 係 calibre 插件發佈同更多版本更新資訊嘅開發者頁面。',
             'about_open_nowtiny': '開啟 Nowtiny',
             'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
@@ -483,6 +487,11 @@ class CantoneseTranslation(BaseTranslation):
             # 字段說明
             'api_key_desc': '你用於身份驗證嘅 API 金鑰。請妥善保管，唔好分享。', # Your API key for authentication. Keep it secure and do not share.
             'base_url_desc': 'API 端點 URL。除非你有自訂端點，否則用預設值。', # The API endpoint URL. Use default unless you have a custom endpoint.
+            'base_url_desc_kimi': '國際站 Key 用 https://api.moonshot.ai/v1；中國站 Key 用 https://api.moonshot.cn/v1。唔好撈亂。', # International keys use https://api.moonshot.ai/v1; China-platform keys use https://api.moonshot.cn/v1. Do not mix them.
+            'kimi_region_label': '平台', # Platform
+            'kimi_region_global': '國際版', # International
+            'kimi_region_china': '中國大陸版', # China Mainland
+            'kimi_base_url_readonly_tip': 'Base URL 由所選平台決定。', # Base URL is determined by the selected platform.
             'model_desc': '從列表中揀一個模型，或者用自訂模型名稱。', # Select a model from the list or use a custom model name.
             'streaming_desc': '啟用實時回應串流，可以更快咁得到回覆。', # Enable real-time response streaming for faster feedback.
             'advanced_section': '進階', # Advanced

@@ -507,7 +507,7 @@ class GeminiModel(BaseAIModel):
     
     def verify_api_key_with_test_request(self) -> None:
         """
-        Gemini 使用 URL 参数传递 API Key，需要自定义验证逻辑
+        Gemini 使用请求头 x-goog-api-key 鉴权；发送最小 generateContent 请求做校验。
         """
         import logging
         from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests

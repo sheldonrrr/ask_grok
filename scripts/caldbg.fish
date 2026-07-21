@@ -66,9 +66,9 @@ function caldbg-p
     cd "$ASK_GROK_ROOT"
     bash scripts/package.sh
     set -l version (python3 -c "import sys; sys.path.insert(0, '$ASK_GROK_ROOT'); from version import VERSION_STRING; print(VERSION_STRING)")
-    set -l zip "$ASK_GROK_ROOT/dist/Ask AI Plugin-$version.zip"
+    set -l zip "$ASK_GROK_ROOT/dist/Ask_AI_Plugin_v$version.zip"
     if not test -f "$zip"
-        echo "未找到 dist/Ask AI Plugin-$version.zip"
+        echo "未找到 dist/Ask_AI_Plugin_v$version.zip"
         return 1
     end
     calibre-customize -r "$_plugin_name" 2>/dev/null

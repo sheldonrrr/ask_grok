@@ -1,8 +1,9 @@
 
-# Ask AI Plugin User Manual v0.9
-Latest updated: Jul 1, 2026, Ask AI Plugin v1.4.7
+# Ask AI Plugin User Manual v1.0
+Latest updated: Jul 21, 2026, Ask AI Plugin v1.5.0
 
 ToC of this tutorial:
+- Introduction
 - Explain: Why & What is API Keys
 - Free API Key Options
 - Installation
@@ -14,13 +15,25 @@ ToC of this tutorial:
 - Prompts
 - Other Features
 - Configuration
-- Custom Prompt Length (New)
+- Custom Prompt Length
 - Troubleshooting
 - Privacy
 - Tips
 - Getting Help
 
-Note: This plugin was renamed from Ask Grok to Ask AI Plugin because it now supports multiple AI providers, not just Grok.
+## Introduction
+
+Ask AI Plugin lets you ask questions about books in your calibre library using many AI providers (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Kimi, Nvidia, Perplexity, OpenRouter, Ollama, and more).
+
+What you can do:
+- Ask about one book or several selected books
+- Search your whole library with natural language (AI Search)
+- Compare answers from two AIs side by side
+- Export conversations to PDF
+
+You need an API key for most cloud AIs. A free Nvidia channel works out of the box with no setup.
+
+Note: This plugin was renamed from Ask Grok to Ask AI Plugin because it supports multiple AI providers, not just Grok.
 
 ## Explain: Why & What is API Keys
 
@@ -48,15 +61,11 @@ Option 1: Nvidia (Recommended for Stability)
 - Setup: Visit https://build.nvidia.com/ and sign up
 - Get your API key and paste it in the plugin's Nvidia AI configuration
 
-Option 2: Google Gemini
-- Free tier: 15 requests per minute
-- Get key at: https://aistudio.google.com/
-
-Option 3: OpenRouter
+Option 2: OpenRouter
 - Free models: there are some free models available at: https://openrouter.ai/models?q=free
 - Get key at: https://openrouter.ai/settings/keys
 
-Option 4: Ollama (Local, No Internet)
+Option 3: Ollama (Local, No Internet)
 - Cost: Free forever
 - Privacy: Runs on your computer, nothing sent online
 - Setup: Download from https://ollama.com/ and install
@@ -80,17 +89,27 @@ Method 2 (Manual):
 
 ## First Time Setup an AI Service
 
-Example: Setting up Nvidia AI (free)
+1. Open **Configuration** from the Ask AI Plugin menu
+2. Click **Add AI**
+3. Choose a provider, enter your API key, then load and select a model
+4. Click **Add**
+5. When asked whether to set it as the **default AI**, choose **Yes** or **No**
+   - Yes: future Ask sessions use this AI by default
+   - No: keep your current default (for example Nvidia Free)
 
-1. Click Ask AI Plugin menu in calibre toolbar
-2. Select Configuration
-3. Find Nvidia AI section
-4. Paste your API key
-5. Base URL is already filled in
-6. Click Load Model List button
-7. Select a model from dropdown
+You can change the default anytime with the **Default AI** dropdown in Configuration.
 
-Done!
+### Kimi (Moonshot) tip
+
+Kimi has two platforms. Pick the one that matches your API key:
+- **International** — `https://api.moonshot.ai/v1`
+- **China Mainland** — `https://api.moonshot.cn/v1`
+
+Do not mix a key from one platform with the other. Labels follow your plugin language (for example 国际版 / 中国大陆版 in Chinese).
+
+### Manage configured AIs
+
+Use **Manage Configured AI** to edit, delete, or review AIs you already added. Double-click a row in the configured list to open it.
 
 ## How to Use
 
@@ -234,10 +253,11 @@ General Settings:
 - Custom Prompt Length: Optional advanced limit (see chapter below)
 
 AI Provider Settings:
-- API Key: Your authentication key
-- Base URL: Usually pre-filled
-- Model: Select from dropdown or enter custom
-- Enable Streaming: Get responses word-by-word
+- **Add AI** / **Manage Configured AI**: add or edit providers
+- **Default AI**: which AI Ask uses by default
+- After you add an AI, you can set it as default immediately
+- For each provider: API Key, Base URL, Model, Enable Streaming
+- Kimi: choose International or China Mainland to match your key
 
 Search Tab:
 - AI Search overview, privacy notice, and **Update Library Data** (full-library index)
@@ -250,7 +270,7 @@ Prompts Tab (separate tab for better management):
 Export Settings:
 - Set default PDF save location
 
-## Custom Prompt Length (New)
+## Custom Prompt Length
 
 The plugin limits how much text is sent to the AI in a single request. This protects against timeouts and confusing errors when a prompt grows too large.
 
@@ -304,6 +324,7 @@ API Key Invalid:
 - Copy entire key without spaces
 - Check key hasn't expired
 - For Grok: use key from console.x.ai, not x.com
+- For Kimi: make sure Platform matches your key (International vs China Mainland)
 
 Ollama Not Working:
 - Make sure Ollama is installed and running
@@ -340,10 +361,10 @@ For maximum privacy: Use Ollama (runs locally, nothing sent online).
 5. Use Perplexity for research questions that need citations.
 6. Use AI Search to quickly find books in your library without browsing.
 7. If you see "Question too long", switch to AI Search, use compact mode (30+ books), or raise the custom limit for very large libraries.
+8. After adding a new AI, set it as default if you want Ask to use it next time.
 
 ## Getting Help
 
 GitHub: https://github.com/sheldonrrr/ask_grok
 calibre Forum: https://www.mobileread.com/forums/showthread.php?p=4547077
 Email: sheldonrrr@gmail.com
-

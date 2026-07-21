@@ -29,6 +29,7 @@ from .config import (
     is_ai_config_complete,
     build_ai_display_text,
     build_configured_ai_entries,
+    get_provider_display_name,
 )
 from .models.base import AIProvider, DEFAULT_MODELS, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation
@@ -401,29 +402,61 @@ class AddAIDialog(QDialog):
         # 保存配置
         models_config[config_id] = config
         prefs['models'] = models_config
-        
-        # 如果是第一个配置，设为默认
-        configured_count = sum(
-            1
-            for cid, cfg in models_config.items()
-            if is_ai_config_complete(extract_provider_id(cid, cfg), cfg)
-        )
-        if configured_count == 1:
-            prefs['selected_model'] = config_id
-            panel_selections = prefs.get('panel_ai_selections', {}) or {}
-            panel_selections['panel_0'] = config_id
-            prefs['panel_ai_selections'] = panel_selections
-            prefs['force_default_ai_on_next_open'] = True
-        
         prefs.commit()
-        
+
         logger.info(f"[AddAI] Added new config: {config_id}")
-        
-        # 发出信号
-        self.config_changed.emit()
-        
-        # 关闭弹窗
+
+        # 单 AI 模式：新增成功后询问是否设为默认；多面板模式保持原有「首个配置自动默认」逻辑
+        # 仅写 prefs，不在此刷新父 Config（避免 Windows 上子模态未关时重建 UI）
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        is_complete = bool(config.get('is_configured'))
+        if parallel_ai_count == 1 and is_complete:
+            if self._prompt_set_as_default(config_id, config):
+                self._set_as_default_ai(config_id)
+        else:
+            configured_count = sum(
+                1
+                for cid, cfg in models_config.items()
+                if is_ai_config_complete(extract_provider_id(cid, cfg), cfg)
+            )
+            if configured_count == 1:
+                self._set_as_default_ai(config_id)
+
+        # 先关闭弹窗；父级 Config 在 exec_() 返回后再刷新（Windows 模态/焦点更稳）
         self.accept()
+
+    def _prompt_set_as_default(self, config_id, config):
+        """新增成功后询问是否设为默认 AI。返回用户是否选择是。"""
+        display_name = build_ai_display_text(config_id, config, i18n=self.i18n)
+        msg_template = self.i18n.get(
+            'set_default_ai_after_add_message',
+            'You have successfully added "{0}". Would you like to set it as the default AI?'
+        )
+        # 避免 display_name 含 {} 时 str.format 抛错
+        msg_text = msg_template.replace('{0}', display_name)
+
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n.get('set_default_ai_title', 'Set Default AI'))
+        msg_box.setText(msg_text)
+        msg_box.setIcon(QMessageBox.Question)
+
+        yes_button = msg_box.addButton(self.i18n.get('yes', 'Yes'), QMessageBox.YesRole)
+        no_button = msg_box.addButton(self.i18n.get('no', 'No'), QMessageBox.NoRole)
+        msg_box.setDefaultButton(yes_button)
+        msg_box.exec_()
+        # Esc / 点 X 时 clickedButton() 为 None，视为 No
+        return msg_box.clickedButton() is yes_button
+
+    def _set_as_default_ai(self, config_id):
+        """将指定配置设为默认 AI（单面板场景）。"""
+        prefs = get_prefs()
+        prefs['selected_model'] = config_id
+        panel_selections = prefs.get('panel_ai_selections', {}) or {}
+        panel_selections['panel_0'] = config_id
+        prefs['panel_ai_selections'] = panel_selections
+        prefs['force_default_ai_on_next_open'] = True
+        prefs.commit()
+        logger.info(f"[AddAI] Set default AI to: {config_id}")
 
 
 # ============================================================
@@ -753,7 +786,11 @@ class ManageAIDialog(QDialog):
         
         self.config_changed.emit()
         
-        display_name = config.get('display_name', self.current_config_id)
+        display_name = get_provider_display_name(
+            extract_provider_id(self.current_config_id, config),
+            config,
+            i18n=self.i18n,
+        ) or self.current_config_id
         QMessageBox.information(
             self,
             self.i18n.get('success', 'Success'),
@@ -768,7 +805,11 @@ class ManageAIDialog(QDialog):
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         config = models_config.get(self.current_config_id, {})
-        display_name = config.get('display_name', self.current_config_id)
+        display_name = get_provider_display_name(
+            extract_provider_id(self.current_config_id, config),
+            config,
+            i18n=self.i18n,
+        ) or self.current_config_id
         
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle(self.i18n.get('confirm_delete_title', 'Confirm Delete'))

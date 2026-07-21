@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # Package Ask AI Plugin into dist/ for release.
+#
+# Output (canonical, no spaces — safer on Windows / shells):
+#   dist/Ask_AI_Plugin_vX.Y.Z.zip
+#
+# Exclusions stay in sync with the "Packaging exclusions" notes in .gitignore.
+# GitHub-only reference trees (docs/, aiprovider/, scripts/, tests/, …) are not shipped.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,7 +18,12 @@ cd "$ROOT"
 
 echo "Packaging Ask AI Plugin v${VERSION}..."
 
-rm -f "$DIST/Ask AI Plugin.zip" "$DIST/Ask AI Plugin-${VERSION}.zip" "$DIST/$VERSIONED_ZIP"
+# Remove current + legacy artifact names
+rm -f \
+  "$DIST/$VERSIONED_ZIP" \
+  "$DIST/Ask_AI_Plugin_v"*.zip \
+  "$DIST/Ask AI Plugin.zip" \
+  "$DIST/Ask AI Plugin-"*.zip
 
 zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "*.git*" \
@@ -28,6 +39,18 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x ".agent/**" \
   -x ".history/*" \
   -x ".history/**" \
+  -x ".windsurf/*" \
+  -x ".windsurf/**" \
+  -x ".idea/*" \
+  -x ".idea/**" \
+  -x ".vscode/*" \
+  -x ".vscode/**" \
+  -x ".github/*" \
+  -x ".github/**" \
+  -x ".obsidian/*" \
+  -x ".obsidian/**" \
+  -x ".sync/*" \
+  -x ".sync/**" \
   -x "dist/*" \
   -x "dist/**" \
   -x "scripts/*" \
@@ -40,20 +63,9 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "aiprovider/**" \
   -x "docs/*" \
   -x "docs/**" \
+  -x "tutorial/about.md" \
   -x "backend/*" \
   -x "backend/**" \
-  -x ".github/*" \
-  -x ".github/**" \
-  -x ".obsidian/*" \
-  -x ".obsidian/**" \
-  -x ".sync/*" \
-  -x ".sync/**" \
-  -x ".idea/*" \
-  -x ".idea/**" \
-  -x ".vscode/*" \
-  -x ".vscode/**" \
-  -x ".windsurf/*" \
-  -x ".windsurf/**" \
   -x "lib/bin/*" \
   -x "lib/bin/**" \
   -x "**/*.dist-info/*" \
@@ -63,6 +75,7 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "**/.mypy_cache/*" \
   -x "**/.mypy_cache/**" \
   -x "**/__pycache__/*" \
+  -x "**/__pycache__/**" \
   -x "__pycache__/*" \
   -x "__pycache__/**" \
   -x "node_modules/*" \
@@ -73,9 +86,30 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "**/*.py[cod]" \
   -x "**/.DS_Store" \
   -x ".DS_Store" \
+  -x "**/.DS_Store" \
   -x "**/._*" \
+  -x "__MACOSX/*" \
+  -x "__MACOSX/**" \
+  -x "**/.Spotlight-V100/*" \
+  -x "**/.Spotlight-V100/**" \
+  -x "**/.Trashes/*" \
+  -x "**/.Trashes/**" \
+  -x "**/.fseventsd/*" \
+  -x "**/.fseventsd/**" \
+  -x "**/.TemporaryItems/*" \
+  -x "**/.TemporaryItems/**" \
+  -x "**/.AppleDouble/*" \
+  -x "**/.AppleDouble/**" \
+  -x "**/.LSOverride" \
+  -x "**/*.icloud" \
+  -x "**/*~" \
+  -x "**/*.swp" \
+  -x "**/*.swo" \
   -x "**/Thumbs.db" \
+  -x "**/ehthumbs.db" \
   -x "**/Desktop.ini" \
+  -x "**/\$RECYCLE.BIN/*" \
+  -x "**/\$RECYCLE.BIN/**" \
   -x "*.zip" \
   -x "*.code-workspace" \
   > /dev/null

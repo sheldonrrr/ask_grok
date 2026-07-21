@@ -25,8 +25,10 @@ share/python-wheels/
 MANIFEST
 
 # Release artifacts (keep dist/ folder, ignore generated zips)
+# Canonical package name: dist/Ask_AI_Plugin_vX.Y.Z.zip  (see scripts/package.sh)
 dist/*
 !dist/.gitkeep
+Ask_AI_Plugin_v*.zip
 
 # PyInstaller
 *.manifest
@@ -152,7 +154,13 @@ cython_debug/
 
 # VS Code / Cursor
 .vscode/
-.cursor/
+.cursor/*
+# Track shared agent commands + rules; keep local Cursor junk ignored
+!.cursor/commands/
+!.cursor/commands/**
+!.cursor/rules/
+!.cursor/rules/**
+.cursor/**/*.log
 *.code-workspace
 
 # macOS system files
@@ -199,14 +207,14 @@ node_modules/
 # Backend folder (managed in separate repository)
 backend/
 
-# Project specific
+# Project specific / local artifacts
 *.zip
-
-# See "Environments" above — .env holds local API keys (e.g. DEEPSEEK_API_KEY) and must not be committed.
-
-# Packaging hygiene (non-core runtime files)
-tests/
-bin/
 ask_ai_plugin_gif_preview.gif
 lib/bin/
 **/*.dist-info/
+
+# See "Environments" above — .env holds local API keys and must not be committed.
+#
+# Packaging exclusions (NOT git-ignore): docs/, aiprovider/, scripts/, tests/, bin/
+# stay in the repo for development; scripts/package.sh omits them from the plugin zip.
+# Do not list tests/ or bin/ here — they are tracked source / helpers.

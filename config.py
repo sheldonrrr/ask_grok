@@ -110,11 +110,50 @@ def is_ai_config_complete(provider_id, model_config):
     return has_auth and has_model
 
 
+def _resolve_kimi_region(config):
+    """从配置解析 Kimi 平台（china / global），兼容旧版 display_name。"""
+    config = config or {}
+    region = (config.get('kimi_region') or '').strip().lower()
+    if region in (KimiModel.REGION_CHINA, KimiModel.REGION_GLOBAL):
+        return region
+
+    inferred = KimiModel.region_from_base_url(config.get('api_base_url', ''))
+    if inferred == KimiModel.REGION_CHINA:
+        return KimiModel.REGION_CHINA
+
+    # 兼容旧配置：display_name 中曾写入本地化地区名
+    legacy = str(config.get('display_name') or '')
+    legacy_lower = legacy.lower()
+    if (
+        any(marker in legacy for marker in ('中国大陆', '中國大陸', '国内', '國內'))
+        or 'china' in legacy_lower
+    ):
+        return KimiModel.REGION_CHINA
+    if any(marker in legacy for marker in ('国际', '國際')) or 'international' in legacy_lower:
+        return KimiModel.REGION_GLOBAL
+    return inferred
+
+
+def build_kimi_display_name(config, i18n=None):
+    """按当前语言生成 Kimi 显示名（地区标签不写入持久化配置）。"""
+    i18n = i18n or {}
+    base = i18n.get('model_display_name_kimi', 'Kimi (Moonshot)')
+    region = _resolve_kimi_region(config)
+    if region == KimiModel.REGION_CHINA:
+        region_label = i18n.get('kimi_region_china', 'China Mainland')
+    else:
+        region_label = i18n.get('kimi_region_global', 'International')
+    return f'{base} · {region_label}'
+
+
 def get_provider_display_name(provider_id, config, i18n=None):
     """获取服务商显示名，确保不为空。"""
     if provider_id == 'nvidia_free':
         free_text = (i18n or {}).get('free', 'Free')
         return f"Nvidia AI ({free_text})"
+
+    if provider_id == 'kimi':
+        return build_kimi_display_name(config, i18n=i18n)
 
     provider_name = (config or {}).get('display_name')
     if provider_name and str(provider_name).strip():
@@ -500,9 +539,6 @@ def get_prefs(force_reload=False):
         if model_val.startswith('google/'):
             _cfg['model'] = model_val[len('google/'):]
             gemini_migrated = True
-        elif model_val == 'google/gemini-3.5-flash':
-            _cfg['model'] = GEMINI_CONFIG.default_model_name
-            gemini_migrated = True
     if gemini_migrated:
         prefs.commit()
 
@@ -761,7 +797,7 @@ class ModelConfigWidget(QWidget):
                 # 本地 OpenAI 兼容服务通常不需要 API Key
                 self.api_key_edit = None
             
-            # Kimi：国际版 / 国内版（决定 Base URL）
+            # Kimi：国际版 / 中国大陆版（决定 Base URL）
             if self.model_id == 'kimi':
                 self._setup_kimi_region_selector(main_layout, TEXT_COLOR_SECONDARY_STRONG)
             else:
@@ -1037,11 +1073,8 @@ class ModelConfigWidget(QWidget):
                 or KimiModel.region_from_base_url(self.config.get('api_base_url', ''))
             )
             config['kimi_region'] = region
-            if region == KimiModel.REGION_CHINA:
-                region_label = self.i18n.get('kimi_region_china', 'China')
-            else:
-                region_label = self.i18n.get('kimi_region_global', 'International')
-            config['display_name'] = f'Kimi (Moonshot) · {region_label}'
+            # 地区标签按当前 UI 语言在展示时拼接，避免切换语言后仍显示旧文案
+            config['display_name'] = 'Kimi (Moonshot)'
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -1208,7 +1241,7 @@ class ModelConfigWidget(QWidget):
         )
         self.kimi_region_global_radio.setObjectName('radio_kimi_region_global')
         self.kimi_region_china_radio = QRadioButton(
-            self.i18n.get('kimi_region_china', 'China')
+            self.i18n.get('kimi_region_china', 'China Mainland')
         )
         self.kimi_region_china_radio.setObjectName('radio_kimi_region_china')
         self.kimi_region_group.addButton(self.kimi_region_global_radio)
@@ -1909,7 +1942,7 @@ class ModelConfigWidget(QWidget):
             )
         if hasattr(self, 'kimi_region_china_radio'):
             self.kimi_region_china_radio.setText(
-                self.i18n.get('kimi_region_china', 'China')
+                self.i18n.get('kimi_region_china', 'China Mainland')
             )
         if hasattr(self, 'api_base_edit') and self.model_id == 'kimi':
             self.api_base_edit.setToolTip(
@@ -2954,15 +2987,17 @@ class ConfigDialog(QWidget):
     def _on_add_ai_clicked(self):
         """点击添加 AI 按钮时打开可最大化的独立配置窗口"""
         from .ai_manager_dialog import AddAIDialog
+        from PyQt5.QtWidgets import QDialog
         
         dialog = AddAIDialog(self)
-        dialog.config_changed.connect(self._on_ai_manager_config_changed)
         
         # 连接语言切换信号
         if hasattr(self, 'language_changed'):
             self.language_changed.connect(lambda lang: self._update_dialog_language(dialog, lang))
         
-        dialog.exec_()
+        # 关闭后再刷新：避免 Windows 上子模态仍开着时重建 Config 列表
+        if dialog.exec_() == QDialog.Accepted:
+            self._on_ai_manager_config_changed()
     
     def _on_manage_ai_clicked(self, initial_config_id=None):
         """点击管理 AI 按钮时打开可最大化的独立配置窗口"""

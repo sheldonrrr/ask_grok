@@ -42,6 +42,7 @@ import html
 NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
 NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
 NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?t=373788'
+ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
 
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
@@ -720,214 +721,256 @@ class AskGrokConfigWidget(QWidget):
         self.language_changed.emit(lang_code)
 
 class AboutWidget(QWidget):
-    """Local About page with version info and related calibre plugins."""
+    """Local About page with version info and themed recommendation cards."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.language = language
         self.i18n = get_translation(language)
-        
-        # 创建主布局 - 使用统一的 Tab 布局函数
+        self._recommendation_cards = []
+        self._restyling = False
+        self._build_ui()
+        self.apply_translations()
+
+    def _build_ui(self):
         from .ui_constants import setup_tab_widget_layout
-        layout = setup_tab_widget_layout(self)
-        
-        # 创建文本浏览器
-        from PyQt5.QtWidgets import QTextBrowser, QFrame
-        self.text_browser = QTextBrowser()
-        self.text_browser.setOpenExternalLinks(True)  # About 页面允许点击推荐与 Nowtiny 链接
-        self.text_browser.setReadOnly(True)
-        self.text_browser.setFrameShape(QFrame.NoFrame)  # 移除边框，与其他 Tab 保持一致
-        layout.addWidget(self.text_browser)
-        
-        # 加载内容
-        self.load_content()
-        
-    def load_content(self):
-        """Render the local About page."""
-        self.text_browser.setHtml(self._local_about_html())
+        from calibre.gui2 import open_url
 
-    def _local_about_html(self):
-        def tr(key, fallback):
-            return html.escape(str(self.i18n.get(key, fallback)))
+        outer = setup_tab_widget_layout(self)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        content = QWidget()
+        cl = QVBoxLayout(content)
+        cl.setSpacing(SPACING_MEDIUM)
+        cl.setContentsMargins(PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM, PADDING_MEDIUM)
 
-        title = tr('about_title', self.i18n.get('about_plugin', 'About Ask AI Plugin'))
-        version_label = tr('about_version_label', 'Version')
-        description = tr(
-            'about_description',
-            'Ask AI Plugin helps you ask questions about books in calibre.',
-        )
-        rec_heading = tr('about_related_plugins', 'Related plugins')
-        markdown_title = tr('about_markdown_title', 'Markdown for calibre')
-        markdown_desc = tr(
-            'about_markdown_desc',
-            'Export books as Markdown text files.',
-        )
-        tradsimp_title = tr('about_tradsimp_title', 'Chinese Text Conversion for calibre')
-        tradsimp_desc = tr(
-            'about_tradsimp_desc',
-            'Convert Traditional and Simplified Chinese in ebooks.',
-        )
-        open_text = tr('about_open_mobileread', 'Open MobileRead')
-        nowtiny_text = tr('about_open_nowtiny', 'Open Nowtiny')
-        status_note = tr('about_nowtiny_note', 'More tools and plugin status are on Nowtiny.')
+        self.title_label = QLabel()
+        title_font = self.title_label.font()
+        title_font.setBold(True)
+        title_font.setPointSize(title_font.pointSize() + 2)
+        self.title_label.setFont(title_font)
+        cl.addWidget(self.title_label)
 
-        return f"""
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                line-height: 1.55;
-                padding: 16px;
-                color: palette(window-text);
-                background: transparent;
-            }}
-            h1 {{
-                margin-top: 0;
-                font-size: 1.5em;
-                color: palette(window-text);
-            }}
-            h2 {{
-                margin-top: 1.1em;
-                font-size: 1.15em;
-                color: palette(window-text);
-            }}
-            p {{
-                margin: 0.45em 0;
-            }}
-            .version {{
-                color: palette(mid);
-                margin-bottom: 0.9em;
-            }}
-            .card {{
-                margin: 8px 0;
-                padding: 10px;
-                border: 1px solid palette(mid);
-                border-radius: 8px;
-                background: palette(base);
-            }}
-            .card-title {{
-                font-weight: bold;
-                margin-bottom: 4px;
-            }}
-            a {{
-                color: palette(link);
-                text-decoration: none;
-            }}
-            .footer {{
-                margin-top: 14px;
-                padding-top: 10px;
-                border-top: 1px solid palette(mid);
-            }}
-        </style>
-        <h1>{title}</h1>
-        <p class="version">{version_label}: {VERSION_DISPLAY}</p>
-        <p>{description}</p>
-        <h2>{rec_heading}</h2>
-        <div class="card">
-            <div class="card-title">{markdown_title}</div>
-            <p>{markdown_desc}</p>
-            <p><a href="{NOWTINY_PLUGIN_MARKDOWN_URL}">{open_text}</a></p>
-        </div>
-        <div class="card">
-            <div class="card-title">{tradsimp_title}</div>
-            <p>{tradsimp_desc}</p>
-            <p><a href="{NOWTINY_PLUGIN_TRADSIMP_URL}">{open_text}</a></p>
-        </div>
-        <div class="footer">
-            <p>{status_note}</p>
-            <p><a href="{NOWTINY_SITE_URL}">{nowtiny_text}</a></p>
-        </div>
-        """
-    
-    def _markdown_to_html(self, markdown_text):
-        """简单的 markdown 转 HTML - 极简风格（复用 TutorialWidget 逻辑）"""
-        import re
-        
-        lines = markdown_text.split('\n')
-        result = []
-        in_paragraph = False
-        
-        for line in lines:
-            stripped = line.strip()
-            
-            # Headers
-            if stripped.startswith('# '):
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-                content = stripped[2:]
-                result.append(f'<h1>{content}</h1>')
-            # Empty line
-            elif not stripped:
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-            # Regular text
-            else:
-                if not in_paragraph:
-                    result.append('<p>')
-                    in_paragraph = True
-                else:
-                    result.append('<br>')
-                result.append(self._process_inline(stripped))
-        
-        # Close any open tags
-        if in_paragraph:
-            result.append('</p>')
-        
-        html = '\n'.join(result)
-        
-        # 添加样式 - 极简主义风格，支持明暗模式
-        styled_html = f"""
-        <style>
-            body {{ 
-                font-family: Arial, sans-serif; 
-                line-height: 1.65; 
-                padding: 20px;
-                color: palette(window-text);
-                background: transparent;
-            }}
-            h1 {{ 
-                color: palette(window-text); 
-                border-bottom: 2px solid palette(mid); 
-                padding-bottom: 10px;
-                font-size: 1.5em;
-                margin-top: 0.5em;
-                margin-bottom: 0.8em;
-            }}
-            p {{
-                color: palette(window-text);
-                margin: 0.5em 0;
-            }}
-            strong {{
-                color: palette(window-text);
-                font-weight: bold;
-            }}
-            a {{
-                color: palette(link);
-                text-decoration: none;
-            }}
-        </style>
-        {html}
-        """
-        
-        return styled_html
-    
-    def _process_inline(self, text):
-        """处理行内元素：粗体、链接"""
-        import re
-        # Bold
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-        # Links (keep clickable in About page)
-        text = re.sub(r'\[([^\]]+)\]\(([^\)]+)\)', r'<a href="\2">\1</a>', text)
-        return text
-        
+        self.version_label = QLabel()
+        cl.addWidget(self.version_label)
+
+        self.description_label = QLabel()
+        self.description_label.setWordWrap(True)
+        cl.addWidget(self.description_label)
+
+        self.mobile_read_link_label = QLabel()
+        self.mobile_read_link_label.setWordWrap(True)
+        self.mobile_read_link_label.setTextFormat(Qt.RichText)
+        self.mobile_read_link_label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.mobile_read_link_label.setOpenExternalLinks(False)
+        self.mobile_read_link_label.linkActivated.connect(
+            lambda _url: open_url(QUrl(ASK_AI_RELEASE_URL))
+        )
+        cl.addWidget(self.mobile_read_link_label)
+
+        self.section_divider_label = QLabel('---')
+        cl.addWidget(self.section_divider_label)
+
+        self.recommend_heading_label = QLabel()
+        heading_font = self.recommend_heading_label.font()
+        heading_font.setBold(True)
+        self.recommend_heading_label.setFont(heading_font)
+        cl.addWidget(self.recommend_heading_label)
+
+        self.markdown_card, self.markdown_title, self.markdown_desc, self.markdown_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(NOWTINY_PLUGIN_MARKDOWN_URL)))
+        )
+        cl.addWidget(self.markdown_card)
+
+        self.tradsimp_card, self.tradsimp_title, self.tradsimp_desc, self.tradsimp_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(NOWTINY_PLUGIN_TRADSIMP_URL)))
+        )
+        cl.addWidget(self.tradsimp_card)
+
+        self.recommend_note_label = QLabel()
+        self.recommend_note_label.setWordWrap(True)
+        cl.addWidget(self.recommend_note_label)
+
+        self.nowtiny_link_label = QLabel()
+        self.nowtiny_link_label.setWordWrap(True)
+        self.nowtiny_link_label.setTextFormat(Qt.RichText)
+        self.nowtiny_link_label.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.nowtiny_link_label.setOpenExternalLinks(False)
+        self.nowtiny_link_label.linkActivated.connect(
+            lambda _url: open_url(QUrl(NOWTINY_SITE_URL))
+        )
+        cl.addWidget(self.nowtiny_link_label)
+
+        cl.addStretch(1)
+        scroll.setWidget(content)
+        outer.addWidget(scroll)
+
+    def _create_recommendation_card(self, on_open):
+        card = QWidget()
+        card_layout = QHBoxLayout(card)
+        card_layout.setContentsMargins(12, 10, 12, 10)
+        card_layout.setSpacing(12)
+
+        text_layout = QVBoxLayout()
+        text_layout.setContentsMargins(0, 0, 0, 0)
+        text_layout.setSpacing(2)
+
+        title_label = QLabel()
+        title_font = title_label.font()
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        text_layout.addWidget(title_label)
+
+        desc_label = QLabel()
+        desc_label.setWordWrap(True)
+        text_layout.addWidget(desc_label)
+        card_layout.addLayout(text_layout, 1)
+
+        action_btn = QPushButton()
+        action_btn.setCursor(Qt.PointingHandCursor)
+        action_btn.clicked.connect(on_open)
+        card_layout.addWidget(action_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
+
+        self._style_recommendation_card(card, title_label, desc_label, action_btn)
+        self._recommendation_cards.append((card, title_label, desc_label, action_btn))
+        return card, title_label, desc_label, action_btn
+
+    def _style_recommendation_card(self, card, title_label, desc_label, action_btn):
+        """Match markdown-output recommendation cards (light/dark aware)."""
+        try:
+            from qt.core import QPalette
+            window_role = QPalette.ColorRole.Window
+        except Exception:
+            from PyQt5.QtGui import QPalette
+            window_role = QPalette.Window
+
+        window_color = self.palette().color(window_role)
+        is_dark_ui = window_color.lightness() < 128
+        if is_dark_ui:
+            card_bg = '#3a3d41'
+            card_border = '#4a4d52'
+            title_color = '#f2f2f2'
+            desc_color = '#d0d0d0'
+            link_color = '#66b3ff'
+            link_hover_color = '#90c9ff'
+        else:
+            card_bg = '#e8eaed'
+            card_border = '#d7dadd'
+            title_color = '#1a1a1a'
+            desc_color = '#4a4a4a'
+            link_color = '#0066cc'
+            link_hover_color = '#004499'
+
+        card.setObjectName('recommendationCard')
+        card.setStyleSheet(
+            'QWidget#recommendationCard {{'
+            'background: {};'
+            'border: 1px solid {};'
+            'border-radius: 8px;'
+            '}}'
+            .format(card_bg, card_border)
+        )
+        title_label.setStyleSheet('color: {}; background: transparent;'.format(title_color))
+        desc_label.setStyleSheet('color: {}; background: transparent;'.format(desc_color))
+        action_btn.setFlat(True)
+        action_btn.setStyleSheet(
+            'QPushButton {{'
+            'color: {};'
+            'background: transparent;'
+            'border: none;'
+            'text-decoration: underline;'
+            'padding: 0;'
+            '}}'
+            'QPushButton:hover {{'
+            'color: {};'
+            '}}'
+            .format(link_color, link_hover_color)
+        )
+
+    def _restyle_cards(self):
+        if self._restyling:
+            return
+        self._restyling = True
+        try:
+            for card, title_label, desc_label, action_btn in self._recommendation_cards:
+                self._style_recommendation_card(card, title_label, desc_label, action_btn)
+        finally:
+            self._restyling = False
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.PaletteChange and not self._restyling:
+            self._restyle_cards()
+        super().changeEvent(event)
+
+    def apply_translations(self):
+        title = self.i18n.get('about_title', 'About Ask AI Plugin')
+        version_label = self.i18n.get('about_version_label', 'Version')
+        self.title_label.setText(title)
+        self.version_label.setText('{}: {}'.format(version_label, VERSION_DISPLAY))
+        self.description_label.setText(
+            self.i18n.get(
+                'about_description',
+                'Ask questions about books in calibre, using the AI providers you choose.',
+            )
+        )
+        link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
+        self.mobile_read_link_label.setText(
+            '<a href="{url}">{text}</a>'.format(url=ASK_AI_RELEASE_URL, text=html.escape(link_text))
+        )
+        self.recommend_heading_label.setText(
+            self.i18n.get(
+                'about_related_plugins',
+                'Nowtiny calibre plugin recommendations',
+            )
+        )
+        self.markdown_title.setText(
+            self.i18n.get('about_markdown_title', 'Markdown for calibre')
+        )
+        self.markdown_desc.setText(
+            self.i18n.get('about_markdown_desc', 'Export books as Markdown text files.')
+        )
+        self.tradsimp_title.setText(
+            self.i18n.get('about_tradsimp_title', 'Chinese Text Conversion for calibre')
+        )
+        self.tradsimp_desc.setText(
+            self.i18n.get(
+                'about_tradsimp_desc',
+                'Convert Traditional and Simplified Chinese in ebooks.',
+            )
+        )
+        open_text = self.i18n.get('about_open_button', 'MobileRead')
+        self.markdown_btn.setText(open_text)
+        self.tradsimp_btn.setText(open_text)
+        self.recommend_note_label.setText(
+            self.i18n.get(
+                'about_mobileread_note',
+                'Note: MobileRead is the developer page for calibre plugin releases and more version updates.',
+            )
+        )
+        nowtiny_label = self.i18n.get('about_open_nowtiny', 'Open Nowtiny')
+        nowtiny_note = self.i18n.get(
+            'about_nowtiny_note',
+            'More tools and plugin status are on Nowtiny.',
+        )
+        self.nowtiny_link_label.setText(
+            '{note}<br><a href="{url}">{text}</a>'.format(
+                note=html.escape(nowtiny_note),
+                url=NOWTINY_SITE_URL,
+                text=html.escape(nowtiny_label),
+            )
+        )
+
     def update_content(self):
         """更新内容（语言切换时调用）"""
         prefs = get_prefs()
         self.language = prefs.get('language', self.language) if hasattr(prefs, 'get') and callable(prefs.get) else self.language
         self.i18n = get_translation(self.language)
-        self.load_content()
+        self.apply_translations()
+        self._restyle_cards()
 
 
 class TutorialWidget(QWidget):
@@ -967,10 +1010,8 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # 读取教程（英文文档，优先加载最新版本；若打包缺失则回退旧文件名）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.9.md')
-            if not tutorial_data:
-                tutorial_data = plugin.get_resources('tutorial/tutorial_v0.8.md')
+            # 读取教程（固定单文件，发版时就地更新）
+            tutorial_data = plugin.get_resources('tutorial/tutorial_v1.0.md')
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
