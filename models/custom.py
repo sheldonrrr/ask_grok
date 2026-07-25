@@ -14,4 +14,4 @@ class CustomModel(OpenAICompatModel):
 
     DEFAULT_MODEL = ""
     DEFAULT_API_BASE_URL = ""
-    PROVIDER_DISPLAY_NAME = "Custom"
+    PROVIDER_DISPLAY_NAME = "Custom (OpenAI Compatible)"

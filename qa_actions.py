@@ -42,7 +42,7 @@ def get_ai_display_name(ai_name):
         'nvidia': 'Nvidia',
         'openrouter': 'OpenRouter',
         'ollama': 'Ollama',
-        'custom': 'Custom',
+        'custom': 'Custom (OpenAI Compatible)',
     }
     return display_names.get(ai_name.lower(), ai_name.capitalize())
 

@@ -405,10 +405,11 @@ class CantoneseTranslation(BaseTranslation):
             'model_display_name_deepseek': 'Deepseek', # Deepseek
             'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
             'model_display_name_mistral': 'Mistral', # Mistral
-            'model_display_name_custom': '自訂', # Custom
+            'model_display_name_custom': '自訂 (OpenAI 兼容)', # Custom (OpenAI Compatible)
             'model_display_name_ollama': 'Ollama(本地)',
             'model_display_name_lmstudio': 'LM Studio(本地)',
             'model_display_name_koboldcpp': 'KoboldCpp(本地)',
+            'custom_openai_compat_notice': '提示：自訂服務商使用 OpenAI Chat Completions 請求格式（/chat/completions）。請填寫兼容嘅 Base URL 同模型名稱。部分本地服務可以唔填 API Key。',
             'local_openai_compat_no_api_key_notice': '提示：呢個本地 OpenAI 兼容服務通常唔使 API Key。請先啟動本地服務，再刷新模型列表。',
             'lmstudio_no_api_key_notice': '提示：LM Studio 本地用 OpenAI 兼容接口，通常唔使 API Key。',
             'koboldcpp_no_api_key_notice': '提示：KoboldCpp 本地用 OpenAI 兼容接口，通常唔使 API Key。',

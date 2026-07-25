@@ -15,7 +15,7 @@ import re
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QStackedWidget, QWidget,
-    QMessageBox, QSplitter, QFrame, QSizePolicy, QScrollArea,
+    QMessageBox, QFrame, QSizePolicy, QScrollArea,
     QGroupBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -33,16 +33,28 @@ from .config import (
 )
 from .models.base import AIProvider, DEFAULT_MODELS, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation
-from .widgets import apply_button_style
+from .widgets import apply_button_style, GripSplitter
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     PADDING_SMALL, PADDING_MEDIUM, PADDING_LARGE,
     BUTTON_MIN_WIDTH, BUTTON_HEIGHT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
-    get_standard_button_style, get_list_widget_style, TEXT_COLOR_SECONDARY
+    get_standard_button_style, get_list_widget_style,
+    TEXT_COLOR_SECONDARY,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _configure_side_panel_splitter(splitter, left_layout, right_layout, handle_width=6):
+    """左右面板与拖拽手柄间距对称；手柄为圆点样式，拖拽时高亮。"""
+    # 手柄两侧与内容保持相同间距（此前右侧为 0，导致贴边）
+    left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
+    right_layout.setContentsMargins(SPACING_MEDIUM, 0, 0, 0)
+    splitter.setHandleWidth(handle_width)
+    splitter.setChildrenCollapsible(False)
+    # 不使用整条高亮条样式，保留 GripSplitter 绘制的圆点手柄
+    splitter.setStyleSheet('')
 
 
 # AI Provider 显示顺序（与 config.py 保持一致）
@@ -182,13 +194,12 @@ class AddAIDialog(QDialog):
         main_layout.setSpacing(SPACING_MEDIUM)
         main_layout.setContentsMargins(PADDING_LARGE, PADDING_LARGE, PADDING_LARGE, PADDING_LARGE)
         
-        # 使用 QSplitter 分割左右
-        splitter = QSplitter(Qt.Horizontal)
+        # 使用带圆点手柄的分栏
+        splitter = GripSplitter(Qt.Horizontal)
         
         # ========== 左侧：Provider 列表 ==========
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
         left_layout.setSpacing(SPACING_SMALL)
         
         # 标题
@@ -207,7 +218,6 @@ class AddAIDialog(QDialog):
         # ========== 右侧：配置面板 ==========
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(SPACING_SMALL)
         
         # 配置面板标题
@@ -233,6 +243,7 @@ class AddAIDialog(QDialog):
         right_layout.addWidget(self.config_container, 1)
         
         splitter.addWidget(right_widget)
+        _configure_side_panel_splitter(splitter, left_layout, right_layout)
         
         # 设置 splitter 比例
         splitter.setSizes([220, 480])
@@ -316,7 +327,11 @@ class AddAIDialog(QDialog):
                 continue
             
             model_config = DEFAULT_MODELS[provider_enum]
-            item = QListWidgetItem(model_config.display_name)
+            display_name = self.i18n.get(
+                f'model_display_name_{provider_id}',
+                model_config.display_name,
+            )
+            item = QListWidgetItem(display_name)
             item.setData(Qt.UserRole, provider_id)
             self.provider_list.addItem(item)
     
@@ -360,7 +375,11 @@ class AddAIDialog(QDialog):
         
         # 更新标题
         config_text = self.i18n.get('configuration', 'Configuration')
-        self.config_title.setText(f"{default_config.display_name} {config_text}")
+        display_name = self.i18n.get(
+            f'model_display_name_{provider_id}',
+            default_config.display_name,
+        )
+        self.config_title.setText(f"{display_name} {config_text}")
         
         # 启用添加按钮
         self.add_button.setEnabled(True)
@@ -373,8 +392,11 @@ class AddAIDialog(QDialog):
         # 获取配置
         config = self.model_widget.get_config()
         
-        # 验证必填字段（本地 OpenAI 兼容服务不需要 API Key）
-        if self.current_provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+        # 验证必填字段（本地 OpenAI 兼容服务 / Custom 可不填 API Key）
+        if (
+            self.current_provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS
+            and self.current_provider_id != 'custom'
+        ):
             # Grok 使用 auth_token，其他使用 api_key
             key_field = 'auth_token' if self.current_provider_id == 'grok' else 'api_key'
             api_key = config.get(key_field, '').strip()
@@ -512,13 +534,12 @@ class ManageAIDialog(QDialog):
         main_layout.setSpacing(SPACING_MEDIUM)
         main_layout.setContentsMargins(PADDING_LARGE, PADDING_LARGE, PADDING_LARGE, PADDING_LARGE)
         
-        # 使用 QSplitter 分割左右
-        splitter = QSplitter(Qt.Horizontal)
+        # 使用带圆点手柄的分栏
+        splitter = GripSplitter(Qt.Horizontal)
         
         # ========== 左侧：已配置 AI 列表 ==========
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
         left_layout.setSpacing(SPACING_SMALL)
         
         # 标题
@@ -537,7 +558,6 @@ class ManageAIDialog(QDialog):
         # ========== 右侧：配置面板 ==========
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(SPACING_SMALL)
         
         # 配置面板标题
@@ -582,6 +602,7 @@ class ManageAIDialog(QDialog):
         right_layout.addLayout(action_layout)
         
         splitter.addWidget(right_widget)
+        _configure_side_panel_splitter(splitter, left_layout, right_layout)
         
         # 设置 splitter 比例
         splitter.setSizes([260, 490])

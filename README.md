@@ -52,7 +52,7 @@ Import the file to calibre custom plugins:
 - **Ollama** - https://ollama.ai/ (Local, OpenAI-compatible `/v1`)
 - **LM Studio** - https://lmstudio.ai/ (Local, OpenAI-compatible `/v1`)
 - **KoboldCpp** - https://github.com/LostRuins/koboldcpp (Local, OpenAI-compatible `/v1`)
-- **Custom** - Any OpenAI-compatible API endpoint
+- **Custom (OpenAI Compatible)** - Any OpenAI Chat Completions–compatible API endpoint (`/chat/completions`)
 
 Note: For Perplexity, when the API returns citations/search results, the plugin appends a plain-text reference section with full URLs at the end of the answer for easy copy/paste.
 

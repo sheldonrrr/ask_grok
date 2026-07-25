@@ -45,7 +45,8 @@ from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
+    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG,
+    BG_COLOR_BASE, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
     get_list_widget_style,
     setup_settings_tab_content, add_settings_section, configure_layout,
@@ -770,10 +771,16 @@ class ModelConfigWidget(QWidget):
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
                 main_layout.addWidget(api_key_label)
                 
-                # 纯文字提示（不可编辑）
+                # 纯文字提示（不可编辑；样式跟随主题，避免暗色下白底）
                 api_key_info = QLabel(self.i18n.get('nvidia_free_api_key_info', 'Will be obtained from server'))
                 api_key_info.setObjectName(f'label_api_key_info_{self.model_id}')
-                api_key_info.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 8px; background-color: #f5f5f5; border-radius: 4px;")
+                api_key_info.setStyleSheet(
+                    f"color: {TEXT_COLOR_SECONDARY_STRONG};"
+                    f" padding: 8px;"
+                    f" background-color: {BG_COLOR_BASE};"
+                    f" border: 1px solid palette(mid);"
+                    f" border-radius: 4px;"
+                )
                 api_key_info.setMinimumHeight(40)
                 main_layout.addWidget(api_key_info)
                 
@@ -1022,6 +1029,16 @@ class ModelConfigWidget(QWidget):
                 notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 notice_label.setWordWrap(True)
                 main_layout.addWidget(notice_label)
+            elif self.model_id == 'custom':
+                notice_label = QLabel(self.i18n.get(
+                    'custom_openai_compat_notice',
+                    'Note: Custom uses the OpenAI Chat Completions format (/chat/completions). '
+                    'Enter a compatible Base URL and model name. API Key is optional for some local servers.',
+                ))
+                notice_label.setObjectName('label_custom_notice')
+                notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
+                notice_label.setWordWrap(True)
+                main_layout.addWidget(notice_label)
             
             # 设置按钮初始状态
             self.update_button_states()
@@ -1095,7 +1112,7 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'Custom'  # 设置固定的显示名称
+            config['display_name'] = 'Custom (OpenAI Compatible)'  # 设置固定的显示名称
         elif self.model_id == 'openai':
             provider = AIProvider.AI_OPENAI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''

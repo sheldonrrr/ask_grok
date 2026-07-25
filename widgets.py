@@ -5,8 +5,64 @@
 自定义UI组件
 """
 
-from PyQt5.QtWidgets import QComboBox, QPushButton
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QComboBox, QPushButton, QSplitter, QSplitterHandle
+from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QPainter, QBrush
+
+
+class GripSplitterHandle(QSplitterHandle):
+    """绘制上下排列圆点的分栏手柄；拖拽按下时高亮。"""
+
+    def __init__(self, orientation, parent):
+        super().__init__(orientation, parent)
+        self._dragging = False
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        try:
+            # Calibre/Qt6: QPainter.RenderHint.Antialiasing
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect()
+            pal = self.palette()
+
+            if self._dragging:
+                # 与此前 hover 高亮一致：highlight 背景
+                painter.fillRect(rect, pal.highlight().color())
+                dot_color = pal.highlightedText().color()
+            else:
+                painter.fillRect(rect, Qt.transparent)
+                dot_color = pal.mid().color()
+
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(dot_color))
+            cx = rect.center().x()
+            cy = rect.center().y()
+            radius = 2
+            gap = 5
+            # 水平分栏手柄：中间一列上下排列的圆点
+            for i in (-1, 0, 1):
+                painter.drawEllipse(QPoint(int(cx), int(cy + i * gap)), radius, radius)
+        finally:
+            painter.end()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._dragging = True
+            self.update()
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._dragging = False
+            self.update()
+        super().mouseReleaseEvent(event)
+
+
+class GripSplitter(QSplitter):
+    """使用圆点手柄的水平/垂直分栏。"""
+
+    def createHandle(self):
+        return GripSplitterHandle(self.orientation(), self)
 
 
 class NoScrollComboBox(QComboBox):

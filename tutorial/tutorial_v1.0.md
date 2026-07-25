@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v1.0
-Latest updated: Jul 21, 2026, Ask AI Plugin v1.5.0
+Latest updated: Jul 24, 2026, Ask AI Plugin v1.5.1
 
 ToC of this tutorial:
 - Introduction

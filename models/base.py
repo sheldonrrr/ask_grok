@@ -130,8 +130,8 @@ DEFAULT_MODELS = {
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,
-        display_name="Custom",
-        api_key_label="API Key:",
+        display_name="Custom (OpenAI Compatible)",
+        api_key_label="API Key (Optional):",
         default_api_base_url="",
         default_model_name=""
     ),
