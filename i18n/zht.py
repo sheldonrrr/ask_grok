@@ -422,7 +422,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_nowtiny_note': '更多工具與插件狀態可在 Nowtiny 查看。',
         
         # 模型特定配置
-        'model_display_name_grok': 'Grok(x.AI)',
+        'model_display_name_grok': 'Grok(SpaceXAI)',
         'model_display_name_gemini': 'Gemini(Google)',
         'model_display_name_deepseek': 'Deepseek',
         'model_display_name_kimi': 'Kimi（月之暗面）',

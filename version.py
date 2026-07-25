@@ -27,4 +27,4 @@ AUTHOR = 'Sheldon'
 AUTHOR_EMAIL = 'sheldonrrr@gmail.com'
 
 # 关键词
-KEYWORDS = 'bookAI readingAI x.AI GrokAI GeminiAI'
+KEYWORDS = 'bookAI readingAI SpaceXAI GrokAI GeminiAI'

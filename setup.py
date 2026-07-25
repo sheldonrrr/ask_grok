@@ -21,7 +21,7 @@ setup(
     platforms=['windows', 'osx', 'linux'],
     install_requires=['requests'],
     zip_safe=False,
-    keywords='bookAI readingAI x.AI GrokAI GeminiAI',
+    keywords='bookAI readingAI SpaceXAI GrokAI GeminiAI',
     package_data={
         'ask_ai_plugin': ['images/*.png', 'lib/*']
     }

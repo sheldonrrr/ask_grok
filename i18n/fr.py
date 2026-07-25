@@ -436,7 +436,7 @@ class FrenchTranslation(BaseTranslation):
             'about_nowtiny_note': "Plus d'outils et l'état des plugins sont sur Nowtiny.",
 
             # Configurations spécifiques au modèle
-            'model_display_name_grok': 'Grok(x.AI)',
+            'model_display_name_grok': 'Grok(SpaceXAI)',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',

@@ -400,7 +400,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
-            'model_display_name_grok': 'Grok(x.AI)', # Grok(x.AI)
+            'model_display_name_grok': 'Grok(SpaceXAI)', # Grok(SpaceXAI)
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
             'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
