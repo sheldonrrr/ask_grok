@@ -424,6 +424,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi（月之暗面）',
+            'model_display_name_mistral': 'Mistral',
             'model_display_name_custom': '自定义',
             'model_display_name_ollama': 'Ollama(本地)',
             'model_display_name_lmstudio': 'LM Studio(本地)',

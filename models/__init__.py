@@ -15,6 +15,7 @@ from .grok import GrokModel
 from .gemini import GeminiModel
 from .deepseek import DeepseekModel
 from .kimi import KimiModel
+from .mistral import MistralModel
 from .custom import CustomModel
 from .openai import OpenAIModel
 from .anthropic import AnthropicModel
@@ -31,6 +32,7 @@ AIModelFactory.register_model('grok', GrokModel)
 AIModelFactory.register_model('gemini', GeminiModel)
 AIModelFactory.register_model('deepseek', DeepseekModel)
 AIModelFactory.register_model('kimi', KimiModel)
+AIModelFactory.register_model('mistral', MistralModel)
 AIModelFactory.register_model('custom', CustomModel)
 AIModelFactory.register_model('openai', OpenAIModel)
 AIModelFactory.register_model('anthropic', AnthropicModel)
@@ -53,6 +55,7 @@ __all__ = [
     'GeminiModel',
     'DeepseekModel',
     'KimiModel',
+    'MistralModel',
     'CustomModel',
     'OpenAIModel',
     'AnthropicModel',

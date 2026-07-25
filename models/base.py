@@ -14,6 +14,7 @@ class AIProvider(Enum):
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
     AI_KIMI = auto()      # Kimi (Moonshot)
+    AI_MISTRAL = auto()   # Mistral AI
     AI_CUSTOM = auto()    # Custom (Local or Remote API)
     AI_OPENAI = auto()    # OpenAI (GPT models)
     AI_ANTHROPIC = auto() # Anthropic (Claude models)
@@ -31,7 +32,7 @@ LOCAL_OPENAI_COMPAT_PROVIDER_IDS = ('ollama', 'lmstudio', 'koboldcpp')
 
 # Registered provider ids (include underscore ids like nvidia_free for longest-prefix match)
 KNOWN_PROVIDER_IDS = frozenset({
-    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi',
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi', 'mistral',
     'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
     'ollama', 'lmstudio', 'koboldcpp', 'custom',
 })
@@ -119,6 +120,13 @@ DEFAULT_MODELS = {
         api_key_label="Kimi API Key:",
         default_api_base_url="https://api.moonshot.ai/v1",
         default_model_name="kimi-k3"
+    ),
+    AIProvider.AI_MISTRAL: ModelConfig(
+        provider=AIProvider.AI_MISTRAL,
+        display_name="Mistral",
+        api_key_label="Mistral API Key:",
+        default_api_base_url="https://api.mistral.ai/v1",
+        default_model_name="mistral-large-latest"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,

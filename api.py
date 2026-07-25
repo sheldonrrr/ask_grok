@@ -47,6 +47,7 @@ class APIClient:
         'gemini': AIProvider.AI_GEMINI,
         'deepseek': AIProvider.AI_DEEPSEEK,
         'kimi': AIProvider.AI_KIMI,
+        'mistral': AIProvider.AI_MISTRAL,
         'custom': AIProvider.AI_CUSTOM,
         'openai': AIProvider.AI_OPENAI,
         'anthropic': AIProvider.AI_ANTHROPIC,

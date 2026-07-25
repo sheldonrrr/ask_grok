@@ -36,6 +36,8 @@ def get_ai_display_name(ai_name):
         'grok': 'Grok',
         'gemini': 'Gemini',
         'deepseek': 'DeepSeek',
+        'kimi': 'Kimi',
+        'mistral': 'Mistral',
         'anthropic': 'Claude',
         'nvidia': 'Nvidia',
         'openrouter': 'OpenRouter',
