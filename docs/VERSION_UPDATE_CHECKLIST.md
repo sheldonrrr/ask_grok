@@ -1,5 +1,7 @@
 # 版本号更新快速检查清单
 
+> Agent 精简版见：`.cursor/rules/version-update.mdc`
+
 ## 🚀 更新版本号到 X.Y.Z
 
 ### 第一步：更新版本号（5 个位置）
@@ -21,20 +23,20 @@ version='X.Y.Z'
 # VERSION_DISPLAY 从 version.py 自动导入
 ```
 
-当前版本示例（v1.4.7）：
+当前版本示例（v1.5.0）：
 
 ```bash
-# version.py:11
-VERSION = (1, 4, 7)
+# version.py
+VERSION = (1, 5, 0)
 
-# __init__.py:22
-VERSION = (1, 4, 7) # 版本号推送触发
+# __init__.py — VERSION（推送触发）
+VERSION = (1, 5, 0) # 版本号推送触发
 
-# __init__.py:87
-version = (1, 4, 7)
+# __init__.py — AskAIPlugin.version
+version = (1, 5, 0)
 
-# setup.py:15
-version='1.4.7',
+# setup.py
+version='1.5.0',
 ```
 
 ---
@@ -50,10 +52,10 @@ grep -n "version.*= (" __init__.py
 grep -n "version=" setup.py
 
 # 应该看到：
-# version.py:11:VERSION = (1, 4, 7)
-# __init__.py:22:VERSION = (1, 4, 7) # 版本号推送触发
-# __init__.py:87:    version             = (1, 4, 7)
-# setup.py:15:    version='1.4.7',
+# version.py: VERSION = (1, 5, 0)
+# __init__.py: VERSION = (1, 5, 0) # 版本号推送触发
+# __init__.py:     version             = (1, 5, 0)
+# setup.py:    version='1.5.0',
 ```
 
 ---
@@ -73,7 +75,7 @@ calibre-debug -g
 # 检查：
 # 1. 插件能否正常加载
 # 2. 打开插件菜单 → About
-# 3. 确认版本号显示为 v1.4.7
+# 3. 确认版本号显示为 v1.5.0
 ```
 
 ---
@@ -86,13 +88,14 @@ chmod +x scripts/package.sh
 ./scripts/package.sh
 
 # 会生成：
-# dist/Ask AI Plugin-1.4.7.zip
+# dist/Ask_AI_Plugin_v1.5.0.zip
 ```
 
 说明：
-- `dist/` 目录保留在仓库中，但 zip 产物已被 `.gitignore` 忽略
-- 打包脚本会自动排除 `.git/`、`.cursor/`、`.github/`、`aiprovider/`、`docs/`、`backend/`、`__pycache__/`、`.DS_Store` 等无用文件
-- `aiprovider/`、`docs/` 仅保留在 GitHub 仓库中，供开发/文档查阅，不随插件 zip 分发
+- 产物文件名规范：`Ask_AI_Plugin_vX.Y.Z.zip`（无空格；见 `docs/README.md`）
+- `dist/` 目录保留在仓库中，zip 产物已被 `.gitignore` 忽略
+- 打包脚本会排除 `.git/`、`.cursor/`、`.github/`、`aiprovider/`、`docs/`、`scripts/`、`tests/`、`bin/`、`backend/`、`__pycache__/` 等
+- `aiprovider/`、`docs/` 仅保留在 GitHub 仓库中，不随插件 zip 分发
 
 ---
 
@@ -163,49 +166,19 @@ chmod +x scripts/package.sh
 5. **发布流程**
    - 第一部分（BBCode）：复制到 mobileread.com 论坛发布帖
    - 第二部分（Markdown）：复制到 GitHub Release 页面
-   - 上传 `dist/Ask AI Plugin-X.Y.Z.zip` 到 GitHub Release
+   - 上传 `dist/Ask_AI_Plugin_vX.Y.Z.zip` 到 GitHub Release
 
-#### 5.2 更新 Tutorial 文档（仅当内容有变化时）
+#### 5.2 更新 Tutorial 文档（就地修改，不新增文件）
 
-**注意：只有当教程内容（除日期和版本号外）有实质性修改时才需要升级 tutorial 版本**
+**固定文件：`tutorial/tutorial_v1.0.md`** — 之后发版都直接改这一份，方便 git diff。不要再 `cp` 出 `tutorial_v*.md`。
 
-1. **判断是否需要升级 tutorial 版本**
-   - ✅ 需要升级：新增功能说明、修改操作步骤、更新配置说明等
-   - ❌ 不需要升级：仅更新日期和版本号
+每次版本升级至少更新文件头：
+```bash
+# Latest updated: [当前日期], Ask AI Plugin v[当前版本]
+# 示例：Latest updated: Jul 21, 2026, Ask AI Plugin v1.5.0
+```
 
-2. **如果只是更新日期和版本号**
-   ```bash
-   # 直接修改最新的 tutorial 文件
-   # 例如：tutorial/tutorial_v0.8.md
-   # 更新第 3 行：Latest updated: [当前日期], Ask AI Plugin v[当前版本]
-   # 示例：Latest updated: Jul 1, 2026, Ask AI Plugin v1.4.7
-   ```
-
-3. **如果需要升级 tutorial 版本**
-   ```bash
-   # 步骤 1：创建新版本文件
-   cp tutorial/tutorial_v0.7.md tutorial/tutorial_v0.8.md
-   
-   # 步骤 2：修改新文件
-   # - 更新标题：# Ask AI Plugin User Manual v0.8
-   # - 更新日期和版本：Latest updated: [当前日期], Ask AI Plugin v[当前版本]
-   # - 添加或修改教程内容
-   
-   # 步骤 3：🔴 更新代码中的 tutorial 加载逻辑（2 个位置）
-   # tutorial_viewer.py Line ~198-200
-   # ui.py Line ~721-723
-   # 将两处的回退逻辑更新为最新两个版本
-   # 例如：tutorial_v0.8.md -> tutorial_v0.7.md（删除 v0.6 的回退）
-   
-   # 步骤 4：删除过旧的 tutorial 文件
-   # 只保留最新两个版本
-   # 例如：删除 tutorial_v0.6.md
-   ```
-
-4. **Tutorial 版本号规则**
-   - Tutorial 版本号（如 v0.8）独立于插件版本号（如 v1.4.7）
-   - Tutorial 版本号只在教程内容有实质性变化时才递增
-   - 一个 tutorial 版本可以对应多个插件版本
+若有用户可见的功能变化，在同一文件内改对应章节（保持介绍简短）。加载路径保持 `tutorial/tutorial_v1.0.md`，一般无需改 `tutorial_viewer.py` / `ui.py`。
 
 #### 5.3 其他文档更新
 
@@ -234,17 +207,15 @@ chmod +x scripts/package.sh
 
 ### 打包发布
 - [ ] `./scripts/package.sh` 已执行
-- [ ] `dist/Ask AI Plugin-X.Y.Z.zip` 已生成
+- [ ] `dist/Ask_AI_Plugin_vX.Y.Z.zip` 已生成
 
 ### 文档更新
 - [ ] 🔴 CHANGELOG_VX.Y.Z_EN.md 已创建（必须）
 - [ ] CHANGELOG 包含 BBCode 格式（用于论坛）
 - [ ] CHANGELOG 包含 Markdown 格式（用于 GitHub）
 - [ ] 删除倒数第三个旧版本 CHANGELOG（如果存在）
-- [ ] Tutorial 日期和版本号已更新
-- [ ] Tutorial 版本已升级（如果内容有变化）
-- [ ] Tutorial 加载逻辑已更新（如果升级了版本）
-- [ ] 删除倒数第三个旧版本 Tutorial（如果升级了版本）
+- [ ] `tutorial/tutorial_v1.0.md` 已就地更新（日期/插件版本；有功能变化则改对应章节）
+- [ ] 未新增额外的 tutorial_v*.md 文件
 
 ---
 
@@ -286,21 +257,19 @@ chmod +x scripts/package.sh
 #### ❌ 忘记删除旧版本 CHANGELOG
 **后果：** 文档目录混乱，保留过多无用文档
 
-#### ❌ Tutorial 只更新了日期但升级了版本号
-**后果：** 版本号膨胀，没有实质性内容变化却增加了版本号
+#### ❌ 为教程再新建一份 tutorial_v*.md
+**后果：** diff 分散、加载回退逻辑易过时；应只改 `tutorial/tutorial_v1.0.md`
 
-#### ❌ Tutorial 内容有变化但忘记升级版本号
-**后果：** 用户看到的教程版本号与实际内容不符
-
-#### ❌ 升级 Tutorial 版本但忘记更新代码中的加载逻辑
-**后果：** 插件仍然加载旧版本教程，用户看不到新内容
+#### ❌ 发版时忘记更新教程头的日期/插件版本
+**后果：** 用户手册显示旧版本号
 
 #### ❌ 忘记执行 `./scripts/package.sh`
 **后果：** 发版时没有可上传的 zip 文件
 
 ---
 
-## 🔗 相关文档
+## 相关文档
 
+- 文档命名规范：`docs/README.md`
 - 发版补充指南：`docs/RELEASE_UPDATE_GUIDE.md`
-- 变更日志：`CHANGELOG_VENDOR_NAMESPACE.md`
+- 变更日志：`docs/CHANGELOG_VX.Y.Z_EN.md`（仅保留最近两个版本）

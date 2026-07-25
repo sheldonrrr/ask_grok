@@ -2,6 +2,8 @@
 
 适用于使用 OpenAI 格式的自定义服务，如 LocalAI、FastChat、vLLM 等。
 
+> 若使用 **Ollama / LM Studio / KoboldCpp**，请优先在「添加 AI」里选择对应专用入口（已预填默认 Base URL）；三者默认均走 OpenAI 兼容 Chat Completions。
+
 ## 核心配置
 
 - **API Key**: 可选。在请求头中作为 Bearer Token 发送。

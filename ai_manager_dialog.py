@@ -15,7 +15,7 @@ import re
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QStackedWidget, QWidget,
-    QMessageBox, QSplitter, QFrame, QSizePolicy, QScrollArea,
+    QMessageBox, QFrame, QSizePolicy, QScrollArea,
     QGroupBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -29,19 +29,32 @@ from .config import (
     is_ai_config_complete,
     build_ai_display_text,
     build_configured_ai_entries,
+    get_provider_display_name,
 )
-from .models.base import AIProvider, DEFAULT_MODELS
+from .models.base import AIProvider, DEFAULT_MODELS, LOCAL_OPENAI_COMPAT_PROVIDER_IDS
 from .i18n import get_translation
-from .widgets import apply_button_style
+from .widgets import apply_button_style, GripSplitter
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     PADDING_SMALL, PADDING_MEDIUM, PADDING_LARGE,
     BUTTON_MIN_WIDTH, BUTTON_HEIGHT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
-    get_standard_button_style, get_list_widget_style, TEXT_COLOR_SECONDARY
+    get_standard_button_style, get_list_widget_style,
+    TEXT_COLOR_SECONDARY,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _configure_side_panel_splitter(splitter, left_layout, right_layout, handle_width=6):
+    """左右面板与拖拽手柄间距对称；手柄为圆点样式，拖拽时高亮。"""
+    # 手柄两侧与内容保持相同间距（此前右侧为 0，导致贴边）
+    left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
+    right_layout.setContentsMargins(SPACING_MEDIUM, 0, 0, 0)
+    splitter.setHandleWidth(handle_width)
+    splitter.setChildrenCollapsible(False)
+    # 不使用整条高亮条样式，保留 GripSplitter 绘制的圆点手柄
+    splitter.setStyleSheet('')
 
 
 # AI Provider 显示顺序（与 config.py 保持一致）
@@ -51,11 +64,15 @@ AI_PROVIDER_ORDER = [
     ('gemini', AIProvider.AI_GEMINI),
     ('grok', AIProvider.AI_GROK),
     ('deepseek', AIProvider.AI_DEEPSEEK),
+    ('kimi', AIProvider.AI_KIMI),
+    ('mistral', AIProvider.AI_MISTRAL),
     ('nvidia', AIProvider.AI_NVIDIA),
     ('nvidia_free', AIProvider.AI_NVIDIA_FREE),  # 免费通道放在 Nvidia 后面
     ('perplexity', AIProvider.AI_PERPLEXITY),
     ('openrouter', AIProvider.AI_OPENROUTER),
     ('ollama', AIProvider.AI_OLLAMA),
+    ('lmstudio', AIProvider.AI_LMSTUDIO),
+    ('koboldcpp', AIProvider.AI_KOBOLDCPP),
     ('custom', AIProvider.AI_CUSTOM),
 ]
 
@@ -94,6 +111,46 @@ def get_display_name_with_model(provider_name, model_name):
     return provider_name
 
 
+def _resolve_dialog_parent(parent):
+    """Prefer the top-level window so manager dialogs are not clipped by nested config pages."""
+    if parent is None:
+        return None
+    try:
+        top = parent.window()
+        return top if top is not None else parent
+    except Exception:
+        return parent
+
+
+def _apply_resizable_dialog_chrome(dialog, prefs_width_key, prefs_height_key, default_size, min_size):
+    """
+    Make Add/Manage dialogs independently resizable/maximizable and restore last size.
+    """
+    dialog.setWindowFlags(
+        Qt.Dialog
+        | Qt.WindowTitleHint
+        | Qt.WindowSystemMenuHint
+        | Qt.WindowCloseButtonHint
+        | Qt.WindowMinimizeButtonHint
+        | Qt.WindowMaximizeButtonHint
+    )
+    dialog.setMinimumSize(*min_size)
+    prefs = get_prefs()
+    width = int(prefs.get(prefs_width_key, default_size[0]) or default_size[0])
+    height = int(prefs.get(prefs_height_key, default_size[1]) or default_size[1])
+    dialog.resize(max(width, min_size[0]), max(height, min_size[1]))
+    dialog._size_prefs_keys = (prefs_width_key, prefs_height_key)
+
+
+def _persist_dialog_size(dialog):
+    keys = getattr(dialog, '_size_prefs_keys', None)
+    if not keys:
+        return
+    prefs = get_prefs()
+    prefs[keys[0]] = dialog.width()
+    prefs[keys[1]] = dialog.height()
+
+
 # ============================================================
 # AddAIDialog - 添加新的 AI 配置
 # ============================================================
@@ -103,7 +160,7 @@ class AddAIDialog(QDialog):
     config_changed = pyqtSignal()
     
     def __init__(self, parent=None, i18n=None):
-        super().__init__(parent)
+        super().__init__(_resolve_dialog_parent(parent))
         
         if i18n is None:
             prefs = get_prefs()
@@ -125,20 +182,24 @@ class AddAIDialog(QDialog):
     def setup_ui(self):
         """设置 UI"""
         self.setWindowTitle(self.i18n.get('add_ai_title', 'Add AI Provider'))
-        self.setMinimumSize(700, 600)
-        self.resize(750, 680)
+        _apply_resizable_dialog_chrome(
+            self,
+            'add_ai_dialog_width',
+            'add_ai_dialog_height',
+            default_size=(920, 760),
+            min_size=(780, 640),
+        )
         
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(SPACING_MEDIUM)
         main_layout.setContentsMargins(PADDING_LARGE, PADDING_LARGE, PADDING_LARGE, PADDING_LARGE)
         
-        # 使用 QSplitter 分割左右
-        splitter = QSplitter(Qt.Horizontal)
+        # 使用带圆点手柄的分栏
+        splitter = GripSplitter(Qt.Horizontal)
         
         # ========== 左侧：Provider 列表 ==========
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
         left_layout.setSpacing(SPACING_SMALL)
         
         # 标题
@@ -157,7 +218,6 @@ class AddAIDialog(QDialog):
         # ========== 右侧：配置面板 ==========
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(SPACING_SMALL)
         
         # 配置面板标题
@@ -183,6 +243,7 @@ class AddAIDialog(QDialog):
         right_layout.addWidget(self.config_container, 1)
         
         splitter.addWidget(right_widget)
+        _configure_side_panel_splitter(splitter, left_layout, right_layout)
         
         # 设置 splitter 比例
         splitter.setSizes([220, 480])
@@ -209,6 +270,18 @@ class AddAIDialog(QDialog):
         
         main_layout.addLayout(button_layout)
     
+    def closeEvent(self, event):
+        _persist_dialog_size(self)
+        super().closeEvent(event)
+
+    def accept(self):
+        _persist_dialog_size(self)
+        super().accept()
+
+    def reject(self):
+        _persist_dialog_size(self)
+        super().reject()
+
     def retranslate_ui(self):
         """更新界面文字（语言切换时调用）"""
         self.setWindowTitle(self.i18n.get('add_ai_title', 'Add AI Provider'))
@@ -254,7 +327,11 @@ class AddAIDialog(QDialog):
                 continue
             
             model_config = DEFAULT_MODELS[provider_enum]
-            item = QListWidgetItem(model_config.display_name)
+            display_name = self.i18n.get(
+                f'model_display_name_{provider_id}',
+                model_config.display_name,
+            )
+            item = QListWidgetItem(display_name)
             item.setData(Qt.UserRole, provider_id)
             self.provider_list.addItem(item)
     
@@ -298,7 +375,11 @@ class AddAIDialog(QDialog):
         
         # 更新标题
         config_text = self.i18n.get('configuration', 'Configuration')
-        self.config_title.setText(f"{default_config.display_name} {config_text}")
+        display_name = self.i18n.get(
+            f'model_display_name_{provider_id}',
+            default_config.display_name,
+        )
+        self.config_title.setText(f"{display_name} {config_text}")
         
         # 启用添加按钮
         self.add_button.setEnabled(True)
@@ -311,8 +392,11 @@ class AddAIDialog(QDialog):
         # 获取配置
         config = self.model_widget.get_config()
         
-        # 验证必填字段（Ollama 不需要 API Key）
-        if self.current_provider_id != 'ollama':
+        # 验证必填字段（本地 OpenAI 兼容服务 / Custom 可不填 API Key）
+        if (
+            self.current_provider_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS
+            and self.current_provider_id != 'custom'
+        ):
             # Grok 使用 auth_token，其他使用 api_key
             key_field = 'auth_token' if self.current_provider_id == 'grok' else 'api_key'
             api_key = config.get(key_field, '').strip()
@@ -341,29 +425,61 @@ class AddAIDialog(QDialog):
         # 保存配置
         models_config[config_id] = config
         prefs['models'] = models_config
-        
-        # 如果是第一个配置，设为默认
-        configured_count = sum(
-            1
-            for cid, cfg in models_config.items()
-            if is_ai_config_complete(extract_provider_id(cid, cfg), cfg)
-        )
-        if configured_count == 1:
-            prefs['selected_model'] = config_id
-            panel_selections = prefs.get('panel_ai_selections', {}) or {}
-            panel_selections['panel_0'] = config_id
-            prefs['panel_ai_selections'] = panel_selections
-            prefs['force_default_ai_on_next_open'] = True
-        
         prefs.commit()
-        
+
         logger.info(f"[AddAI] Added new config: {config_id}")
-        
-        # 发出信号
-        self.config_changed.emit()
-        
-        # 关闭弹窗
+
+        # 单 AI 模式：新增成功后询问是否设为默认；多面板模式保持原有「首个配置自动默认」逻辑
+        # 仅写 prefs，不在此刷新父 Config（避免 Windows 上子模态未关时重建 UI）
+        parallel_ai_count = prefs.get('parallel_ai_count', 1)
+        is_complete = bool(config.get('is_configured'))
+        if parallel_ai_count == 1 and is_complete:
+            if self._prompt_set_as_default(config_id, config):
+                self._set_as_default_ai(config_id)
+        else:
+            configured_count = sum(
+                1
+                for cid, cfg in models_config.items()
+                if is_ai_config_complete(extract_provider_id(cid, cfg), cfg)
+            )
+            if configured_count == 1:
+                self._set_as_default_ai(config_id)
+
+        # 先关闭弹窗；父级 Config 在 exec_() 返回后再刷新（Windows 模态/焦点更稳）
         self.accept()
+
+    def _prompt_set_as_default(self, config_id, config):
+        """新增成功后询问是否设为默认 AI。返回用户是否选择是。"""
+        display_name = build_ai_display_text(config_id, config, i18n=self.i18n)
+        msg_template = self.i18n.get(
+            'set_default_ai_after_add_message',
+            'You have successfully added "{0}". Would you like to set it as the default AI?'
+        )
+        # 避免 display_name 含 {} 时 str.format 抛错
+        msg_text = msg_template.replace('{0}', display_name)
+
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(self.i18n.get('set_default_ai_title', 'Set Default AI'))
+        msg_box.setText(msg_text)
+        msg_box.setIcon(QMessageBox.Question)
+
+        yes_button = msg_box.addButton(self.i18n.get('yes', 'Yes'), QMessageBox.YesRole)
+        no_button = msg_box.addButton(self.i18n.get('no', 'No'), QMessageBox.NoRole)
+        msg_box.setDefaultButton(yes_button)
+        msg_box.exec_()
+        # Esc / 点 X 时 clickedButton() 为 None，视为 No
+        return msg_box.clickedButton() is yes_button
+
+    def _set_as_default_ai(self, config_id):
+        """将指定配置设为默认 AI（单面板场景）。"""
+        prefs = get_prefs()
+        prefs['selected_model'] = config_id
+        panel_selections = prefs.get('panel_ai_selections', {}) or {}
+        panel_selections['panel_0'] = config_id
+        prefs['panel_ai_selections'] = panel_selections
+        prefs['force_default_ai_on_next_open'] = True
+        prefs.commit()
+        logger.info(f"[AddAI] Set default AI to: {config_id}")
 
 
 # ============================================================
@@ -374,8 +490,8 @@ class ManageAIDialog(QDialog):
     
     config_changed = pyqtSignal()
     
-    def __init__(self, parent=None, i18n=None):
-        super().__init__(parent)
+    def __init__(self, parent=None, i18n=None, initial_config_id=None):
+        super().__init__(_resolve_dialog_parent(parent))
         
         if i18n is None:
             prefs = get_prefs()
@@ -386,31 +502,44 @@ class ManageAIDialog(QDialog):
         
         self.current_config_id = None
         self.model_widget = None
+        self.initial_config_id = initial_config_id
         
         self.setup_ui()
         self.load_configured_list()
         
-        # 默认选中第一项
-        if self.config_list.count() > 0:
+        # Prefer the requested config; otherwise first row
+        selected = False
+        if self.initial_config_id:
+            for i in range(self.config_list.count()):
+                item = self.config_list.item(i)
+                if item and item.data(Qt.UserRole) == self.initial_config_id:
+                    self.config_list.setCurrentRow(i)
+                    selected = True
+                    break
+        if not selected and self.config_list.count() > 0:
             self.config_list.setCurrentRow(0)
     
     def setup_ui(self):
         """设置 UI"""
         self.setWindowTitle(self.i18n.get('manage_ai_title', 'Manage Configured AI'))
-        self.setMinimumSize(750, 600)
-        self.resize(800, 680)
+        _apply_resizable_dialog_chrome(
+            self,
+            'manage_ai_dialog_width',
+            'manage_ai_dialog_height',
+            default_size=(960, 760),
+            min_size=(820, 640),
+        )
         
         main_layout = QVBoxLayout(self)
         main_layout.setSpacing(SPACING_MEDIUM)
         main_layout.setContentsMargins(PADDING_LARGE, PADDING_LARGE, PADDING_LARGE, PADDING_LARGE)
         
-        # 使用 QSplitter 分割左右
-        splitter = QSplitter(Qt.Horizontal)
+        # 使用带圆点手柄的分栏
+        splitter = GripSplitter(Qt.Horizontal)
         
         # ========== 左侧：已配置 AI 列表 ==========
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, SPACING_MEDIUM, 0)
         left_layout.setSpacing(SPACING_SMALL)
         
         # 标题
@@ -429,7 +558,6 @@ class ManageAIDialog(QDialog):
         # ========== 右侧：配置面板 ==========
         right_widget = QWidget()
         right_layout = QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
         right_layout.setSpacing(SPACING_SMALL)
         
         # 配置面板标题
@@ -474,6 +602,7 @@ class ManageAIDialog(QDialog):
         right_layout.addLayout(action_layout)
         
         splitter.addWidget(right_widget)
+        _configure_side_panel_splitter(splitter, left_layout, right_layout)
         
         # 设置 splitter 比例
         splitter.setSizes([260, 490])
@@ -491,6 +620,18 @@ class ManageAIDialog(QDialog):
         bottom_layout.addWidget(close_button)
         
         main_layout.addLayout(bottom_layout)
+
+    def closeEvent(self, event):
+        _persist_dialog_size(self)
+        super().closeEvent(event)
+
+    def accept(self):
+        _persist_dialog_size(self)
+        super().accept()
+
+    def reject(self):
+        _persist_dialog_size(self)
+        super().reject()
     
     def retranslate_ui(self):
         """更新界面文字（语言切换时调用）"""
@@ -620,8 +761,8 @@ class ManageAIDialog(QDialog):
         config = models_config.get(config_id, {})
         selected_model = prefs.get('selected_model', '')
         
-        # 获取 provider_id
-        provider_id = config.get('provider_id', config_id.split('_')[0] if '_' in config_id else config_id)
+        # 获取 provider_id（正确处理 nvidia_free 等带下划线的 id）
+        provider_id = extract_provider_id(config_id, config)
         
         # 创建 ModelConfigWidget
         if self.model_widget:
@@ -667,7 +808,11 @@ class ManageAIDialog(QDialog):
         
         self.config_changed.emit()
         
-        display_name = config.get('display_name', self.current_config_id)
+        display_name = get_provider_display_name(
+            extract_provider_id(self.current_config_id, config),
+            config,
+            i18n=self.i18n,
+        ) or self.current_config_id
         QMessageBox.information(
             self,
             self.i18n.get('success', 'Success'),
@@ -682,7 +827,11 @@ class ManageAIDialog(QDialog):
         prefs = get_prefs()
         models_config = prefs.get('models', {})
         config = models_config.get(self.current_config_id, {})
-        display_name = config.get('display_name', self.current_config_id)
+        display_name = get_provider_display_name(
+            extract_provider_id(self.current_config_id, config),
+            config,
+            i18n=self.i18n,
+        ) or self.current_config_id
         
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle(self.i18n.get('confirm_delete_title', 'Confirm Delete'))

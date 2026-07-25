@@ -1,11 +1,14 @@
-# OpenAI 及其兼容提供商配置指南
+# OpenAI 兼容提供商配置指南
 
-此指南适用于 OpenAI 以及遵循其 API 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, xAI, Nvidia, Custom**。
+此指南适用于遵循 **Chat Completions** 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, Nvidia, Custom, Mistral, Kimi**，以及本地的 **Ollama / LM Studio / KoboldCpp**（各自有专用入口）。
+
+> 插件内置的 **OpenAI (ChatGPT)** 提供商已改用 Responses API，请看 [openai.md](./openai.md)。
+> **SpaceXAI (Grok)** 已改为推荐的 **Responses API**（`/v1/responses`），详见 [xai.md](xai.md)，不在下文 Chat Completions 说明范围内。
 
 ## 核心配置
 
 - **API Key**: 必需。在请求头中作为 Bearer Token 发送。
-- **Base URL**: 必需。这是 API 的根地址，例如 `https://api.openai.com/v1`。
+- **Base URL**: 必需。这是 API 的根地址，例如 `https://api.deepseek.com`。
 
 ## 获取模型列表
 
@@ -20,7 +23,7 @@
 - **注意事项**:
   - **Nvidia**: 直接从浏览器请求此端点会遇到 CORS 跨域问题。需要通过本地服务器代理该请求。
 
-## 发送聊天请求
+## 发送聊天请求（Chat Completions）
 
 - **端点**: `${baseUrl}/chat/completions`
 - **方法**: `POST`
@@ -45,4 +48,4 @@
 
 ## 总结
 
-这类提供商遵循了统一的 API 标准，配置相对简单。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。
+Chat Completions 兼容提供商遵循统一 API 标准，配置相对简单。OpenAI/ChatGPT 请改用 [openai.md](./openai.md)；SpaceXAI Grok 请改用 [xai.md](xai.md)。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。

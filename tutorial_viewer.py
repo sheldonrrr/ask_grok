@@ -8,7 +8,6 @@ Tutorial Viewer - Simple markdown to HTML converter
 import os
 import re
 import tempfile
-import webbrowser
 from pathlib import Path
 
 
@@ -195,9 +194,7 @@ def open_tutorial_in_browser():
             return False
         
         # Read tutorial using plugin's get_resources method
-        tutorial_data = plugin.get_resources('tutorial/tutorial_v0.9.md')
-        if not tutorial_data:
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v0.8.md')
+        tutorial_data = plugin.get_resources('tutorial/tutorial_v1.0.md')
         
         if not tutorial_data:
             logger.error("Failed to read tutorial")
@@ -232,8 +229,13 @@ def open_tutorial_in_browser():
         
         logger.info(f"Created HTML: {html_file_path}")
         
-        # Open in browser
-        webbrowser.open(f'file://{html_file_path}')
+        # Windows-safe local file open (file://C:\... is invalid)
+        from calibre.gui2 import open_url
+        try:
+            from qt.core import QUrl
+        except ImportError:
+            from PyQt5.QtCore import QUrl
+        open_url(QUrl.fromLocalFile(html_file_path))
         
         return True
         

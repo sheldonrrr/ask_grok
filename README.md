@@ -1,6 +1,6 @@
 # Ask AI Plugin(old name: Ask Grok)
 
-A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok, DeepSeek, Nvidia AI, Perplexity (Sonar), OpenRouter, Ollama, and custom AI providers.
+A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok (SpaceXAI), DeepSeek, Kimi (Moonshot), Mistral, Nvidia AI, Perplexity (Sonar), OpenRouter, Ollama, LM Studio, KoboldCpp, and custom AI providers.
 
 ## Preview
 
@@ -42,13 +42,17 @@ Import the file to calibre custom plugins:
 - **OpenAI** - https://platform.openai.com/
 - **Anthropic (Claude)** - https://console.anthropic.com/
 - **Google Gemini** - https://aistudio.google.com/
-- **Grok (x.AI)** - https://console.x.ai/
+- **Grok (SpaceXAI)** - https://console.x.ai/
 - **DeepSeek** - https://platform.deepseek.com/
+- **Kimi (Moonshot)** - https://platform.kimi.ai/ (China: https://platform.moonshot.cn/)
+- **Mistral** - https://console.mistral.ai/
 - **Nvidia AI** - https://build.nvidia.com/ (Free tier available)
 - **Perplexity (Sonar)** - https://docs.perplexity.ai/ (Great for research-style answers with citations)
 - **OpenRouter** - https://openrouter.ai/
-- **Ollama** - https://ollama.ai/ (Local AI models)
-- **Custom** - Any OpenAI-compatible API endpoint
+- **Ollama** - https://ollama.ai/ (Local, OpenAI-compatible `/v1`)
+- **LM Studio** - https://lmstudio.ai/ (Local, OpenAI-compatible `/v1`)
+- **KoboldCpp** - https://github.com/LostRuins/koboldcpp (Local, OpenAI-compatible `/v1`)
+- **Custom (OpenAI Compatible)** - Any OpenAI Chat Completions–compatible API endpoint (`/chat/completions`)
 
 Note: For Perplexity, when the API returns citations/search results, the plugin appends a plain-text reference section with full URLs at the end of the answer for easy copy/paste.
 
@@ -72,7 +76,7 @@ API Key:
 ## Configure API Key
 
   - Click the Ask AI Plugin dropdown menu in the menu bar, select `Configure`
-  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Nvidia, OpenRouter, Ollama, or Custom)
+  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Kimi, Mistral, Nvidia, OpenRouter, Ollama, LM Studio, KoboldCpp, or Custom)
   - Enter the corresponding API Key into the API Key input box
   - Click the `Save` button
   - Done

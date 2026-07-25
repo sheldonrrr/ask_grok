@@ -8,7 +8,7 @@
 """
 
 # 版本号元组，用于 Calibre 插件系统
-VERSION = (1, 4, 7)
+VERSION = (1, 5, 1)
 
 # 版本号字符串，用于显示
 VERSION_STRING = '.'.join(map(str, VERSION))
@@ -27,4 +27,4 @@ AUTHOR = 'Sheldon'
 AUTHOR_EMAIL = 'sheldonrrr@gmail.com'
 
 # 关键词
-KEYWORDS = 'bookAI readingAI x.AI GrokAI GeminiAI'
+KEYWORDS = 'bookAI readingAI SpaceXAI GrokAI GeminiAI'

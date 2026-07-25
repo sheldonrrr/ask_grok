@@ -1,0 +1,46 @@
+---
+description: Bump Ask AI Plugin version, changelog, package, and release checklist
+alwaysApply: true
+---
+
+# Version Update (→ X.Y.Z)
+
+## Code (all four must match)
+
+1. `version.py` → `VERSION = (X, Y, Z)`
+2. `__init__.py` → `VERSION = (X, Y, Z) # 版本号推送触发` 🔴 update-push trigger
+3. `__init__.py` → `version = (X, Y, Z)` on `AskAIPlugin`
+4. `setup.py` → `version='X.Y.Z'`
+
+`ui.py` reads `VERSION_DISPLAY` from `version.py` — do not hardcode.
+
+Verify: `grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py`
+
+## Docs
+
+- **Must** add `docs/CHANGELOG_VX.Y.Z_EN.md` with BBCode (MobileRead) + Markdown (GitHub). User-facing, not technical.
+- Keep only the **latest two** changelogs; delete older ones.
+- Tutorial: edit the **same** file in place (`tutorial/tutorial_v1.0.md`) — never add `tutorial_v*.md` copies (keeps git diff clean). Update header `Latest updated` + plugin version; change feature text only when needed.
+
+## Build / ship
+
+```bash
+calibre-customize -b .          # or ./scripts/package.sh
+./scripts/package.sh            # → dist/Ask_AI_Plugin_vX.Y.Z.zip
+```
+
+Zip excludes `.git/`, `.cursor/`, `docs/`, `aiprovider/`, `scripts/`, `tests/`, etc. Confirm About shows `vX.Y.Z`. Doc naming: `docs/README.md`.
+
+## Semver
+
+MAJOR = breaking · MINOR = features · PATCH = fixes
+
+## Slash command
+
+Invoke with `/version-up` (optional `X.Y.Z` argument). See `.cursor/commands/version-up.md`.
+Related: `/pack` packages; `/push` commits and pushes.
+
+## Never
+
+- Skip `__init__.py` `VERSION` (users get no update push)
+- Ship without CHANGELOG or without packaging zip

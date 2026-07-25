@@ -36,11 +36,13 @@ def get_ai_display_name(ai_name):
         'grok': 'Grok',
         'gemini': 'Gemini',
         'deepseek': 'DeepSeek',
+        'kimi': 'Kimi',
+        'mistral': 'Mistral',
         'anthropic': 'Claude',
         'nvidia': 'Nvidia',
         'openrouter': 'OpenRouter',
         'ollama': 'Ollama',
-        'custom': 'Custom',
+        'custom': 'Custom (OpenAI Compatible)',
     }
     return display_names.get(ai_name.lower(), ai_name.capitalize())
 

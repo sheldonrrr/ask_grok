@@ -7,12 +7,14 @@ import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                             QLineEdit, QTextEdit, QPlainTextEdit, QComboBox, 
                             QPushButton, QHBoxLayout, QFormLayout, QGroupBox, QScrollArea, QSizePolicy,
-                            QFrame, QCheckBox, QMessageBox, QApplication)
+                            QFrame, QCheckBox, QMessageBox, QApplication, QRadioButton, QButtonGroup)
 from PyQt5.QtCore import pyqtSignal, QTimer, Qt, QEvent
 from PyQt5.QtGui import QFontMetrics
 from .models.grok import GrokModel
 from .models.gemini import GeminiModel
 from .models.deepseek import DeepseekModel
+from .models.kimi import KimiModel
+from .models.mistral import MistralModel
 from .models.custom import CustomModel
 from .models.openai import OpenAIModel
 from .models.anthropic import AnthropicModel
@@ -21,18 +23,30 @@ from .models.nvidia_free import NvidiaFreeModel
 from .models.openrouter import OpenRouterModel
 from .models.perplexity import PerplexityModel
 from .models.ollama import OllamaModel
+from .models.lmstudio import LMStudioModel
+from .models.koboldcpp import KoboldCppModel
 from calibre.utils.config import JSONConfig
 from .env_config import EnvironmentConfig
 
 from .i18n import get_default_template, get_translation, get_suggestion_template, get_multi_book_template, get_all_languages
-from .models.base import AIProvider, ModelConfig, DEFAULT_MODELS, AIModelFactory, BaseAIModel
+from .models.base import (
+    AIProvider,
+    ModelConfig,
+    DEFAULT_MODELS,
+    AIModelFactory,
+    BaseAIModel,
+    LOCAL_OPENAI_COMPAT_PROVIDER_IDS,
+    KNOWN_PROVIDER_IDS,
+    extract_provider_id,
+)
 from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
 from .prompt_limits import DEFAULT_CUSTOM_LIMIT
 from .widgets import NoScrollComboBox, apply_button_style
 from .ui_constants import (
     SPACING_TINY, SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     MARGIN_MEDIUM, PADDING_MEDIUM,
-    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG, BG_COLOR_ALTERNATE,
+    TEXT_COLOR_PRIMARY, TEXT_COLOR_SECONDARY, TEXT_COLOR_SECONDARY_STRONG,
+    BG_COLOR_BASE, BG_COLOR_ALTERNATE,
     get_groupbox_style, get_separator_style, get_subtitle_style, get_section_title_style,
     get_list_widget_style,
     setup_settings_tab_content, add_settings_section, configure_layout,
@@ -61,6 +75,8 @@ def get_current_model_config(provider: AIProvider) -> ModelConfig:
 GROK_CONFIG = get_current_model_config(AIProvider.AI_GROK)
 GEMINI_CONFIG = get_current_model_config(AIProvider.AI_GEMINI)
 DEEPSEEK_CONFIG = get_current_model_config(AIProvider.AI_DEEPSEEK)
+KIMI_CONFIG = get_current_model_config(AIProvider.AI_KIMI)
+MISTRAL_CONFIG = get_current_model_config(AIProvider.AI_MISTRAL)
 CUSTOM_CONFIG = get_current_model_config(AIProvider.AI_CUSTOM)
 OPENAI_CONFIG = get_current_model_config(AIProvider.AI_OPENAI)
 ANTHROPIC_CONFIG = get_current_model_config(AIProvider.AI_ANTHROPIC)
@@ -69,21 +85,17 @@ NVIDIA_FREE_CONFIG = get_current_model_config(AIProvider.AI_NVIDIA_FREE)
 OPENROUTER_CONFIG = get_current_model_config(AIProvider.AI_OPENROUTER)
 PERPLEXITY_CONFIG = get_current_model_config(AIProvider.AI_PERPLEXITY)
 OLLAMA_CONFIG = get_current_model_config(AIProvider.AI_OLLAMA)
+LMSTUDIO_CONFIG = get_current_model_config(AIProvider.AI_LMSTUDIO)
+KOBOLDCPP_CONFIG = get_current_model_config(AIProvider.AI_KOBOLDCPP)
 
 AI_PROVIDER_ORDER = [
-    'openai', 'anthropic', 'gemini', 'grok', 'deepseek',
-    'nvidia', 'nvidia_free', 'perplexity', 'openrouter', 'ollama', 'custom',
+    'openai', 'anthropic', 'gemini', 'grok', 'deepseek', 'kimi', 'mistral',
+    'nvidia', 'nvidia_free', 'perplexity', 'openrouter',
+    'ollama', 'lmstudio', 'koboldcpp', 'custom',
 ]
 
-
-def extract_provider_id(config_id, config):
-    """从配置中提取 provider_id（兼容旧数据）。"""
-    provider_id = (config or {}).get('provider_id')
-    if provider_id:
-        return provider_id
-    if '_' in config_id:
-        return config_id.split('_', 1)[0]
-    return config_id
+# Providers that hide API key UI / skip key validation (local OpenAI-compat + free proxy)
+NO_API_KEY_PROVIDER_IDS = set(LOCAL_OPENAI_COMPAT_PROVIDER_IDS) | {'nvidia_free'}
 
 
 def is_ai_config_complete(provider_id, model_config):
@@ -91,7 +103,7 @@ def is_ai_config_complete(provider_id, model_config):
     provider_id = (provider_id or '').strip()
     config = model_config or {}
 
-    if provider_id in ['ollama', 'custom', 'nvidia_free']:
+    if provider_id in NO_API_KEY_PROVIDER_IDS or provider_id == 'custom':
         has_auth = True
     else:
         api_key_field = 'auth_token' if provider_id == 'grok' else 'api_key'
@@ -101,11 +113,50 @@ def is_ai_config_complete(provider_id, model_config):
     return has_auth and has_model
 
 
+def _resolve_kimi_region(config):
+    """从配置解析 Kimi 平台（china / global），兼容旧版 display_name。"""
+    config = config or {}
+    region = (config.get('kimi_region') or '').strip().lower()
+    if region in (KimiModel.REGION_CHINA, KimiModel.REGION_GLOBAL):
+        return region
+
+    inferred = KimiModel.region_from_base_url(config.get('api_base_url', ''))
+    if inferred == KimiModel.REGION_CHINA:
+        return KimiModel.REGION_CHINA
+
+    # 兼容旧配置：display_name 中曾写入本地化地区名
+    legacy = str(config.get('display_name') or '')
+    legacy_lower = legacy.lower()
+    if (
+        any(marker in legacy for marker in ('中国大陆', '中國大陸', '国内', '國內'))
+        or 'china' in legacy_lower
+    ):
+        return KimiModel.REGION_CHINA
+    if any(marker in legacy for marker in ('国际', '國際')) or 'international' in legacy_lower:
+        return KimiModel.REGION_GLOBAL
+    return inferred
+
+
+def build_kimi_display_name(config, i18n=None):
+    """按当前语言生成 Kimi 显示名（地区标签不写入持久化配置）。"""
+    i18n = i18n or {}
+    base = i18n.get('model_display_name_kimi', 'Kimi (Moonshot)')
+    region = _resolve_kimi_region(config)
+    if region == KimiModel.REGION_CHINA:
+        region_label = i18n.get('kimi_region_china', 'China Mainland')
+    else:
+        region_label = i18n.get('kimi_region_global', 'International')
+    return f'{base} · {region_label}'
+
+
 def get_provider_display_name(provider_id, config, i18n=None):
     """获取服务商显示名，确保不为空。"""
     if provider_id == 'nvidia_free':
         free_text = (i18n or {}).get('free', 'Free')
         return f"Nvidia AI ({free_text})"
+
+    if provider_id == 'kimi':
+        return build_kimi_display_name(config, i18n=i18n)
 
     provider_name = (config or {}).get('display_name')
     if provider_name and str(provider_name).strip():
@@ -204,6 +255,22 @@ prefs.defaults['models'] = {
         'display_name': DEEPSEEK_CONFIG.display_name,        
         'enabled': False  # 默认不启用，需要用户配置
     },
+    'kimi': {
+        'api_key': '',
+        'api_base_url': KIMI_CONFIG.default_api_base_url,
+        'model': KIMI_CONFIG.default_model_name,
+        'display_name': KIMI_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
+    'mistral': {
+        'api_key': '',
+        'api_base_url': MISTRAL_CONFIG.default_api_base_url,
+        'model': MISTRAL_CONFIG.default_model_name,
+        'display_name': MISTRAL_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False  # 默认不启用，需要用户配置
+    },
     'custom': {
         'api_key': '',
         'api_base_url': CUSTOM_CONFIG.default_api_base_url,
@@ -255,12 +322,28 @@ prefs.defaults['models'] = {
         'enabled': False  # 默认不启用，需要用户配置
     },
     'ollama': {
-        'api_key': '',  # Optional for Ollama (local service)
+        'api_key': '',  # Optional for local OpenAI-compatible services
         'api_base_url': OLLAMA_CONFIG.default_api_base_url,
         'model': OLLAMA_CONFIG.default_model_name,
         'display_name': OLLAMA_CONFIG.display_name,
         'enable_streaming': True,
         'enabled': False  # 默认不启用，需要用户配置
+    },
+    'lmstudio': {
+        'api_key': '',
+        'api_base_url': LMSTUDIO_CONFIG.default_api_base_url,
+        'model': LMSTUDIO_CONFIG.default_model_name,
+        'display_name': LMSTUDIO_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False
+    },
+    'koboldcpp': {
+        'api_key': '',
+        'api_base_url': KOBOLDCPP_CONFIG.default_api_base_url,
+        'model': KOBOLDCPP_CONFIG.default_model_name,
+        'display_name': KOBOLDCPP_CONFIG.display_name,
+        'enable_streaming': True,
+        'enabled': False
     },
     'nvidia_free': {
         'api_key': 'free-tier',  # 免费通道不需要真实 API Key
@@ -279,6 +362,10 @@ prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
+prefs.defaults['add_ai_dialog_width'] = 920
+prefs.defaults['add_ai_dialog_height'] = 760
+prefs.defaults['manage_ai_dialog_width'] = 960
+prefs.defaults['manage_ai_dialog_height'] = 760
 prefs.defaults['random_questions'] = ''  # v1.3.9: Changed from dict to string (prompt template)
 prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
@@ -436,6 +523,52 @@ def get_prefs(force_reload=False):
         if isinstance(nv, dict) and nv.get('model') == 'meta/llama-3.3-70b-instruct':
             nv['model'] = NVIDIA_CONFIG.default_model_name
             prefs.commit()
+
+    # Ollama 默认改为 OpenAI 兼容路径：旧 base URL 无 /v1 时自动补齐
+    ollama_migrated = False
+    for _cid, _cfg in (prefs.get('models') or {}).items():
+        if not isinstance(_cfg, dict):
+            continue
+        _pid = extract_provider_id(_cid, _cfg)
+        if _pid != 'ollama':
+            continue
+        base = (_cfg.get('api_base_url') or '').rstrip('/')
+        if base in ('http://localhost:11434', 'http://127.0.0.1:11434'):
+            _cfg['api_base_url'] = f'{base}/v1'
+            ollama_migrated = True
+    if ollama_migrated:
+        prefs.commit()
+
+    # Gemini：旧默认模型带 google/ 前缀，原生 API 不接受，迁移到无前缀 ID
+    gemini_migrated = False
+    for _cid, _cfg in (prefs.get('models') or {}).items():
+        if not isinstance(_cfg, dict):
+            continue
+        if extract_provider_id(_cid, _cfg) != 'gemini':
+            continue
+        model_val = (_cfg.get('model') or '').strip()
+        if model_val.startswith('google/'):
+            _cfg['model'] = model_val[len('google/'):]
+            gemini_migrated = True
+    if gemini_migrated:
+        prefs.commit()
+
+    # 确保本地 OpenAI 兼容提供商默认配置存在
+    for _pid, _model_cfg in (
+        ('lmstudio', LMSTUDIO_CONFIG),
+        ('koboldcpp', KOBOLDCPP_CONFIG),
+        ('ollama', OLLAMA_CONFIG),
+    ):
+        if _pid not in prefs['models']:
+            prefs['models'][_pid] = {
+                'api_key': '',
+                'api_base_url': _model_cfg.default_api_base_url,
+                'model': _model_cfg.default_model_name,
+                'display_name': _model_cfg.display_name,
+                'enable_streaming': True,
+                'enabled': False,
+            }
+            prefs.commit()
     
     # 配置迁移：删除已废弃的 openrouter_free 配置（旧版本遗留数据）
     # 同时删除任何包含 'openrouter' 且 model 为 ':free' 或包含 'free' 的旧配置
@@ -591,6 +724,12 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'mistral':
+            provider = AIProvider.AI_MISTRAL
+            model_config = get_current_model_config(provider)
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             model_config = get_current_model_config(provider)
@@ -612,6 +751,12 @@ class ModelConfigWidget(QWidget):
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
             model_config = get_current_model_config(provider)
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            model_config = get_current_model_config(provider)
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            model_config = get_current_model_config(provider)
         elif self.model_id == 'nvidia_free':
             provider = AIProvider.AI_NVIDIA_FREE
             model_config = get_current_model_config(provider)
@@ -619,17 +764,23 @@ class ModelConfigWidget(QWidget):
         if model_config:
             from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
             
-            # API Key/Token 输入框（Ollama 和 nvidia_free 不需要）
+            # API Key/Token 输入框（本地 OpenAI 兼容服务和 nvidia_free 不需要）
             if self.model_id == 'nvidia_free':
                 # Nvidia 免费通道：显示纯文字提示
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
                 main_layout.addWidget(api_key_label)
                 
-                # 纯文字提示（不可编辑）
+                # 纯文字提示（不可编辑；样式跟随主题，避免暗色下白底）
                 api_key_info = QLabel(self.i18n.get('nvidia_free_api_key_info', 'Will be obtained from server'))
                 api_key_info.setObjectName(f'label_api_key_info_{self.model_id}')
-                api_key_info.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 8px; background-color: #f5f5f5; border-radius: 4px;")
+                api_key_info.setStyleSheet(
+                    f"color: {TEXT_COLOR_SECONDARY_STRONG};"
+                    f" padding: 8px;"
+                    f" background-color: {BG_COLOR_BASE};"
+                    f" border: 1px solid palette(mid);"
+                    f" border-radius: 4px;"
+                )
                 api_key_info.setMinimumHeight(40)
                 main_layout.addWidget(api_key_info)
                 
@@ -642,7 +793,7 @@ class ModelConfigWidget(QWidget):
                 
                 # 创建空的占位符以保持代码兼容性
                 self.api_key_edit = None
-            elif self.model_id != 'ollama':
+            elif self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                 # API Key 标签
                 api_key_label = QLabel(self.i18n.get('api_key_label', 'API Key'))
                 api_key_label.setObjectName(f'label_api_key_{self.model_id}')
@@ -663,31 +814,37 @@ class ModelConfigWidget(QWidget):
                 api_key_desc.setWordWrap(True)
                 main_layout.addWidget(api_key_desc)
             else:
-                # Ollama 不需要 API Key，创建一个空的占位符以保持代码兼容性
+                # 本地 OpenAI 兼容服务通常不需要 API Key
                 self.api_key_edit = None
             
-            # API Base URL 标签
-            base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
-            base_url_label.setObjectName(f'label_base_url_{self.model_id}')
-            main_layout.addWidget(base_url_label)
-            
-            # API Base URL 输入框
-            self.api_base_edit = QLineEdit(self)
-            self.api_base_edit.setText(self.config.get('api_base_url', model_config.default_api_base_url))
-            self.api_base_edit.textChanged.connect(self.on_config_changed)
-            self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
-                default_api_base_url=model_config.default_api_base_url
-            ))
-            self.api_base_edit.setMinimumHeight(25)
-            self.api_base_edit.setMinimumWidth(base_width)
-            main_layout.addWidget(self.api_base_edit)
-            
-            # Base URL 说明
-            base_url_desc = QLabel(self.i18n.get('base_url_desc', 'The API endpoint URL. Use default unless you have a custom endpoint.'))
-            base_url_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
-            base_url_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
-            base_url_desc.setWordWrap(True)
-            main_layout.addWidget(base_url_desc)
+            # Kimi：国际版 / 中国大陆版（决定 Base URL）
+            if self.model_id == 'kimi':
+                self._setup_kimi_region_selector(main_layout, TEXT_COLOR_SECONDARY_STRONG)
+            else:
+                # API Base URL 标签
+                base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+                base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+                main_layout.addWidget(base_url_label)
+
+                # API Base URL 输入框
+                self.api_base_edit = QLineEdit(self)
+                self.api_base_edit.setText(self.config.get('api_base_url', model_config.default_api_base_url))
+                self.api_base_edit.textChanged.connect(self.on_config_changed)
+                self.api_base_edit.setPlaceholderText(self.i18n.get('base_url_placeholder', 'Default: {default_api_base_url}').format(
+                    default_api_base_url=model_config.default_api_base_url
+                ))
+                self.api_base_edit.setMinimumHeight(25)
+                self.api_base_edit.setMinimumWidth(base_width)
+                main_layout.addWidget(self.api_base_edit)
+
+                base_url_desc = QLabel(self.i18n.get(
+                    'base_url_desc',
+                    'The API endpoint URL. Use default unless you have a custom endpoint.',
+                ))
+                base_url_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
+                base_url_desc.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;")
+                base_url_desc.setWordWrap(True)
+                main_layout.addWidget(base_url_desc)
             
             # 模型下拉框
             self.model_combo = NoScrollComboBox(self)
@@ -858,10 +1015,27 @@ class ModelConfigWidget(QWidget):
                 notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 notice_label.setWordWrap(True)
                 main_layout.addWidget(notice_label)
-            elif self.model_id == 'ollama':
-                notice_label = QLabel(self.i18n.get('ollama_no_api_key_notice', 
-                    'Note: Ollama is a local model that does not require an API key.'))
-                notice_label.setObjectName('label_ollama_notice')
+            elif self.model_id in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
+                notice_key = f'{self.model_id}_no_api_key_notice'
+                notice_label = QLabel(self.i18n.get(
+                    notice_key,
+                    self.i18n.get(
+                        'local_openai_compat_no_api_key_notice',
+                        'Note: This local OpenAI-compatible service usually does not require an API key. '
+                        'Start the local server, then refresh the model list.',
+                    ),
+                ))
+                notice_label.setObjectName(f'label_{self.model_id}_notice')
+                notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
+                notice_label.setWordWrap(True)
+                main_layout.addWidget(notice_label)
+            elif self.model_id == 'custom':
+                notice_label = QLabel(self.i18n.get(
+                    'custom_openai_compat_notice',
+                    'Note: Custom uses the OpenAI Chat Completions format (/chat/completions). '
+                    'Enter a compatible Base URL and model name. API Key is optional for some local servers.',
+                ))
+                notice_label.setObjectName('label_custom_notice')
                 notice_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: 5px 0; font-style: italic;")
                 notice_label.setWordWrap(True)
                 main_layout.addWidget(notice_label)
@@ -876,8 +1050,8 @@ class ModelConfigWidget(QWidget):
     
     def update_button_states(self):
         """更新刷新和测试按钮的启用状态"""
-        # 刷新按钮：需要 API Key（Ollama 和 nvidia_free 除外）
-        if self.model_id in ['ollama', 'nvidia_free']:
+        # 刷新按钮：需要 API Key（本地 OpenAI 兼容服务和 nvidia_free 除外）
+        if self.model_id in NO_API_KEY_PROVIDER_IDS:
             self.refresh_models_button.setEnabled(True)
         elif self.api_key_edit is not None:
             # QTextEdit 使用 toPlainText()，QLineEdit 使用 text()
@@ -912,7 +1086,7 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GROK
             # API Key字段名称为auth_token
             config['auth_token'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'x.AI (Grok)'  # 设置固定的显示名称
+            config['display_name'] = 'SpaceXAI (Grok)'  # 设置固定的显示名称
         elif self.model_id == 'gemini':
             provider = AIProvider.AI_GEMINI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -921,10 +1095,24 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_DEEPSEEK
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
             config['display_name'] = 'Deepseek'  # 设置固定的显示名称
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            region = self._current_kimi_region() if hasattr(self, 'kimi_region_group') else (
+                self.config.get('kimi_region')
+                or KimiModel.region_from_base_url(self.config.get('api_base_url', ''))
+            )
+            config['kimi_region'] = region
+            # 地区标签按当前 UI 语言在展示时拼接，避免切换语言后仍显示旧文案
+            config['display_name'] = 'Kimi (Moonshot)'
+        elif self.model_id == 'mistral':
+            provider = AIProvider.AI_MISTRAL
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
+            config['display_name'] = 'Mistral'  # 设置固定的显示名称
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'Custom'  # 设置固定的显示名称
+            config['display_name'] = 'Custom (OpenAI Compatible)'  # 设置固定的显示名称
         elif self.model_id == 'openai':
             provider = AIProvider.AI_OPENAI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -958,9 +1146,16 @@ class ModelConfigWidget(QWidget):
                 config['x_title'] = self.x_title_edit.text().strip()
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
-            # Ollama 不需要 API Key
             config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
-            config['display_name'] = 'Ollama (Local)'  # 设置固定的显示名称
+            config['display_name'] = 'Ollama (Local)'
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
+            config['display_name'] = 'LM Studio (Local)'
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            config['api_key'] = self.api_key_edit.toPlainText().strip() if (hasattr(self, 'api_key_edit') and self.api_key_edit) else ''
+            config['display_name'] = 'KoboldCpp (Local)'
         elif self.model_id == 'nvidia_free':
             provider = AIProvider.AI_NVIDIA_FREE
             # Nvidia 免费通道不需要用户提供 API Key
@@ -973,6 +1168,10 @@ class ModelConfigWidget(QWidget):
         
         # 通用配置项
         config['api_base_url'] = self.api_base_edit.text().strip() if hasattr(self, 'api_base_edit') else ''
+        if self.model_id == 'kimi':
+            region = config.get('kimi_region') or self._current_kimi_region()
+            config['kimi_region'] = region
+            config['api_base_url'] = KimiModel.base_url_for_region(region)
         
         # 模型名称配置（新逻辑：支持下拉框或自定义输入）
         if hasattr(self, 'use_custom_model_checkbox') and self.use_custom_model_checkbox.isChecked():
@@ -1036,6 +1235,161 @@ class ModelConfigWidget(QWidget):
         
         # 触发配置变更信号
         self.on_config_changed()
+
+    def _default_kimi_region(self):
+        """Infer initial Kimi region from saved config or UI language."""
+        saved_region = (self.config.get('kimi_region') or '').strip().lower()
+        if saved_region in (KimiModel.REGION_GLOBAL, KimiModel.REGION_CHINA):
+            return saved_region
+
+        # Add-AI blank form always carries the provider default URL (.ai).
+        # Prefer UI language until the user has a configured region/URL intent.
+        if not self.config.get('is_configured'):
+            lang = ''
+            try:
+                lang = (get_prefs().get('language') or '').lower()
+            except Exception:
+                lang = ''
+            if lang.startswith('zh') or lang in ('yue', 'zht'):
+                return KimiModel.REGION_CHINA
+            return KimiModel.REGION_GLOBAL
+
+        saved_url = (self.config.get('api_base_url') or '').strip()
+        if saved_url:
+            return KimiModel.region_from_base_url(saved_url)
+
+        return KimiModel.REGION_GLOBAL
+
+    def _setup_kimi_region_selector(self, main_layout, secondary_color):
+        """Build International / China radios and read-only Base URL for Kimi."""
+        region_label = QLabel(self.i18n.get('kimi_region_label', 'Platform'))
+        region_label.setObjectName(f'label_kimi_region_{self.model_id}')
+        main_layout.addWidget(region_label)
+
+        region_row = QHBoxLayout()
+        region_row.setSpacing(SPACING_MEDIUM)
+
+        self.kimi_region_group = QButtonGroup(self)
+        self.kimi_region_global_radio = QRadioButton(
+            self.i18n.get('kimi_region_global', 'International')
+        )
+        self.kimi_region_global_radio.setObjectName('radio_kimi_region_global')
+        self.kimi_region_china_radio = QRadioButton(
+            self.i18n.get('kimi_region_china', 'China Mainland')
+        )
+        self.kimi_region_china_radio.setObjectName('radio_kimi_region_china')
+        self.kimi_region_group.addButton(self.kimi_region_global_radio)
+        self.kimi_region_group.addButton(self.kimi_region_china_radio)
+        region_row.addWidget(self.kimi_region_global_radio)
+        region_row.addWidget(self.kimi_region_china_radio)
+        region_row.addStretch()
+        main_layout.addLayout(region_row)
+
+        base_url_label = QLabel(self.i18n.get('base_url_label', 'Base URL'))
+        base_url_label.setObjectName(f'label_base_url_{self.model_id}')
+        main_layout.addWidget(base_url_label)
+
+        initial_region = self._default_kimi_region()
+        initial_url = KimiModel.base_url_for_region(initial_region)
+        self.api_base_edit = QLineEdit(self)
+        self.api_base_edit.setText(initial_url)
+        self.api_base_edit.setReadOnly(True)
+        self.api_base_edit.setMinimumHeight(25)
+        self.api_base_edit.setToolTip(
+            self.i18n.get(
+                'kimi_base_url_readonly_tip',
+                'Base URL is determined by the selected platform.',
+            )
+        )
+        main_layout.addWidget(self.api_base_edit)
+
+        region_desc = QLabel(self.i18n.get(
+            'base_url_desc_kimi',
+            'International keys use https://api.moonshot.ai/v1; '
+            'China-platform keys use https://api.moonshot.cn/v1. Do not mix them.',
+        ))
+        region_desc.setObjectName(f'label_base_url_desc_{self.model_id}')
+        region_desc.setStyleSheet(
+            f"color: {secondary_color}; font-style: italic; padding: 2px 0;"
+        )
+        region_desc.setWordWrap(True)
+        main_layout.addWidget(region_desc)
+
+        if initial_region == KimiModel.REGION_CHINA:
+            self.kimi_region_china_radio.setChecked(True)
+        else:
+            self.kimi_region_global_radio.setChecked(True)
+
+        self.kimi_region_global_radio.toggled.connect(self._on_kimi_region_toggled)
+        self.kimi_region_china_radio.toggled.connect(self._on_kimi_region_toggled)
+
+    def _current_kimi_region(self):
+        if hasattr(self, 'kimi_region_china_radio') and self.kimi_region_china_radio.isChecked():
+            return KimiModel.REGION_CHINA
+        return KimiModel.REGION_GLOBAL
+
+    def _sync_kimi_region_controls(self, api_base_url=None, region=None):
+        """Keep radios + Base URL aligned with resolved region/URL."""
+        if self.model_id != 'kimi' or not hasattr(self, 'kimi_region_group'):
+            return
+        if region not in (KimiModel.REGION_GLOBAL, KimiModel.REGION_CHINA):
+            region = KimiModel.region_from_base_url(api_base_url or self.api_base_edit.text())
+        url = KimiModel.base_url_for_region(region)
+
+        radios = (self.kimi_region_global_radio, self.kimi_region_china_radio)
+        for radio in radios:
+            radio.blockSignals(True)
+        try:
+            if region == KimiModel.REGION_CHINA:
+                self.kimi_region_china_radio.setChecked(True)
+            else:
+                self.kimi_region_global_radio.setChecked(True)
+            if self.api_base_edit.text().strip() != url:
+                self.api_base_edit.setText(url)
+        finally:
+            for radio in radios:
+                radio.blockSignals(False)
+
+    def _reset_kimi_model_list_ui(self):
+        """Clear loaded models after switching Kimi platform."""
+        if not hasattr(self, 'model_combo'):
+            return
+        self._models_loaded = False
+        self.model_combo.clear()
+        placeholder_text = self.i18n.get('select_model', '-- No Model --')
+        self.model_combo.addItem(placeholder_text)
+        self.model_combo.setItemData(0, 'select_model')
+        hint_text = self.i18n.get('request_model_list', 'Please request model list')
+        self.model_combo.addItem(hint_text)
+        self.model_combo.setItemData(1, 'request_model_list')
+        try:
+            model = self.model_combo.model()
+            item = model.item(1)
+            if item:
+                item.setEnabled(False)
+        except Exception:
+            pass
+        self.model_combo.setCurrentIndex(0)
+        if hasattr(self, 'use_custom_model_checkbox'):
+            self.use_custom_model_checkbox.setChecked(False)
+        if hasattr(self, 'update_button_states'):
+            self.update_button_states()
+
+    def _on_kimi_region_toggled(self, checked):
+        if not checked:
+            return
+        region = self._current_kimi_region()
+        url = KimiModel.base_url_for_region(region)
+        if self.api_base_edit.text().strip() != url:
+            self.api_base_edit.setText(url)
+        # Platform changed: previous model list belongs to the other endpoint
+        prefs = get_prefs()
+        cached_models = prefs.get('cached_models', {}) or {}
+        if 'kimi' in cached_models:
+            del cached_models['kimi']
+            prefs['cached_models'] = cached_models
+        self._reset_kimi_model_list_ui()
+        self.on_config_changed()
     
     def on_config_changed(self):
         """配置变更处理"""
@@ -1097,6 +1451,14 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_DEEPSEEK
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'mistral':
+            provider = AIProvider.AI_MISTRAL
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
         elif self.model_id == 'openai':
             provider = AIProvider.AI_OPENAI
             model_config = get_current_model_config(provider)
@@ -1119,6 +1481,18 @@ class ModelConfigWidget(QWidget):
             default_model_name = model_config.default_model_name if model_config else None
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+            model_config = get_current_model_config(provider)
+            default_model_name = model_config.default_model_name if model_config else None
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
             model_config = get_current_model_config(provider)
             default_model_name = model_config.default_model_name if model_config else None
         
@@ -1191,8 +1565,8 @@ class ModelConfigWidget(QWidget):
         import logging
         logger = logging.getLogger(__name__)
         
-        # 1. 验证 API Key（Ollama 和 nvidia_free 不需要）
-        if self.model_id not in ['ollama', 'nvidia_free']:
+        # 1. 验证 API Key（本地 OpenAI 兼容服务和 nvidia_free 不需要）
+        if self.model_id not in NO_API_KEY_PROVIDER_IDS:
             api_key = self.get_api_key()
             if not api_key:
                 QMessageBox.warning(
@@ -1231,6 +1605,21 @@ class ModelConfigWidget(QWidget):
             if success:
                 # 成功：填充下拉框
                 models = result
+
+                # Kimi 等提供商可能在请求中自动纠正区域 Base URL，同步回控件
+                resolved_base_url = (config.get('api_base_url') or '').strip()
+                resolved_region = (config.get('kimi_region') or '').strip()
+                if self.model_id == 'kimi':
+                    self._sync_kimi_region_controls(
+                        api_base_url=resolved_base_url,
+                        region=resolved_region or None,
+                    )
+                elif (
+                    resolved_base_url
+                    and hasattr(self, 'api_base_edit')
+                    and resolved_base_url != self.api_base_edit.text().strip()
+                ):
+                    self.api_base_edit.setText(resolved_base_url)
                 
                 self.model_combo.clear()
                 # 先添加占位符
@@ -1347,6 +1736,21 @@ class ModelConfigWidget(QWidget):
             
             # 停止测试动画
             self.test_model_animation.stop()
+
+            # 区域回退后同步纠正后的 Base URL / 平台选项
+            resolved_base_url = (config.get('api_base_url') or '').strip()
+            resolved_region = (config.get('kimi_region') or '').strip()
+            if self.model_id == 'kimi':
+                self._sync_kimi_region_controls(
+                    api_base_url=resolved_base_url,
+                    region=resolved_region or None,
+                )
+            elif (
+                resolved_base_url
+                and hasattr(self, 'api_base_edit')
+                and resolved_base_url != self.api_base_edit.text().strip()
+            ):
+                self.api_base_edit.setText(resolved_base_url)
             
             if success:
                 # 测试成功
@@ -1568,6 +1972,23 @@ class ModelConfigWidget(QWidget):
             if obj_name in checkbox_map:
                 i18n_key, fallback = checkbox_map[obj_name]
                 checkbox.setText(self.i18n.get(i18n_key, fallback))
+
+        # Kimi 平台单选
+        if hasattr(self, 'kimi_region_global_radio'):
+            self.kimi_region_global_radio.setText(
+                self.i18n.get('kimi_region_global', 'International')
+            )
+        if hasattr(self, 'kimi_region_china_radio'):
+            self.kimi_region_china_radio.setText(
+                self.i18n.get('kimi_region_china', 'China Mainland')
+            )
+        if hasattr(self, 'api_base_edit') and self.model_id == 'kimi':
+            self.api_base_edit.setToolTip(
+                self.i18n.get(
+                    'kimi_base_url_readonly_tip',
+                    'Base URL is determined by the selected platform.',
+                )
+            )
         
         # 使用 objectName 映射更新 Button
         button_map = {
@@ -1608,6 +2029,16 @@ class ModelConfigWidget(QWidget):
             f'label_api_key_{self.model_id}': ('api_key_label', 'API Key'),
             f'label_base_url_{self.model_id}': ('base_url_label', 'Base URL'),
             f'label_model_{self.model_id}': ('model_label', 'Model'),
+            f'label_kimi_region_{self.model_id}': ('kimi_region_label', 'Platform'),
+            f'label_base_url_desc_{self.model_id}': (
+                'base_url_desc_kimi' if self.model_id == 'kimi' else 'base_url_desc',
+                (
+                    'International keys use https://api.moonshot.ai/v1; '
+                    'China-platform keys use https://api.moonshot.cn/v1. Do not mix them.'
+                    if self.model_id == 'kimi'
+                    else 'The API endpoint URL. Use default unless you have a custom endpoint.'
+                ),
+            ),
         }
         
         for label in self.findChildren(QLabel):
@@ -1644,6 +2075,12 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'deepseek':
                 from .models import DeepseekModel
                 model_config = DeepseekModel
+            elif self.model_id == 'kimi':
+                from .models import KimiModel
+                model_config = KimiModel
+            elif self.model_id == 'mistral':
+                from .models import MistralModel
+                model_config = MistralModel
             elif self.model_id == 'custom':
                 from .models import CustomModel
                 model_config = CustomModel
@@ -1665,6 +2102,15 @@ class ModelConfigWidget(QWidget):
             elif self.model_id == 'ollama':
                 from .models import OllamaModel
                 model_config = OllamaModel
+            elif self.model_id == 'lmstudio':
+                from .models import LMStudioModel
+                model_config = LMStudioModel
+            elif self.model_id == 'koboldcpp':
+                from .models import KoboldCppModel
+                model_config = KoboldCppModel
+            elif self.model_id == 'nvidia_free':
+                from .models import NvidiaFreeModel
+                model_config = NvidiaFreeModel
                 
             if model_config:
                 default_api_base_url = getattr(model_config, 'DEFAULT_API_BASE_URL', '')
@@ -1682,6 +2128,8 @@ class ModelConfigWidget(QWidget):
             'grok': AIProvider.AI_GROK,
             'gemini': AIProvider.AI_GEMINI,
             'deepseek': AIProvider.AI_DEEPSEEK,
+            'kimi': AIProvider.AI_KIMI,
+            'mistral': AIProvider.AI_MISTRAL,
             'custom': AIProvider.AI_CUSTOM,
             'openai': AIProvider.AI_OPENAI,
             'anthropic': AIProvider.AI_ANTHROPIC,
@@ -1689,6 +2137,8 @@ class ModelConfigWidget(QWidget):
             'openrouter': AIProvider.AI_OPENROUTER,
             'perplexity': AIProvider.AI_PERPLEXITY,
             'ollama': AIProvider.AI_OLLAMA,
+            'lmstudio': AIProvider.AI_LMSTUDIO,
+            'koboldcpp': AIProvider.AI_KOBOLDCPP,
             'nvidia_free': AIProvider.AI_NVIDIA_FREE,
         }
         
@@ -1746,6 +2196,10 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GEMINI
         elif self.model_id == 'deepseek':
             provider = AIProvider.AI_DEEPSEEK
+        elif self.model_id == 'kimi':
+            provider = AIProvider.AI_KIMI
+        elif self.model_id == 'mistral':
+            provider = AIProvider.AI_MISTRAL
         elif self.model_id == 'custom':
             provider = AIProvider.AI_CUSTOM
         elif self.model_id == 'openai':
@@ -1760,6 +2214,12 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_PERPLEXITY
         elif self.model_id == 'ollama':
             provider = AIProvider.AI_OLLAMA
+        elif self.model_id == 'lmstudio':
+            provider = AIProvider.AI_LMSTUDIO
+        elif self.model_id == 'koboldcpp':
+            provider = AIProvider.AI_KOBOLDCPP
+        elif self.model_id == 'nvidia_free':
+            provider = AIProvider.AI_NVIDIA_FREE
         else:
             # 未知模型，无法重置
             logger.warning(f"未知模型 ID: {self.model_id}，无法重置")
@@ -1771,15 +2231,26 @@ class ModelConfigWidget(QWidget):
         if model_config:
             logger.info(f"开始重置模型 {self.model_id} 的参数")
             
-            # 1. 清除 API Key / Auth Token（Ollama 除外）
-            if self.model_id != 'ollama':
+            # 1. 清除 API Key / Auth Token（本地 OpenAI 兼容服务 / nvidia_free 除外）
+            if self.model_id not in NO_API_KEY_PROVIDER_IDS:
                 if hasattr(self, 'api_key_edit') and self.api_key_edit:
                     self.api_key_edit.clear()
                     logger.info(f"已清除 {self.model_id} 的 API Key")
             
-            # 2. 重置 API Base URL
-            self.api_base_edit.setText(model_config.default_api_base_url)
-            logger.info(f"已重置 API Base URL 为: {model_config.default_api_base_url}")
+            # 2. 重置 API Base URL / Kimi 平台
+            if self.model_id == 'kimi' and hasattr(self, 'kimi_region_group'):
+                # 重置时忽略已保存配置，按界面语言给默认平台
+                lang = (get_prefs().get('language') or '').lower()
+                default_region = (
+                    KimiModel.REGION_CHINA
+                    if lang.startswith('zh') or lang in ('yue', 'zht')
+                    else KimiModel.REGION_GLOBAL
+                )
+                self._sync_kimi_region_controls(region=default_region)
+                logger.info(f"已重置 Kimi 平台为: {default_region}")
+            else:
+                self.api_base_edit.setText(model_config.default_api_base_url)
+                logger.info(f"已重置 API Base URL 为: {model_config.default_api_base_url}")
             
             # 3. 重置模型名称：清空下拉框，添加占位符，清空自定义输入框
             self.model_combo.clear()
@@ -1795,6 +2266,7 @@ class ModelConfigWidget(QWidget):
             if item:
                 item.setEnabled(False)
             self.model_combo.setCurrentIndex(0)  # 选中占位符
+            self._models_loaded = False
             
             # 取消自定义模式，清空自定义输入框
             self.use_custom_model_checkbox.setChecked(False)
@@ -1846,7 +2318,7 @@ class ModelConfigWidget(QWidget):
                             del current['api_key']
                         except Exception:
                             pass
-                elif self.model_id != 'ollama':
+                elif self.model_id not in LOCAL_OPENAI_COMPAT_PROVIDER_IDS:
                     current['api_key'] = ''
                 current['enable_streaming'] = True
                 current['enabled'] = False
@@ -1934,6 +2406,8 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('grok', GrokModel)
         AIModelFactory.register_model('gemini', GeminiModel)
         AIModelFactory.register_model('deepseek', DeepseekModel)
+        AIModelFactory.register_model('kimi', KimiModel)
+        AIModelFactory.register_model('mistral', MistralModel)
         AIModelFactory.register_model('custom', CustomModel)
         AIModelFactory.register_model('openai', OpenAIModel)
         AIModelFactory.register_model('anthropic', AnthropicModel)
@@ -1941,6 +2415,9 @@ class ConfigDialog(QWidget):
         AIModelFactory.register_model('perplexity', PerplexityModel)
         AIModelFactory.register_model('openrouter', OpenRouterModel)
         AIModelFactory.register_model('ollama', OllamaModel)
+        AIModelFactory.register_model('lmstudio', LMStudioModel)
+        AIModelFactory.register_model('koboldcpp', KoboldCppModel)
+        AIModelFactory.register_model('nvidia_free', NvidiaFreeModel)
         
         self.setup_ui()
         self.load_initial_values()
@@ -2097,41 +2574,54 @@ class ConfigDialog(QWidget):
         default_ai_layout.addStretch()
         
         model_layout.addLayout(default_ai_layout)
-        
-        # 已配置 AI 列表（简洁显示）
-        from PyQt5.QtWidgets import QListWidget, QListWidgetItem
-        from PyQt5.QtCore import QEvent
-        self.configured_ai_list = QListWidget()
-        self.configured_ai_list.setObjectName('list_configured_ai_summary')
-        self.configured_ai_list.setMaximumHeight(120)
-        self.configured_ai_list.setStyleSheet(get_list_widget_style())
-        self.configured_ai_list.itemDoubleClicked.connect(self._on_ai_list_double_clicked)
-        
-        # 安装事件过滤器，实现鼠标滚动互斥
-        self.configured_ai_list.viewport().installEventFilter(self)
-        
-        model_layout.addWidget(self.configured_ai_list)
-        
-        # AI 操作按钮区域
+
+        # AI 操作按钮放在列表上方，避免被外层滚动/矮列表挤到看不见
         ai_buttons_layout = QHBoxLayout()
         configure_layout(ai_buttons_layout, 'form_row')
-        
-        # 添加 AI 按钮（使用默认样式）
+
         self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
         self.add_ai_button.setObjectName('button_add_ai')
         self.add_ai_button.clicked.connect(self._on_add_ai_clicked)
         ai_buttons_layout.addWidget(self.add_ai_button)
-        
-        # 管理已配置 AI 按钮（使用默认样式）
-        self.manage_ai_button = QPushButton(self.i18n.get('manage_configured_ai_button', 'Manage Configured AI'))
+
+        self.manage_ai_button = QPushButton(
+            self.i18n.get('manage_configured_ai_button', 'Manage Configured AI')
+        )
         self.manage_ai_button.setObjectName('button_manage_ai')
         self.manage_ai_button.clicked.connect(self._on_manage_ai_clicked)
         ai_buttons_layout.addWidget(self.manage_ai_button)
-        
         ai_buttons_layout.addStretch()
-        
         model_layout.addLayout(ai_buttons_layout)
-        
+
+        ai_manager_hint = QLabel(
+            self.i18n.get(
+                'ai_manager_window_hint',
+                'Add / Manage opens a resizable window (you can maximize it). '
+                'Double-click a configured AI to edit it.',
+            )
+        )
+        ai_manager_hint.setObjectName('label_ai_manager_hint')
+        ai_manager_hint.setWordWrap(True)
+        ai_manager_hint.setStyleSheet(
+            f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;"
+        )
+        model_layout.addWidget(ai_manager_hint)
+
+        # 已配置 AI 摘要列表（加大可视高度，减少内外滚动打架）
+        from PyQt5.QtWidgets import QListWidget, QListWidgetItem
+        from PyQt5.QtCore import QEvent
+        self.configured_ai_list = QListWidget()
+        self.configured_ai_list.setObjectName('list_configured_ai_summary')
+        self.configured_ai_list.setMinimumHeight(160)
+        self.configured_ai_list.setMaximumHeight(260)
+        self.configured_ai_list.setStyleSheet(get_list_widget_style())
+        self.configured_ai_list.itemDoubleClicked.connect(self._on_ai_list_double_clicked)
+
+        # 安装事件过滤器，实现鼠标滚动互斥
+        self.configured_ai_list.viewport().installEventFilter(self)
+
+        model_layout.addWidget(self.configured_ai_list)
+
         # 初始化 AI 列表显示
         self.refresh_ai_list()
         
@@ -2261,7 +2751,6 @@ class ConfigDialog(QWidget):
         self._update_panel_ai_selectors()
         
         # 添加并行AI提示信息
-        from .ui_constants import TEXT_COLOR_SECONDARY_STRONG
         parallel_notice = QLabel(self.i18n.get('parallel_ai_notice', 
             'Each response window will have its own AI selector. Make sure you have configured enough AI providers.'))
         parallel_notice.setObjectName('label_parallel_ai_notice')
@@ -2534,30 +3023,32 @@ class ConfigDialog(QWidget):
         return super(ConfigDialog, self).eventFilter(obj, event)
     
     def _on_ai_list_double_clicked(self, item):
-        """双击 AI 列表项时打开管理弹窗"""
+        """双击 AI 列表项时打开管理弹窗并定位到该项"""
         model_id = item.data(Qt.UserRole)
         if model_id is None:
             return
-        self._on_manage_ai_clicked()
+        self._on_manage_ai_clicked(initial_config_id=model_id)
     
     def _on_add_ai_clicked(self):
-        """点击添加 AI 按钮时打开弹窗"""
+        """点击添加 AI 按钮时打开可最大化的独立配置窗口"""
         from .ai_manager_dialog import AddAIDialog
+        from PyQt5.QtWidgets import QDialog
         
         dialog = AddAIDialog(self)
-        dialog.config_changed.connect(self._on_ai_manager_config_changed)
         
         # 连接语言切换信号
         if hasattr(self, 'language_changed'):
             self.language_changed.connect(lambda lang: self._update_dialog_language(dialog, lang))
         
-        dialog.exec_()
+        # 关闭后再刷新：避免 Windows 上子模态仍开着时重建 Config 列表
+        if dialog.exec_() == QDialog.Accepted:
+            self._on_ai_manager_config_changed()
     
-    def _on_manage_ai_clicked(self):
-        """点击管理 AI 按钮时打开弹窗"""
+    def _on_manage_ai_clicked(self, initial_config_id=None):
+        """点击管理 AI 按钮时打开可最大化的独立配置窗口"""
         from .ai_manager_dialog import ManageAIDialog
         
-        dialog = ManageAIDialog(self)
+        dialog = ManageAIDialog(self, initial_config_id=initial_config_id)
         dialog.config_changed.connect(self._on_ai_manager_config_changed)
         
         # 连接语言切换信号

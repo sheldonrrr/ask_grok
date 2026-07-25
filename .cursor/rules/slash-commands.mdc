@@ -1,0 +1,24 @@
+---
+description: High-frequency slash commands /push /pack /version-up
+alwaysApply: true
+---
+
+# Slash commands (type `/` in chat)
+
+| Command | Action |
+|---------|--------|
+| `/push` | Commit current progress with a readable English message, then push (usually `dev` → `origin/dev`) |
+| `/pack` | Run `bash scripts/package.sh` → `dist/Ask_AI_Plugin_vX.Y.Z.zip` |
+| `/version-up` | Bump version per `.cursor/rules/version-update.mdc` |
+
+When the user invokes one of these (via slash command or by saying the same intent), follow the matching prompt in `.cursor/commands/<name>.md` exactly.
+
+## Commit message style for `/push`
+
+Use clear English with connecting words (not telegraphic keyword stacks), e.g. “Add … after …”, “Fix … when …”.
+
+## Defaults
+
+- Push target: current branch’s upstream; if on `dev`, push to `origin/dev`.
+- Never force-push unless the user explicitly asks.
+- `/version-up` does not commit or pack unless combined with `/push` / `/pack`.

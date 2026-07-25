@@ -113,6 +113,7 @@ class CantoneseTranslation(BaseTranslation):
             'set_default_ai_title': '設定預設 AI', # Set Default AI
             'set_default_ai_message': '你已經轉咗去「{0}」。想唔想將佢設為以後查詢嘅預設 AI 呀？', # You have switched to "{0}". Would you like to set it as the default AI for future queries?
             'set_default_ai_success': '預設 AI 已經設定為「{0}」。', # Default AI has been set to "{0}".
+            'set_default_ai_after_add_message': '已成功新增「{0}」。想唔想將佢設為預設 AI 呀？', # You have successfully added "{0}". Would you like to set it as the default AI?
             'default_ai_mismatch_title': '預設 AI 已更改', # Default AI Changed
             'default_ai_mismatch_message': '設定中嘅預設 AI 已經改咗做「{default_ai}」，\n但係目前對話用緊「{current_ai}」。\n\n想唔想轉用新嘅預設 AI 呀？', # The default AI in configuration has been changed to "{default_ai}",\nbut the current dialog is using "{current_ai}".\n\nWould you like to switch to the new default AI?
             'copied': '已複製！', # Copied!
@@ -383,12 +384,36 @@ class CantoneseTranslation(BaseTranslation):
             'about_plugin': '關於 Ask AI 插件', # Why Ask AI Plugin?
             'learn_how_to_use': '點樣用', # How to Use
             'email': 'iMessage', # iMessage
+            'about_title': '關於 Ask AI 插件',
+            'about_version_label': '版本',
+            'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
+            'about_mobileread_link_text': 'MobileRead',
+            'about_related_plugins': 'Nowtiny calibre 插件推薦',
+            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_desc': 'Calibre 插件 · Python\n將書本匯出做 Markdown 文字檔。',
+            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
+            'about_open_button': 'MobileRead',
+            'about_open_mobileread': '開啟 MobileRead',
+            'about_mobileread_note': '注：MobileRead 係 calibre 插件發佈同更多版本更新資訊嘅開發者頁面。',
+            'about_open_nowtiny': '開啟 Nowtiny',
+            'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
-            'model_display_name_grok': 'Grok(x.AI)', # Grok(x.AI)
+            'model_display_name_grok': 'Grok(SpaceXAI)', # Grok(SpaceXAI)
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
-            'model_display_name_custom': '自訂', # Custom
+            'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
+            'model_display_name_mistral': 'Mistral', # Mistral
+            'model_display_name_custom': '自訂 (OpenAI 兼容)', # Custom (OpenAI Compatible)
+            'model_display_name_ollama': 'Ollama(本地)',
+            'model_display_name_lmstudio': 'LM Studio(本地)',
+            'model_display_name_koboldcpp': 'KoboldCpp(本地)',
+            'custom_openai_compat_notice': '提示：自訂服務商使用 OpenAI Chat Completions 請求格式（/chat/completions）。請填寫兼容嘅 Base URL 同模型名稱。部分本地服務可以唔填 API Key。',
+            'local_openai_compat_no_api_key_notice': '提示：呢個本地 OpenAI 兼容服務通常唔使 API Key。請先啟動本地服務，再刷新模型列表。',
+            'lmstudio_no_api_key_notice': '提示：LM Studio 本地用 OpenAI 兼容接口，通常唔使 API Key。',
+            'koboldcpp_no_api_key_notice': '提示：KoboldCpp 本地用 OpenAI 兼容接口，通常唔使 API Key。',
+            'local_service_not_running': '連唔上本地 AI 服務。請確認服務已啟動同 Base URL 正確。',
             'model_enable_streaming': '啟用串流', # Enable Streaming
 
             # AI Switcher
@@ -443,6 +468,7 @@ class CantoneseTranslation(BaseTranslation):
             'remove_ai_config': '移除', # Remove
             'delete_ai': '刪除', # Delete
             'add_ai_button': '新增 AI', # Add AI
+            'ai_manager_window_hint': '「新增 / 管理」會開可調大小嘅獨立視窗（可以最大化）。雙擊已配置嘅 AI 可以直接編輯。',
             'edit_ai_button': '編輯 AI', # Edit AI
             'manage_configured_ai_button': '管理已設定嘅 AI', # Manage Configured AI
             'manage_ai_button': '管理 AI', # Manage AI
@@ -463,13 +489,18 @@ class CantoneseTranslation(BaseTranslation):
             # 字段說明
             'api_key_desc': '你用於身份驗證嘅 API 金鑰。請妥善保管，唔好分享。', # Your API key for authentication. Keep it secure and do not share.
             'base_url_desc': 'API 端點 URL。除非你有自訂端點，否則用預設值。', # The API endpoint URL. Use default unless you have a custom endpoint.
+            'base_url_desc_kimi': '國際站 Key 用 https://api.moonshot.ai/v1；中國站 Key 用 https://api.moonshot.cn/v1。唔好撈亂。', # International keys use https://api.moonshot.ai/v1; China-platform keys use https://api.moonshot.cn/v1. Do not mix them.
+            'kimi_region_label': '平台', # Platform
+            'kimi_region_global': '國際版', # International
+            'kimi_region_china': '中國大陸版', # China Mainland
+            'kimi_base_url_readonly_tip': 'Base URL 由所選平台決定。', # Base URL is determined by the selected platform.
             'model_desc': '從列表中揀一個模型，或者用自訂模型名稱。', # Select a model from the list or use a custom model name.
             'streaming_desc': '啟用實時回應串流，可以更快咁得到回覆。', # Enable real-time response streaming for faster feedback.
             'advanced_section': '進階', # Advanced
 
             # 服務供應商特定提示
             'perplexity_model_notice': '注意：Perplexity 冇提供公開嘅模型列表 API，所以模型係硬編碼嘅。', # Note: Perplexity does not provide a public model list API, so models are hardcoded.
-            'ollama_no_api_key_notice': '注意：Ollama 係一個本地模型，唔需要 API 金鑰。', # Note: Ollama is a local model that does not require an API key.
+            'ollama_no_api_key_notice': '提示：Ollama 本地用 OpenAI 兼容接口，通常唔使 API Key。', # OpenAI-compatible local Ollama
             'nvidia_free_credits_notice': '注意：新用戶有免費 API 額度 - 唔使信用卡。', # Note: New users get free API credits - No credit card required.
 
             # Nvidia 免費方案錯誤消息

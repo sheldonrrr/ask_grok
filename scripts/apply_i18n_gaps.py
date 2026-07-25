@@ -34,6 +34,9 @@ INSERT_AFTER = [
         "empty_response",
         "empty_response_after_filter",
     ]),
+    ("set_default_ai_success", [
+        "set_default_ai_after_add_message",
+    ]),
     ("failed_to_fetch_models", [
         "error_401",
         "error_403",
