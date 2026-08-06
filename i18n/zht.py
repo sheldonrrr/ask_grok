@@ -505,6 +505,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'error_5xx': '伺服器錯誤。請稍後再試或檢查服務提供者狀態。',
         'error_network': '網路連線失敗。請檢查網路連線、代理設定或防火牆設定。',
         'error_unknown': '未知錯誤。',
+        'http_status_detail': 'HTTP {status}，請求網址：{url}',
         'gemini_geo_restriction': 'Gemini API 在您的地區無法使用。請嘗試：\n1. 使用 VPN 從支援的地區連線\n2. 使用其他 AI 提供者（OpenAI、Anthropic、DeepSeek 等）\n3. 檢查 Google AI Studio 的地區可用性',
         'load_models_list': '載入模型清單',
         'loading_models_text': '正在載入模型',

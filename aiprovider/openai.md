@@ -8,7 +8,7 @@ Ask AI Plugin 的 **OpenAI** 提供商使用最新推荐的 **Responses API**（
 
 - **API Key**: 必需。`Authorization: Bearer ${apiKey}`
 - **Base URL**: 必需。例如 `https://api.openai.com/v1`
-- **Model**: 例如 `gpt-5.4`
+- **Model**: 例如 `gpt-5-chat-latest`（较通用的 Chat 别名；具体可用模型以帐号 `/models` 列表为准）
 
 ## 获取模型列表
 
@@ -31,7 +31,7 @@ Ask AI Plugin 的 **OpenAI** 提供商使用最新推荐的 **Responses API**（
 - **请求体 (Body)**:
   ```json
   {
-    "model": "gpt-5.4",
+    "model": "gpt-5-chat-latest",
     "instructions": "<系统提示词>",
     "input": "<用户提示词>",
     "store": false,

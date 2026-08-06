@@ -389,6 +389,7 @@ class NorwegianTranslation(BaseTranslation):
             'error_5xx': 'Serverfeil. Prøv igjen senere eller kontroller statusen til tjenesteleverandøren.',
             'error_network': 'Nettverkstilkobling mislyktes. Kontroller nettverkstilkobling, proxy-innstillinger eller brannmurkonfigurasjon.',
             'error_unknown': 'Ukjent feil.',
+            'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Tekniske detaljer',
             'ollama_service_not_running': 'Ollama-tjenesten kjører ikke. Start Ollama-tjenesten først.',
             'ollama_service_timeout': 'Ollama-tjenestetilkobling tidsavbrutt. Kontroller om tjenesten kjører riktig.',

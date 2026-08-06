@@ -558,6 +558,7 @@ class JapaneseTranslation(BaseTranslation):
             'error_5xx': 'サーバーエラー。後でもう一度お試しいただくか、サービスプロバイダーのステータスを確認してください。',
             'error_network': 'ネットワーク接続に失敗しました。ネットワーク接続、プロキシ設定、またはファイアウォール設定を確認してください。',
             'error_unknown': '不明なエラー。',
+            'http_status_detail': 'HTTP {status}、URL: {url}',
             'gemini_geo_restriction': 'Gemini APIはお住まいの地域では利用できません。お試しください：\n1. サポートされている地域からVPNを使用して接続する\n2. 他のAIプロバイダーを使用する（OpenAI、Anthropic、DeepSeekなど）\n3. Google AI Studioで地域の利用可能性を確認する',
             'load_models_list': 'モデルリストを読み込む',
             'loading_models_text': 'モデルを読み込んでいます',

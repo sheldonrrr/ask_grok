@@ -392,6 +392,7 @@ class FinnishTranslation(BaseTranslation):
             'error_5xx': 'Palvelinvirhe. Yritä uudelleen myöhemmin tai tarkista palveluntarjoajan tila.',
             'error_network': 'Verkkoyhteys epäonnistui. Tarkista verkkoyhteys, välityspalvelinasetukset tai palomuurikonfiguraatio.',
             'error_unknown': 'Tuntematon virhe.',
+            'http_status_detail': 'HTTP {status}, URL: {url}',
             'technical_details': 'Tekniset yksityiskohdat',
             'ollama_service_not_running': 'Ollama-palvelu ei ole käynnissä. Käynnistä Ollama-palvelu ensin.',
             'ollama_service_timeout': 'Ollama-palveluyhteyden aikakatkaisu. Tarkista, onko palvelu käynnissä oikein.',

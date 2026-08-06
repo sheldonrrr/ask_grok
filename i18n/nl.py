@@ -390,6 +390,7 @@ class DutchTranslation(BaseTranslation):
             'error_5xx': 'Serverfout. Probeer het later opnieuw of controleer de status van de serviceprovider.',
             'error_network': 'Netwerkverbinding mislukt. Controleer alstublieft de netwerkverbinding, proxy-instellingen of firewallconfiguratie.',
             'error_unknown': 'Onbekende fout.',
+            'http_status_detail': 'HTTP {status} voor URL: {url}',
             'technical_details': 'Technische details',
             'ollama_service_not_running': 'Ollama-service draait niet. Start alstublieft eerst de Ollama-service.',
             'ollama_service_timeout': 'Ollama-serviceverbinding time-out. Controleer alstublieft of de service correct draait.',

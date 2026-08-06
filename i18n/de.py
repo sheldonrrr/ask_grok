@@ -517,6 +517,7 @@ class GermanTranslation(BaseTranslation):
             'error_5xx': 'Serverfehler. Bitte versuchen Sie es später erneut oder prüfen Sie den Status des Dienstanbieters.',
             'error_network': 'Netzwerkverbindung fehlgeschlagen. Bitte prüfen Sie Netzwerkverbindung, Proxy-Einstellungen oder Firewall-Konfiguration.',
             'error_unknown': 'Unbekannter Fehler.',
+            'http_status_detail': 'HTTP {status} für URL: {url}',
             'gemini_geo_restriction': 'Gemini API ist in Ihrer Region nicht verfügbar. Bitte versuchen Sie:\n1. VPN verwenden, um von einer unterstützten Region aus zu verbinden\n2. Andere KI-Anbieter verwenden (OpenAI, Anthropic, DeepSeek usw.)\n3. Google AI Studio für Regionsverfügbarkeit prüfen',
             'load_models_list': 'Modellliste Laden',
             'loading_models_text': 'Modelle werden geladen',

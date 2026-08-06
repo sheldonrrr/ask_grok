@@ -392,6 +392,7 @@ class SpanishTranslation(BaseTranslation):
             'error_5xx': 'Error del servidor. Por favor, inténtalo de nuevo más tarde o comprueba el estado del proveedor del servicio.',
             'error_network': 'La conexión de red falló. Por favor, comprueba la conexión de red, la configuración del proxy o la configuración del firewall.',
             'error_unknown': 'Error desconocido.',
+            'http_status_detail': 'HTTP {status} para la URL: {url}',
             'technical_details': 'Detalles técnicos',
             'ollama_service_not_running': 'El servicio de Ollama no se está ejecutando. Por favor, inicia el servicio de Ollama primero.',
             'ollama_service_timeout': 'Tiempo de espera de conexión del servicio de Ollama agotado. Por favor, comprueba si el servicio se está ejecutando correctamente.',

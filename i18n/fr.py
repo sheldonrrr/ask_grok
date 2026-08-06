@@ -521,6 +521,7 @@ class FrenchTranslation(BaseTranslation):
             'error_5xx': 'Erreur serveur. Veuillez réessayer plus tard ou vérifier l\'état du fournisseur de services.',
             'error_network': 'Échec de la connexion réseau. Veuillez vérifier la connexion réseau, les paramètres du proxy ou la configuration du pare-feu.',
             'error_unknown': 'Erreur inconnue.',
+            'http_status_detail': "HTTP {status} pour l'URL : {url}",
             'gemini_geo_restriction': 'L\'API Gemini n\'est pas disponible dans votre région. Veuillez essayer:\n1. Utiliser un VPN pour se connecter depuis une région prise en charge\n2. Utiliser d\'autres fournisseurs d\'IA (OpenAI, Anthropic, DeepSeek, etc.)\n3. Vérifier Google AI Studio pour la disponibilité régionale',
             'load_models_list': 'Charger la Liste des Modèles',
             'loading_models_text': 'Chargement des modèles',

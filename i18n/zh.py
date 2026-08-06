@@ -388,6 +388,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'error_5xx': '服务器错误。请稍后重试，或检查服务提供商状态。',
             'error_network': '网络连接失败。请检查：网络连接是否正常、代理设置是否正确、防火墙配置是否允许访问。',
             'error_unknown': '未知错误。',
+            'http_status_detail': 'HTTP {status}，请求地址：{url}',
             'technical_details': '技术细节',
             'ollama_service_not_running': 'Ollama 服务未运行。请先启动 Ollama 服务。',
             'ollama_service_timeout': 'Ollama 服务连接超时。请检查服务是否正常运行。',

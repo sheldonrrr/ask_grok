@@ -391,6 +391,7 @@ class SwedishTranslation(BaseTranslation):
             'error_5xx': 'Serverfel. Vänligen försök igen senare eller kontrollera tjänsteleverantörens status.',
             'error_network': 'Nätverksanslutningen misslyckades. Vänligen kontrollera nätverksanslutning, proxyinställningar eller brandväggskonfiguration.',
             'error_unknown': 'Okänt fel.',
+            'http_status_detail': 'HTTP {status} för URL: {url}',
             'technical_details': 'Tekniska detaljer',
             'ollama_service_not_running': 'Ollama-tjänsten körs inte. Vänligen starta Ollama-tjänsten först.',
             'ollama_service_timeout': 'Ollama-tjänstanslutning tidsinställd. Vänligen kontrollera om tjänsten körs korrekt.',

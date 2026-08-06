@@ -15,7 +15,7 @@ from typing import Dict, Any, List
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
-from .base import BaseAIModel
+from .base import BaseAIModel, format_http_error
 from ..i18n import get_translation
 
 logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
@@ -288,21 +288,7 @@ class GrokModel(BaseAIModel):
             )
 
         except requests.exceptions.RequestException as e:
-            translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get(
-                'api_request_failed',
-                'API request failed: {error}',
-            ).format(error=str(e))
-            if hasattr(e, 'response') and e.response is not None:
-                try:
-                    error_detail = e.response.json()
-                    message = (error_detail.get('error') or {}).get('message')
-                    if message:
-                        error_msg = f"{error_msg} | {message}"
-                    else:
-                        error_msg += f" | {json.dumps(error_detail, ensure_ascii=False)}"
-                except Exception:
-                    error_msg += f" | {getattr(e.response, 'text', '')}"
+            error_msg = format_http_error(e, self.config.get('language', 'en'))
             raise Exception(error_msg) from e
 
     def supports_streaming(self) -> bool:

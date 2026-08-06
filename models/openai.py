@@ -16,7 +16,7 @@ from typing import Dict, Any, List
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
-from .base import BaseAIModel
+from .base import BaseAIModel, format_http_error
 from ..i18n import get_translation
 
 logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.openai')
@@ -30,7 +30,7 @@ class OpenAIModel(BaseAIModel):
     providers in this plugin continue to use /chat/completions.
     """
     # Default model name
-    DEFAULT_MODEL = "gpt-5.4"
+    DEFAULT_MODEL = "gpt-5-chat-latest"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.openai.com/v1"
 
@@ -97,6 +97,29 @@ class OpenAIModel(BaseAIModel):
             "Content-Type": "application/json",
             "Authorization": token,
         }
+
+    def normalize_api_base_url(self, api_base_url: str) -> str:
+        """
+        Normalize OpenAI API base URL for Responses API.
+
+        Official host expects ``.../v1`` (e.g. https://api.openai.com/v1).
+        A bare ``https://api.openai.com`` would build ``/responses`` and 404.
+        """
+        base = (api_base_url or self.DEFAULT_API_BASE_URL).strip().rstrip('/')
+        if not base:
+            return self.DEFAULT_API_BASE_URL
+
+        # If user pasted an endpoint path as base, strip it back
+        for suffix in ('/responses', '/chat/completions', '/models'):
+            if base.endswith(suffix):
+                base = base[: -len(suffix)].rstrip('/')
+                break
+
+        host_path = base.split('://', 1)[-1].lower()
+        if host_path == 'api.openai.com' or host_path.startswith('api.openai.com/'):
+            if not base.endswith('/v1'):
+                return 'https://api.openai.com/v1'
+        return base
 
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
@@ -181,8 +204,9 @@ class OpenAIModel(BaseAIModel):
         use_stream = kwargs.get('stream', self.config.get('enable_streaming', True))
         stream_callback = kwargs.get('stream_callback', None)
 
-        api_base_url = kwargs.get('api_base_url') or self.config.get(
-            'api_base_url', self.DEFAULT_API_BASE_URL
+        api_base_url = self.normalize_api_base_url(
+            kwargs.get('api_base_url')
+            or self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
         )
         api_url = self.build_api_url(api_base_url, '/responses')
 
@@ -288,19 +312,7 @@ class OpenAIModel(BaseAIModel):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"OpenAI API request error: {str(e)}")
-            translations = get_translation(self.config.get('language', 'en'))
-            error_msg = translations.get(
-                'api_request_failed',
-                'API request failed: {error}',
-            ).format(error=str(e))
-            if hasattr(e, 'response') and e.response is not None:
-                try:
-                    detail = e.response.json()
-                    message = (detail.get('error') or {}).get('message')
-                    if message:
-                        error_msg = f"{error_msg} | {message}"
-                except Exception:
-                    pass
+            error_msg = format_http_error(e, self.config.get('language', 'en'))
             raise Exception(error_msg) from e
 
     def send_message(self, prompt: str, callback: callable) -> None:
@@ -370,7 +382,9 @@ class OpenAIModel(BaseAIModel):
 
         try:
             headers = self.prepare_headers()
-            api_base_url = self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            api_base_url = self.normalize_api_base_url(
+                self.config.get('api_base_url', self.DEFAULT_API_BASE_URL)
+            )
             test_url = self.build_api_url(api_base_url, '/responses')
             test_data = self.prepare_request_data("hi", max_tokens=16, stream=False)
 

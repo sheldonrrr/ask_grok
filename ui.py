@@ -1010,8 +1010,18 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # 读取教程（固定单文件，发版时就地更新）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v1.0.md')
+            # Prefer current single-file tutorial; keep older names for upgrade mismatches
+            tutorial_data = None
+            matched = None
+            for requested in (
+                'tutorial/tutorial_v1.0.md',
+                'tutorial/tutorial_v0.9.md',
+                'tutorial/tutorial_v0.8.md',
+            ):
+                tutorial_data = plugin.get_resources(requested)
+                if tutorial_data:
+                    matched = requested
+                    break
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
@@ -1025,7 +1035,7 @@ class TutorialWidget(QWidget):
             # 设置 HTML 内容
             self.text_browser.setHtml(html_content)
             
-            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes")
+            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes from {matched}")
             
         except Exception as e:
             logger.error(f"Failed to load tutorial: {str(e)}")

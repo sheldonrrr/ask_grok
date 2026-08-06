@@ -1,14 +1,14 @@
-# /push — Save progress and push to remote
+# /push — Commit progress and push to the current branch’s remote
 
-Commit the current worktree progress with a **readable English** commit message, then push to the tracked remote branch (usually `dev` → `origin/dev`).
+Commit the current worktree with a **readable English** message, then push to the **upstream of the current branch** (e.g. `dev` → `origin/dev`).
 
 ## Steps (do all of them)
 
 1. Run in parallel:
    - `git status`
    - `git diff` and `git diff --staged`
-   - `git log -5 --oneline` (match recent style, but prefer readable English)
-   - `git branch -vv` (confirm upstream, e.g. `dev` tracking `origin/dev`)
+   - `git log -5 --oneline` (match recent style; prefer readable English)
+   - `git branch -vv` (confirm current branch and upstream)
 2. Stage relevant changes (`git add` for intended files). **Never** stage secrets (`.env`, credentials, API keys).
 3. Draft a commit message that is:
    - **English**
@@ -19,16 +19,17 @@ Commit the current worktree progress with a **readable English** commit message,
      - `Fix Kimi platform labels so they follow the UI language.`
      - `Harden Add AI and About flows for more reliable Windows behavior.`
 4. Commit with a HEREDOC (see user git rules). Do **not** amend unless the user asked and amend rules are satisfied.
-5. Push to the remote tracking branch:
-   - Default expectation: current branch is `dev` → `git push -u origin HEAD` (or `git push origin dev` when already on `dev`)
+5. Push to the remote tracking branch for **this** branch:
    - If upstream exists: `git push`
+   - If no upstream yet: `git push -u origin HEAD`
+   - On `dev` with `origin/dev`: normal `git push` / `git push origin dev` is fine
    - **Never** `--force` / `--force-with-lease` unless the user explicitly asks
-6. Report: commit subject, branch, remote result (and PR URL only if one was requested).
+6. Report: commit subject, local branch, remote tracking branch, and push result (PR URL only if requested).
 
 ## Stop and ask if
 
 - There are no changes to commit
-- The branch is not `dev` and the user did not say which remote branch to use
+- Upstream is missing or ambiguous and push target is unclear
 - Push would require force, or conflicts with remote
 - Only secret/credential files are present
 
@@ -36,4 +37,5 @@ Commit the current worktree progress with a **readable English** commit message,
 
 - Update git config
 - Skip hooks
-- Push unrelated untracked junk (build zips under `dist/`, `__pycache__`, `.env`)
+- Push unrelated junk (`dist/*.zip`, `__pycache__`, `.env`)
+- Force-push to `main` / `master`

@@ -368,6 +368,7 @@ class CantoneseTranslation(BaseTranslation):
             'error_5xx': '伺服器錯誤。請稍後重試，或者檢查服務供應商狀態。', # Server error. Please try again later or check the service provider status.
             'error_network': '網路連線失敗。請檢查：網路連線是否正常、代理設定是否正確、防火牆設定是否允許存取。', # Network connection failed. Please check network connection, proxy settings, or firewall configuration.
             'error_unknown': '未知錯誤。', # Unknown error.
+            'http_status_detail': 'HTTP {status}，請求網址：{url}', # HTTP {status} for URL: {url}
             'technical_details': '技術細節', # Technical Details
             'ollama_service_not_running': 'Ollama 服務未運行。請先啟動 Ollama 服務。', # Ollama service is not running. Please start Ollama service first.
             'ollama_service_timeout': 'Ollama 服務連線逾時。請檢查服務是否正常運行。', # Ollama service connection timeout. Please check if the service is running properly.

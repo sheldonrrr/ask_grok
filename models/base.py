@@ -140,7 +140,7 @@ DEFAULT_MODELS = {
         display_name="OpenAI",
         api_key_label="OpenAI API Key:",
         default_api_base_url="https://api.openai.com/v1",
-        default_model_name="gpt-5.4"
+        default_model_name="gpt-5-chat-latest"
     ),
     AIProvider.AI_ANTHROPIC: ModelConfig(
         provider=AIProvider.AI_ANTHROPIC,
@@ -300,6 +300,36 @@ def get_translation(lang_code: str) -> Dict[str, str]:
     return base
 
 
+def extract_api_error_message(response) -> str:
+    """
+    Extract provider error message from an HTTP response body when present.
+    Prefers OpenAI-style ``{"error": {"message": "..."}}``.
+    """
+    if response is None:
+        return ''
+    try:
+        detail = response.json()
+    except Exception:
+        text = (getattr(response, 'text', None) or '').strip()
+        return text[:800] if text else ''
+
+    if not isinstance(detail, dict):
+        return ''
+
+    err = detail.get('error')
+    if isinstance(err, dict):
+        message = err.get('message')
+        if message:
+            return str(message).strip()
+    elif isinstance(err, str) and err.strip():
+        return err.strip()
+
+    message = detail.get('message')
+    if message:
+        return str(message).strip()
+    return ''
+
+
 def format_http_error(e: Exception, lang_code: str = 'en') -> str:
     """
     格式化 HTTP 错误信息为用户友好格式
@@ -311,29 +341,45 @@ def format_http_error(e: Exception, lang_code: str = 'en') -> str:
     from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
     
     translations = get_translation(lang_code)
+    technical_detail = str(e)
+    api_message = ''
     
     # 检查是否是 HTTPError
     if isinstance(e, requests.exceptions.HTTPError):
         status_code = e.response.status_code if e.response is not None else None
+        response_url = ''
+        if e.response is not None:
+            response_url = getattr(e.response, 'url', '') or ''
+            api_message = extract_api_error_message(e.response)
         
-        # 根据状态码选择错误描述
+        # Status-based fallback only when the provider did not return a message.
+        # Example: OpenAI 404 + "Model not found ..." must not become "endpoint not found".
         if status_code == 401:
-            user_msg = translations.get('error_401', 
+            fallback_msg = translations.get('error_401', 
                 'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
         elif status_code == 403:
-            user_msg = translations.get('error_403', 
+            fallback_msg = translations.get('error_403', 
                 'Access denied. Please check: API Key has sufficient permissions, no regional access restrictions.')
         elif status_code == 404:
-            user_msg = translations.get('error_404', 
+            fallback_msg = translations.get('error_404', 
                 'API endpoint not found. Please check if the API Base URL configuration is correct.')
         elif status_code == 429:
-            user_msg = translations.get('error_429', 
+            fallback_msg = translations.get('error_429', 
                 'Too many requests, rate limit reached. Please try again later.')
         elif status_code and 500 <= status_code < 600:
-            user_msg = translations.get('error_5xx', 
+            fallback_msg = translations.get('error_5xx', 
                 'Server error. Please try again later or check the service provider status.')
         else:
-            user_msg = translations.get('error_unknown', 'Unknown error.')
+            fallback_msg = translations.get('error_unknown', 'Unknown error.')
+
+        user_msg = api_message or fallback_msg
+
+        # Avoid dumping raw English "404 Client Error: Not Found for url: ..."
+        if status_code is not None:
+            technical_detail = translations.get(
+                'http_status_detail',
+                'HTTP {status} for URL: {url}',
+            ).format(status=status_code, url=response_url or '(unknown)')
     elif isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.Timeout)):
         # 网络连接错误或超时
         user_msg = translations.get('error_network', 
@@ -344,7 +390,7 @@ def format_http_error(e: Exception, lang_code: str = 'en') -> str:
     
     # 格式化完整错误信息
     technical_label = translations.get('technical_details', 'Technical Details')
-    return f"{user_msg}\n\n{technical_label}: {str(e)}"
+    return f"{user_msg}\n\n{technical_label}: {technical_detail}"
 
 
 def get_model_specific_translation(key: str, lang_code: str, provider: AIProvider = DEFAULT_PROVIDER) -> str:

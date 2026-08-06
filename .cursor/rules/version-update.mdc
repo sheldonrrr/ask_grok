@@ -37,8 +37,9 @@ MAJOR = breaking · MINOR = features · PATCH = fixes
 
 ## Slash command
 
-Invoke with `/version-up` (optional `X.Y.Z` argument). See `.cursor/commands/version-up.md`.
-Related: `/pack` packages; `/push` commits and pushes.
+Invoke with `/upgrade-version` (optional `X.Y.Z` argument; alias `/version-up`).
+See `.cursor/commands/upgrade-version.md`.
+Related: `/pack` packages via `scripts/package.sh`; `/push` commits and pushes.
 
 ## Never
 

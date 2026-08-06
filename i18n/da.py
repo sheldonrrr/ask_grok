@@ -388,6 +388,7 @@ class DanishTranslation(BaseTranslation):
             'error_5xx': 'Serverfejl. Prøv venligst igen senere, eller kontroller tjenesteudbyderens status.',
             'error_network': 'Netværksforbindelse mislykkedes. Kontroller venligst netværksforbindelse, proxyindstillinger eller firewallkonfiguration.',
             'error_unknown': 'Ukendt fejl.',
+            'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Tekniske detaljer',
             'ollama_service_not_running': 'Ollama-tjenesten kører ikke. Start venligst Ollama-tjenesten først.',
             'ollama_service_timeout': 'Ollama-tjenesteforbindelse timeout. Kontroller venligst, om tjenesten kører korrekt.',

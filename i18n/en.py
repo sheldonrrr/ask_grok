@@ -393,6 +393,7 @@ class EnglishTranslation(BaseTranslation):
             'error_5xx': 'Server error. Please try again later or check the service provider status.',
             'error_network': 'Network connection failed. Please check network connection, proxy settings, or firewall configuration.',
             'error_unknown': 'Unknown error.',
+            'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Technical Details',
             'ollama_service_not_running': 'Ollama service is not running. Please start Ollama service first.',
             'ollama_service_timeout': 'Ollama service connection timeout. Please check if the service is running properly.',
