@@ -416,6 +416,8 @@ class DanishTranslation(BaseTranslation):
             'about_markdown_desc': 'Eksporter bøger som Markdown-tekstfiler.',
             'about_tradsimp_title': 'Kinesisk tekstkonvertering til calibre',
             'about_tradsimp_desc': 'Konverter traditionelt og forenklet kinesisk i ebooks.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Hold en kort liste over bøger, du læser, se fremskridt og synkroniser fra fremviseren.',
             'about_open_mobileread': 'Åbn MobileRead',
             'about_open_nowtiny': 'Åbn Nowtiny',
             'about_nowtiny_note': 'Flere værktøjer og pluginstatus findes på Nowtiny.',
@@ -537,6 +539,7 @@ class DanishTranslation(BaseTranslation):
 
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Gratis niveau hastighedsgrænse overskredet. Prøv venligst igen senere, eller konfigurer din egen Nvidia API-nøgle.',
+            'free_tier_gone': 'Den gratis Nvidia-kanal er ikke længere tilgængelig (HTTP 410). Konfigurer din egen Nvidia API-nøgle under Indstillinger → AI (Nvidia AI), eller prøv igen senere, hvis den gratis tjeneste genoprettes.',
             'free_tier_unavailable': 'Gratis niveau er midlertidigt utilgængeligt. Prøv venligst igen senere, eller konfigurer din egen Nvidia API-nøgle.',
             'free_tier_server_error': 'Gratis niveau serverfejl. Prøv venligst igen senere.',
             'free_tier_error': 'Gratis niveau fejl',
@@ -586,7 +589,7 @@ class DanishTranslation(BaseTranslation):
             'library_enable': 'Aktiver AI Søgning',
             'library_enable_tooltip': 'Når aktiveret, kan du søge i dit bibliotek ved hjælp af AI, når ingen bøger er valgt',
             'library_update': 'Opdater biblioteksdata',
-            'library_update_tooltip': 'Udtræk bogtitler og forfattere fra dit bibliotek',
+            'library_update_tooltip': 'Indekser titler og forfattere, og genopbyg den kompakte prompt-cache',
             'library_updating': 'Opdaterer...',
             'library_status': 'Status: {count} bøger, sidste opdatering: {time}',
             'library_status_empty': 'Status: Ingen data. Klik på "Opdater biblioteksdata" for at starte.',
@@ -598,28 +601,26 @@ class DanishTranslation(BaseTranslation):
             'library_init_message': 'AI Søgning kræver biblioteksmetadata for at fungere. Vil du initialisere det nu?\n\nDette vil udtrække bogtitler og forfattere fra dit bibliotek.',
             'library_init_required': 'AI Søgning kan ikke aktiveres uden biblioteksdata. Klik venligst på "Opdater biblioteksdata", når du er klar til at bruge denne funktion.',
             'ai_search_welcome_title': 'Velkommen til AI Søgning',
-            'ai_search_welcome_message': 'AI Søgning er aktiveret!\n\nSådan aktiveres:\n• Tastaturgenvej (kan tilpasses i indstillinger)\n• Værktøjsmenu → AI Søgning\n• Åbn Ask-dialog uden at vælge bøger\n\nDu kan søge i hele dit bibliotek med naturligt sprog. For eksempel:\n• "Har du nogen bøger om Python?"\n• "Vis mig bøger af Isaac Asimov"\n• "Find bøger om maskinlæring"\n\nAI vil søge i dit bibliotek og anbefale relevante bøger. Klik på bogtitler for at åbne dem direkte.',
+            'ai_search_welcome_message': (
+                'AI Search er aktiv. Søg i biblioteket med naturligt sprog (titel + forfatter).\n'
+                '\n'
+                'Åbn Ask uden valg, eller Værktøjer → AI Search.\n'
+                'Efter tilføj/fjern: Opdater biblioteksdata for at genopfriske prompt-cachen.'
+            ),
             'ai_search_not_enough_books_title': 'Ikke nok bøger',
             'ai_search_not_enough_books_message': 'AI Søgning kræver mindst {min_books} bøger i dit bibliotek.\n\nDit nuværende bibliotek har kun {book_count} bog/bøger.\n\nTilføj venligst flere bøger for at bruge AI Søgning.',
             'ai_search_mode_info': 'Søger på tværs af hele dit bibliotek',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Søg i hele dit bibliotek med naturligt sprog',
             'ai_search_feature_description': (
-                'AI Search hjælper dig med at finde bøger i hele dit Calibre-bibliotek.\n\n'
-                '• Udløs: åbn Ask uden at vælge bøger, brug Værktøjer → AI Search, eller en genvej\n'
-                '• Sådan virker det: pluginet sender kompakte metadata (bog-ID, titel, forfatter) '
-                'for alle indekserede bøger\n'
-                '• Store valg: hvis du vælger mere end 50 bøger, foreslår Ask AI Search i stedet for '
-                'at indlejre hver bog i detaljeret format\n'
-                '• Hold data opdateret: klik "Opdater biblioteksdata" efter tilføjelse eller fjernelse af bøger\n\n'
-                'Eksempler: "Find bøger om Python", "Vis mig bøger af Isaac Asimov".'
+                'Søg i biblioteket med naturligt sprog (titel + forfatter).\n'
+                'Åbn Ask uden valgte bøger, eller Værktøjer → AI Search.\n'
+                'Klik Opdater biblioteksdata efter ændringer — genopfrisker den kompakte prompt-cache.'
             ),
-            'ai_search_usage_hint': (
-                'Tip: AI Search fungerer bedst til biblioteksomfattende opdagelse. For dybdegående '
-                'sammenligning af få bøger, vælg op til 30 bøger i stedet.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Biblioteksindex',
-            'ai_search_data_subtitle': 'Opdater den kompakte bogliste sendt til AI, når du tilføjer eller fjerner bøger',
+            'ai_search_data_subtitle': 'Genopbyg indeks og prompt-cache efter tilføjelse eller fjernelse af bøger',
+            'library_search_system_message': 'Du er en calibre-bibliotekssøgeassistent. Svar KUN med matchende bøger som en HTML-liste i det ønskede format. Ingen analyse, ingen tankekæde, ingen indledning.',
             'library_prompt_template': 'Du har adgang til brugerens bogbibliotek. Her er alle bøgerne: {metadata} Brugerforespørgsel: {query} Find venligst matchende bøger i det aktuelle bibliotek og returner dem i dette format (**VIGTIGT**: Brug HTML-linkformat, så brugere kan klikke på bogtitler for at åbne dem direkte): - <a href="calibre://book/BOOK_ID">Bogtitel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Bemærk: Nogle forfattere kan være angivet som "unknown". Dette er normale data, returner venligst alle matchende resultater normalt. Returner kun bøger, der matcher forespørgslen. Maksimalt 5 resultater.',
             'ai_search_privacy_title': 'Meddelelse om beskyttelse af personlige oplysninger',
             'ai_search_privacy_alert': 'AI Søgning bruger bogmetadata (titler og forfattere) fra dit bibliotek. Disse oplysninger vil blive sendt til den AI-udbyder, du har konfigureret til at behandle dine søgeforespørgsler.',

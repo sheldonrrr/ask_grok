@@ -23,15 +23,17 @@ dist/Ask_AI_Plugin_vX.Y.Z.zip
 **Must include (runtime):**
 
 - Plugin Python modules at zip root (`__init__.py`, `ui.py`, `models/`, …)
-- `i18n/`, `images/`, `lib/ask_ai_plugin_vendor/`
+- `i18n/`, `images/`, `lib/ask_ai_plugin_vendor/` (including `*.dist-info/` LICENSE/METADATA)
 - `tutorial/tutorial_v1.0.md`
+- `LICENSE`, `README.md`
 - `.env.example` (script re-adds it if present)
 
-**Must NOT include** (dev / local / docs — keep out of the ship zip; see `scripts/package.sh` and `.gitignore` “Packaging exclusions” notes):
+**Must NOT include** (dev / repo-only — see `scripts/package.sh` and `.gitignore` packaging notes):
 
 - `.git/`, `.cursor/`, `.github/`, other editor/tooling dirs
-- `docs/`, `aiprovider/`, `scripts/`, `tests/`, `bin/`, `backend/`, `dist/`
+- `release/`, `aiprovider/`, `scripts/`, `tests/`, `bin/`, `backend/`, `dist/`
 - `setup.py`, `requirements.txt`, `AGENTS.md`
+- `ask_ai_plugin_gif_preview.gif` (README preview only; stays in git)
 - `tutorial/about.md` (dev-only)
 - Caches / junk: `__pycache__/`, `*.py[cod]`, `.pytest_cache/`, `.mypy_cache/`, `node_modules/`
 - OS junk: `.DS_Store`, `._*`, `__MACOSX/`, `Thumbs.db`, `Desktop.ini`, `$RECYCLE.BIN/`, etc.
@@ -48,6 +50,6 @@ dist/Ask_AI_Plugin_vX.Y.Z.zip
 
 ## Do not
 
-- Hand-zip the whole repo (pulls in tests/scripts/docs)
+- Hand-zip the whole repo (pulls in tests/scripts/release/dev trees)
 - Package with `calibre-customize -b` as a substitute for the release zip
 - Include local debug helpers, agent transcripts, or IDE folders

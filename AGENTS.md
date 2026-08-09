@@ -24,8 +24,11 @@ The project ships a fish-based dev loop. Source it or run the bash wrappers:
   directly from any shell (they `exec fish -c ...`):
   - `bin/caldbg`      – install plugin from source (`calibre-customize -b .`) + launch GUI
   - `bin/caldbg-ag`   – shut down a running calibre first, then install + launch (use this to reload after code changes)
-  - `bin/caldbg-p`    – package `dist/*.zip` via `scripts/package.sh`, install the zip, launch
-  - `bin/caldbg-pag`  – same as `caldbg-p` but shuts down a running calibre first
+- `bin/caldbg-p`    – package `dist/*.zip` via `scripts/package.sh`, install the zip, launch
+- `bin/caldbg-pag`  – same as `caldbg-p` but shuts down a running calibre first
+- Packaging policy (public repo vs plugin zip) lives in `.gitignore` “Packaging notes”
+  and `scripts/package.sh` (release notes, tests, scripts, aiprovider are git-tracked
+  but not shipped).
 - The GUI (`calibre-debug --gui`) needs a display; in this env prefix with the
   existing `DISPLAY=:1`, or wrap in `xvfb-run -a` for headless.
 

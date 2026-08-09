@@ -154,7 +154,7 @@ DEFAULT_MODELS = {
         display_name="Nvidia AI",
         api_key_label="Nvidia API Key:",
         default_api_base_url="https://integrate.api.nvidia.com/v1",
-        default_model_name="nvidia/nemotron-3-ultra-550b-a55b"
+        default_model_name="nvidia/nemotron-3-nano-30b-a3b"
     ),
     AIProvider.AI_OPENROUTER: ModelConfig(
         provider=AIProvider.AI_OPENROUTER,
@@ -196,7 +196,8 @@ DEFAULT_MODELS = {
         display_name="Nvidia AI (Free)",
         api_key_label="API Key (Not Required):",
         default_api_base_url="https://nvidia-proxy.boy-liushaopeng.workers.dev",
-        default_model_name="openai/gpt-oss-120b"
+        # Same small/fast default as paid Nvidia; gpt-oss-120b often exceeds free-proxy TTFB.
+        default_model_name="nvidia/nemotron-3-nano-30b-a3b"
     )
 }
 

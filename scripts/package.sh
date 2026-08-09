@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Package Ask AI Plugin into dist/ for release.
+# Package Ask AI Plugin into dist/ for calibre / MobileRead distribution.
 #
 # Output (canonical, no spaces — safer on Windows / shells):
 #   dist/Ask_AI_Plugin_vX.Y.Z.zip
 #
-# Exclusions stay in sync with the "Packaging exclusions" notes in .gitignore.
-# GitHub-only reference trees (docs/, aiprovider/, scripts/, tests/, …) are not shipped.
+# This public GitHub repo contains more than the plugin runtime.
+# Keep zip excludes in sync with the "Packaging notes" section in .gitignore.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -25,10 +25,14 @@ rm -f \
   "$DIST/Ask AI Plugin.zip" \
   "$DIST/Ask AI Plugin-"*.zip
 
+# zip -x patterns are matched against archive member names (paths relative to ROOT).
+# Broad "*.git*" keeps .git / .gitignore / .gitattributes out of the ship zip.
 zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "*.git*" \
+  \
   -x ".env" \
   -x ".env.*" \
+  \
   -x ".cursor/*" \
   -x ".cursor/**" \
   -x ".claude/*" \
@@ -51,6 +55,7 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x ".obsidian/**" \
   -x ".sync/*" \
   -x ".sync/**" \
+  \
   -x "dist/*" \
   -x "dist/**" \
   -x "scripts/*" \
@@ -61,15 +66,21 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "bin/**" \
   -x "aiprovider/*" \
   -x "aiprovider/**" \
-  -x "docs/*" \
-  -x "docs/**" \
-  -x "tutorial/about.md" \
+  -x "release/*" \
+  -x "release/**" \
   -x "backend/*" \
   -x "backend/**" \
   -x "lib/bin/*" \
   -x "lib/bin/**" \
-  -x "**/*.dist-info/*" \
-  -x "**/*.dist-info/**" \
+  \
+  -x "tutorial/about.md" \
+  -x "ask_ai_plugin_gif_preview.gif" \
+  -x "setup.py" \
+  -x "requirements.txt" \
+  -x "AGENTS.md" \
+  -x "*.code-workspace" \
+  -x "*.zip" \
+  \
   -x "**/.pytest_cache/*" \
   -x "**/.pytest_cache/**" \
   -x "**/.mypy_cache/*" \
@@ -80,14 +91,10 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "__pycache__/**" \
   -x "node_modules/*" \
   -x "node_modules/**" \
-  -x "ask_ai_plugin_gif_preview.gif" \
-  -x "setup.py" \
-  -x "requirements.txt" \
-  -x "AGENTS.md" \
   -x "**/*.py[cod]" \
+  \
   -x "**/.DS_Store" \
   -x ".DS_Store" \
-  -x "**/.DS_Store" \
   -x "**/._*" \
   -x "__MACOSX/*" \
   -x "__MACOSX/**" \
@@ -111,11 +118,9 @@ zip -r "$DIST/$VERSIONED_ZIP" . \
   -x "**/Desktop.ini" \
   -x "**/\$RECYCLE.BIN/*" \
   -x "**/\$RECYCLE.BIN/**" \
-  -x "*.zip" \
-  -x "*.code-workspace" \
   > /dev/null
 
-# Keep sample env template in release package (align with .gitignore: !.env.example)
+# `.env.*` above also matches `.env.example`; re-add the safe template for users.
 if [ -f "$ROOT/.env.example" ]; then
   zip -qj "$DIST/$VERSIONED_ZIP" "$ROOT/.env.example"
 fi

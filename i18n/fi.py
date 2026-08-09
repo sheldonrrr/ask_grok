@@ -420,6 +420,8 @@ class FinnishTranslation(BaseTranslation):
             'about_markdown_desc': 'Vie kirjat Markdown-tekstitiedostoiksi.',
             'about_tradsimp_title': 'Kiinankielisen tekstin muunnos calibre-ohjelmalle',
             'about_tradsimp_desc': 'Muunna perinteistä ja yksinkertaistettua kiinaa e-kirjoissa.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Pidä lyhyt lista lukemistasi kirjoista, näe edistyminen ja synkronoi katselimesta.',
             'about_open_mobileread': 'Avaa MobileRead',
             'about_open_nowtiny': 'Avaa Nowtiny',
             'about_nowtiny_note': 'Lisää työkaluja ja lisäosien tila löytyy Nowtiny-sivustolta.',
@@ -541,6 +543,7 @@ class FinnishTranslation(BaseTranslation):
             
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Ilmaisen tason nopeusrajoitus ylitetty. Yritä uudelleen myöhemmin tai määritä oma Nvidia API-avaimesi.',
+            'free_tier_gone': 'Ilmainen Nvidia-kanava ei ole enää käytettävissä (HTTP 410). Määritä oma Nvidia API-avaimesi kohdassa Asetukset → AI (Nvidia AI), tai yritä myöhemmin uudelleen, jos ilmainen palvelu palautuu.',
             'free_tier_unavailable': 'Ilmainen taso on tilapäisesti poissa käytöstä. Yritä uudelleen myöhemmin tai määritä oma Nvidia API-avaimesi.',
             'free_tier_server_error': 'Ilmaisen tason palvelinvirhe. Yritä uudelleen myöhemmin.',
             'free_tier_error': 'Ilmaisen tason virhe',
@@ -590,7 +593,7 @@ class FinnishTranslation(BaseTranslation):
             'library_enable': 'Ota AI-haku käyttöön',
             'library_enable_tooltip': 'Kun käytössä, voit hakea kirjastostasi tekoälyllä, kun kirjoja ei ole valittuna',
             'library_update': 'Päivitä kirjaston tiedot',
-            'library_update_tooltip': 'Hae kirjojen nimet ja kirjailijat kirjastostasi',
+            'library_update_tooltip': 'Indeksoi nimet ja tekijät sekä rakenna tiivis prompt-välimuisti uudelleen',
             'library_updating': 'Päivitetään...',
             'library_status': 'Tila: {count} kirjaa, viimeisin päivitys: {time}',
             'library_status_empty': 'Tila: Ei tietoja. Aloita klikkaamalla "Päivitä kirjaston tiedot".',
@@ -602,28 +605,28 @@ class FinnishTranslation(BaseTranslation):
             'library_init_message': 'AI-haku vaatii kirjaston metatiedot toimiakseen. Haluatko alustaa ne nyt?\n\nTämä hakee kirjojen nimet ja kirjailijat kirjastostasi.',
             'library_init_required': 'AI-hakua ei voi ottaa käyttöön ilman kirjaston tietoja. Klikkaa "Päivitä kirjaston tiedot", kun olet valmis käyttämään tätä ominaisuutta.',
             'ai_search_welcome_title': 'Tervetuloa AI-hakuun',
-            'ai_search_welcome_message': 'AI-haku on aktivoitu!\n\nAktivointitavat:\n• Pikanäppäin (muokattavissa asetuksissa)\n• Työkalut-valikko → AI-haku\n• Avaa Ask-dialogi valitsematta kirjoja\n\nVoit hakea koko kirjastostasi luonnollisella kielellä. Esimerkiksi:\n• "Onko sinulla kirjoja Pythonista?"\n• "Näytä Isaac Asimovin kirjoja"\n• "Etsi kirjoja koneoppimisesta"\n\nAI etsii kirjastostasi ja suosittelee sopivia kirjoja. Napsauta kirjan nimeä avataksesi sen suoraan.',
+            'ai_search_welcome_message': (
+                'AI Search on käytössä. Hae kirjastosta luonnollisella kielellä (otsikko + tekijä).\n'
+                '\n'
+                'Avaa Ask ilman valintaa tai Työkalut → AI Search.\n'
+                'Lisäyksen/poiston jälkeen päivitä kirjastotiedot prompt-välimuistin päivittämiseksi.'
+            ),
             'ai_search_not_enough_books_title': 'Ei tarpeeksi kirjoja',
             'ai_search_not_enough_books_message': 'AI-haku vaatii vähintään {min_books} kirjaa kirjastossasi.\n\nNykyisessä kirjastossasi on vain {book_count} kirja(a).\n\nLisää kirjoja käyttääksesi AI-hakua.',
             'ai_search_mode_info': 'Haetaan koko kirjastosta',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Hae koko kirjastostasi luonnollisella kielellä',
             'ai_search_feature_description': (
-                'AI Search auttaa löytämään kirjoja koko Calibre-kirjastostasi.\n\n'
-                '• Käynnistys: avaa Ask valitsematta kirjoja, käytä Työkalut → AI Search tai pikanäppäin\n'
-                '• Toiminta: lisäosa lähettää tiiviit metatiedot (kirja-ID, otsikko, tekijä) '
-                'kaikista indeksoiduista kirjoista\n'
-                '• Suuret valinnat: yli 50 kirjan valinta ehdottaa AI Search -toimintoa sen sijaan, '
-                'että jokainen kirja upotettaisiin yksityiskohtaisessa muodossa\n'
-                '• Pidä tiedot ajan tasalla: napsauta "Päivitä kirjastotiedot" lisättyäsi tai poistettuasi kirjoja\n\n'
-                'Esimerkkejä: "Etsi kirjoja Pythonista", "Näytä Isaac Asimovin kirjoja".'
+                'Hae kirjastosta luonnollisella kielellä (otsikko + tekijä).\n'
+                'Avaa Ask ilman valittuja kirjoja tai Työkalut → AI Search.\n'
+                'Päivitä kirjastotiedot muutosten jälkeen — päivittää tiiviin prompt-välimuistin.'
             ),
-            'ai_search_usage_hint': (
-                'Vinkki: AI Search sopii parhaiten koko kirjaston löytämiseen. Vertaillaksesi '
-                'muutamaa kirjaa syvällisesti, valitse enintään 30 kirjaa.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Kirjastoindeksi',
-            'ai_search_data_subtitle': 'Päivitä tekoälylle lähetettävä tiivis kirjalista, kun lisäät tai poistat kirjoja',
+            'ai_search_data_subtitle': (
+                'Rakenna indeksi ja prompt-välimuisti uudelleen kirjojen lisäyksen tai poiston jälkeen'
+            ),
+            'library_search_system_message': 'Olet calibre-kirjaston hakuavustaja. Vastaa VAIN vastaavilla kirjoilla HTML-luettelona pyydetyssä muodossa. Ei analyysiä, ei ajatteluketjua, ei johdantoa.',
             'library_prompt_template': 'Sinulla on pääsy käyttäjän kirjakirjastoon. Tässä ovat kaikki kirjat: {metadata} Käyttäjän kysely: {query} Etsi vastaavat kirjat nykyisestä kirjastosta ja palauta ne tässä muodossa (**TÄRKEÄÄ**: Käytä HTML-linkkimuotoa, jotta käyttäjät voivat napsauttaa kirjojen nimiä avatakseen ne suoraan): - <a href="calibre://book/BOOK_ID">Kirjan nimi</a> - Kirjailijan nimi Esimerkki: - <a href="calibre://book/123">Opi Python</a> - Mark Lutz - <a href="calibre://book/456">Koneoppiminen käytännössä</a> - Peter Harrington Huomautus: Jotkut kirjailijat voivat olla merkitty "unknown". Tämä on normaalia dataa, palauta kaikki vastaavat tulokset normaalisti. Palauta vain kyselyä vastaavat kirjat. Enintään 5 tulosta.',
             'ai_search_privacy_title': 'Tietosuojailmoitus',
             'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',

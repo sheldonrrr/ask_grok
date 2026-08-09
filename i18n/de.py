@@ -393,6 +393,8 @@ class GermanTranslation(BaseTranslation):
             'about_markdown_desc': 'Exportieren Sie Bücher als Markdown-Textdateien.',
             'about_tradsimp_title': 'Chinesische Textkonvertierung für calibre',
             'about_tradsimp_desc': 'Konvertieren Sie traditionelles und vereinfachtes Chinesisch in E-Books.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Behalten Sie eine kurze Liste der Bücher, die Sie lesen, sehen Sie den Fortschritt und synchronisieren Sie vom Viewer.',
             'about_open_mobileread': 'MobileRead öffnen',
             'about_open_nowtiny': 'Nowtiny öffnen',
             'about_nowtiny_note': 'Weitere Tools und Plugin-Status finden Sie auf Nowtiny.',
@@ -561,6 +563,7 @@ class GermanTranslation(BaseTranslation):
             
             # Nvidia Free Fehlermeldungen
             'free_tier_rate_limit': 'Ratenlimit für kostenlosen Zugang überschritten. Bitte versuchen Sie es später erneut oder konfigurieren Sie Ihren eigenen Nvidia API-Schlüssel.',
+            'free_tier_gone': 'Der kostenlose Nvidia-Kanal ist nicht mehr verfügbar (HTTP 410). Bitte konfigurieren Sie Ihren eigenen Nvidia-API-Schlüssel unter Einstellungen → AI (Nvidia AI), oder versuchen Sie es später erneut, falls der kostenlose Dienst wiederhergestellt wird.',
             'free_tier_unavailable': 'Kostenloser Zugang ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut oder konfigurieren Sie Ihren eigenen Nvidia API-Schlüssel.',
             'free_tier_server_error': 'Serverfehler beim kostenlosen Zugang. Bitte versuchen Sie es später erneut.',
             'free_tier_error': 'Fehler beim kostenlosen Zugang',
@@ -593,7 +596,9 @@ class GermanTranslation(BaseTranslation):
             'library_enable': 'KI-Suche aktivieren',
             'library_enable_tooltip': 'Wenn aktiviert, können Sie Ihre Bibliothek mithilfe von KI durchsuchen, wenn keine Bücher ausgewählt sind',
             'library_update': 'Bibliotheksdaten aktualisieren',
-            'library_update_tooltip': 'Buchtitel und Autoren aus Ihrer Bibliothek extrahieren',
+            'library_update_tooltip': (
+                'Titel und Autoren aller Bücher indexieren und den kompakten Prompt-Cache neu aufbauen'
+            ),
             'library_updating': 'Aktualisierung...',
             'library_status': 'Status: {count} Bücher, letzte Aktualisierung: {time}',
             'library_status_empty': 'Status: Keine Daten. Klicken Sie auf "Bibliotheksdaten aktualisieren", um zu beginnen.',
@@ -605,32 +610,26 @@ class GermanTranslation(BaseTranslation):
             'library_init_message': 'Die KI-Suche benötigt Bibliotheks-Metadaten, um zu funktionieren. Möchten Sie diese jetzt initialisieren?\n\nDadurch werden Buchtitel und Autoren aus Ihrer Bibliothek extrahiert.',
             'library_init_required': 'Die KI-Suche kann ohne Bibliotheksdaten nicht aktiviert werden. Bitte klicken Sie auf "Bibliotheksdaten aktualisieren", wenn Sie bereit sind, diese Funktion zu nutzen.',
             'ai_search_welcome_title': 'Willkommen zur KI-Suche',
-            'ai_search_welcome_message': 'KI-Suche ist aktiviert!\n\nAuslösemethoden:\n• Tastenkürzel (in den Einstellungen anpassbar)\n• Extras-Menü → KI-Suche\n• Ask-Dialog öffnen ohne Bücher auszuwählen\n\nSie können Ihre gesamte Bibliothek mit natürlicher Sprache durchsuchen. Zum Beispiel:\n• "Hast du Bücher über Python?"\n• "Zeig mir Bücher von Isaac Asimov"\n• "Finde Bücher über maschinelles Lernen"\n\nDie KI durchsucht Ihre Bibliothek und empfiehlt relevante Bücher. Klicken Sie auf Buchtitel, um sie direkt zu öffnen.',
+            'ai_search_welcome_message': (
+                'AI Search ist aktiv. Durchsuchen Sie Ihre Bibliothek in natürlicher Sprache (Titel + Autor).\n'
+                '\n'
+                'Öffnen Sie Ask ohne Auswahl, oder Tools → AI Search.\n'
+                'Nach Hinzufügen/Entfernen von Büchern: „Bibliotheksdaten aktualisieren“, um den Prompt-Cache zu aktualisieren.'
+            ),
             'ai_search_not_enough_books_title': 'Nicht genügend Bücher',
             'ai_search_not_enough_books_message': 'Die KI-Suche erfordert mindestens {min_books} Bücher in Ihrer Bibliothek.\n\nIhre aktuelle Bibliothek enthält nur {book_count} Buch/Bücher.\n\nBitte fügen Sie mehr Bücher hinzu, um die KI-Suche zu nutzen.',
             'ai_search_mode_info': 'Suche in der gesamten Bibliothek',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Durchsuchen Sie Ihre gesamte Bibliothek in natürlicher Sprache',
             'ai_search_feature_description': (
-                'AI Search hilft Ihnen, Bücher in Ihrer gesamten Calibre-Bibliothek zu entdecken.\n\n'
-                '• Auslösen: Ask ohne Bücherauswahl öffnen, Extras → AI Search oder Tastenkürzel\n'
-                '• Funktionsweise: Das Plugin sendet kompakte Metadaten (Buch-ID, Titel, Autor) '
-                'für alle indizierten Bücher\n'
-                '• Große Auswahl: Bei mehr als 50 Büchern schlägt Ask AI Search vor, statt jedes '
-                'Buch im ausführlichen Format einzubetten\n'
-                '• Daten aktuell halten: Nach Hinzufügen oder Entfernen von Büchern '
-                '„Bibliotheksdaten aktualisieren“ klicken\n\n'
-                'Beispielfragen: „Finde Bücher über Python“, „Zeig mir Bücher von Isaac Asimov“.'
+                'Bibliothek in natürlicher Sprache durchsuchen (Titel + Autor).\n'
+                'Ask ohne Auswahl öffnen oder Tools → AI Search nutzen.\n'
+                'Nach Änderungen „Bibliotheksdaten aktualisieren“ — aktualisiert den kompakten Prompt-Cache.'
             ),
-            'ai_search_usage_hint': (
-                'Tipp: AI Search eignet sich am besten für bibliotheksweite Suche. Für einen '
-                'tiefen Vergleich weniger Bücher wählen Sie bis zu 30 Bücher aus.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Bibliotheksindex',
-            'ai_search_data_subtitle': (
-                'Aktualisieren Sie die kompakte Buchliste für die KI, wenn Sie Bücher '
-                'hinzufügen oder entfernen'
-            ),
+            'ai_search_data_subtitle': 'Index und Prompt-Cache nach Hinzufügen/Entfernen von Büchern neu aufbauen',
+            'library_search_system_message': 'Sie sind ein Calibre-Bibliothekssuchassistent. Antworten Sie NUR mit passenden Büchern als HTML-Liste im angeforderten Format. Keine Analyse, kein Denkprozess, keine Einleitung.',
             'library_prompt_template': 'Sie haben Zugriff auf die Buchbibliothek des Benutzers. Hier sind alle Bücher: {metadata} Benutzeranfrage: {query} Bitte finden Sie passende Bücher in der aktuellen Bibliothek und geben Sie sie in diesem Format zurück (**WICHTIG**: Verwenden Sie das HTML-Link-Format, damit Benutzer auf Buchtitel klicken können, um sie direkt zu öffnen): - <a href="calibre://book/BOOK_ID">Buchtitel</a> - Autorenname Beispiel: - <a href="calibre://book/123">Python lernen</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Aktion</a> - Peter Harrington Hinweis: Einige Autoren können als "unknown" aufgeführt sein. Dies sind normale Daten, bitte geben Sie alle passenden Ergebnisse normal zurück. Nur Bücher zurückgeben, die der Anfrage entsprechen. Maximal 5 Ergebnisse.',
             'ai_search_privacy_title': 'Datenschutzhinweis',
             'ai_search_privacy_alert': 'Die KI-Suche verwendet Buch-Metadaten (Titel und Autoren) aus Ihrer Bibliothek. Diese Informationen werden an den von Ihnen konfigurierten KI-Anbieter gesendet, um Ihre Suchanfragen zu verarbeiten.',

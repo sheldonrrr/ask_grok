@@ -20,7 +20,7 @@ class NvidiaModel(BaseAIModel):
     Note: Free tier available with 40 RPM rate limit
     """
     # Default model name
-    DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b"
+    DEFAULT_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://integrate.api.nvidia.com/v1"
     
@@ -157,6 +157,7 @@ class NvidiaModel(BaseAIModel):
                 full_content = ""
                 chunk_count = 0
                 last_chunk_time = time.time()
+                stall_warned = False
                 logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.nvidia')
                 
                 api_url = f"{self.config['api_base_url']}/chat/completions"
@@ -189,17 +190,23 @@ class NvidiaModel(BaseAIModel):
                                                     stream_callback(chunk_text)
                                                     chunk_count += 1
                                                     last_chunk_time = time.time()
+                                                    stall_warned = False
                                     except json.JSONDecodeError as je:
                                         logger.error(f"JSON parse error: {str(je)}, line content: {line_str[:50]}...")
                                         continue
                                     
-                                # Check if no new data received for 15 seconds
+                                # Stall check: log once per stall (avoid spam on empty SSE heartbeats)
                                 current_time = time.time()
-                                if current_time - last_chunk_time > 15:
-                                    logger.warning(f"No new data received for {current_time - last_chunk_time:.1f} seconds")
+                                stalled_for = current_time - last_chunk_time
+                                if stalled_for > 15 and not stall_warned:
+                                    logger.warning(
+                                        "No new data received for %.1f seconds",
+                                        stalled_for,
+                                    )
+                                    stall_warned = True
                                 
                                 # If no new data for 60 seconds, try to recover connection
-                                if current_time - last_chunk_time > 60 and full_content:
+                                if stalled_for > 60 and full_content:
                                     logger.warning("No response for over 60 seconds, triggering recovery mechanism")
                                     translations = get_translation(self.config.get('language', 'en'))
                                     raise requests.exceptions.ReadTimeout(translations.get('stream_timeout_error', "Streaming timeout after 60 seconds with no new content, possible connection issue"))

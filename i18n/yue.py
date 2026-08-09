@@ -394,6 +394,8 @@ class CantoneseTranslation(BaseTranslation):
             'about_markdown_desc': 'Calibre 插件 · Python\n將書本匯出做 Markdown 文字檔。',
             'about_tradsimp_title': 'Chinese Text Conversion for calibre',
             'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': '維護緊讀緊嘅書單、睇進度，同埋從閱讀器同步。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '開啟 MobileRead',
             'about_mobileread_note': '注：MobileRead 係 calibre 插件發佈同更多版本更新資訊嘅開發者頁面。',
@@ -506,6 +508,7 @@ class CantoneseTranslation(BaseTranslation):
 
             # Nvidia 免費方案錯誤消息
             'free_tier_rate_limit': '免費方案請求頻率超限。請稍後再試或者設定你自己嘅 Nvidia API 金鑰。', # Free tier rate limit exceeded. Please try again later or configure your own Nvidia API Key.
+            'free_tier_gone': '內建免費 Nvidia 通道已經唔可用（HTTP 410）。請喺設定 → AI 入面配置你自己嘅 Nvidia API 金鑰（Nvidia AI），或者等免費服務恢復再試。',
             'free_tier_unavailable': '免費方案暫時不可用。請稍後再試或者設定你自己嘅 Nvidia API 金鑰。', # Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.
             'free_tier_server_error': '免費方案伺服器錯誤。請稍後再試。', # Free tier server error. Please try again later.
             'free_tier_error': '免費方案錯誤', # Free tier error
@@ -555,7 +558,7 @@ class CantoneseTranslation(BaseTranslation):
             'library_enable': '開啟 AI 搜尋',
             'library_enable_tooltip': '開咗之後，喺冇揀書嘅情況下可以用 AI 搜尋書庫',
             'library_update': '更新書庫資料',
-            'library_update_tooltip': '喺書庫度提取書名同作者',
+            'library_update_tooltip': '為全部書籍建立索引（書名同作者），並重建精簡提示詞快取',
             'library_updating': '更新緊...',
             'library_status': '狀態：有 {count} 本書，上次更新：{time}',
             'library_status_empty': '狀態：冇資料。請點擊「更新書庫資料」開始。',
@@ -567,23 +570,26 @@ class CantoneseTranslation(BaseTranslation):
             'library_init_message': 'AI 搜尋需要書庫嘅 Metadata 先用到。想唔想而家初始化？\n\n呢個動作會喺你個書庫度提取書名同作者。',
             'library_init_required': '冇書庫資料就用唔到 AI 搜尋。準備好嘅話請點擊「更新書庫資料」。',
             'ai_search_welcome_title': '歡迎使用 AI 搜尋',
-            'ai_search_welcome_message': 'AI 搜尋已經開咗喇！\n\n觸發方式：\n• 快捷鍵（可以喺設定度自訂）\n• 工具選單 → AI 搜尋\n• 唔揀任何書嘅時候開 Ask 對話框\n\n你可以用自然語言嚟搜尋成個書庫。例如：\n• 「你有冇關於 Python 嘅書？」\n• 「我想睇艾西莫夫嘅書」\n• 「搵啲關於機器學習嘅書俾我」\n\nAI 會幫你喺書庫度搵返相關嘅書出嚟，撳書名就可以直接開嚟睇。',
+            'ai_search_welcome_message': (
+                'AI 搜尋已開啟。可用自然語言搜尋書庫（書名 + 作者）。\n'
+                '\n'
+                '唔選書開 Ask、用「工具 → AI 搜尋」或快捷鍵就得。\n'
+                '加減書籍後請撳「更新圖書館資料」，刷新搜尋用嘅精簡提示詞快取。'
+            ),
             'ai_search_not_enough_books_title': '書唔夠多',
             'ai_search_not_enough_books_message': 'AI 搜尋需要你個書庫至少有 {min_books} 本書。\n\n你而家個書庫得 {book_count} 本書。\n\n請加多啲書先再用 AI 搜尋。',
             'ai_search_mode_info': '搜尋緊成個書庫',
             'ai_search_feature_title': 'AI 搜尋',
             'ai_search_feature_subtitle': '用自然語言搜尋成個書庫',
             'ai_search_feature_description': (
-                'AI 搜尋幫你喺成個 Calibre 書庫搵書。\n\n'
-                '• 觸發：唔揀書開 Ask、用「工具 → AI 搜尋」或者快捷鍵\n'
-                '• 原理：插件以緊湊格式（書籍 ID、書名、作者）發送已索引嘅全部書籍元數據\n'
-                '• 大量揀書：揀超過 50 本時，Ask 會建議用 AI 搜尋，而唔係把每本書詳細元數據塞入提示詞\n'
-                '• 保持數據新鮮：加書或刪書之後，請撳「更新書庫數據」\n\n'
-                '示例：「有冇 Python 相關嘅書？」「俾我睇阿西莫夫嘅書」。'
+                '用自然語言搜尋書庫（書名 + 作者）。\n'
+                '唔選書開 Ask，或者用「工具 → AI 搜尋」。\n'
+                '加減書籍後請撳「更新圖書館資料」——會刷新搜尋用嘅精簡提示詞快取。'
             ),
-            'ai_search_usage_hint': '提示：AI 搜尋最啱書庫級發現。如果想深入比較少少書，直接揀唔超過 30 本就得。',
+            'ai_search_usage_hint': '',
             'ai_search_data_title': '書庫索引',
-            'ai_search_data_subtitle': '加書或刪書之後，請刷新發送畀 AI 嘅緊湊書單',
+            'ai_search_data_subtitle': '加減書籍後重建索引同精簡提示詞快取',
+            'library_search_system_message': '你係 calibre 書庫搜尋助手。淨係按用戶要求嘅 HTML 列表格式回傳匹配書籍。唔好分析、唔好思維鏈、唔好前言。',
             'library_prompt_template': '你可以睇到用戶嘅書庫。以下係所有書籍：{metadata} 用戶查詢：{query} 請喺當前書庫目錄入面搵出符合嘅書籍並以以下格式回傳（**重要**：用 HTML 連結格式，等用戶可以撳書名直接開書）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，呢個係正常資料，請正常回傳所有符合結果，唔好俾呢個誤導。只回傳符合查詢嘅書籍。最多 5 個結果。',
             'ai_search_privacy_title': '隱私聲明',
             'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',

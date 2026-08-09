@@ -415,6 +415,8 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_markdown_desc': 'Calibre 插件 · Python\n將書籍匯出為 Markdown 文字檔。',
         'about_tradsimp_title': 'Chinese Text Conversion for calibre',
         'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n在電子書中轉換繁體中文與簡體中文。',
+        'about_simple_goal_title': 'Simple Goal for calibre',
+        'about_simple_goal_desc': '維護正在閱讀的書單、查看進度，並從閱讀器同步。',
         'about_open_button': 'MobileRead',
         'about_open_mobileread': '開啟 MobileRead',
         'about_mobileread_note': '注：MobileRead 是 calibre 插件發佈和更多版本更新資訊的開發者頁面。',
@@ -551,6 +553,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         
         # Nvidia Free 錯誤訊息
         'free_tier_rate_limit': '免費通道請求頻率超限。請稍後再試或配置自己的 Nvidia API Key。',
+        'free_tier_gone': '內建免費 Nvidia 通道已不可用（HTTP 410）。請在設定 → AI 中配置自己的 Nvidia API Key（Nvidia AI），或等待免費服務恢復後再試。',
         'free_tier_unavailable': '免費通道暫時不可用。請稍後再試或配置自己的 Nvidia API Key。',
         'free_tier_server_error': '免費通道伺服器錯誤。請稍後再試。',
         'free_tier_error': '免費通道錯誤',
@@ -583,7 +586,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'library_enable': '啟用 AI 搜尋',
         'library_enable_tooltip': '啟用後，在未選取書籍的情況下可以使用 AI 搜尋書庫',
         'library_update': '更新書庫資料',
-        'library_update_tooltip': '從書庫中提取書名與作者',
+        'library_update_tooltip': '為全部書籍建立索引（書名與作者），並重建緊湊提示詞快取',
         'library_updating': '更新中...',
         'library_status': '狀態：共有 {count} 本書，上次更新時間：{time}',
         'library_status_empty': '狀態：尚無資料。請點擊「更新書庫資料」開始。',
@@ -595,25 +598,26 @@ class TraditionalChineseTranslation(BaseTranslation):
         'library_init_message': 'AI 搜尋需要書庫元數據才能運作。是否立即進行初始化？\n\n這將會從您的書庫中提取書名與作者。',
         'library_init_required': '若無書庫資料則無法啟用 AI 搜尋。請在準備就緒時點擊「更新書庫資料」。',
         'ai_search_welcome_title': '歡迎使用 AI 搜尋',
-        'ai_search_welcome_message': 'AI 搜尋已啟動！\n\n觸發方式：\n• 快捷鍵（可在設定中自訂）\n• 工具選單 → AI 搜尋\n• 不選取任何書籍時開啟 Ask 對話框\n\n您可以用自然語言搜尋整個書庫。例如：\n• 「你有關於 Python 的書嗎？」\n• 「幫我找艾西莫夫寫的書」\n• 「尋找關於機器學習的書」\n\nAI 會搜尋您的書庫並推薦相關書籍，點擊書名即可直接開啟閱讀。',
+        'ai_search_welcome_message': (
+                'AI 搜尋已開啟。可用自然語言搜尋書庫（書名 + 作者）。\n'
+                '\n'
+                '不選書打開 Ask、使用「工具 → AI 搜尋」或快捷鍵即可。\n'
+                '增刪書籍後請點擊「更新圖書館資料」，以重新整理搜尋用的緊湊提示詞快取。'
+            ),
         'ai_search_not_enough_books_title': '書籍數量不足',
         'ai_search_not_enough_books_message': 'AI 搜尋需要您的書庫中至少有 {min_books} 本書。\n\n您目前的書庫只有 {book_count} 本書。\n\n請新增更多書籍後再使用 AI 搜尋。',
         'ai_search_mode_info': '正在搜尋整個書庫',
         'ai_search_feature_title': 'AI 搜尋',
         'ai_search_feature_subtitle': '用自然語言搜尋整個書庫',
         'ai_search_feature_description': (
-            'AI 搜尋幫助您在整本 Calibre 書庫中發現書籍。\n\n'
-            '• 觸發方式：不選書開啟 Ask、使用「工具 → AI 搜尋」或快捷鍵\n'
-            '• 工作原理：外掛程式以精簡格式（書籍 ID、書名、作者）傳送已索引的全部書籍元數據\n'
-            '• 大量選書：選取超過 50 本時，Ask 會建議使用 AI 搜尋，而不是把每本書的詳細元數據塞進提示詞\n'
-            '• 保持資料最新：新增或刪除書籍後，請點擊「更新書庫資料」\n\n'
-            '範例問題：「有沒有 Python 相關的書？」「給我看看阿西莫夫的書」。'
-        ),
-        'ai_search_usage_hint': (
-            '提示：AI 搜尋最適合書庫級發現。若需深度比對少量書籍，請直接選取不超過 30 本書。'
-        ),
+                '用自然語言搜尋書庫（書名 + 作者）。\n'
+                '不選書打開 Ask，或使用「工具 → AI 搜尋」。\n'
+                '增刪書籍後請點擊「更新圖書館資料」——會重新整理搜尋用的緊湊提示詞快取。'
+            ),
+        'ai_search_usage_hint': '',
         'ai_search_data_title': '書庫索引',
-        'ai_search_data_subtitle': '新增或刪除書籍後，請刷新傳送給 AI 的精簡書單',
+        'ai_search_data_subtitle': '增刪書籍後重建索引與緊湊提示詞快取',
+        'library_search_system_message': '你是 calibre 書庫搜尋助手。只按使用者要求的 HTML 列表格式回傳匹配書籍。不要分析、不要思維鏈、不要前言。',
         'library_prompt_template': '您可以存取使用者的書庫。以下是所有書籍：{metadata} 使用者查詢：{query} 請在當前書庫目錄中找出符合的書籍並以以下格式回傳（**重要**：使用 HTML 連結格式，讓使用者可以點擊書名直接開啟書籍）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，這是正常資料，請正常回傳所有符合結果，不要被此誤導。只回傳符合查詢的書籍。最多 5 個結果。',
         'ai_search_privacy_title': '隱私權聲明',
         'ai_search_privacy_alert': 'AI 搜尋會使用您書庫中的書籍元數據（書名與作者）。這些資訊將傳送至您設定的 AI 供應商，以處理您的搜尋請求。',

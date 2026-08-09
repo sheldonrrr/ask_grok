@@ -197,17 +197,17 @@ class APIClient:
                     error_msg = self.i18n.get('no_model_configured', 'No AI model configured. Please configure an AI model in settings.')
                     raise AIAPIError(error_msg, error_type="config_error")
             
-            # Library Chat支持：检查是否需要注入图书馆元数据
+            # Library Chat / AI Search：调用方请求时注入书库索引（有缓存即可，不依赖配置页开关）
             if use_library_chat:
-                from .utils import is_library_chat_enabled, build_library_prompt
+                from .utils import build_library_prompt, get_library_metadata
                 from .config import get_prefs
                 from .prompt_limits import validate_prompt_length, count_books_in_library_metadata
                 
                 prefs = get_prefs()
-                if is_library_chat_enabled(prefs):
-                    # 使用build_library_prompt包装用户查询，传入i18n支持多语言
+                if get_library_metadata(prefs):
+                    prefs['library_chat_enabled'] = True
                     prompt = build_library_prompt(prompt, prefs, self.i18n)
-                    logger.info("Library Chat enabled, injected library metadata into prompt")
+                    logger.info("AI Search: injected library metadata into prompt")
 
                     book_count = count_books_in_library_metadata(prefs)
                     length_error = validate_prompt_length(
@@ -238,7 +238,16 @@ class APIClient:
                     logger.warning(
                         f"忽略无法解析的 max_tokens 配置: {configured_max_tokens}"
                     )
-            
+            if use_library_chat:
+                # Avoid the default "book analysis expert" system prompt — it pushes
+                # reasoning models to narrate analysis instead of returning HTML links.
+                kwargs['system_message'] = self.i18n.get(
+                    'library_search_system_message',
+                    'You are a calibre library search assistant. '
+                    'Reply with ONLY matching books as an HTML bullet list in the format requested by the user. '
+                    'No analysis, no chain-of-thought, no preamble.',
+                )
+
             # 检查模型是否支持流式传输以及是否在配置中启用了流式传输
             model_supports_streaming = hasattr(self._ai_model, 'supports_streaming') and self._ai_model.supports_streaming()
             streaming_enabled = self._ai_model.config.get('enable_streaming', True)  # 默认启用

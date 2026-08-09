@@ -28,12 +28,11 @@ Verify with:
 grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py
 ```
 
-## Docs
+## Release notes
 
-- Create `docs/CHANGELOG_VX.Y.Z_EN.md` (BBCode for MobileRead + Markdown for GitHub; **user-facing**, not a technical dump).
-- Keep only the latest **two** changelogs; delete older ones.
+- Create `release/CHANGELOG_VX.Y.Z_EN.md` (BBCode for MobileRead + Markdown for GitHub; **user-facing**, not a technical dump).
+- Keep only the **latest** changelog; delete older ones.
 - Edit `tutorial/tutorial_v1.0.md` **in place** (header `Latest updated` + plugin version; feature text only when needed). Never add a new `tutorial_v*.md`.
-- See also `docs/README.md` for naming.
 
 ## After version bump
 

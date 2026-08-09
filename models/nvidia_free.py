@@ -21,7 +21,7 @@ class NvidiaFreeModel(NvidiaModel):
     通过 Cloudflare Worker 代理访问 Nvidia API
     支持本地测试环境和生产环境切换
     """
-    DEFAULT_MODEL = "openai/gpt-oss-120b"
+    DEFAULT_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
 
     def __init__(self, config: Dict[str, Any]):
         """
@@ -214,9 +214,24 @@ class NvidiaFreeModel(NvidiaModel):
             if status_code == 429:
                 return translations.get('free_tier_rate_limit', 
                     '免费通道请求频率超限。请稍后再试或配置自己的 Nvidia API Key。')
+            elif status_code == 410:
+                # Proxy/upstream explicitly retired this free chat endpoint (Gone).
+                return translations.get(
+                    'free_tier_gone',
+                    'The free Nvidia channel is no longer available (HTTP 410). '
+                    'Please configure your own Nvidia API Key in Settings → AI '
+                    '(Nvidia AI provider), or try again later if the free service is restored.',
+                )
             elif status_code == 503:
                 return translations.get('free_tier_unavailable', 
                     '免费通道暂时不可用。请稍后再试或配置自己的 Nvidia API Key。')
+            elif status_code == 404:
+                # Upstream often 404s for unavailable model ids; not a missing /api/chat route.
+                model_name = self.config.get('model', '')
+                return translations.get(
+                    'free_tier_model_unavailable',
+                    'Free tier model is unavailable ({model}). Try another model in settings, or configure your own Nvidia API Key.',
+                ).format(model=model_name)
             elif status_code >= 500:
                 return translations.get('free_tier_server_error', 
                     '免费通道服务器错误。请稍后再试。')
@@ -300,10 +315,11 @@ class NvidiaFreeModel(NvidiaModel):
         获取后备模型列表（当 API 请求失败时使用）
         """
         return [
-            "openai/gpt-oss-120b",
+            "nvidia/nemotron-3-nano-30b-a3b",
             "meta/llama-4-maverick-17b-128e-instruct",
             "meta/llama-4-scout-17b-16e-instruct",
             "meta/llama-3.3-70b-instruct",
+            "openai/gpt-oss-120b",
             "deepseek-ai/deepseek-r1",
         ]
     

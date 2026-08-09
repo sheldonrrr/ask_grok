@@ -16,10 +16,10 @@ alwaysApply: true
 
 Verify: `grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py`
 
-## Docs
+## Release notes
 
-- **Must** add `docs/CHANGELOG_VX.Y.Z_EN.md` with BBCode (MobileRead) + Markdown (GitHub). User-facing, not technical.
-- Keep only the **latest two** changelogs; delete older ones.
+- **Must** add `release/CHANGELOG_VX.Y.Z_EN.md` with BBCode (MobileRead) + Markdown (GitHub). User-facing, not technical.
+- Keep only the **latest** changelog; delete older ones.
 - Tutorial: edit the **same** file in place (`tutorial/tutorial_v1.0.md`) — never add `tutorial_v*.md` copies (keeps git diff clean). Update header `Latest updated` + plugin version; change feature text only when needed.
 
 ## Build / ship
@@ -29,7 +29,7 @@ calibre-customize -b .          # or ./scripts/package.sh
 ./scripts/package.sh            # → dist/Ask_AI_Plugin_vX.Y.Z.zip
 ```
 
-Zip excludes `.git/`, `.cursor/`, `docs/`, `aiprovider/`, `scripts/`, `tests/`, etc. Confirm About shows `vX.Y.Z`. Doc naming: `docs/README.md`.
+Zip excludes `.git/`, `.cursor/`, `release/`, `aiprovider/`, `scripts/`, `tests/`, etc. (see `.gitignore` packaging notes). Confirm About shows `vX.Y.Z`.
 
 ## Semver
 

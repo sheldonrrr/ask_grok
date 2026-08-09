@@ -1,4 +1,6 @@
-# /push — Commit progress and push to the current branch’s remote
+# /push — Commit progress, then push (default)
+
+**Default:** always **commit first**, then push. Do not push-only unless the user explicitly says so (e.g. “push only”, “push without commit”, “push existing commits only”).
 
 Commit the current worktree with a **readable English** message, then push to the **upstream of the current branch** (e.g. `dev` → `origin/dev`).
 
@@ -9,7 +11,7 @@ Commit the current worktree with a **readable English** message, then push to th
    - `git diff` and `git diff --staged`
    - `git log -5 --oneline` (match recent style; prefer readable English)
    - `git branch -vv` (confirm current branch and upstream)
-2. Stage relevant changes (`git add` for intended files). **Never** stage secrets (`.env`, credentials, API keys).
+2. Stage relevant changes (`git add` for intended files). **Never** stage secrets (`.env`, credentials, API keys). Also skip pack artifacts (`dist/*.zip`), `__pycache__/`, and other gitignored junk.
 3. Draft a commit message that is:
    - **English**
    - **Readable** with connecting words (e.g. “Add … after …”, “Fix … when …”, “Update … for …”)
@@ -26,9 +28,15 @@ Commit the current worktree with a **readable English** message, then push to th
    - **Never** `--force` / `--force-with-lease` unless the user explicitly asks
 6. Report: commit subject, local branch, remote tracking branch, and push result (PR URL only if requested).
 
+## If the worktree is already clean
+
+- Skip creating an empty commit.
+- If the branch is ahead of upstream, still `git push`.
+- If everything is already up to date, say so.
+
 ## Stop and ask if
 
-- There are no changes to commit
+- There are no changes to commit **and** nothing to push
 - Upstream is missing or ambiguous and push target is unclear
 - Push would require force, or conflicts with remote
 - Only secret/credential files are present
@@ -37,5 +45,6 @@ Commit the current worktree with a **readable English** message, then push to th
 
 - Update git config
 - Skip hooks
+- Push without committing when there are uncommitted changes (unless user explicitly asked for push-only)
 - Push unrelated junk (`dist/*.zip`, `__pycache__`, `.env`)
 - Force-push to `main` / `master`

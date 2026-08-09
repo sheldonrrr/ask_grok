@@ -423,6 +423,8 @@ class JapaneseTranslation(BaseTranslation):
             'about_markdown_desc': '本をMarkdownテキストファイルとしてエクスポートします。',
             'about_tradsimp_title': 'Chinese Text Conversion for calibre',
             'about_tradsimp_desc': '電子書籍内の繁体字中国語と簡体字中国語を変換します。',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': '読んでいる本の短いリストを管理し、進捗を確認し、ビューアから同期します。',
             'about_open_mobileread': 'MobileReadを開く',
             'about_open_nowtiny': 'Nowtinyを開く',
             'about_nowtiny_note': 'その他のツールとプラグインの状態はNowtinyで確認できます。',
@@ -511,7 +513,7 @@ class JapaneseTranslation(BaseTranslation):
             'library_enable': 'AI検索を有効にする',
             'library_enable_tooltip': '有効にすると、本が選択されていない場合にAIを使用してライブラリを検索できます',
             'library_update': 'ライブラリデータを更新',
-            'library_update_tooltip': 'ライブラリから書籍のタイトルと著者を抽出します',
+            'library_update_tooltip': '全冊の書名・著者を索引し、コンパクトなプロンプトキャッシュを再構築します',
             'library_updating': '更新中...',
             'library_status': 'ステータス：{count}冊、最終更新：{time}',
             'library_status_empty': 'ステータス：データなし。「ライブラリデータを更新」をクリックして開始してください。',
@@ -523,27 +525,26 @@ class JapaneseTranslation(BaseTranslation):
             'library_init_message': 'AI検索を機能させるにはライブラリメタデータが必要です。今すぐ初期化しますか？\n\nこれにより、ライブラリから書籍のタイトルと著者が抽出されます。',
             'library_init_required': 'ライブラリデータなしではAI検索を有効にできません。この機能を使用する準備ができたら、「ライブラリデータを更新」をクリックしてください。',
             'ai_search_welcome_title': 'AI検索へようこそ',
-            'ai_search_welcome_message': '本が選択されていないため、AI検索が有効になりました！\n\n自然言語でライブラリ全体を検索できます。例えば：\n• "Pythonに関する本はありますか？"\n• "アイザック・アシモフの本を見せて"\n• "機械学習に関する本を探して"\n\nAIがライブラリを検索し、関連する本を推薦します。',
+            'ai_search_welcome_message': (
+                'AI検索が有効です。書名・著者で自然言語検索できます。\n'
+                '\n'
+                '本を選ばずにAskを開くか、ツール → AI検索／ショートカットを使います。\n'
+                '本の追加・削除後は「図書館データを更新」でプロンプトキャッシュを更新してください。'
+            ),
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': '自然言語でライブラリ全体を検索',
             'ai_search_feature_description': (
-                'AI Search は Calibre ライブラリ全体から書籍を見つけるのに役立ちます。\n\n'
-                '• 起動方法：書籍を選択せずに Ask を開く、ツール → AI Search、またはショートカット\n'
-                '• 仕組み：プラグインはインデックス済みの全書籍のコンパクトメタデータ'
-                '（書籍 ID、タイトル、著者）を送信します\n'
-                '• 大量選択：50 冊を超える場合、Ask は詳細形式の代わりに AI Search を提案します\n'
-                '• データ更新：書籍の追加・削除後は「ライブラリデータの更新」をクリックしてください\n\n'
-                '例：「Python に関する本を探して」「アイザック・アシモフの本を見せて」。'
+                '書名・著者で自然言語検索します。\n'
+                '本を選ばずにAskを開くか、ツール → AI検索を使います。\n'
+                '本の追加・削除後は「図書館データを更新」で検索用のコンパクトなプロンプトキャッシュを更新します。'
             ),
-            'ai_search_usage_hint': (
-                'ヒント：AI Search はライブラリ全体の発見に最適です。少数の書籍を詳しく比較する場合は、'
-                '30 冊以内を選択してください。'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'ライブラリインデックス',
-            'ai_search_data_subtitle': '書籍の追加・削除時に AI へ送るコンパクトな書籍リストを更新',
+            'ai_search_data_subtitle': '本の追加・削除後に索引とプロンプトキャッシュを再構築',
+            'library_search_system_message': 'あなたは calibre のライブラリ検索アシスタントです。ユーザーが指定した HTML リスト形式でのみ一致する本を返してください。分析・思考過程・前置きは不要です。',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             
             'default_ai_mismatch_title': 'デフォルトAIが変更されました',
@@ -602,6 +603,7 @@ class JapaneseTranslation(BaseTranslation):
             
             # Nvidia Free エラーメッセージ
             'free_tier_rate_limit': '無料プランのレート制限を超えました。しばらくしてから再試行するか、独自のNvidia APIキーを設定してください。',
+            'free_tier_gone': '無料の Nvidia チャネルは利用できなくなりました（HTTP 410）。設定 → AI で独自の Nvidia API キー（Nvidia AI）を設定するか、無料サービスが復旧するまでお待ちください。',
             'free_tier_unavailable': '無料プランは一時的に利用できません。しばらくしてから再試行するか、独自のNvidia APIキーを設定してください。',
             'free_tier_server_error': '無料プランのサーバーエラーが発生しました。しばらくしてから再試行してください。',
             'free_tier_error': '無料プランエラー',
@@ -634,7 +636,7 @@ class JapaneseTranslation(BaseTranslation):
             'library_enable': 'AI検索を有効化',
             'library_enable_tooltip': '有効にすると、本を選択していない時にAIを使用してライブラリを検索できます',
             'library_update': 'ライブラリデータの更新',
-            'library_update_tooltip': 'ライブラリから本のタイトルと著者名を抽出します',
+            'library_update_tooltip': '全冊の書名・著者を索引し、コンパクトなプロンプトキャッシュを再構築します',
             'library_updating': '更新中...',
             'library_status': 'ステータス: {count} 冊、最終更新: {time}',
             'library_status_empty': 'ステータス: データなし。「ライブラリデータの更新」をクリックして開始してください。',
@@ -646,27 +648,25 @@ class JapaneseTranslation(BaseTranslation):
             'library_init_message': 'AI検索を利用するにはライブラリのメタデータが必要です。今すぐ初期化しますか？\n\nこれにより、ライブラリから本のタイトルと著者名が抽出されます。',
             'library_init_required': 'ライブラリデータなしでAI検索を有効にすることはできません。準備ができたら「ライブラリデータの更新」をクリックしてください。',
             'ai_search_welcome_title': 'AI検索へようこそ',
-            'ai_search_welcome_message': 'AI検索が有効になりました！\n\n起動方法：\n• キーボードショートカット（設定でカスタマイズ可能）\n• ツールメニュー → AI検索\n• 本を選択せずにAskダイアログを開く\n\n自然言語でライブラリ全体を検索できます。例：\n• 「Pythonに関する本はありますか？」\n• 「アイザック・アシモフの本を見せて」\n• 「機械学習についての本を探して」\n\nAIがライブラリ内を検索し、関連する本を推薦します。本のタイトルをクリックすると直接開けます。',
+            'ai_search_welcome_message': (
+                'AI検索が有効です。書名・著者で自然言語検索できます。\n'
+                '\n'
+                '本を選ばずにAskを開くか、ツール → AI検索／ショートカットを使います。\n'
+                '本の追加・削除後は「図書館データを更新」でプロンプトキャッシュを更新してください。'
+            ),
             'ai_search_not_enough_books_title': '本が足りません',
             'ai_search_not_enough_books_message': 'AI検索を使用するには、ライブラリに少なくとも {min_books} 冊の本が必要です。\n\n現在のライブラリには {book_count} 冊しかありません。\n\nAI検索を使用するには、もっと本を追加してください。',
             'ai_search_mode_info': 'ライブラリ全体を検索中',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': '自然言語でライブラリ全体を検索',
             'ai_search_feature_description': (
-                'AI Search は Calibre ライブラリ全体から書籍を見つけるのに役立ちます。\n\n'
-                '• 起動方法：書籍を選択せずに Ask を開く、ツール → AI Search、またはショートカット\n'
-                '• 仕組み：プラグインはインデックス済みの全書籍のコンパクトメタデータ'
-                '（書籍 ID、タイトル、著者）を送信します\n'
-                '• 大量選択：50 冊を超える場合、Ask は詳細形式の代わりに AI Search を提案します\n'
-                '• データ更新：書籍の追加・削除後は「ライブラリデータの更新」をクリックしてください\n\n'
-                '例：「Python に関する本を探して」「アイザック・アシモフの本を見せて」。'
+                '書名・著者で自然言語検索します。\n'
+                '本を選ばずにAskを開くか、ツール → AI検索を使います。\n'
+                '本の追加・削除後は「図書館データを更新」で検索用のコンパクトなプロンプトキャッシュを更新します。'
             ),
-            'ai_search_usage_hint': (
-                'ヒント：AI Search はライブラリ全体の発見に最適です。少数の書籍を詳しく比較する場合は、'
-                '30 冊以内を選択してください。'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'ライブラリインデックス',
-            'ai_search_data_subtitle': '書籍の追加・削除時に AI へ送るコンパクトな書籍リストを更新',
+            'ai_search_data_subtitle': '本の追加・削除後に索引とプロンプトキャッシュを再構築',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             'ai_search_privacy_title': 'プライバシーに関するお知らせ',
             'ai_search_privacy_alert': 'AI検索はライブラリの本のメタデータ（タイトルと著者）を使用します。この情報は、検索クエリを処理するために設定されたAIプロバイダーに送信されます。',
