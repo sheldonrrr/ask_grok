@@ -392,6 +392,10 @@ prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
 prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
 prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
 
+# Web Search (Brave Search API — user-bound key)
+prefs.defaults['web_search_enabled'] = False
+prefs.defaults['brave_search_api_key'] = ''
+
 # Prompt length settings
 prefs.defaults['enable_custom_prompt_limit'] = False
 prefs.defaults['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT  # Used when enable_custom_prompt_limit is True
@@ -4181,7 +4185,7 @@ class LibraryWidget(QWidget):
         from .ui_constants import (
             setup_tab_widget_layout, get_first_section_title_style,
             setup_settings_tab_content, add_settings_section, configure_layout,
-            PADDING_MEDIUM,
+            PADDING_MEDIUM, SPACING_SMALL,
         )
         
         main_layout = setup_tab_widget_layout(self)
@@ -4262,6 +4266,82 @@ class LibraryWidget(QWidget):
         self.status_label.setWordWrap(True)
         self.status_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
         data_section.addWidget(self.status_label)
+
+        web_section, self.web_search_title, self.web_search_subtitle = add_settings_section(
+            layout,
+            self.i18n.get('web_search_section_title', 'Web Search (Brave)'),
+            self.i18n.get(
+                'web_search_section_subtitle',
+                'Optional live web results in Ask, using your own Brave Search API key',
+            ),
+        )
+        self.web_search_title.setObjectName('title_web_search')
+        if self.web_search_subtitle:
+            self.web_search_subtitle.setObjectName('subtitle_web_search')
+
+        self.web_search_description = QLabel(self.i18n.get(
+            'web_search_section_description',
+            'Turn on Web Search in the Ask toolbar to let AI look up current information. '
+            'The plugin calls the Brave Search API with the key you bind here. '
+            'Get a key from the Brave Search API dashboard (https://api-dashboard.search.brave.com/).',
+        ))
+        self.web_search_description.setObjectName('label_web_search_description')
+        self.web_search_description.setWordWrap(True)
+        self.web_search_description.setTextFormat(Qt.RichText)
+        self.web_search_description.setOpenExternalLinks(True)
+        self.web_search_description.setStyleSheet(
+            f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;"
+        )
+        web_section.addWidget(self.web_search_description)
+
+        self.web_search_key_label = QLabel(self.i18n.get(
+            'web_search_api_key_label', 'Brave Search API Key'
+        ))
+        self.web_search_key_label.setObjectName('label_brave_search_api_key')
+        web_section.addWidget(self.web_search_key_label)
+
+        key_row = QHBoxLayout()
+        key_row.setSpacing(SPACING_SMALL)
+        self.brave_api_key_edit = QLineEdit(self)
+        self.brave_api_key_edit.setObjectName('edit_brave_search_api_key')
+        self.brave_api_key_edit.setEchoMode(QLineEdit.Password)
+        self.brave_api_key_edit.setPlaceholderText(self.i18n.get(
+            'web_search_api_key_placeholder', 'Paste your Brave subscription token'
+        ))
+        self.brave_api_key_edit.textChanged.connect(self._on_brave_api_key_changed)
+        key_row.addWidget(self.brave_api_key_edit, stretch=1)
+
+        self.web_search_test_button = QPushButton(self.i18n.get('web_search_test_button', 'Test'))
+        self.web_search_test_button.setObjectName('button_web_search_test')
+        self.web_search_test_button.clicked.connect(self.on_test_brave_search)
+        apply_button_style(self.web_search_test_button)
+        key_row.addWidget(self.web_search_test_button)
+        web_section.addLayout(key_row)
+
+        self.web_search_key_desc = QLabel(self.i18n.get(
+            'web_search_api_key_desc',
+            'Your key stays on this computer in the plugin settings. '
+            'It is sent only to api.search.brave.com.',
+        ))
+        self.web_search_key_desc.setObjectName('label_web_search_api_key_desc')
+        self.web_search_key_desc.setWordWrap(True)
+        self.web_search_key_desc.setStyleSheet(
+            f"color: {TEXT_COLOR_SECONDARY_STRONG}; font-style: italic; padding: 2px 0;"
+        )
+        web_section.addWidget(self.web_search_key_desc)
+
+        self.web_search_privacy = QLabel(self.i18n.get(
+            'web_search_privacy_alert',
+            'When Web Search is on, search queries are sent to Brave Search '
+            '(not to your AI provider). Book titles in those queries may be visible to Brave.',
+        ))
+        self.web_search_privacy.setObjectName('label_web_search_privacy')
+        self.web_search_privacy.setWordWrap(True)
+        self.web_search_privacy.setStyleSheet(
+            f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px; "
+            f"background-color: palette(alternate-base); border-left: 3px solid palette(mid);"
+        )
+        web_section.addWidget(self.web_search_privacy)
         
         layout.addStretch()
         
@@ -4272,6 +4352,11 @@ class LibraryWidget(QWidget):
         """加载配置值"""
         # AI搜索现在始终启用，确保配置为True
         self.prefs['library_chat_enabled'] = True
+        self._saved_brave_api_key = (self.prefs.get('brave_search_api_key') or '')
+        if hasattr(self, 'brave_api_key_edit'):
+            self.brave_api_key_edit.blockSignals(True)
+            self.brave_api_key_edit.setText(self._saved_brave_api_key)
+            self.brave_api_key_edit.blockSignals(False)
         
         # 更新状态显示
         self.update_status_display()
@@ -4319,6 +4404,43 @@ class LibraryWidget(QWidget):
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
             self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
                 'Extract titles and authors for all books in your library (no 100-book limit)'))
+
+        if hasattr(self, 'web_search_title'):
+            self.web_search_title.setText(self.i18n.get('web_search_section_title', 'Web Search (Brave)'))
+        if hasattr(self, 'web_search_subtitle') and self.web_search_subtitle:
+            self.web_search_subtitle.setText(self.i18n.get(
+                'web_search_section_subtitle',
+                'Optional live web results in Ask, using your own Brave Search API key',
+            ))
+        if hasattr(self, 'web_search_description'):
+            self.web_search_description.setText(self.i18n.get(
+                'web_search_section_description',
+                'Turn on Web Search in the Ask toolbar to let AI look up current information. '
+                'The plugin calls the Brave Search API with the key you bind here. '
+                'Get a key from the Brave Search API dashboard (https://api-dashboard.search.brave.com/).',
+            ))
+        if hasattr(self, 'web_search_key_label'):
+            self.web_search_key_label.setText(self.i18n.get(
+                'web_search_api_key_label', 'Brave Search API Key'
+            ))
+        if hasattr(self, 'brave_api_key_edit'):
+            self.brave_api_key_edit.setPlaceholderText(self.i18n.get(
+                'web_search_api_key_placeholder', 'Paste your Brave subscription token'
+            ))
+        if hasattr(self, 'web_search_test_button'):
+            self.web_search_test_button.setText(self.i18n.get('web_search_test_button', 'Test'))
+        if hasattr(self, 'web_search_key_desc'):
+            self.web_search_key_desc.setText(self.i18n.get(
+                'web_search_api_key_desc',
+                'Your key stays on this computer in the plugin settings. '
+                'It is sent only to api.search.brave.com.',
+            ))
+        if hasattr(self, 'web_search_privacy'):
+            self.web_search_privacy.setText(self.i18n.get(
+                'web_search_privacy_alert',
+                'When Web Search is on, search queries are sent to Brave Search '
+                '(not to your AI provider). Book titles in those queries may be visible to Brave.',
+            ))
         
         # 更新状态显示
         self.update_status_display()
@@ -4393,13 +4515,71 @@ class LibraryWidget(QWidget):
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
     
     
+    def _current_brave_api_key(self):
+        if hasattr(self, 'brave_api_key_edit'):
+            return (self.brave_api_key_edit.text() or '').strip()
+        return (self.prefs.get('brave_search_api_key') or '').strip()
+
+    def _on_brave_api_key_changed(self, _text=None):
+        self.config_changed.emit()
+
+    def on_test_brave_search(self):
+        """Send a short Brave Search request with the key currently in the field."""
+        from .web_search import TEST_QUERY, WebSearchError, search_web
+
+        api_key = self._current_brave_api_key()
+        if not api_key:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                self.i18n.get(
+                    'web_search_missing_key',
+                    'Web Search is on, but no Brave Search API key is configured. '
+                    'Open Configuration → Search and paste your Brave API key.',
+                ),
+            )
+            return
+
+        self.web_search_test_button.setEnabled(False)
+        QApplication.processEvents()
+        try:
+            results = search_web(TEST_QUERY, api_key, i18n=self.i18n)
+            QMessageBox.information(
+                self,
+                self.i18n.get('success', 'Success'),
+                self.i18n.get(
+                    'web_search_test_success',
+                    'Brave Search API is working. Found {count} result(s) for a test query.',
+                ).format(count=len(results)),
+            )
+        except WebSearchError as exc:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('web_search_test_failed', 'Brave Search API test failed: {error}').format(
+                    error=str(exc)
+                ),
+            )
+        except Exception as exc:
+            QMessageBox.warning(
+                self,
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('web_search_test_failed', 'Brave Search API test failed: {error}').format(
+                    error=str(exc)
+                ),
+            )
+        finally:
+            self.web_search_test_button.setEnabled(True)
+
     def save_settings(self):
         """保存设置"""
         # AI搜索始终启用
         self.prefs['library_chat_enabled'] = True
+        self.prefs['brave_search_api_key'] = self._current_brave_api_key()
+        self._saved_brave_api_key = self.prefs['brave_search_api_key']
         logger.info("AI Search is always enabled")
     
     def has_changes(self):
         """检查是否有未保存的更改"""
-        # AI搜索没有可配置项，始终返回False
-        return False
+        saved = getattr(self, '_saved_brave_api_key', self.prefs.get('brave_search_api_key') or '')
+        return self._current_brave_api_key() != (saved or '').strip()

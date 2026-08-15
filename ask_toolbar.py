@@ -15,7 +15,7 @@ from calibre_plugins.ask_ai_plugin.ui_constants import (
 
 
 class AskToolbar(QWidget):
-    """一行工具栏：左侧 AI/历史，右侧随机/停止/发送。"""
+    """一行工具栏：左侧 AI/历史，右侧全网搜索/随机/停止/发送。"""
 
     def __init__(self, i18n, parent=None):
         super().__init__(parent)
@@ -31,6 +31,17 @@ class AskToolbar(QWidget):
         root.setAlignment(Qt.AlignVCenter)
         root.addLayout(self._left_layout)
         root.addStretch()
+
+        self.web_search_button = QPushButton(self.i18n.get('web_search_button', 'Web Search'))
+        self.web_search_button.setCheckable(True)
+        self.web_search_button.setToolTip(self.i18n.get(
+            'web_search_button_tooltip',
+            'Search the web with Brave Search and let AI decide whether to search again or answer. '
+            'Bind your Brave API key in Settings → Search.',
+        ))
+        style_ask_toolbar_widget(self.web_search_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)
+        self.web_search_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        root.addWidget(self.web_search_button, alignment=Qt.AlignVCenter)
 
         self.suggest_button = QPushButton(self.i18n.get('suggest_button', 'Random'))
         style_ask_toolbar_widget(self.suggest_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)

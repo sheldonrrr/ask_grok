@@ -15,6 +15,7 @@ A simple calibre plugin that allows users to ask questions about books using var
 - Configurable prompt template
 - Automatically display the most recent query history based on a book
 - Supports copying answers, copying questions and answers
+- Optional Web Search in Ask (Brave Search API key you bind in Settings → Search)
 
 ## Installation
 

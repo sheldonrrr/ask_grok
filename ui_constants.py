@@ -578,6 +578,11 @@ def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
             margin: 0;
             text-align: center;
         }}
+        QPushButton:checked {{
+            background-color: palette(highlight);
+            color: palette(highlighted-text);
+            border: 1px solid palette(highlight);
+        }}
         {focus_style}
     """
 

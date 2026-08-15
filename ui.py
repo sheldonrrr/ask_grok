@@ -3764,6 +3764,9 @@ Please answer the question based on the above book information.""")
 
         self.ask_toolbar = AskToolbar(self.i18n)
         self.ask_toolbar.set_ai_search_mode(not self.books_info)
+        self.web_search_button = self.ask_toolbar.web_search_button
+        self.web_search_button.setChecked(bool(prefs.get('web_search_enabled', False)))
+        self.web_search_button.toggled.connect(self._on_web_search_toggled)
         layout.addWidget(self.ask_toolbar)
 
         self.metadata_bar = AskMetadataBar(self.i18n, language_name_fn=self.get_language_name)
@@ -3969,6 +3972,10 @@ Please answer the question based on the above book information.""")
             return False
         
         return True
+
+    def _on_web_search_toggled(self, checked):
+        from calibre_plugins.ask_ai_plugin.config import get_prefs
+        get_prefs()['web_search_enabled'] = bool(checked)
     
     def send_question(self):
         """发送问题"""
@@ -4135,6 +4142,19 @@ Please answer the question based on the above book information.""")
             if length_error:
                 self.response_handler.handle_error(length_error)
                 return
+
+        use_web_search = bool(
+            getattr(self, 'web_search_button', None) and self.web_search_button.isChecked()
+        )
+        if use_web_search:
+            from calibre_plugins.ask_ai_plugin.web_search import get_brave_api_key
+            if not get_brave_api_key(prefs):
+                self.response_handler.handle_error(self.i18n.get(
+                    'web_search_missing_key',
+                    'Web Search is on, but no Brave Search API key is configured. '
+                    'Open Configuration → Search and paste your Brave API key.',
+                ))
+                return
         
         self._reset_history_button_text()
         self._blur_input_area()
@@ -4168,14 +4188,21 @@ Please answer the question based on the above book information.""")
                     if selected_ai:
                         request_time = time.time()
                         elapsed_ms = (request_time - parallel_start_time) * 1000
-                        panel.send_request(prompt, model_id=selected_ai, use_library_chat=use_library_chat)
+                        panel.send_request(
+                            prompt,
+                            model_id=selected_ai,
+                            use_library_chat=use_library_chat,
+                            use_web_search=use_web_search,
+                        )
                     else:
                         logger.warning(f"面板 {panel.panel_index} 没有选中AI，跳过")
                 total_time = (time.time() - parallel_start_time) * 1000
                 logger.info(f"所有请求已发出，总耗时: {total_time:.2f}ms，面板数: {len(self.response_panels)}")
             else:
                 # 向后兼容：单面板模式
-                self.response_handler.start_async_request(prompt, use_library_chat=use_library_chat)
+                self.response_handler.start_async_request(
+                    prompt, use_library_chat=use_library_chat, use_web_search=use_web_search,
+                )
                 logger.info(f"异步请求已启动（单面板模式），use_library_chat={use_library_chat}")
         except Exception as e:
             logger.error(f"启动异步请求时出错: {str(e)}")
@@ -4269,6 +4296,13 @@ Please answer the question based on the above book information.""")
             self.stop_button.setText(self.i18n.get('stop_button', 'Stop'))
         if hasattr(self, 'send_button'):
             self.send_button.setText(self.i18n.get('send_button', 'Send'))
+        if hasattr(self, 'web_search_button'):
+            self.web_search_button.setText(self.i18n.get('web_search_button', 'Web Search'))
+            self.web_search_button.setToolTip(self.i18n.get(
+                'web_search_button_tooltip',
+                'Search the web with Brave Search and let AI decide whether to search again or answer. '
+                'Bind your Brave API key in Settings → Search.',
+            ))
         self._refresh_history_button_text()
         
         logger.debug("AskDialog 界面语言更新完成")

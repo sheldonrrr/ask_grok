@@ -315,13 +315,14 @@ class ResponsePanel(QWidget):
             
             return False
     
-    def send_request(self, prompt, model_id=None, use_library_chat=False):
+    def send_request(self, prompt, model_id=None, use_library_chat=False, use_web_search=False):
         """发送请求到选中的AI
         
         Args:
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的AI
             use_library_chat: 是否使用Library Chat功能
+            use_web_search: 是否启用 Brave 全网搜索调度
         """
         if not self.response_handler:
             logger.error(f"面板 {self.panel_index} 的 ResponseHandler 未初始化")
@@ -334,7 +335,10 @@ class ResponsePanel(QWidget):
             logger.warning(f"面板 {self.panel_index} 没有选中的AI")
             return
         
-        logger.info(f"[面板 {self.panel_index}] 开始请求 AI: {target_model_id}, use_library_chat={use_library_chat}")
+        logger.info(
+            f"[面板 {self.panel_index}] 开始请求 AI: {target_model_id}, "
+            f"use_library_chat={use_library_chat}, use_web_search={use_web_search}"
+        )
         self.request_started.emit(self.panel_index)
         
         # 更新响应处理器的AI标识符（用于历史记录）
@@ -342,7 +346,12 @@ class ResponsePanel(QWidget):
         logger.info(f"[面板 {self.panel_index}] 已设置 ai_id={target_model_id} 用于历史记录")
         
         # 调用响应处理器发送请求，传递model_id和use_library_chat参数
-        self.response_handler.start_async_request(prompt, model_id=target_model_id, use_library_chat=use_library_chat)
+        self.response_handler.start_async_request(
+            prompt,
+            model_id=target_model_id,
+            use_library_chat=use_library_chat,
+            use_web_search=use_web_search,
+        )
         logger.info(f"[面板 {self.panel_index}] 异步请求已启动")
     
     def get_response_text(self):

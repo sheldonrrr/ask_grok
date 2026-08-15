@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v1.0
-Latest updated: Jul 24, 2026, Ask AI Plugin v1.5.1
+Latest updated: Aug 15, 2026, Ask AI Plugin v1.6.0
 
 ToC of this tutorial:
 - Introduction
@@ -10,6 +10,7 @@ ToC of this tutorial:
 - First Time Setup an AI Service
 - How to Use
 - AI Search
+- Web Search
 - Keyboard Shortcuts
 - Random Questions
 - Prompts
@@ -28,6 +29,7 @@ Ask AI Plugin lets you ask questions about books in your calibre library using m
 What you can do:
 - Ask about one book or several selected books
 - Search your whole library with natural language (AI Search)
+- Turn on Web Search to add live Brave Search results to the current answer
 - Compare answers from two AIs side by side
 - Export conversations to PDF
 
@@ -169,6 +171,30 @@ AI will search through your library metadata and recommend relevant books, and y
 - AI Search works best with well-organized library metadata
 - For library-wide discovery, use AI Search — do not select thousands of books manually
 - For comparing a few books in depth, select up to about 30 books instead
+
+## Web Search
+
+Web Search adds live web results to the current Ask answer. It uses the [Brave Search API](https://api-dashboard.search.brave.com/) with a key you bind yourself. The plugin does not include a shared key.
+
+### Bind your Brave API key
+
+1. Create an account and API key in the [Brave Search API dashboard](https://api-dashboard.search.brave.com/)
+2. Open the plugin Configuration dialog
+3. Open the Search tab
+4. Paste the key into **Brave Search API Key**
+5. Click **Test** to confirm the key works, then save settings
+
+### Use Web Search in Ask
+
+1. Open the Ask dialog
+2. Click **Web Search** in the toolbar so it stays on
+3. Type your question and send it as usual
+
+AI sees the search results in the same response. It can run another search if it still needs facts, or write a summary when it has enough. Search queries and source links appear above the final answer.
+
+If Web Search is on but no key is saved, Ask shows a reminder to bind the key in Configuration → Search.
+
+When Web Search is on, search queries go to Brave Search, not to your AI provider.
 
 ## Keyboard Shortcuts
 
