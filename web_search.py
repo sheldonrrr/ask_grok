@@ -128,7 +128,7 @@ def search_web(
             i18n.get(
                 'web_search_missing_key',
                 'Web Search is on, but no Brave Search API key is configured. '
-                'Open Configuration → Search and paste your Brave API key.',
+                'Open Configuration → General and paste your Brave API key.',
             ),
             error_type='missing_key',
         )
@@ -171,7 +171,7 @@ def search_web(
             i18n.get(
                 'web_search_invalid_key',
                 'Brave Search rejected the API key (HTTP {status}). '
-                'Check the key and your Brave plan in Settings → Search.',
+                'Check the key and your Brave plan in Settings → General.',
             ).format(status=status),
             error_type='invalid_key',
             status_code=status,

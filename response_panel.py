@@ -322,7 +322,7 @@ class ResponsePanel(QWidget):
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的AI
             use_library_chat: 是否使用Library Chat功能
-            use_web_search: 是否启用 Brave 全网搜索调度
+            use_web_search: 是否启用 Brave 网页搜索调度
         """
         if not self.response_handler:
             logger.error(f"面板 {self.panel_index} 的 ResponseHandler 未初始化")

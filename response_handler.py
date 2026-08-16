@@ -395,7 +395,7 @@ class ResponseHandler(QObject):
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
             use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
-            use_web_search: 是否启用 Brave 全网搜索调度
+            use_web_search: 是否启用 Brave 网页搜索调度
         """
         # 清理之前的请求状态
         self.cleanup()

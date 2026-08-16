@@ -150,7 +150,9 @@ class TestAgentDecision(unittest.TestCase):
             search_fn=lambda _q: self.fail('should not search'),
         )
         result = agent.run('What is 2+2?')
-        self.assertEqual(result, 'Two plus two is four.')
+        self.assertIn('Two plus two is four.', result)
+        self.assertIn('Planning web search (round 1/3)', result)
+        self.assertIn('AI is writing the answer', result)
 
     def test_caps_rounds_and_force_answers(self):
         searches = []
@@ -197,6 +199,53 @@ class TestAgentDecision(unittest.TestCase):
         result = agent.run('What happened?')
         self.assertIn('bad key', result)
         self.assertIn('I will answer without more search.', result)
+
+    def test_schedule_logs_are_visible_but_not_fed_to_planner(self):
+        i18n = {
+            'web_search_log_planning': 'Planning web search (round {round}/{max})…',
+            'web_search_log_requested': 'AI requested search: {queries}',
+            'web_search_log_answering': 'AI is writing the answer…',
+            'web_search_log_force_answer': 'Search limit reached. Writing the answer from current results…',
+            'web_search_searching': 'Searching the web: {query}',
+            'web_search_heading': 'Web search: {query}',
+        }
+        planner_prompts = []
+        replies = [
+            '<search>\nSpaceX launch\n</search>',
+            'The launch happened last week.',
+        ]
+        updates = []
+
+        def ask_fn(prompt):
+            planner_prompts.append(prompt)
+            return replies.pop(0)
+
+        def search_fn(query):
+            return [{'title': 'T', 'url': 'https://ex.com', 'description': 'D'}]
+
+        agent = web_search_agent.WebSearchAgent(
+            ask_fn=ask_fn,
+            i18n=i18n,
+            api_key='k',
+            search_fn=search_fn,
+            on_update=updates.append,
+        )
+        result = agent.run('What launched?')
+
+        self.assertIn('Planning web search (round 1/3)', result)
+        self.assertIn('AI requested search: SpaceX launch', result)
+        self.assertIn('Searching the web: SpaceX launch', result)
+        self.assertIn('Planning web search (round 2/3)', result)
+        self.assertIn('AI is writing the answer', result)
+        self.assertIn('The launch happened last week.', result)
+        self.assertTrue(any('Planning web search (round 1/3)' in chunk for chunk in updates))
+        self.assertTrue(any('AI requested search: SpaceX launch' in chunk for chunk in updates))
+
+        self.assertEqual(len(planner_prompts), 2)
+        self.assertNotIn('Planning web search', planner_prompts[1])
+        self.assertNotIn('AI requested search', planner_prompts[1])
+        self.assertNotIn('AI is writing the answer', planner_prompts[1])
+        self.assertIn('https://ex.com', planner_prompts[1])
 
 
 if __name__ == '__main__':

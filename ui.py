@@ -3764,9 +3764,9 @@ Please answer the question based on the above book information.""")
 
         self.ask_toolbar = AskToolbar(self.i18n)
         self.ask_toolbar.set_ai_search_mode(not self.books_info)
-        self.web_search_button = self.ask_toolbar.web_search_button
-        self.web_search_button.setChecked(bool(prefs.get('web_search_enabled', False)))
-        self.web_search_button.toggled.connect(self._on_web_search_toggled)
+        self.web_search_checkbox = self.ask_toolbar.web_search_checkbox
+        self.web_search_checkbox.setChecked(bool(prefs.get('web_search_enabled', False)))
+        self.web_search_checkbox.toggled.connect(self._on_web_search_toggled)
         layout.addWidget(self.ask_toolbar)
 
         self.metadata_bar = AskMetadataBar(self.i18n, language_name_fn=self.get_language_name)
@@ -4144,7 +4144,7 @@ Please answer the question based on the above book information.""")
                 return
 
         use_web_search = bool(
-            getattr(self, 'web_search_button', None) and self.web_search_button.isChecked()
+            getattr(self, 'web_search_checkbox', None) and self.web_search_checkbox.isChecked()
         )
         if use_web_search:
             from calibre_plugins.ask_ai_plugin.web_search import get_brave_api_key
@@ -4152,7 +4152,7 @@ Please answer the question based on the above book information.""")
                 self.response_handler.handle_error(self.i18n.get(
                     'web_search_missing_key',
                     'Web Search is on, but no Brave Search API key is configured. '
-                    'Open Configuration → Search and paste your Brave API key.',
+                    'Open Configuration → General and paste your Brave API key.',
                 ))
                 return
         
@@ -4296,12 +4296,12 @@ Please answer the question based on the above book information.""")
             self.stop_button.setText(self.i18n.get('stop_button', 'Stop'))
         if hasattr(self, 'send_button'):
             self.send_button.setText(self.i18n.get('send_button', 'Send'))
-        if hasattr(self, 'web_search_button'):
-            self.web_search_button.setText(self.i18n.get('web_search_button', 'Web Search'))
-            self.web_search_button.setToolTip(self.i18n.get(
+        if hasattr(self, 'web_search_checkbox'):
+            self.web_search_checkbox.setText(self.i18n.get('web_search_button', 'Web Search'))
+            self.web_search_checkbox.setToolTip(self.i18n.get(
                 'web_search_button_tooltip',
                 'Search the web with Brave Search and let AI decide whether to search again or answer. '
-                'Bind your Brave API key in Settings → Search.',
+                'Bind your Brave API key in Settings → General.',
             ))
         self._refresh_history_button_text()
         

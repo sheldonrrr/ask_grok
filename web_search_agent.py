@@ -108,18 +108,41 @@ class WebSearchAgent:
     def _cancelled(self):
         return bool(self.cancelled_fn())
 
+    def _format_log(self, key, default, **kwargs):
+        message = self.i18n.get(key, default).format(**kwargs)
+        return '> *{0}*'.format(message)
+
+    def _append_user(self, user_parts, text):
+        text = (text or '').rstrip()
+        if not text:
+            return
+        prefix = '\n\n' if user_parts else ''
+        user_parts.append(text)
+        self._emit('{0}{1}\n'.format(prefix, text))
+
     def run(self, user_prompt):
         """Return the full markdown (search schedule + final answer)."""
         transcript_parts = []
+        user_parts = []
         used_queries = set()
         fatal_auth_error = None
 
         for round_index in range(self.max_rounds):
             if self._cancelled():
                 break
-            can_search = (
-                fatal_auth_error is None and round_index < self.max_rounds
-            )
+            can_search = fatal_auth_error is None
+            if can_search:
+                self._append_user(user_parts, self._format_log(
+                    'web_search_log_planning',
+                    'Planning web search (round {round}/{max})…',
+                    round=round_index + 1,
+                    max=self.max_rounds,
+                ))
+            else:
+                self._append_user(user_parts, self._format_log(
+                    'web_search_log_force_answer',
+                    'Search limit reached. Writing the answer from current results…',
+                ))
             planner_prompt = build_planner_prompt(
                 user_prompt,
                 '\n\n'.join(transcript_parts),
@@ -132,8 +155,12 @@ class WebSearchAgent:
 
             action, payload = parse_agent_decision(response)
             if action != 'search' or not can_search:
+                self._append_user(user_parts, self._format_log(
+                    'web_search_log_answering',
+                    'AI is writing the answer…',
+                ))
                 answer = payload if action == 'answer' else (response or '').strip()
-                return self._join_final(transcript_parts, answer)
+                return self._join_final(user_parts, answer)
 
             new_queries = []
             for query in payload:
@@ -144,7 +171,17 @@ class WebSearchAgent:
                 new_queries.append(query)
 
             if not new_queries:
-                return self._join_final(transcript_parts, response)
+                self._append_user(user_parts, self._format_log(
+                    'web_search_log_answering',
+                    'AI is writing the answer…',
+                ))
+                return self._join_final(user_parts, response)
+
+            self._append_user(user_parts, self._format_log(
+                'web_search_log_requested',
+                'AI requested search: {queries}',
+                queries='; '.join(new_queries),
+            ))
 
             for query in new_queries:
                 if self._cancelled():
@@ -152,8 +189,7 @@ class WebSearchAgent:
                 searching = self.i18n.get(
                     'web_search_searching', 'Searching the web: {query}'
                 ).format(query=query)
-                prefix = '\n\n' if transcript_parts else ''
-                self._emit('{0}{1}\n\n'.format(prefix, searching))
+                self._append_user(user_parts, '> *{0}*'.format(searching))
                 try:
                     results = self.search_fn(query)
                     block = format_search_results_markdown(query, results, self.i18n)
@@ -165,13 +201,17 @@ class WebSearchAgent:
                     if exc.error_type in ('missing_key', 'invalid_key'):
                         fatal_auth_error = exc
                 transcript_parts.append(block)
-                self._emit(block if block.endswith('\n') else block + '\n')
+                self._append_user(user_parts, block)
                 if fatal_auth_error is not None:
                     break
 
         if self._cancelled():
-            return '\n\n'.join(transcript_parts).strip()
+            return '\n\n'.join(user_parts).strip()
 
+        self._append_user(user_parts, self._format_log(
+            'web_search_log_force_answer',
+            'Search limit reached. Writing the answer from current results…',
+        ))
         planner_prompt = build_planner_prompt(
             user_prompt, '\n\n'.join(transcript_parts), self.i18n, force_answer=True,
         )
@@ -179,7 +219,7 @@ class WebSearchAgent:
         action, payload = parse_agent_decision(answer)
         if action == 'answer':
             answer = payload
-        return self._join_final(transcript_parts, answer)
+        return self._join_final(user_parts, answer)
 
     @staticmethod
     def _join_final(transcript_parts, answer):

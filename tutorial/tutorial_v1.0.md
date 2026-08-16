@@ -180,19 +180,19 @@ Web Search adds live web results to the current Ask answer. It uses the [Brave S
 
 1. Create an account and API key in the [Brave Search API dashboard](https://api-dashboard.search.brave.com/)
 2. Open the plugin Configuration dialog
-3. Open the Search tab
-4. Paste the key into **Brave Search API Key**
-5. Click **Test** to confirm the key works, then save settings
+3. Open the General tab
+4. Paste the key into **Brave Search API Key** (it saves automatically)
+5. Click **Test** to confirm the key works
 
 ### Use Web Search in Ask
 
 1. Open the Ask dialog
-2. Click **Web Search** in the toolbar so it stays on
+2. Check **Web Search** in the toolbar
 3. Type your question and send it as usual
 
-AI sees the search results in the same response. It can run another search if it still needs facts, or write a summary when it has enough. Search queries and source links appear above the final answer.
+AI sees the search results in the same response. It can run another search if it still needs facts, or write a summary when it has enough. A search schedule, queries, and source links appear above the final answer.
 
-If Web Search is on but no key is saved, Ask shows a reminder to bind the key in Configuration → Search.
+If Web Search is on but no key is saved, Ask shows a reminder to bind the key in Configuration → General.
 
 When Web Search is on, search queries go to Brave Search, not to your AI provider.
 
