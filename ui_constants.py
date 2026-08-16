@@ -578,6 +578,11 @@ def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
             margin: 0;
             text-align: center;
         }}
+        QPushButton:checked {{
+            background-color: palette(highlight);
+            color: palette(highlighted-text);
+            border: 1px solid palette(highlight);
+        }}
         {focus_style}
     """
 
@@ -627,6 +632,26 @@ def elide_ask_toolbar_toolbutton_text(text, font, button_width):
     return QFontMetrics(font).elidedText(text, Qt.ElideRight, max_width)
 
 
+def get_ask_toolbar_checkbox_style():
+    """Ask 工具栏 QCheckBox（网页搜索等增强选项）：原生勾选框，高度与工具栏对齐。"""
+    is_macos = sys.platform == 'darwin'
+    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT if is_macos else BUTTON_HEIGHT
+    return f"""
+        QCheckBox {{
+            min-height: {h}px;
+            max-height: {h}px;
+            height: {h}px;
+            padding: 0 8px 0 0;
+            margin: 0;
+            spacing: 6px;
+        }}
+        QCheckBox::indicator {{
+            width: 16px;
+            height: 16px;
+        }}
+    """
+
+
 def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH):
     """Ask 工具栏 QComboBox（AI 切换器）：与按钮同高。"""
     return f"""
@@ -648,10 +673,13 @@ def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH):
 
 def style_ask_toolbar_widget(widget, min_width=None):
     """为 Ask 工具栏控件应用统一尺寸与样式。"""
-    from PyQt5.QtWidgets import QComboBox, QToolButton, QPushButton
+    from PyQt5.QtWidgets import QCheckBox, QComboBox, QToolButton, QPushButton
 
     width = min_width or ASK_COMBO_MIN_WIDTH
     widget.setFixedHeight(BUTTON_HEIGHT)
+    if isinstance(widget, QCheckBox):
+        widget.setStyleSheet(get_ask_toolbar_checkbox_style())
+        return
     if hasattr(widget, 'setMinimumWidth'):
         widget.setMinimumWidth(width)
     if isinstance(widget, QComboBox):

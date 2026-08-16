@@ -388,13 +388,14 @@ class ResponseHandler(QObject):
             # 恢复按钮状态 - 通过信号在主线程中更新
             self.signal.request_finished.emit()
 
-    def start_async_request(self, prompt, model_id=None, use_library_chat=False):
+    def start_async_request(self, prompt, model_id=None, use_library_chat=False, use_web_search=False):
         """开始异步请求 API，可以处理普通请求和流式请求
         
         Args:
             prompt: 提示词
             model_id: 可选，指定使用的模型ID。如果为None，使用当前选中的模型
             use_library_chat: 是否使用Library Chat功能（仅在未选择书籍时使用）
+            use_web_search: 是否启用 Brave 网页搜索调度
         """
         # 清理之前的请求状态
         self.cleanup()
@@ -448,7 +449,9 @@ class ResponseHandler(QObject):
                     self.api._ai_model = original_model
                     self.api._model_name = original_model_name
                 
-                if model_supports_streaming and streaming_enabled:
+                if use_web_search:
+                    self._run_web_search_request(prompt, model_id, use_library_chat)
+                elif model_supports_streaming and streaming_enabled:
                     # 使用流式请求
                     
                     # 初始化流式日志计数器
@@ -502,6 +505,9 @@ class ResponseHandler(QObject):
             guard_sec = int(get_prefs().get('request_timeout', 120))
         except (TypeError, ValueError):
             guard_sec = 120
+        if use_web_search:
+            from .web_search_agent import MAX_SEARCH_ROUNDS
+            guard_sec = guard_sec * MAX_SEARCH_ROUNDS
         guard_sec = max(1, min(guard_sec, 3600))
         self._ui_guard_timeout_sec = guard_sec
 
@@ -515,6 +521,51 @@ class ResponseHandler(QObject):
         self._timeout_timer.timeout.connect(self._check_request_timeout)
         self._timeout_timer.start(guard_sec * 1000)
     
+    def _run_web_search_request(self, prompt, model_id, use_library_chat):
+        """Run the Brave search loop and stream the schedule into the current result."""
+        from .config import get_prefs
+        from .web_search import get_brave_api_key
+        from .web_search_agent import WebSearchAgent
+
+        prefs = get_prefs()
+        prepared_prompt = prompt
+        if use_library_chat:
+            from .utils import is_library_chat_enabled, build_library_prompt
+            from .prompt_limits import validate_prompt_length, count_books_in_library_metadata
+
+            if is_library_chat_enabled(prefs):
+                prepared_prompt = build_library_prompt(prompt, prefs, self.i18n)
+                book_count = count_books_in_library_metadata(prefs)
+                length_error = validate_prompt_length(
+                    prepared_prompt, True, prefs, self.i18n, book_count,
+                    is_library_search=True,
+                )
+                if length_error:
+                    raise Exception(length_error)
+
+        def ask_fn(planner_prompt):
+            return self.api.ask(
+                planner_prompt,
+                stream=False,
+                model_id=model_id,
+                use_library_chat=False,
+            )
+
+        def on_update(chunk):
+            if not self._request_cancelled:
+                self._current_signals.stream_update.emit(chunk)
+
+        agent = WebSearchAgent(
+            ask_fn=ask_fn,
+            i18n=self.i18n,
+            api_key=get_brave_api_key(prefs),
+            cancelled_fn=lambda: self._request_cancelled,
+            on_update=on_update,
+        )
+        response = agent.run(prepared_prompt)
+        if not self._request_cancelled:
+            self._current_signals.update_ui.emit(response or self._stream_response, True)
+
     # 初始化流式响应相关变量
     def _init_stream_variables(self):
         """初始化流式响应相关变量"""

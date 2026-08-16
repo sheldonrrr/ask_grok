@@ -4,7 +4,7 @@
 """Ask 弹窗统一工具栏。"""
 
 from PyQt5.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QSizePolicy,
+    QWidget, QHBoxLayout, QPushButton, QCheckBox, QSizePolicy,
 )
 from PyQt5.QtCore import Qt
 
@@ -15,7 +15,7 @@ from calibre_plugins.ask_ai_plugin.ui_constants import (
 
 
 class AskToolbar(QWidget):
-    """一行工具栏：左侧 AI/历史，右侧随机/停止/发送。"""
+    """一行工具栏：左侧 AI/历史，右侧网页搜索/随机/停止/发送。"""
 
     def __init__(self, i18n, parent=None):
         super().__init__(parent)
@@ -31,6 +31,16 @@ class AskToolbar(QWidget):
         root.setAlignment(Qt.AlignVCenter)
         root.addLayout(self._left_layout)
         root.addStretch()
+
+        self.web_search_checkbox = QCheckBox(self.i18n.get('web_search_button', 'Web Search'))
+        self.web_search_checkbox.setToolTip(self.i18n.get(
+            'web_search_button_tooltip',
+            'Search the web with Brave Search and let AI decide whether to search again or answer. '
+            'Bind your Brave API key in Settings → General.',
+        ))
+        style_ask_toolbar_widget(self.web_search_checkbox)
+        self.web_search_checkbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        root.addWidget(self.web_search_checkbox, alignment=Qt.AlignVCenter)
 
         self.suggest_button = QPushButton(self.i18n.get('suggest_button', 'Random'))
         style_ask_toolbar_widget(self.suggest_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)
