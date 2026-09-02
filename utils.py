@@ -116,8 +116,32 @@ def format_books_compact_tsv(books):
     return '\n'.join(lines)
 
 
+def _get_library_book_ids(db):
+    """Return all book ids from a Calibre db (full library)."""
+    try:
+        return list(db.new_api.all_book_ids())
+    except AttributeError:
+        return list(db.data.search_getting_ids('', db.FIELD_MAP['search']))
+
+
+def compute_library_ids_fingerprint(book_ids):
+    """
+    Fingerprint a library by sorted book ids (count + membership).
+
+    :return: (fingerprint_hex, book_count)
+    """
+    import hashlib
+    parts = sorted(str(int(book_id)) for book_id in book_ids)
+    digest = hashlib.sha1(','.join(parts).encode('utf-8')).hexdigest()
+    return digest, len(parts)
+
+
 def format_library_metadata_for_prompt(prefs):
-    """Convert cached library JSON metadata to compact TSV for prompts."""
+    """Return compact TSV for prompts; prefer prebuilt cache, else rebuild from JSON."""
+    cached_tsv = prefs.get('library_cached_tsv', '') or ''
+    if cached_tsv.strip():
+        return cached_tsv
+
     cached_metadata = get_library_metadata(prefs)
     if not cached_metadata:
         return ''
@@ -126,29 +150,52 @@ def format_library_metadata_for_prompt(prefs):
         books = json.loads(cached_metadata)
         if not isinstance(books, list):
             return cached_metadata
-        return format_books_compact_tsv(books)
+        tsv = format_books_compact_tsv(books)
+        if tsv:
+            prefs['library_cached_tsv'] = tsv
+        return tsv
     except (json.JSONDecodeError, TypeError):
         return cached_metadata
 
 
-def update_library_metadata(db, prefs):
+def update_library_metadata(db, prefs, force=False):
     """
-    提取图书馆元数据（仅书名和作者名），索引全库
+    提取图书馆元数据（仅书名和作者名），索引全库。
+
+    未 force 且 id 指纹未变、JSON/TSV 缓存齐全时跳过全量重建。
     
     :param db: Calibre数据库对象
     :param prefs: 插件配置对象
+    :param force: True 时强制重建（手动 Update Library Data）
     :return: (成功标志, 书籍数量, 错误信息)
     """
     try:
         import json
         from datetime import datetime
-        
-        # 获取所有书籍ID（全库，无上限）
-        try:
-            book_ids = list(db.new_api.all_book_ids())
-        except AttributeError:
-            # 如果new_api不可用，尝试使用旧API
-            book_ids = list(db.data.search_getting_ids('', db.FIELD_MAP['search']))
+
+        book_ids = _get_library_book_ids(db)
+        fingerprint, book_count = compute_library_ids_fingerprint(book_ids)
+        cached_fp = prefs.get('library_ids_fingerprint', '') or ''
+        cached_json = prefs.get('library_cached_metadata', '') or ''
+        cached_tsv = prefs.get('library_cached_tsv', '') or ''
+
+        if (
+            not force
+            and cached_fp
+            and cached_fp == fingerprint
+            and cached_json.strip()
+            and cached_tsv.strip()
+        ):
+            logger.info(
+                "Library metadata cache is fresh (%s books), skip rebuild",
+                book_count,
+            )
+            try:
+                from .statistics_widget import update_book_count
+                update_book_count(prefs, book_count)
+            except Exception as stat_error:
+                logger.warning(f"Failed to update book count in statistics: {stat_error}")
+            return True, book_count, None
         
         books = []
         for book_id in book_ids:
@@ -167,8 +214,10 @@ def update_library_metadata(db, prefs):
                 logger.warning(f"Failed to get metadata for book {book_id}: {e}")
                 continue
         
-        # 保存为JSON字符串
+        compact_tsv = format_books_compact_tsv(books)
         prefs['library_cached_metadata'] = json.dumps(books, ensure_ascii=False)
+        prefs['library_cached_tsv'] = compact_tsv
+        prefs['library_ids_fingerprint'] = fingerprint
         prefs['library_last_update'] = datetime.now().isoformat()
         
         # 更新统计页面的书籍数量
@@ -231,12 +280,13 @@ def build_library_prompt(user_query, prefs, i18n=None):
     default_template = (
         'You have access to the user\'s book library. Here are all the books: {metadata} '
         'User query: {query} '
-        'Please find matching books in the current library and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): '
+        'Find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): '
         '- <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name '
         'Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz '
         '- <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington '
-        'Note: Some authors may be listed as "unknown". This is normal data, please return all matching results normally without being misled by this. '
-        'Only return books that match the query. Maximum 5 results.'
+        'Note: Some authors may be listed as "unknown". This is normal data. '
+        'Only return books that match the query. Maximum 5 results. '
+        'Output ONLY the bullet list — no analysis, no chain-of-thought, no preamble.'
     )
     
     # 从i18n获取模板，如果没有则使用默认模板
@@ -284,5 +334,12 @@ def build_library_prompt(user_query, prefs, i18n=None):
         metadata_for_prompt = f"{metadata_for_prompt}\n\n{note}"
 
     prompt = template.format(metadata=metadata_for_prompt, query=user_query)
+    # Keep all locales from drifting into long CoT answers (esp. reasoning models).
+    output_rule = (
+        '\n\nIMPORTANT: Output ONLY the matching books as the HTML bullet list above. '
+        'Do not write analysis, reasoning, or any text outside that list.'
+    )
+    if 'Output ONLY' not in prompt and '只输出' not in prompt and '只回傳' not in prompt:
+        prompt = prompt + output_rule
     
     return prompt

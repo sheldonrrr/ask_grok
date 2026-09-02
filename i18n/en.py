@@ -393,6 +393,7 @@ class EnglishTranslation(BaseTranslation):
             'error_5xx': 'Server error. Please try again later or check the service provider status.',
             'error_network': 'Network connection failed. Please check network connection, proxy settings, or firewall configuration.',
             'error_unknown': 'Unknown error.',
+            'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Technical Details',
             'ollama_service_not_running': 'Ollama service is not running. Please start Ollama service first.',
             'ollama_service_timeout': 'Ollama service connection timeout. Please check if the service is running properly.',
@@ -412,12 +413,15 @@ class EnglishTranslation(BaseTranslation):
             'about_title': 'About Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
+            'about_latest_update': 'Latest update (2026.09.02): Fixed the free AI service being unavailable',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre plugin recommendations',
             'about_markdown_title': 'Markdown for calibre',
-            'about_markdown_desc': 'Calibre plugin · Python\nExport books as Markdown text files.',
+            'about_markdown_desc': 'Export books as Markdown text files.',
             'about_tradsimp_title': 'Chinese Text Conversion for calibre',
-            'about_tradsimp_desc': 'Calibre plugin · Python · offline\nConvert Traditional and Simplified Chinese in ebooks.',
+            'about_tradsimp_desc': 'Convert Traditional and Simplified Chinese in ebooks.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Keep a short list of books you are reading, see progress, and sync from the viewer.',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': 'Open MobileRead',
             'about_mobileread_note': 'Note: MobileRead is the developer page for calibre plugin releases and more version updates.',
@@ -544,6 +548,7 @@ class EnglishTranslation(BaseTranslation):
             
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Free tier rate limit exceeded. Please try again later or configure your own Nvidia API Key.',
+            'free_tier_gone': 'The free Nvidia channel is no longer available (HTTP 410). Please configure your own Nvidia API Key in Settings → AI (Nvidia AI provider), or try again later if the free service is restored.',
             'free_tier_unavailable': 'Free tier is temporarily unavailable. Please try again later or configure your own Nvidia API Key.',
             'free_tier_server_error': 'Free tier server error. Please try again later.',
             'free_tier_error': 'Free tier error',
@@ -593,7 +598,7 @@ class EnglishTranslation(BaseTranslation):
             'library_enable': 'Enable AI Search',
             'library_enable_tooltip': 'When enabled, you can search your library using AI when no books are selected',
             'library_update': 'Update Library Data',
-            'library_update_tooltip': 'Index titles and authors for all books in your library (full library, compact format)',
+            'library_update_tooltip': 'Index titles and authors for all books and rebuild the compact prompt cache',
             'library_updating': 'Updating...',
             'library_status': 'Status: {count} books, last update: {time}',
             'library_status_empty': 'Status: No data. Click "Update Library Data" to start.',
@@ -605,28 +610,26 @@ class EnglishTranslation(BaseTranslation):
             'library_init_message': 'AI Search requires library metadata to work. Would you like to initialize it now?\n\nThis will extract book titles and authors from your library.',
             'library_init_required': 'AI Search cannot be enabled without library data. Please click "Update Library Data" when you are ready to use this feature.',
             'ai_search_welcome_title': 'Welcome to AI Search',
-            'ai_search_welcome_message': 'AI Search is activated!\n\nHow to trigger:\n• Keyboard shortcut (customizable in settings)\n• Tools menu → AI Search\n• Open Ask dialog without selecting any books\n\nYou can search your entire library using natural language. For example:\n• "Do you have any books about Python?"\n• "Show me books by Isaac Asimov"\n• "Find books about machine learning"\n\nAI will search through your library and recommend relevant books. Click book titles to open them directly.',
+            'ai_search_welcome_message': (
+                'AI Search is on. Search your library with natural language (title + author).\n\n'
+                'Open Ask with no books selected, use Tools → AI Search, or a shortcut.\n'
+                'After adding or removing books, click Update Library Data to refresh the compact prompt cache.'
+            ),
             'ai_search_not_enough_books_title': 'Not Enough Books',
             'ai_search_not_enough_books_message': 'AI Search requires at least {min_books} books in your library.\n\nYour current library has only {book_count} book(s).\n\nPlease add more books to your library to use AI Search.',
             'ai_search_mode_info': 'Searching across your entire library',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Search your entire library using natural language',
             'ai_search_feature_description': (
-                'AI Search helps you discover books across your whole Calibre library.\n\n'
-                '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
-                '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
-                '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
-                'embedding every book in verbose format\n'
-                '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
-                'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'
+                'Search your library with natural language (title + author).\n'
+                'Open Ask with no books selected, or use Tools → AI Search.\n'
+                'Click Update Library Data after you add/remove books — this refreshes the compact prompt cache used for searches.'
             ),
-            'ai_search_usage_hint': (
-                'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
-                'select up to 30 books instead.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Library Index',
-            'ai_search_data_subtitle': 'Refresh the compact book list sent to AI when you add or remove books',
-            'library_prompt_template': 'You have access to the user\'s book library. Here are all the books: {metadata} User query: {query} Please find matching books in the current library and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): - <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington Note: Some authors may be listed as "unknown". This is normal data, please return all matching results normally without being misled by this. Only return books that match the query. Maximum 5 results.',
+            'ai_search_data_subtitle': 'Rebuild the index and compact prompt cache after you add or remove books',
+            'library_search_system_message': 'You are a calibre library search assistant. Reply with ONLY matching books as an HTML bullet list in the format requested by the user. No analysis, no chain-of-thought, no preamble.',
+            'library_prompt_template': 'You have access to the user\'s book library. Here are all the books: {metadata} User query: {query} Find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): - <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington Note: Some authors may be listed as "unknown". This is normal data. Only return books that match the query. Maximum 5 results. Output ONLY the bullet list — no analysis, no chain-of-thought, no preamble.',
             'ai_search_privacy_title': 'Privacy Notice',
             'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',
             'ai_search_updated_info': 'Updated {count} books {time_ago}',

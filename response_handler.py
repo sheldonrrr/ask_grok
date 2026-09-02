@@ -1121,6 +1121,20 @@ class ResponseHandler(QObject):
                             ai_id=ai_id,
                             model_info=model_info
                         )
+
+                        # AI Search: persist last UID immediately (not only on dialog close),
+                        # so force-quit / caldbg restart still restores the latest reply.
+                        if mode == 'ai_search':
+                            try:
+                                from .config import get_prefs
+                                prefs = get_prefs()
+                                prefs['ai_search_last_history_uid'] = parent_dialog.current_uid
+                                prefs.commit()
+                            except Exception as prefs_error:
+                                logger.warning(
+                                    "Failed to persist AI Search last history UID: %s",
+                                    prefs_error,
+                                )
                         
                         # 增加AI回复统计计数
                         try:

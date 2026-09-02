@@ -388,6 +388,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'error_5xx': '服务器错误。请稍后重试，或检查服务提供商状态。',
             'error_network': '网络连接失败。请检查：网络连接是否正常、代理设置是否正确、防火墙配置是否允许访问。',
             'error_unknown': '未知错误。',
+            'http_status_detail': 'HTTP {status}，请求地址：{url}',
             'technical_details': '技术细节',
             'ollama_service_not_running': 'Ollama 服务未运行。请先启动 Ollama 服务。',
             'ollama_service_timeout': 'Ollama 服务连接超时。请检查服务是否正常运行。',
@@ -407,12 +408,15 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_title': '关于 Ask AI Plugin',
             'about_version_label': '版本',
             'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
+            'about_latest_update': '最新更新（2026.09.02）：修复了免费AI服务不可用的问题',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推荐',
             'about_markdown_title': 'Markdown for calibre',
-            'about_markdown_desc': 'Calibre 插件 · Python\n将书籍导出为 Markdown 文本文件。',
+            'about_markdown_desc': '将书籍导出为 Markdown 文本文件。',
             'about_tradsimp_title': 'Chinese Text Conversion for calibre',
-            'about_tradsimp_desc': 'Calibre 插件 · Python · 离线\n在电子书中转换简体中文与繁体中文。',
+            'about_tradsimp_desc': '在电子书中转换简体中文与繁体中文。',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': '维护正在阅读的书单、查看进度，并从阅读器同步。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '打开 MobileRead',
             'about_mobileread_note': '注：MobileRead 是 calibre 插件发布和更多版本更新信息的开发者页面。',
@@ -535,6 +539,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             
             # Nvidia Free 错误消息
             'free_tier_rate_limit': '免费通道请求频率超限。请稍后再试或配置自己的 Nvidia API Key。',
+            'free_tier_gone': '内置免费 Nvidia 通道已不可用（HTTP 410）。请在设置 → AI 中配置自己的 Nvidia API Key（Nvidia AI），或等待免费服务恢复后再试。',
             'free_tier_unavailable': '免费通道暂时不可用。请稍后再试或配置自己的 Nvidia API Key。',
             'free_tier_server_error': '免费通道服务器错误。请稍后再试。',
             'free_tier_error': '免费通道错误',
@@ -583,7 +588,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'library_enable': '启用AI搜索',
             'library_enable_tooltip': '启用后，未选择书籍时可以使用AI搜索图书馆',
             'library_update': '更新图书馆数据',
-            'library_update_tooltip': '为书库中全部书籍建立索引（书名与作者，紧凑格式，无数量上限）',
+            'library_update_tooltip': '为全部书籍建立索引（书名与作者），并重建紧凑提示词缓存',
             'library_updating': '更新中...',
             'library_status': '状态：{count} 本书，最后更新：{time}',
             'library_status_empty': '状态：无数据。点击“更新图书馆数据”开始。',
@@ -595,26 +600,26 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'library_init_message': 'AI搜索需要图书馆元数据才能工作。是否现在初始化？\n\n这将从您的图书馆中提取书名和作者信息。',
             'library_init_required': '没有图书馆数据无法启用AI搜索。当您准备好使用此功能时，请点击“更新图书馆数据”。',
             'ai_search_welcome_title': '欢迎AI搜索',
-            'ai_search_welcome_message': 'AI搜索已启动！\n\n触发方式：\n• 快捷键（可在设置中自定义）\n• 工具菜单 → AI搜索\n• 不选择任何书籍时打开Ask对话框\n\n您可以使用自然语言搜索整个图书馆。例如：\n• "有没有关于Python的书？"\n• "给我看看阿西莫夫的书"\n• "找找关于机器学习的书"\n\nAI会搜索您的图书馆并推荐相关书籍，点击书名即可直接打开阅读。',
+            'ai_search_welcome_message': (
+                'AI 搜索已开启。可用自然语言搜索书库（书名 + 作者）。\n\n'
+                '不选书打开 Ask、使用「工具 → AI 搜索」或快捷键即可。\n'
+                '增删书籍后请点击「更新图书馆数据」，以刷新搜索用的紧凑提示词缓存。'
+            ),
             'ai_search_not_enough_books_title': '书籍数量不足',
             'ai_search_not_enough_books_message': 'AI搜索需要您的图书馆中至少有 {min_books} 本书。\n\n您当前的图书馆只有 {book_count} 本书。\n\n请添加更多书籍后再使用AI搜索。',
             'ai_search_mode_info': '正在搜索您的整个图书馆',
             'ai_search_feature_title': 'AI 搜索',
             'ai_search_feature_subtitle': '用自然语言搜索整个书库',
             'ai_search_feature_description': (
-                'AI 搜索帮助您在整本 Calibre 书库中发现书籍。\n\n'
-                '• 触发方式：不选书打开 Ask、使用「工具 → AI 搜索」或快捷键\n'
-                '• 工作原理：插件以紧凑格式（书籍 ID、书名、作者）发送已索引的全部书籍元数据\n'
-                '• 大量选书：选中超过 50 本时，Ask 会建议使用 AI 搜索，而不是把每本书的详细元数据塞进提示词\n'
-                '• 保持数据最新：添加或删除书籍后，请点击「更新图书馆数据」\n\n'
-                '示例问题：「有没有 Python 相关的书？」「给我看看阿西莫夫的书」。'
+                '用自然语言搜索书库（书名 + 作者）。\n'
+                '不选书打开 Ask，或使用「工具 → AI 搜索」。\n'
+                '增删书籍后请点击「更新图书馆数据」——会刷新搜索用的紧凑提示词缓存。'
             ),
-            'ai_search_usage_hint': (
-                '提示：AI 搜索最适合书库级发现。若需深度对比少量书籍，请直接选中不超过 30 本书。'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': '书库索引',
-            'ai_search_data_subtitle': '添加或删除书籍后，请刷新发送给 AI 的紧凑书单',
-            'library_prompt_template': '您可以访问用户的图书馆。以下是所有书籍：{metadata} 用户查询：{query} 请在当前书库目录中找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：- <a href="calibre://book/书籍ID">书名</a> - 作者名 示例：- <a href="calibre://book/123">Python编程</a> - Mark Lutz - <a href="calibre://book/456">机器学习实战</a> - Peter Harrington 注意：部分作者信息可能显示为"unknown"，这是正常数据，请正常返回所有匹配结果，不要被此误导。只返回匹配查询的书籍。最多5个结果。',
+            'ai_search_data_subtitle': '增删书籍后重建索引与紧凑提示词缓存',
+            'library_search_system_message': '你是 calibre 书库搜索助手。只按用户要求的 HTML 列表格式返回匹配书籍。不要分析、不要思维链、不要前言。',
+            'library_prompt_template': '您可以访问用户的图书馆。以下是所有书籍：{metadata} 用户查询：{query} 请在当前书库目录中找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：- <a href="calibre://book/书籍ID">书名</a> - 作者名 示例：- <a href="calibre://book/123">Python编程</a> - Mark Lutz - <a href="calibre://book/456">机器学习实战</a> - Peter Harrington 注意：部分作者信息可能显示为"unknown"，这是正常数据。只返回匹配查询的书籍。最多5个结果。只输出上述列表，不要分析、不要思维链、不要前言。',
             'ai_search_privacy_title': '隐私提示',
             'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',
             'ai_search_updated_info': '已更新 {count} 本书，{time_ago}',

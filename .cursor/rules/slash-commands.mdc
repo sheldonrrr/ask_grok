@@ -1,5 +1,5 @@
 ---
-description: High-frequency slash commands /push /pack /version-up
+description: High-frequency slash commands /push /pack /upgrade-version
 alwaysApply: true
 ---
 
@@ -7,11 +7,16 @@ alwaysApply: true
 
 | Command | Action |
 |---------|--------|
-| `/push` | Commit current progress with a readable English message, then push (usually `dev` → `origin/dev`) |
-| `/pack` | Run `bash scripts/package.sh` → `dist/Ask_AI_Plugin_vX.Y.Z.zip` |
-| `/version-up` | Bump version per `.cursor/rules/version-update.mdc` |
+| `/push` | **Commit then push** (default). Readable English message → current branch’s upstream (e.g. `dev` → `origin/dev`). Push-only only if user explicitly says so. |
+| `/pack` | Run `bash scripts/package.sh` → `dist/Ask_AI_Plugin_vX.Y.Z.zip` (excludes tests/scripts/release/dev trees) |
+| `/upgrade-version` | Bump version per `.cursor/rules/version-update.mdc` (alias: `/version-up`) |
 
 When the user invokes one of these (via slash command or by saying the same intent), follow the matching prompt in `.cursor/commands/<name>.md` exactly.
+
+- `/upgrade-version` → `.cursor/commands/upgrade-version.md`
+- `/version-up` → same workflow (see `.cursor/commands/version-up.md` alias)
+- `/pack` → `.cursor/commands/pack.md` (must use `scripts/package.sh`, stay aligned with `.gitignore` packaging notes)
+- `/push` → `.cursor/commands/push.md`
 
 ## Commit message style for `/push`
 
@@ -19,6 +24,8 @@ Use clear English with connecting words (not telegraphic keyword stacks), e.g. �
 
 ## Defaults
 
-- Push target: current branch’s upstream; if on `dev`, push to `origin/dev`.
+- `/push` (and plain “push” / “推送” when it means this workflow): **always commit uncommitted work first**, then push. Do not treat UI “push commits only” wording as the default.
+- Push-only (no new commit): only when the user explicitly says “push only”, “without commit”, or “existing commits only”.
+- Push target: **current branch’s upstream**; if none, `git push -u origin HEAD`. On `dev`, expect `origin/dev`.
 - Never force-push unless the user explicitly asks.
-- `/version-up` does not commit or pack unless combined with `/push` / `/pack`.
+- `/upgrade-version` does not commit or pack unless combined with `/push` / `/pack`.

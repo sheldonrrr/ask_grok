@@ -426,6 +426,7 @@ class FrenchTranslation(BaseTranslation):
             'about_title': 'À propos de Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': "Posez des questions sur vos livres calibre avec les services d'IA que vous choisissez.",
+            'about_latest_update': "Dernière mise à jour (2026.09.02) : correction de l'indisponibilité du service d'IA gratuit",
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Remarque : MobileRead est la page développeur pour les publications de plugins calibre et les mises à jour de version.',
@@ -434,6 +435,8 @@ class FrenchTranslation(BaseTranslation):
             'about_markdown_desc': 'Exportez les livres en fichiers texte Markdown.',
             'about_tradsimp_title': 'Conversion du chinois pour calibre',
             'about_tradsimp_desc': 'Convertissez le chinois traditionnel et simplifié dans les ebooks.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Gardez une courte liste des livres que vous lisez, voyez la progression et synchronisez depuis le lecteur.',
             'about_open_mobileread': 'Ouvrir MobileRead',
             'about_open_nowtiny': 'Ouvrir Nowtiny',
             'about_nowtiny_note': "Plus d'outils et l'état des plugins sont sur Nowtiny.",
@@ -521,6 +524,7 @@ class FrenchTranslation(BaseTranslation):
             'error_5xx': 'Erreur serveur. Veuillez réessayer plus tard ou vérifier l\'état du fournisseur de services.',
             'error_network': 'Échec de la connexion réseau. Veuillez vérifier la connexion réseau, les paramètres du proxy ou la configuration du pare-feu.',
             'error_unknown': 'Erreur inconnue.',
+            'http_status_detail': "HTTP {status} pour l'URL : {url}",
             'gemini_geo_restriction': 'L\'API Gemini n\'est pas disponible dans votre région. Veuillez essayer:\n1. Utiliser un VPN pour se connecter depuis une région prise en charge\n2. Utiliser d\'autres fournisseurs d\'IA (OpenAI, Anthropic, DeepSeek, etc.)\n3. Vérifier Google AI Studio pour la disponibilité régionale',
             'load_models_list': 'Charger la Liste des Modèles',
             'loading_models_text': 'Chargement des modèles',
@@ -565,6 +569,7 @@ class FrenchTranslation(BaseTranslation):
             
             # Messages d'erreur Nvidia Free
             'free_tier_rate_limit': 'Limite de taux d\'accès gratuit dépassée. Veuillez réessayer plus tard ou configurer votre propre clé API Nvidia.',
+            'free_tier_gone': 'Le canal Nvidia gratuit n’est plus disponible (HTTP 410). Veuillez configurer votre propre clé API Nvidia dans Paramètres → AI (Nvidia AI), ou réessayez plus tard si le service gratuit est rétabli.',
             'free_tier_unavailable': 'L\'accès gratuit est temporairement indisponible. Veuillez réessayer plus tard ou configurer votre propre clé API Nvidia.',
             'free_tier_server_error': 'Erreur du serveur d\'accès gratuit. Veuillez réessayer plus tard.',
             'free_tier_error': 'Erreur d\'accès gratuit',
@@ -597,7 +602,7 @@ class FrenchTranslation(BaseTranslation):
             'library_enable': 'Activer la recherche IA',
             'library_enable_tooltip': 'Une fois activée, vous pouvez effectuer des recherches dans votre bibliothèque à l\'aide de l\'IA quand aucun livre n\'est sélectionné',
             'library_update': 'Mettre à jour les données',
-            'library_update_tooltip': 'Extraire les titres et auteurs de votre bibliothèque',
+            'library_update_tooltip': 'Indexer titres et auteurs, et reconstruire le cache de prompt compact',
             'library_updating': 'Mise à jour...',
             'library_status': 'Statut : {count} livres, dernière mise à jour : {time}',
             'library_status_empty': 'Statut : Aucune donnée. Cliquez sur "Mettre à jour les données" pour commencer.',
@@ -609,33 +614,26 @@ class FrenchTranslation(BaseTranslation):
             'library_init_message': 'La recherche IA nécessite les métadonnées de la bibliothèque. Souhaitez-vous l\'initialiser maintenant ?\n\nCela extraira les titres et les auteurs de vos livres.',
             'library_init_required': 'La recherche IA ne peut pas être activée sans données. Veuillez cliquer sur "Mettre à jour les données" quand vous serez prêt.',
             'ai_search_welcome_title': 'Bienvenue dans la Recherche IA',
-            'ai_search_welcome_message': 'La recherche IA est activée !\n\nComment déclencher :\n• Raccourci clavier (personnalisable dans les paramètres)\n• Menu Outils → Recherche IA\n• Ouvrir le dialogue Ask sans sélectionner de livres\n\nVous pouvez rechercher dans toute votre bibliothèque en langage naturel. Par exemple :\n• "Avez-vous des livres sur Python ?"\n• "Montrez-moi les livres d\'Isaac Asimov"\n• "Trouvez des livres sur l\'apprentissage automatique"\n\nL\'IA recherchera et recommandera des livres pertinents. Cliquez sur les titres pour les ouvrir directement.',
+            'ai_search_welcome_message': (
+                'AI Search est activé. Cherchez dans votre bibliothèque en langage naturel (titre + auteur).\n'
+                '\n'
+                'Ouvrez Ask sans sélection, ou Outils → AI Search.\n'
+                'Après ajout/suppression, cliquez sur Mettre à jour les données pour rafraîchir le cache de prompt.'
+            ),
             'ai_search_not_enough_books_title': 'Pas assez de livres',
             'ai_search_not_enough_books_message': 'La recherche IA nécessite au moins {min_books} livres dans votre bibliothèque.\n\nVotre bibliothèque actuelle ne contient que {book_count} livre(s).\n\nVeuillez ajouter plus de livres pour utiliser la recherche IA.',
             'ai_search_mode_info': 'Recherche dans toute la bibliothèque',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Recherchez toute votre bibliothèque en langage naturel',
             'ai_search_feature_description': (
-                'AI Search vous aide à découvrir des livres dans toute votre bibliothèque Calibre.\n\n'
-                '• Déclenchement : ouvrir Ask sans sélectionner de livres, Outils → AI Search, '
-                'ou raccourci clavier\n'
-                '• Fonctionnement : le plugin envoie des métadonnées compactes (ID, titre, auteur) '
-                'pour tous les livres indexés\n'
-                '• Grandes sélections : si vous sélectionnez plus de 50 livres, Ask suggère AI Search '
-                'au lieu d\'intégrer chaque livre en format détaillé\n'
-                '• Données à jour : cliquez sur « Mettre à jour les données » après avoir ajouté '
-                'ou supprimé des livres\n\n'
-                'Exemples : « Trouvez des livres sur Python », « Montrez-moi les livres d\'Isaac Asimov ».'
+                'Cherchez dans la bibliothèque en langage naturel (titre + auteur).\n'
+                'Ouvrez Ask sans livres sélectionnés, ou Outils → AI Search.\n'
+                'Cliquez sur Mettre à jour après ajout/suppression — cela rafraîchit le cache de prompt compact.'
             ),
-            'ai_search_usage_hint': (
-                'Conseil : AI Search convient mieux à la découverte à l\'échelle de la bibliothèque. '
-                'Pour comparer quelques livres en profondeur, sélectionnez jusqu\'à 30 livres.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Index de bibliothèque',
-            'ai_search_data_subtitle': (
-                'Actualisez la liste compacte de livres envoyée à l\'IA lorsque vous ajoutez '
-                'ou supprimez des livres'
-            ),
+            'ai_search_data_subtitle': "Reconstruire l'index et le cache de prompt après ajout/suppression de livres",
+            'library_search_system_message': 'Vous êtes un assistant de recherche de bibliothèque calibre. Répondez UNIQUEMENT avec les livres correspondants sous forme de liste HTML au format demandé. Pas d’analyse, pas de raisonnement, pas de préambule.',
             'library_prompt_template': 'Vous avez accès à la bibliothèque de livres de l\'utilisateur. Voici tous les livres : {metadata} Requête de l\'utilisateur : {query} Veuillez trouver les livres correspondants dans la bibliothèque actuelle et les retourner dans ce format (**IMPORTANT** : Utilisez le format de lien HTML pour que les utilisateurs puissent cliquer sur les titres des livres pour les ouvrir directement) : - <a href="calibre://book/BOOK_ID">Titre du livre</a> - Nom de l\'auteur Exemple : - <a href="calibre://book/123">Apprendre Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning en action</a> - Peter Harrington Remarque : Certains auteurs peuvent être listés comme "unknown". Ce sont des données normales, veuillez retourner tous les résultats correspondants normalement. Ne retournez que les livres correspondant à la requête. Maximum 5 résultats.',
             'ai_search_privacy_title': 'Avis de confidentialité',
             'ai_search_privacy_alert': 'La recherche IA utilise les métadonnées (titres et auteurs) de votre bibliothèque. Ces informations seront envoyées au fournisseur d\'IA configuré pour traiter vos requêtes.',

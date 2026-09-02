@@ -26,7 +26,7 @@ from calibre_plugins.ask_ai_plugin.models.base import (
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
-from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY, VERSION_STRING
 from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
 from calibre_plugins.ask_ai_plugin.ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
@@ -42,7 +42,34 @@ import html
 NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
 NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
 NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?t=373788'
+NOWTINY_PLUGIN_SIMPLE_GOAL_URL = 'https://www.mobileread.com/forums/showthread.php?p=4602877'
 ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
+
+# Bump this when promoting a new related plugin so that card is highlighted again.
+ABOUT_RELATED_HIGHLIGHT_ID = 'simple_goal'
+ABOUT_RELATED_HIGHLIGHT_SEEN_KEY = 'about_related_highlight_seen_id'
+ABOUT_LATEST_UPDATE_SEEN_KEY = 'about_latest_update_seen_version'
+
+
+def _about_unread():
+    """Show the About button dot until the user opens About on this version."""
+    prefs = get_prefs()
+    return prefs.get(ABOUT_LATEST_UPDATE_SEEN_KEY) != VERSION_STRING
+
+
+def _mark_about_seen():
+    prefs = get_prefs()
+    prefs[ABOUT_LATEST_UPDATE_SEEN_KEY] = VERSION_STRING
+
+
+def _about_related_unread():
+    prefs = get_prefs()
+    return prefs.get(ABOUT_RELATED_HIGHLIGHT_SEEN_KEY) != ABOUT_RELATED_HIGHLIGHT_ID
+
+
+def _mark_about_related_seen():
+    prefs = get_prefs()
+    prefs[ABOUT_RELATED_HIGHLIGHT_SEEN_KEY] = ABOUT_RELATED_HIGHLIGHT_ID
 
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
@@ -434,13 +461,14 @@ class AskAIPluginUI(InterfaceAction):
                     )
                     return
                 
-                logger.info("书籍数量足够，自动更新AI搜索元数据")
-                # 自动更新图书馆元数据（每次触发AI搜索时）
+                logger.info("书籍数量足够，同步AI搜索元数据（未变更则跳过重建）")
                 prefs = get_prefs()
+                # 确保注入门闩打开（不依赖用户是否打开过 Search 配置页）
+                prefs['library_chat_enabled'] = True
                 from .utils import update_library_metadata
                 try:
-                    update_library_metadata(self.gui.current_db, prefs)
-                    logger.info("AI搜索元数据已自动更新")
+                    update_library_metadata(self.gui.current_db, prefs, force=False)
+                    logger.info("AI搜索元数据已就绪")
                 except Exception as e:
                     logger.warning(f"自动更新元数据失败: {e}")
                 
@@ -723,12 +751,13 @@ class AskGrokConfigWidget(QWidget):
 class AboutWidget(QWidget):
     """Local About page with version info and themed recommendation cards."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, highlight_related_id=None):
         super().__init__(parent)
         prefs = get_prefs()
         language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
         self.language = language
         self.i18n = get_translation(language)
+        self._highlight_related_id = highlight_related_id
         self._recommendation_cards = []
         self._restyling = False
         self._build_ui()
@@ -762,6 +791,10 @@ class AboutWidget(QWidget):
         self.description_label.setWordWrap(True)
         cl.addWidget(self.description_label)
 
+        self.latest_update_label = QLabel()
+        self.latest_update_label.setWordWrap(True)
+        cl.addWidget(self.latest_update_label)
+
         self.mobile_read_link_label = QLabel()
         self.mobile_read_link_label.setWordWrap(True)
         self.mobile_read_link_label.setTextFormat(Qt.RichText)
@@ -791,6 +824,14 @@ class AboutWidget(QWidget):
         )
         cl.addWidget(self.tradsimp_card)
 
+        self.simple_goal_card, self.simple_goal_title, self.simple_goal_desc, self.simple_goal_btn = (
+            self._create_recommendation_card(
+                lambda: open_url(QUrl(NOWTINY_PLUGIN_SIMPLE_GOAL_URL)),
+                highlighted=(self._highlight_related_id == 'simple_goal'),
+            )
+        )
+        cl.addWidget(self.simple_goal_card)
+
         self.recommend_note_label = QLabel()
         self.recommend_note_label.setWordWrap(True)
         cl.addWidget(self.recommend_note_label)
@@ -809,7 +850,7 @@ class AboutWidget(QWidget):
         scroll.setWidget(content)
         outer.addWidget(scroll)
 
-    def _create_recommendation_card(self, on_open):
+    def _create_recommendation_card(self, on_open, highlighted=False):
         card = QWidget()
         card_layout = QHBoxLayout(card)
         card_layout.setContentsMargins(12, 10, 12, 10)
@@ -835,11 +876,15 @@ class AboutWidget(QWidget):
         action_btn.clicked.connect(on_open)
         card_layout.addWidget(action_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
 
-        self._style_recommendation_card(card, title_label, desc_label, action_btn)
-        self._recommendation_cards.append((card, title_label, desc_label, action_btn))
+        self._style_recommendation_card(
+            card, title_label, desc_label, action_btn, highlighted=highlighted
+        )
+        self._recommendation_cards.append(
+            (card, title_label, desc_label, action_btn, highlighted)
+        )
         return card, title_label, desc_label, action_btn
 
-    def _style_recommendation_card(self, card, title_label, desc_label, action_btn):
+    def _style_recommendation_card(self, card, title_label, desc_label, action_btn, highlighted=False):
         """Match markdown-output recommendation cards (light/dark aware)."""
         try:
             from qt.core import QPalette
@@ -857,6 +902,7 @@ class AboutWidget(QWidget):
             desc_color = '#d0d0d0'
             link_color = '#66b3ff'
             link_hover_color = '#90c9ff'
+            accent = '#ff8a65'
         else:
             card_bg = '#e8eaed'
             card_border = '#d7dadd'
@@ -864,16 +910,28 @@ class AboutWidget(QWidget):
             desc_color = '#4a4a4a'
             link_color = '#0066cc'
             link_hover_color = '#004499'
+            accent = '#e65100'
 
         card.setObjectName('recommendationCard')
-        card.setStyleSheet(
-            'QWidget#recommendationCard {{'
-            'background: {};'
-            'border: 1px solid {};'
-            'border-radius: 8px;'
-            '}}'
-            .format(card_bg, card_border)
-        )
+        if highlighted:
+            card.setStyleSheet(
+                'QWidget#recommendationCard {{'
+                'background: {};'
+                'border: 1px solid {};'
+                'border-left: 4px solid {};'
+                'border-radius: 8px;'
+                '}}'
+                .format(card_bg, card_border, accent)
+            )
+        else:
+            card.setStyleSheet(
+                'QWidget#recommendationCard {{'
+                'background: {};'
+                'border: 1px solid {};'
+                'border-radius: 8px;'
+                '}}'
+                .format(card_bg, card_border)
+            )
         title_label.setStyleSheet('color: {}; background: transparent;'.format(title_color))
         desc_label.setStyleSheet('color: {}; background: transparent;'.format(desc_color))
         action_btn.setFlat(True)
@@ -896,8 +954,10 @@ class AboutWidget(QWidget):
             return
         self._restyling = True
         try:
-            for card, title_label, desc_label, action_btn in self._recommendation_cards:
-                self._style_recommendation_card(card, title_label, desc_label, action_btn)
+            for card, title_label, desc_label, action_btn, highlighted in self._recommendation_cards:
+                self._style_recommendation_card(
+                    card, title_label, desc_label, action_btn, highlighted=highlighted
+                )
         finally:
             self._restyling = False
 
@@ -915,6 +975,12 @@ class AboutWidget(QWidget):
             self.i18n.get(
                 'about_description',
                 'Ask questions about books in calibre, using the AI providers you choose.',
+            )
+        )
+        self.latest_update_label.setText(
+            self.i18n.get(
+                'about_latest_update',
+                'Latest update (2026.09.02): Fixed the free AI service being unavailable',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -942,9 +1008,19 @@ class AboutWidget(QWidget):
                 'Convert Traditional and Simplified Chinese in ebooks.',
             )
         )
+        self.simple_goal_title.setText(
+            self.i18n.get('about_simple_goal_title', 'Simple Goal for calibre')
+        )
+        self.simple_goal_desc.setText(
+            self.i18n.get(
+                'about_simple_goal_desc',
+                'Keep a short list of books you are reading, see progress, and sync from the viewer.',
+            )
+        )
         open_text = self.i18n.get('about_open_button', 'MobileRead')
         self.markdown_btn.setText(open_text)
         self.tradsimp_btn.setText(open_text)
+        self.simple_goal_btn.setText(open_text)
         self.recommend_note_label.setText(
             self.i18n.get(
                 'about_mobileread_note',
@@ -1010,8 +1086,18 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # 读取教程（固定单文件，发版时就地更新）
-            tutorial_data = plugin.get_resources('tutorial/tutorial_v1.0.md')
+            # Prefer current single-file tutorial; keep older names for upgrade mismatches
+            tutorial_data = None
+            matched = None
+            for requested in (
+                'tutorial/tutorial_v1.0.md',
+                'tutorial/tutorial_v0.9.md',
+                'tutorial/tutorial_v0.8.md',
+            ):
+                tutorial_data = plugin.get_resources(requested)
+                if tutorial_data:
+                    matched = requested
+                    break
             
             if not tutorial_data:
                 self.text_browser.setHtml("<h2>Error: Tutorial file not found</h2>")
@@ -1025,7 +1111,7 @@ class TutorialWidget(QWidget):
             # 设置 HTML 内容
             self.text_browser.setHtml(html_content)
             
-            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes")
+            logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes from {matched}")
             
         except Exception as e:
             logger.error(f"Failed to load tutorial: {str(e)}")
@@ -1321,6 +1407,7 @@ class TabDialog(QDialog):
         
         # 创建按钮布局
         button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignVCenter)
         
         # 添加左侧间距
         button_layout.addSpacing(10)
@@ -1332,12 +1419,19 @@ class TabDialog(QDialog):
         self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
-        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.save_button, 0, Qt.AlignVCenter)
 
-        # About 放在保存按钮旁边，便于发现且保持为标准按钮样式
+        # About 与保存/关闭同级加入底栏，避免外包一层导致 macOS 原生按钮错位
         self.about_button = QPushButton(self.i18n.get('about', 'About'))
         self.about_button.clicked.connect(self.show_about_dialog)
-        button_layout.addWidget(self.about_button)
+        button_layout.addWidget(self.about_button, 0, Qt.AlignVCenter)
+        self.about_unread_dot = QLabel(self.about_button)
+        self.about_unread_dot.setFixedSize(8, 8)
+        self.about_unread_dot.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.about_unread_dot.raise_()
+        self.about_button.installEventFilter(self)
+        self._style_about_unread_dot()
+        self._update_about_unread_dot()
         
         # 创建保存成功提示标签
         self.save_feedback_label = QLabel("")
@@ -1381,7 +1475,7 @@ class TabDialog(QDialog):
         # 添加Close按钮（右侧）
         self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
         self.close_button.clicked.connect(self.reject)
-        button_layout.addWidget(self.close_button)
+        button_layout.addWidget(self.close_button, 0, Qt.AlignVCenter)
         
         # 添加右侧间距
         button_layout.addSpacing(10)
@@ -1394,13 +1488,56 @@ class TabDialog(QDialog):
         self.config_widget.settings_saved.connect(self.on_settings_saved)
         self.config_widget.language_changed.connect(self.on_language_changed)
 
+    def _style_about_unread_dot(self):
+        if not hasattr(self, 'about_unread_dot'):
+            return
+        # Match button/label text color in light and dark themes (no accent red).
+        text_color = self.about_button.palette().color(
+            self.about_button.foregroundRole()
+        ).name()
+        self.about_unread_dot.setStyleSheet(
+            'background-color: {}; border-radius: 4px; border: none;'.format(text_color)
+        )
+
+    def _update_about_unread_dot(self):
+        if not hasattr(self, 'about_unread_dot'):
+            return
+        show = _about_unread()
+        self.about_unread_dot.setVisible(show)
+        if show:
+            self._style_about_unread_dot()
+            self._position_about_unread_dot()
+
+    def _position_about_unread_dot(self):
+        if not hasattr(self, 'about_unread_dot') or not hasattr(self, 'about_button'):
+            return
+        btn = self.about_button
+        dot = self.about_unread_dot
+        dot.move(max(0, btn.width() - dot.width() - 2), 2)
+
+    def eventFilter(self, obj, event):
+        if (
+            hasattr(self, 'about_button')
+            and obj is self.about_button
+            and event.type() in (QEvent.Resize, QEvent.Show, QEvent.PaletteChange)
+        ):
+            if event.type() == QEvent.PaletteChange:
+                self._style_about_unread_dot()
+            self._position_about_unread_dot()
+        return super().eventFilter(obj, event)
+
     def show_about_dialog(self, _url=None):
         """Open the local About page instead of a remote story URL."""
+        highlight_id = ABOUT_RELATED_HIGHLIGHT_ID if _about_related_unread() else None
+        _mark_about_related_seen()
+        _mark_about_seen()
+        self._update_about_unread_dot()
+
         dialog = QDialog(self)
         dialog.setWindowTitle(self.i18n.get('about_plugin', self.i18n.get('about', 'About')))
-        dialog.resize(620, 520)
+        dialog.resize(620, 640)
         layout = QVBoxLayout(dialog)
-        layout.addWidget(AboutWidget(dialog))
+        layout.addWidget(AboutWidget(dialog, highlight_related_id=highlight_id))
         button_box = QDialogButtonBox(QDialogButtonBox.Ok)
         ok_button = button_box.button(QDialogButtonBox.Ok)
         if ok_button is not None:
@@ -2024,22 +2161,41 @@ class AskDialog(QDialog):
             self.book_metadata = self.books_metadata[0]  # 向后兼容
         
         # 生成或加载 UID
-        # AI Search 模式下，自动加载上次保存的历史UID，如果没有则加载最新的历史记录
+        # AI Search：优先上次会话；若本地有更新的记录则用最新（避免强杀 App 后指针过期）
         if not history_uid and not self.books_info:
             prefs = get_prefs()
             last_uid = prefs.get('ai_search_last_history_uid')
-            if last_uid:
+            from .history_manager import HistoryManager
+            temp_history_manager = HistoryManager()
+            ai_search_histories = temp_history_manager.get_ai_search_histories()
+            newest = ai_search_histories[0] if ai_search_histories else None
+            last_hist = (
+                temp_history_manager.get_history_by_uid(last_uid) if last_uid else None
+            )
+            if last_hist and newest:
+                if (last_hist.get('timestamp') or '') >= (newest.get('timestamp') or ''):
+                    history_uid = last_uid
+                    logger.info(
+                        "AI Search mode, using last saved history UID: %s", last_uid
+                    )
+                else:
+                    history_uid = newest['uid']
+                    prefs['ai_search_last_history_uid'] = history_uid
+                    prefs.commit()
+                    logger.info(
+                        "AI Search mode, last UID stale; loading newest: %s",
+                        history_uid,
+                    )
+            elif last_hist:
                 history_uid = last_uid
-                logger.info(f"AI Search mode, using last saved history UID: {last_uid}")
-            else:
-                # 没有保存的UID时，尝试加载最新的AI Search历史记录
-                from .history_manager import HistoryManager
-                temp_history_manager = HistoryManager()
-                ai_search_histories = temp_history_manager.get_ai_search_histories()
-                if ai_search_histories:
-                    # get_ai_search_histories() 返回按时间倒序排列的列表，第一个是最新的
-                    history_uid = ai_search_histories[0]['uid']
-                    logger.info(f"AI Search mode, loading newest history UID: {history_uid}")
+                logger.info(
+                    "AI Search mode, using last saved history UID: %s", last_uid
+                )
+            elif newest:
+                history_uid = newest['uid']
+                logger.info(
+                    "AI Search mode, loading newest history UID: %s", history_uid
+                )
         
         self._explicit_history_uid = history_uid
         if history_uid:
@@ -2375,13 +2531,15 @@ class AskDialog(QDialog):
 
         logger = logging.getLogger(__name__)
         prefs = get_prefs()
-
-        if get_library_metadata(prefs):
-            return True
+        prefs['library_chat_enabled'] = True
 
         try:
-            update_library_metadata(self.gui.current_db, prefs)
-            return bool(get_library_metadata(prefs))
+            # Dirty-check inside update_library_metadata skips rebuild when unchanged
+            update_library_metadata(self.gui.current_db, prefs, force=False)
+            return bool(
+                get_library_metadata(prefs)
+                and (prefs.get('library_cached_tsv') or '').strip()
+            )
         except Exception as e:
             logger.warning(f"Failed to update library metadata for AI Search routing: {e}")
             return False

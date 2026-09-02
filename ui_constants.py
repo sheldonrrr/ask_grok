@@ -216,8 +216,9 @@ def get_response_content_stylesheet():
         }}
         blockquote {{
             margin: 0.5em 0;
-            padding-left: 1em;
-            color: palette(dark);
+            padding: 0.15em 0 0.15em 1em;
+            border-left: 3px solid palette(mid);
+            color: palette(text);
         }}
         hr {{
             border: none;
@@ -282,7 +283,7 @@ def get_response_content_stylesheet():
             padding-top: 6px;
             border-top: 1px solid palette(mid);
             font-size: {FONT_SIZE_SMALL};
-            color: palette(dark);
+            color: palette(text);
             text-align: right;
         }}
         .reasoning-process-body {{

@@ -389,6 +389,7 @@ class NorwegianTranslation(BaseTranslation):
             'error_5xx': 'Serverfeil. Prøv igjen senere eller kontroller statusen til tjenesteleverandøren.',
             'error_network': 'Nettverkstilkobling mislyktes. Kontroller nettverkstilkobling, proxy-innstillinger eller brannmurkonfigurasjon.',
             'error_unknown': 'Ukjent feil.',
+            'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Tekniske detaljer',
             'ollama_service_not_running': 'Ollama-tjenesten kjører ikke. Start Ollama-tjenesten først.',
             'ollama_service_timeout': 'Ollama-tjenestetilkobling tidsavbrutt. Kontroller om tjenesten kjører riktig.',
@@ -408,6 +409,7 @@ class NorwegianTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Versjon',
             'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
+            'about_latest_update': 'Siste oppdatering (2026.09.02): Fikset at den gratis AI-tjenesten ikke var tilgjengelig',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Merk: MobileRead er utviklersiden for calibre-pluginutgivelser og flere versjonsoppdateringer.',
@@ -416,6 +418,8 @@ class NorwegianTranslation(BaseTranslation):
             'about_markdown_desc': 'Eksporter bøker som Markdown-tekstfiler.',
             'about_tradsimp_title': 'Kinesisk tekstkonvertering for calibre',
             'about_tradsimp_desc': 'Konverter tradisjonell og forenklet kinesisk i ebøker.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Hold en kort liste over bøker du leser, se fremdrift og synkroniser fra leseren.',
             'about_open_mobileread': 'Åpne MobileRead',
             'about_open_nowtiny': 'Åpne Nowtiny',
             'about_nowtiny_note': 'Flere verktøy og programtilleggstatus finnes på Nowtiny.',
@@ -537,6 +541,7 @@ class NorwegianTranslation(BaseTranslation):
 
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Gratisnivåets rate-limit er overskredet. Prøv igjen senere eller konfigurer din egen Nvidia API-nøkkel.',
+            'free_tier_gone': 'Den gratis Nvidia-kanalen er ikke lenger tilgjengelig (HTTP 410). Konfigurer din egen Nvidia API-nøkkel under Innstillinger → AI (Nvidia AI), eller prøv igjen senere hvis den gratis tjenesten gjenopprettes.',
             'free_tier_unavailable': 'Gratisnivået er midlertidig utilgjengelig. Prøv igjen senere eller konfigurer din egen Nvidia API-nøkkel.',
             'free_tier_server_error': 'Gratisnivåets serverfeil. Prøv igjen senere.',
             'free_tier_error': 'Gratisnivåfeil',
@@ -586,7 +591,7 @@ class NorwegianTranslation(BaseTranslation):
             'library_enable': 'Aktiver AI-søk',
             'library_enable_tooltip': 'Når aktivert, kan du søke i biblioteket ditt med AI når ingen bøker er valgt',
             'library_update': 'Oppdater bibliotekdata',
-            'library_update_tooltip': 'Hent ut boktitler og forfattere fra biblioteket ditt',
+            'library_update_tooltip': 'Indekser titler og forfattere, og bygg den kompakte prompt-cachen på nytt',
             'library_updating': 'Oppdaterer...',
             'library_status': 'Status: {count} bøker, siste oppdatering: {time}',
             'library_status_empty': 'Status: Ingen data. Klikk "Oppdater bibliotekdata" for å starte.',
@@ -598,28 +603,26 @@ class NorwegianTranslation(BaseTranslation):
             'library_init_message': 'AI-søk krever metadata fra biblioteket for å fungere. Vil du initialisere det nå?\n\nDette vil hente ut boktitler og forfattere fra biblioteket ditt.',
             'library_init_required': 'AI-søk kan ikke aktiveres uten bibliotekdata. Vennligst klikk "Oppdater bibliotekdata" når du er klar.',
             'ai_search_welcome_title': 'Velkommen til AI-søk',
-            'ai_search_welcome_message': 'AI-søk er aktivert!\n\nSlik aktiverer du:\n• Hurtigtast (kan tilpasses i innstillinger)\n• Verktøy-menyen → AI-søk\n• Åpne Ask-dialogen uten å velge bøker\n\nDu kan søke i hele biblioteket med naturlig språk. For eksempel:\n• "Har du noen bøker om Python?"\n• "Vis meg bøker av Isaac Asimov"\n• "Finn bøker om maskinlæring"\n\nAI vil søke i biblioteket ditt og anbefale relevante bøker. Klikk på boktitler for å åpne dem direkte.',
+            'ai_search_welcome_message': (
+                'AI Search er aktiv. Søk i biblioteket med naturlig språk (tittel + forfatter).\n'
+                '\n'
+                'Åpne Ask uten valg, eller Verktøy → AI Search.\n'
+                'Etter legg til/fjern: Oppdater biblioteksdata for å oppdatere prompt-cachen.'
+            ),
             'ai_search_not_enough_books_title': 'Ikke nok bøker',
             'ai_search_not_enough_books_message': 'AI-søk krever minst {min_books} bøker i biblioteket ditt.\n\nDitt nåværende bibliotek har bare {book_count} bok/bøker.\n\nVennligst legg til flere bøker for å bruke AI-søk.',
             'ai_search_mode_info': 'Søker i hele biblioteket',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Søk i hele biblioteket med naturlig språk',
             'ai_search_feature_description': (
-                'AI Search hjelper deg å finne bøker i hele Calibre-biblioteket.\n\n'
-                '• Utløs: åpne Ask uten å velge bøker, bruk Verktøy → AI Search eller snarvei\n'
-                '• Slik fungerer det: pluginet sender kompakte metadata (bok-ID, tittel, forfatter) '
-                'for alle indekserte bøker\n'
-                '• Store valg: hvis du velger mer enn 50 bøker, foreslår Ask AI Search i stedet for '
-                'å bygge inn hver bok i detaljert format\n'
-                '• Hold data oppdatert: klikk "Oppdater biblioteksdata" etter å ha lagt til eller fjernet bøker\n\n'
-                'Eksempler: "Finn bøker om Python", "Vis meg bøker av Isaac Asimov".'
+                'Søk i biblioteket med naturlig språk (tittel + forfatter).\n'
+                'Åpne Ask uten valgte bøker, eller Verktøy → AI Search.\n'
+                'Klikk Oppdater biblioteksdata etter endringer — oppdaterer den kompakte prompt-cachen.'
             ),
-            'ai_search_usage_hint': (
-                'Tips: AI Search fungerer best for bibliotekomfattende oppdagelse. For dyptgående '
-                'sammenligning av få bøker, velg opptil 30 bøker.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Biblioteksindeks',
-            'ai_search_data_subtitle': 'Oppdater den kompakte boklisten som sendes til AI når du legger til eller fjerner bøker',
+            'ai_search_data_subtitle': 'Bygg indeks og prompt-cache på nytt etter å legge til eller fjerne bøker',
+            'library_search_system_message': 'Du er en calibre-biblioteksøkeassistent. Svar KUN med matchende bøker som en HTML-liste i ønsket format. Ingen analyse, ingen tankerekke, ingen innledning.',
             'library_prompt_template': 'Du har tilgang til brukerens bokbibliotek. Her er alle bøkene: {metadata} Brukerforespørsel: {query} Vennligst finn matchende bøker i det nåværende biblioteket og returner dem i dette formatet (**VIKTIG**: Bruk HTML-lenkformat slik at brukere kan klikke på boktitler for å åpne dem direkte): - <a href="calibre://book/BOOK_ID">Boktittel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Merk: Noen forfattere kan være oppført som "unknown". Dette er normale data, vennligst returner alle matchende resultater normalt. Returner kun bøker som matcher forespørselen. Maksimalt 5 resultater.',
             'ai_search_privacy_title': 'Personvernerklæring',
             'ai_search_privacy_alert': 'AI-søk bruker bokmetadata (titler og forfattere). Denne informasjonen sendes til AI-leverandøren du har konfigurert for å behandle søkene dine.',

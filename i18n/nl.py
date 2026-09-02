@@ -390,6 +390,7 @@ class DutchTranslation(BaseTranslation):
             'error_5xx': 'Serverfout. Probeer het later opnieuw of controleer de status van de serviceprovider.',
             'error_network': 'Netwerkverbinding mislukt. Controleer alstublieft de netwerkverbinding, proxy-instellingen of firewallconfiguratie.',
             'error_unknown': 'Onbekende fout.',
+            'http_status_detail': 'HTTP {status} voor URL: {url}',
             'technical_details': 'Technische details',
             'ollama_service_not_running': 'Ollama-service draait niet. Start alstublieft eerst de Ollama-service.',
             'ollama_service_timeout': 'Ollama-serviceverbinding time-out. Controleer alstublieft of de service correct draait.',
@@ -409,6 +410,7 @@ class DutchTranslation(BaseTranslation):
             'about_title': 'Over Ask AI Plugin',
             'about_version_label': 'Versie',
             'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
+            'about_latest_update': 'Laatste update (2026.09.02): Probleem opgelost waarbij de gratis AI-service niet beschikbaar was',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Let op: MobileRead is de ontwikkelaarspagina voor calibre-pluginreleases en verdere versie-updates.',
@@ -417,6 +419,8 @@ class DutchTranslation(BaseTranslation):
             'about_markdown_desc': 'Exporteer boeken als Markdown-tekstbestanden.',
             'about_tradsimp_title': 'Chinese tekstconversie voor calibre',
             'about_tradsimp_desc': 'Converteer traditioneel en vereenvoudigd Chinees in ebooks.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Houd een korte lijst bij van boeken die je leest, bekijk de voortgang en synchroniseer vanuit de viewer.',
             'about_open_mobileread': 'MobileRead openen',
             'about_open_nowtiny': 'Nowtiny openen',
             'about_nowtiny_note': 'Meer tools en pluginstatus staan op Nowtiny.',
@@ -538,6 +542,7 @@ class DutchTranslation(BaseTranslation):
 
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Limiet voor gratis tier overschreden. Probeer het later opnieuw of configureer uw eigen Nvidia API-sleutel.',
+            'free_tier_gone': 'Het gratis Nvidia-kanaal is niet langer beschikbaar (HTTP 410). Configureer uw eigen Nvidia API-sleutel in Instellingen → AI (Nvidia AI), of probeer het later opnieuw als de gratis dienst is hersteld.',
             'free_tier_unavailable': 'Gratis tier is tijdelijk niet beschikbaar. Probeer het later opnieuw of configureer uw eigen Nvidia API-sleutel.',
             'free_tier_server_error': 'Serverfout gratis tier. Probeer het later opnieuw.',
             'free_tier_error': 'Fout in gratis tier',
@@ -587,7 +592,7 @@ class DutchTranslation(BaseTranslation):
             'library_enable': 'AI Zoeken inschakelen',
             'library_enable_tooltip': 'Indien ingeschakeld, kunt u uw bibliotheek doorzoeken met AI wanneer er geen boeken zijn geselecteerd',
             'library_update': 'Bibliotheekgegevens bijwerken',
-            'library_update_tooltip': 'Boekitels en auteurs uit uw bibliotheek extraheren',
+            'library_update_tooltip': 'Indexeer titels en auteurs en bouw de compacte promptcache opnieuw op',
             'library_updating': 'Bijwerken...',
             'library_status': 'Status: {count} boeken, laatste update: {time}',
             'library_status_empty': 'Status: Geen gegevens. Klik op "Bibliotheekgegevens bijwerken" om te beginnen.',
@@ -599,28 +604,26 @@ class DutchTranslation(BaseTranslation):
             'library_init_message': 'AI Zoeken heeft metadata van de bibliotheek nodig om te werken. Wilt u dit nu initialiseren?\n\nDit extraheert boektitels en auteurs uit uw bibliotheek.',
             'library_init_required': 'AI Zoeken kan niet worden ingeschakeld zonder bibliotheekgegevens. Klik op "Bibliotheekgegevens bijwerken" wanneer u klaar bent.',
             'ai_search_welcome_title': 'Welkom bij AI Zoeken',
-            'ai_search_welcome_message': 'AI Zoeken is geactiveerd!\n\nManieren om te activeren:\n• Sneltoets (aanpasbaar in instellingen)\n• Menu Extra → AI Zoeken\n• Ask-dialoog openen zonder boeken te selecteren\n\nU kunt uw hele bibliotheek doorzoeken in natuurlijke taal. Bijvoorbeeld:\n• "Heb je boeken over Python?"\n• "Toon me boeken van Isaac Asimov"\n• "Vind boeken over machine learning"\n\nDe AI doorzoekt uw bibliotheek en raadt relevante boeken aan. Klik op boektitels om ze direct te openen.',
+            'ai_search_welcome_message': (
+                'AI Search is actief. Zoek in uw bibliotheek met natuurlijke taal (titel + auteur).\n'
+                '\n'
+                'Open Ask zonder selectie, of Extra → AI Search.\n'
+                'Na toevoegen/verwijderen: Bibliotheekgegevens bijwerken om de promptcache te vernieuwen.'
+            ),
             'ai_search_not_enough_books_title': 'Niet genoeg boeken',
             'ai_search_not_enough_books_message': 'AI Zoeken vereist minimaal {min_books} boeken in uw bibliotheek.\n\nUw huidige bibliotheek heeft slechts {book_count} boek(en).\n\nVoeg meer boeken toe om AI Zoeken te gebruiken.',
             'ai_search_mode_info': 'Zoeken door uw hele bibliotheek',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Doorzoek uw hele bibliotheek met natuurlijke taal',
             'ai_search_feature_description': (
-                'AI Search helpt u boeken te ontdekken in uw hele Calibre-bibliotheek.\n\n'
-                '• Activeren: open Ask zonder boeken te selecteren, gebruik Extra → AI Search of een sneltoets\n'
-                '• Werking: de plugin stuurt compacte metadata (boek-ID, titel, auteur) '
-                'van alle geïndexeerde boeken\n'
-                '• Grote selecties: bij meer dan 50 boeken stelt Ask AI Search voor in plaats van '
-                'elk boek in uitgebreid formaat in te sluiten\n'
-                '• Houd gegevens actueel: klik "Bibliotheekgegevens bijwerken" na toevoegen of verwijderen van boeken\n\n'
-                'Voorbeelden: "Vind boeken over Python", "Toon boeken van Isaac Asimov".'
+                'Zoek in de bibliotheek met natuurlijke taal (titel + auteur).\n'
+                'Open Ask zonder boeken geselecteerd, of Extra → AI Search.\n'
+                'Klik na wijzigingen op Bibliotheekgegevens bijwerken — vernieuwt de compacte promptcache.'
             ),
-            'ai_search_usage_hint': (
-                'Tip: AI Search werkt het best voor bibliotheekbrede ontdekking. Voor diepgaande vergelijking '
-                'van enkele boeken, selecteer maximaal 30 boeken.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Bibliotheekindex',
-            'ai_search_data_subtitle': 'Vernieuw de compacte boekenlijst die naar AI wordt gestuurd wanneer u boeken toevoegt of verwijdert',
+            'ai_search_data_subtitle': 'Index en promptcache opnieuw opbouwen na toevoegen of verwijderen van boeken',
+            'library_search_system_message': 'Je bent een calibre-bibliotheekzoekassistent. Antwoord ALLEEN met overeenkomende boeken als HTML-lijst in het gevraagde formaat. Geen analyse, geen redenering, geen inleiding.',
             'library_prompt_template': 'U heeft toegang tot de boekenbibliotheek van de gebruiker. Hier zijn alle boeken: {metadata} Gebruikersvraag: {query} Vind alstublieft overeenkomende boeken in de huidige bibliotheek en retourneer ze in dit formaat (**BELANGRIJK**: Gebruik HTML-linkformaat zodat gebruikers op boektitels kunnen klikken om ze direct te openen): - <a href="calibre://book/BOOK_ID">Boektitel</a> - Auteursnaam Voorbeeld: - <a href="calibre://book/123">Python leren</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in actie</a> - Peter Harrington Opmerking: Sommige auteurs kunnen worden vermeld als "unknown". Dit zijn normale gegevens, retourneer alstublieft alle overeenkomende resultaten normaal. Retourneer alleen boeken die overeenkomen met de vraag. Maximaal 5 resultaten.',
             'ai_search_privacy_title': 'Privacyverklaring',
             'ai_search_privacy_alert': 'AI Zoeken gebruikt metadata van boeken (titels en auteurs). Deze informatie wordt verzonden naar de door u geconfigureerde AI-provider om uw zoekopdrachten te verwerken.',

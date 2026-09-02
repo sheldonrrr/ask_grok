@@ -371,6 +371,7 @@ prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 prefs.defaults['nvidia_free_first_use_shown'] = False  # Track if first use reminder has been shown
+prefs.defaults['about_latest_update_seen_version'] = ''  # About unread dot; set when user opens About
 
 # Export settings
 prefs.defaults['enable_default_export_folder'] = False  # Whether to export to default folder
@@ -388,6 +389,8 @@ prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond
 # Library Chat settings (v1.4.2 MVP)
 prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature
 prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON string)
+prefs.defaults['library_cached_tsv'] = ''  # Prebuilt compact TSV for prompts (id|title|authors)
+prefs.defaults['library_ids_fingerprint'] = ''  # sha1 of sorted book ids (skip rebuild when unchanged)
 prefs.defaults['library_last_update'] = ''  # Last update timestamp (ISO format)
 prefs.defaults['ai_search_first_time'] = True  # Show welcome dialog only on first use
 prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversation UID for history persistence
@@ -395,6 +398,30 @@ prefs.defaults['ai_search_last_history_uid'] = None  # Last AI Search conversati
 # Prompt length settings
 prefs.defaults['enable_custom_prompt_limit'] = False
 prefs.defaults['max_prompt_length'] = DEFAULT_CUSTOM_LIMIT  # Used when enable_custom_prompt_limit is True
+
+# Cache placeholder model labels across get_prefs() calls (avoid reloading all i18n each time).
+_PLACEHOLDER_MODEL_TEXTS = None
+# After one clean sanitize in this process, skip the full scan until force_reload.
+_PREFS_PLACEHOLDER_SANITIZED = False
+
+
+def _get_placeholder_model_texts():
+    """Lazy-load select_model / request_model_list strings for all plugin languages."""
+    global _PLACEHOLDER_MODEL_TEXTS
+    if _PLACEHOLDER_MODEL_TEXTS is not None:
+        return _PLACEHOLDER_MODEL_TEXTS
+    texts = set()
+    for code, _name in SUPPORTED_LANGUAGES:
+        try:
+            t = get_translation(code)
+            texts.add(t.get('select_model', ''))
+            texts.add(t.get('request_model_list', ''))
+        except Exception:
+            pass
+    texts.discard('')
+    _PLACEHOLDER_MODEL_TEXTS = texts
+    return _PLACEHOLDER_MODEL_TEXTS
+
 
 def get_prefs(force_reload=False):
     """获取配置
@@ -511,17 +538,39 @@ def get_prefs(force_reload=False):
             prefs['models']['nvidia_free']['proxy_url'] = current_env_url
             prefs['models']['nvidia_free']['api_base_url'] = current_env_url
             prefs.commit()
-        # 将仍为旧默认模型的免费通道升级到当前默认（用户若从未改过模型）
+        # 免费通道：迁到当前 Free Tier 可用默认（lightning 30b）
         nf = prefs['models']['nvidia_free']
-        if nf.get('model') == 'meta/llama-3.3-70b-instruct':
+        if nf.get('model') in (
+            'nvidia/nemotron-3-nano-30b-a3b',
+            'nvidia/nemotron-nano-3-30b-a3b',
+            'openai/gpt-oss-120b',
+            'meta/llama-4-scout-17b-16e-instruct',
+            'meta/llama-4-maverick-17b-128e-instruct',
+            'meta/llama-3.3-70b-instruct',
+        ):
             nf['model'] = NVIDIA_FREE_CONFIG.default_model_name
             prefs.commit()
     
-    # 付费 Nvidia：仍为旧默认模型时升级到当前默认
+    # 付费 Nvidia：仍为旧默认模型时升级到当前默认（nano 30b）
     if 'nvidia' in prefs['models']:
         nv = prefs['models']['nvidia']
-        if isinstance(nv, dict) and nv.get('model') == 'meta/llama-3.3-70b-instruct':
+        if isinstance(nv, dict) and nv.get('model') in (
+            'meta/llama-3.3-70b-instruct',
+            'nvidia/nemotron-3-ultra-550b-a55b',
+        ):
             nv['model'] = NVIDIA_CONFIG.default_model_name
+            prefs.commit()
+    # 动态创建的 Nvidia 实例（如 nvidia_nvidia_*）若仍为旧默认也一并升级
+    for _cid, _cfg in (prefs.get('models') or {}).items():
+        if not isinstance(_cfg, dict):
+            continue
+        if _cfg.get('provider_id') != 'nvidia':
+            continue
+        if _cfg.get('model') in (
+            'meta/llama-3.3-70b-instruct',
+            'nvidia/nemotron-3-ultra-550b-a55b',
+        ):
+            _cfg['model'] = NVIDIA_CONFIG.default_model_name
             prefs.commit()
 
     # Ollama 默认改为 OpenAI 兼容路径：旧 base URL 无 /v1 时自动补齐
@@ -604,45 +653,40 @@ def get_prefs(force_reload=False):
 
     # 清理历史配置中误保存的占位符模型名称（例如“-- 切换Model --”）
     # 目的：避免占位符被当作真实 model 写入配置，进而在 UI 中被复制到自定义模型输入框。
+    # 优化：占位符文案只加载一次；进程内首次清理干净后跳过全量扫描（force_reload 时重跑）。
+    global _PREFS_PLACEHOLDER_SANITIZED
     try:
-        # 收集所有语言下的 select_model / request_model_list 文本，用于识别占位符
-        placeholder_texts = set()
-        for code, _name in SUPPORTED_LANGUAGES:
-            try:
-                t = get_translation(code)
-                placeholder_texts.add(t.get('select_model', ''))
-                placeholder_texts.add(t.get('request_model_list', ''))
-            except Exception:
-                pass
+        if not (_PREFS_PLACEHOLDER_SANITIZED and not force_reload):
+            placeholder_texts = _get_placeholder_model_texts()
+            changed = False
+            for _model_id, cfg in (prefs.get('models') or {}).items():
+                if not isinstance(cfg, dict):
+                    continue
 
-        changed = False
-        for _model_id, cfg in (prefs.get('models') or {}).items():
-            if not isinstance(cfg, dict):
-                continue
+                # 默认情况下不启用“Use custom model name”
+                if 'use_custom_model_name' not in cfg:
+                    cfg['use_custom_model_name'] = False
+                    changed = True
 
-            # 默认情况下不启用“Use custom model name”
-            if 'use_custom_model_name' not in cfg:
-                cfg['use_custom_model_name'] = False
-                changed = True
+                model_val = (cfg.get('model') or '').strip()
+                if model_val and model_val in placeholder_texts:
+                    logger.warning(
+                        f"[prefs_sanitize] Detected placeholder model stored in prefs. model_id={_model_id}, model='{model_val}'. Clearing it and disabling use_custom_model_name."
+                    )
+                    cfg['model'] = ''
+                    cfg['use_custom_model_name'] = False
+                    changed = True
+                elif not model_val and cfg.get('use_custom_model_name'):
+                    # 没有有效 model 时，确保不处于自定义模式
+                    logger.warning(
+                        f"[prefs_sanitize] use_custom_model_name=True but model is empty. model_id={_model_id}. Forcing use_custom_model_name=False."
+                    )
+                    cfg['use_custom_model_name'] = False
+                    changed = True
 
-            model_val = (cfg.get('model') or '').strip()
-            if model_val and model_val in placeholder_texts:
-                logger.warning(
-                    f"[prefs_sanitize] Detected placeholder model stored in prefs. model_id={_model_id}, model='{model_val}'. Clearing it and disabling use_custom_model_name."
-                )
-                cfg['model'] = ''
-                cfg['use_custom_model_name'] = False
-                changed = True
-            elif not model_val and cfg.get('use_custom_model_name'):
-                # 没有有效 model 时，确保不处于自定义模式
-                logger.warning(
-                    f"[prefs_sanitize] use_custom_model_name=True but model is empty. model_id={_model_id}. Forcing use_custom_model_name=False."
-                )
-                cfg['use_custom_model_name'] = False
-                changed = True
-
-        if changed:
-            prefs.commit()
+            if changed:
+                prefs.commit()
+            _PREFS_PLACEHOLDER_SANITIZED = True
     except Exception:
         pass
     
@@ -4204,26 +4248,16 @@ class LibraryWidget(QWidget):
         if self.feature_subtitle:
             self.feature_subtitle.setObjectName('subtitle_ai_search_feature')
 
-        self.feature_description = QLabel(self.i18n.get('ai_search_feature_description',
-            'AI Search helps you discover books across your whole Calibre library.\n\n'
-            '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
-            '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
-            '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
-            'embedding every book in verbose format\n'
-            '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
-            'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
+        self.feature_description = QLabel(self.i18n.get(
+            'ai_search_feature_description',
+            'Search your library with natural language (title + author).\n'
+            'Open Ask with no books selected, or use Tools → AI Search.\n'
+            'Click Update Library Data after you add/remove books — this refreshes the compact prompt cache used for searches.',
+        ))
         self.feature_description.setObjectName('label_ai_search_feature')
         self.feature_description.setWordWrap(True)
         self.feature_description.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
         feature_section.addWidget(self.feature_description)
-
-        self.usage_label = QLabel(self.i18n.get('ai_search_usage_hint',
-            'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
-            'select up to 30 books instead.'))
-        self.usage_label.setObjectName('label_ai_search_usage')
-        self.usage_label.setWordWrap(True)
-        self.usage_label.setStyleSheet(f"color: {TEXT_COLOR_SECONDARY_STRONG}; padding: {PADDING_MEDIUM}px;")
-        feature_section.addWidget(self.usage_label)
         
         search_section, self.privacy_title, _privacy_sub = add_settings_section(
             layout,
@@ -4242,8 +4276,10 @@ class LibraryWidget(QWidget):
         data_section, self.data_title, self.data_subtitle = add_settings_section(
             layout,
             self.i18n.get('ai_search_data_title', 'Library Index'),
-            self.i18n.get('ai_search_data_subtitle',
-                'Refresh the compact book list sent to AI when you add or remove books'),
+            self.i18n.get(
+                'ai_search_data_subtitle',
+                'Rebuild the index and compact prompt cache after you add or remove books',
+            ),
         )
         self.data_title.setObjectName('title_ai_search_data')
         if self.data_subtitle:
@@ -4251,8 +4287,10 @@ class LibraryWidget(QWidget):
         
         self.update_button = QPushButton(self.i18n.get('library_update', 'Update Library Data'))
         self.update_button.setObjectName('button_library_update')
-        self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-            'Extract titles and authors for all books in your library (no 100-book limit)'))
+        self.update_button.setToolTip(self.i18n.get(
+            'library_update_tooltip',
+            'Index titles and authors for all books and rebuild the compact prompt cache',
+        ))
         self.update_button.clicked.connect(self.on_update_library)
         apply_button_style(self.update_button)
         data_section.addWidget(self.update_button)
@@ -4288,18 +4326,12 @@ class LibraryWidget(QWidget):
             self.feature_subtitle.setText(self.i18n.get('ai_search_feature_subtitle',
                 'Search your entire library using natural language'))
         if hasattr(self, 'feature_description'):
-            self.feature_description.setText(self.i18n.get('ai_search_feature_description',
-                'AI Search helps you discover books across your whole Calibre library.\n\n'
-                '• Trigger: open Ask without selecting books, use Tools → AI Search, or a keyboard shortcut\n'
-                '• How it works: the plugin sends compact metadata (book ID, title, author) for all indexed books\n'
-                '• Large selections: if you select more than 50 books, Ask will suggest AI Search instead of '
-                'embedding every book in verbose format\n'
-                '• Keep data fresh: click "Update Library Data" after adding or removing books\n\n'
-                'Example queries: "Find books about Python", "Show me books by Isaac Asimov".'))
-        if hasattr(self, 'usage_label'):
-            self.usage_label.setText(self.i18n.get('ai_search_usage_hint',
-                'Tip: AI Search works best for library-wide discovery. For comparing a few books in depth, '
-                'select up to 30 books instead.'))
+            self.feature_description.setText(self.i18n.get(
+                'ai_search_feature_description',
+                'Search your library with natural language (title + author).\n'
+                'Open Ask with no books selected, or use Tools → AI Search.\n'
+                'Click Update Library Data after you add/remove books — this refreshes the compact prompt cache used for searches.',
+            ))
 
         if hasattr(self, 'privacy_title'):
             self.privacy_title.setText(self.i18n.get('ai_search_privacy_title', 'Privacy Notice'))
@@ -4312,13 +4344,17 @@ class LibraryWidget(QWidget):
         if hasattr(self, 'data_title'):
             self.data_title.setText(self.i18n.get('ai_search_data_title', 'Library Index'))
         if hasattr(self, 'data_subtitle') and self.data_subtitle:
-            self.data_subtitle.setText(self.i18n.get('ai_search_data_subtitle',
-                'Refresh the compact book list sent to AI when you add or remove books'))
+            self.data_subtitle.setText(self.i18n.get(
+                'ai_search_data_subtitle',
+                'Rebuild the index and compact prompt cache after you add or remove books',
+            ))
         
         if hasattr(self, 'update_button'):
             self.update_button.setText(self.i18n.get('library_update', 'Update Library Data'))
-            self.update_button.setToolTip(self.i18n.get('library_update_tooltip', 
-                'Extract titles and authors for all books in your library (no 100-book limit)'))
+            self.update_button.setToolTip(self.i18n.get(
+                'library_update_tooltip',
+                'Index titles and authors for all books and rebuild the compact prompt cache',
+            ))
         
         # 更新状态显示
         self.update_status_display()
@@ -4371,7 +4407,9 @@ class LibraryWidget(QWidget):
         try:
             # 提取元数据
             db = self.gui.current_db
-            success, book_count, error_msg = update_library_metadata(db, self.prefs)
+            success, book_count, error_msg = update_library_metadata(
+                db, self.prefs, force=True
+            )
             
             if success:
                 # 更新状态显示

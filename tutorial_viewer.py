@@ -193,15 +193,25 @@ def open_tutorial_in_browser():
             logger.error("Plugin not found")
             return False
         
-        # Read tutorial using plugin's get_resources method
-        tutorial_data = plugin.get_resources('tutorial/tutorial_v1.0.md')
+        # Prefer current single-file tutorial; keep older names for upgrade mismatches
+        tutorial_data = None
+        matched = None
+        for candidate in (
+            'tutorial/tutorial_v1.0.md',
+            'tutorial/tutorial_v0.9.md',
+            'tutorial/tutorial_v0.8.md',
+        ):
+            tutorial_data = plugin.get_resources(candidate)
+            if tutorial_data:
+                matched = candidate
+                break
         
         if not tutorial_data:
             logger.error("Failed to read tutorial")
             return False
         
         tutorial_content = tutorial_data.decode('utf-8')
-        logger.info(f"Read tutorial: {len(tutorial_content)} bytes")
+        logger.info(f"Read tutorial: {len(tutorial_content)} bytes from {matched}")
         
         # Convert to HTML
         converter = MarkdownToHTMLConverter()

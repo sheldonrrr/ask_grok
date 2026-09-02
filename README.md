@@ -58,9 +58,13 @@ Note: For Perplexity, when the API returns citations/search results, the plugin 
 
 ### Free Nvidia API Key
 
-Recently, Nvidia released a free API key for llama, Deepseek-r1, you can get free API key from [here](https://build.nvidia.com/).
+Nvidia offers free API access for many models. Get a free API key from [build.nvidia.com](https://build.nvidia.com/).
 
-Available models:
+Plugin default models:
+- Nvidia AI Free: `nvidia/nemotron-3.5-lightning-30b-a3b`
+- Nvidia AI (your own API key): `nvidia/nemotron-3-nano-30b-a3b`
+
+Other models you can select (examples):
 - openai/gpt-oss-120b
 - meta/llama-4-maverick-17b-128e-instruct
 - meta/llama-4-scout-17b-16e-instruct

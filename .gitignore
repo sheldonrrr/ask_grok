@@ -1,169 +1,73 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Ask AI Plugin — public GitHub repo
+#
+# Policy:
+#   TRACK  = needed for contributors, CI agents, README, or release notes
+#   IGNORE = local secrets, caches, IDE junk, build outputs
+#   PACK   = scripts/package.sh decides the calibre plugin zip (see notes at bottom)
+#
+# Do not put secrets here “temporarily”. .env is ignored; use .env.example only.
 
-# C extensions
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-downloads/
-eggs/
-.eggs/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Release artifacts (keep dist/ folder, ignore generated zips)
-# Canonical package name: dist/Ask_AI_Plugin_vX.Y.Z.zip  (see scripts/package.sh)
-dist/*
-!dist/.gitkeep
-Ask_AI_Plugin_v*.zip
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-.pybuilder/
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-# .python-version
-
-# pipenv
-# Pipfile.lock
-
-# UV
-# uv.lock
-
-# poetry
-# poetry.lock
-
-# pdm
-.pdm.toml
-.pdm-python
-.pdm-build/
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
+# --- Secrets / local env ---
 .env
 .env.*
 !.env.example
-.venv
+.venv/
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
+# --- Python caches / test / type junk ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.egg-info/
+.eggs/
+*.egg
 
-# Pyre type checker
-.pyre/
+# --- Release zip artifacts (keep empty dist/ in git) ---
+# Canonical name: dist/Ask_AI_Plugin_vX.Y.Z.zip  (see scripts/package.sh)
+dist/*
+!dist/.gitkeep
+*.zip
 
-# pytype static type analyzer
-.pytype/
+# --- Local / native helper binaries (not source) ---
+lib/bin/
 
-# Cython debug symbols
-cython_debug/
+# --- Backend (separate repository, if present locally) ---
+backend/
 
-# PyCharm / JetBrains
+# --- Editors / AI tooling ---
 .idea/
-
-# PyPI configuration file
-.pypirc
-
-# VS Code / Cursor
 .vscode/
+*.code-workspace
+.windsurf/
+.claude/
+.codex/
+.agent/
+.history/
+.obsidian/
+.sync/
+
+# Cursor: ignore local junk; keep shared slash-commands + rules tracked
 .cursor/*
-# Track shared agent commands + rules; keep local Cursor junk ignored
 !.cursor/commands/
 !.cursor/commands/**
 !.cursor/rules/
 !.cursor/rules/**
 .cursor/**/*.log
-*.code-workspace
 
-# macOS system files
+# --- OS junk ---
 .DS_Store
 .DS_Store?
 .AppleDouble
@@ -171,50 +75,32 @@ cython_debug/
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
 .fseventsd
 .TemporaryItems
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 *.icloud
-
-# Windows system files
+Thumbs.db
+ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-
-# Linux editor / swap files
 *~
 *.swp
 *.swo
 
-# AI assistant / local tooling
-.windsurf/
-.claude/
-.codex/
-.agent/
-.history/
-
-# Node (if any local tooling is added)
+# --- Optional local Node tooling ---
 node_modules/
 
-# Resilio Sync directory
-.sync/
-
-# Obsidian editor
-.obsidian/
-
-# Backend folder (managed in separate repository)
-backend/
-
-# Project specific / local artifacts
-*.zip
-ask_ai_plugin_gif_preview.gif
-lib/bin/
-**/*.dist-info/
-
-# See "Environments" above — .env holds local API keys and must not be committed.
+# --- Packaging notes (NOT git-ignore) ---
+# Tracked in this public repo, but omitted from the plugin zip by scripts/package.sh:
+#   release/          — MobileRead / GitHub changelog (latest only)
+#   aiprovider/       — provider reference docs for contributors
+#   scripts/ tests/ bin/ — packaging + caldbg + unit tests
+#   .cursor/commands .cursor/rules — shared agent workflows
+#   .github/          — GitHub metadata
+#   setup.py requirements.txt AGENTS.md — project/dev metadata
+#   ask_ai_plugin_gif_preview.gif — README preview asset (not needed inside calibre)
+#   tutorial/about.md — author notes (tutorial_v1.0.md IS shipped)
 #
-# Packaging exclusions (NOT git-ignore): docs/, aiprovider/, scripts/, tests/, bin/
-# stay in the repo for development; scripts/package.sh omits them from the plugin zip.
-# Do not list tests/ or bin/ here — they are tracked source / helpers.
+# Vendored wheels metadata (lib/**/*.dist-info/) ARE tracked and ARE packed so
+# third-party LICENSE/METADATA ship with the plugin.

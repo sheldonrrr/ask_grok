@@ -392,6 +392,7 @@ class SpanishTranslation(BaseTranslation):
             'error_5xx': 'Error del servidor. Por favor, inténtalo de nuevo más tarde o comprueba el estado del proveedor del servicio.',
             'error_network': 'La conexión de red falló. Por favor, comprueba la conexión de red, la configuración del proxy o la configuración del firewall.',
             'error_unknown': 'Error desconocido.',
+            'http_status_detail': 'HTTP {status} para la URL: {url}',
             'technical_details': 'Detalles técnicos',
             'ollama_service_not_running': 'El servicio de Ollama no se está ejecutando. Por favor, inicia el servicio de Ollama primero.',
             'ollama_service_timeout': 'Tiempo de espera de conexión del servicio de Ollama agotado. Por favor, comprueba si el servicio se está ejecutando correctamente.',
@@ -411,6 +412,7 @@ class SpanishTranslation(BaseTranslation):
             'about_title': 'Acerca de Ask AI Plugin',
             'about_version_label': 'Versión',
             'about_description': 'Haz preguntas sobre libros de calibre con los servicios de IA que elijas.',
+            'about_latest_update': 'Última actualización (2026.09.02): se corrigió que el servicio de IA gratuita no estuviera disponible',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: MobileRead es la página del desarrollador para publicaciones de plugins de calibre y más actualizaciones de versión.',
@@ -419,6 +421,8 @@ class SpanishTranslation(BaseTranslation):
             'about_markdown_desc': 'Exporta libros como archivos de texto Markdown.',
             'about_tradsimp_title': 'Conversión de chino para calibre',
             'about_tradsimp_desc': 'Convierte chino tradicional y simplificado en ebooks.',
+            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_desc': 'Mantén una lista corta de libros que estás leyendo, ve el progreso y sincroniza desde el visor.',
             'about_open_mobileread': 'Abrir MobileRead',
             'about_open_nowtiny': 'Abrir Nowtiny',
             'about_nowtiny_note': 'Más herramientas y el estado de los plugins están en Nowtiny.',
@@ -540,6 +544,7 @@ class SpanishTranslation(BaseTranslation):
             
             # Nvidia Free error messages
             'free_tier_rate_limit': 'Límite de frecuencia del nivel gratuito excedido. Por favor, inténtalo de nuevo más tarde o configura tu propia clave API de Nvidia.',
+            'free_tier_gone': 'El canal gratuito de Nvidia ya no está disponible (HTTP 410). Configure su propia clave API de Nvidia en Ajustes → AI (Nvidia AI), o inténtelo más tarde si se restaura el servicio gratuito.',
             'free_tier_unavailable': 'El nivel gratuito no está disponible temporalmente. Por favor, inténtalo de nuevo más tarde o configura tu propia clave API de Nvidia.',
             'free_tier_server_error': 'Error del servidor del nivel gratuito. Por favor, inténtalo de nuevo más tarde.',
             'free_tier_error': 'Error del nivel gratuito',
@@ -589,7 +594,7 @@ class SpanishTranslation(BaseTranslation):
             'library_enable': 'Habilitar búsqueda IA',
             'library_enable_tooltip': 'Cuando está habilitado, puede buscar en su biblioteca usando IA cuando no hay libros seleccionados',
             'library_update': 'Actualizar datos de la biblioteca',
-            'library_update_tooltip': 'Extraer títulos y autores de libros de su biblioteca',
+            'library_update_tooltip': 'Indexar títulos y autores y reconstruir la caché compacta de prompts',
             'library_updating': 'Actualizando...',
             'library_status': 'Estado: {count} libros, última actualización: {time}',
             'library_status_empty': 'Estado: Sin datos. Haga clic en "Actualizar datos de la biblioteca" para comenzar.',
@@ -601,28 +606,26 @@ class SpanishTranslation(BaseTranslation):
             'library_init_message': 'La búsqueda IA requiere metadatos de la biblioteca para funcionar. ¿Desea inicializarla ahora?\n\nEsto extraerá títulos y autores de libros de su biblioteca.',
             'library_init_required': 'La búsqueda IA no se puede habilitar sin datos de la biblioteca. Haga clic en "Actualizar datos de la biblioteca" cuando esté listo para usar esta función.',
             'ai_search_welcome_title': 'Bienvenido a la búsqueda IA',
-            'ai_search_welcome_message': '¡La búsqueda IA está activada!\n\nFormas de activar:\n• Atajo de teclado (personalizable en ajustes)\n• Menú Herramientas → Búsqueda IA\n• Abrir diálogo Ask sin seleccionar libros\n\nPuede buscar en toda su biblioteca usando lenguaje natural. Por ejemplo:\n• "¿Tiene libros sobre Python?"\n• "Muéstrame libros de Isaac Asimov"\n• "Encuentra libros sobre aprendizaje automático"\n\nLa IA buscará en su biblioteca y recomendará libros relevantes. Haga clic en los títulos para abrirlos directamente.',
+            'ai_search_welcome_message': (
+                'AI Search está activo. Busque en su biblioteca con lenguaje natural (título + autor).\n'
+                '\n'
+                'Abra Ask sin seleccionar libros, o Herramientas → AI Search.\n'
+                'Tras añadir/quitar libros, actualice los datos de la biblioteca para refrescar la caché de prompts.'
+            ),
             'ai_search_not_enough_books_title': 'No hay suficientes libros',
             'ai_search_not_enough_books_message': 'La búsqueda IA requiere al menos {min_books} libros en su biblioteca.\n\nSu biblioteca actual solo tiene {book_count} libro(s).\n\nPor favor, agregue más libros para usar la búsqueda IA.',
             'ai_search_mode_info': 'Buscando en toda su biblioteca',
             'ai_search_feature_title': 'AI Search',
             'ai_search_feature_subtitle': 'Busque en toda su biblioteca con lenguaje natural',
             'ai_search_feature_description': (
-                'AI Search le ayuda a descubrir libros en toda su biblioteca Calibre.\n\n'
-                '• Activar: abra Ask sin seleccionar libros, use Herramientas → AI Search o un atajo\n'
-                '• Funcionamiento: el plugin envía metadatos compactos (ID, título, autor) '
-                'de todos los libros indexados\n'
-                '• Selecciones grandes: si selecciona más de 50 libros, Ask sugerirá AI Search en lugar de '
-                'incrustar cada libro en formato detallado\n'
-                '• Mantenga los datos actualizados: haga clic en "Actualizar datos de biblioteca" al añadir o eliminar libros\n\n'
-                'Ejemplos: "Encuentra libros sobre Python", "Muéstrame libros de Isaac Asimov".'
+                'Busque en la biblioteca con lenguaje natural (título + autor).\n'
+                'Abra Ask sin libros seleccionados, o Herramientas → AI Search.\n'
+                'Pulse Actualizar datos tras añadir/quitar libros: refresca la caché compacta de prompts.'
             ),
-            'ai_search_usage_hint': (
-                'Consejo: AI Search funciona mejor para descubrimiento en toda la biblioteca. Para comparar '
-                'pocos libros en profundidad, seleccione hasta 30 libros.'
-            ),
+            'ai_search_usage_hint': '',
             'ai_search_data_title': 'Índice de biblioteca',
-            'ai_search_data_subtitle': 'Actualice la lista compacta de libros enviada a la IA cuando añada o elimine libros',
+            'ai_search_data_subtitle': 'Reconstruir el índice y la caché de prompts tras añadir o quitar libros',
+            'library_search_system_message': 'Eres un asistente de búsqueda de biblioteca de calibre. Responde SOLO con los libros coincidentes como lista HTML en el formato solicitado. Sin análisis, sin cadena de pensamiento, sin preámbulo.',
             'library_prompt_template': 'Tiene acceso a la biblioteca de libros del usuario. Aquí están todos los libros: {metadata} Consulta del usuario: {query} Por favor, encuentre libros coincidentes en la biblioteca actual y devuélvalos en este formato (**IMPORTANTE**: Use el formato de enlace HTML para que los usuarios puedan hacer clic en los títulos de los libros para abrirlos directamente): - <a href="calibre://book/BOOK_ID">Título del libro</a> - Nombre del autor Ejemplo: - <a href="calibre://book/123">Aprender Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning en acción</a> - Peter Harrington Nota: Algunos autores pueden aparecer como "unknown". Estos son datos normales, por favor devuelva todos los resultados coincidentes normalmente. Solo devuelva libros que coincidan con la consulta. Máximo 5 resultados.',
             'ai_search_privacy_title': 'Aviso de Privacidad',
             'ai_search_privacy_alert': 'La Búsqueda IA utiliza metadatos de libros (títulos y autores) de tu biblioteca. Esta información se enviará al proveedor de IA que hayas configurado para procesar tus consultas de búsqueda.',

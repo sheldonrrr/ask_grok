@@ -3,6 +3,8 @@
 #   source scripts/caldbg.fish
 #   soufish                    # 若已在 ~/.config/fish/config.fish 中 source 本文件
 #   ~/ask_grok/bin/caldbg-ag   # 任意 shell 可直接运行
+# 新开 fish 自动加载：
+#   ln -sf ~/ask_grok/scripts/fish/conf.d/ask-grok-caldbg.fish ~/.config/fish/conf.d/
 
 if not type -q calibre-customize
     if test -d /Applications/calibre.app/Contents/MacOS
