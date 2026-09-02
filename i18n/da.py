@@ -408,6 +408,7 @@ class DanishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stil spørgsmål om calibre-bøger med de AI-tjenester, du vælger.',
+            'about_latest_update': 'Seneste opdatering (2026.09.02): Rettet at den gratis AI-tjeneste ikke var tilgængelig',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Bemærk: MobileRead er udviklersiden for calibre-pluginudgivelser og flere versionsopdateringer.',

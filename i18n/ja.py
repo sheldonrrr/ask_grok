@@ -415,6 +415,7 @@ class JapaneseTranslation(BaseTranslation):
             'about_title': 'Ask AI Pluginについて',
             'about_version_label': 'バージョン',
             'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
+            'about_latest_update': '最新の更新（2026.09.02）：無料AIサービスが利用できない問題を修正しました',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': '注：MobileRead は calibre プラグインの公開とバージョン更新情報のための開発者ページです。',

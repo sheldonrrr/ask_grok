@@ -196,8 +196,8 @@ DEFAULT_MODELS = {
         display_name="Nvidia AI (Free)",
         api_key_label="API Key (Not Required):",
         default_api_base_url="https://nvidia-proxy.boy-liushaopeng.workers.dev",
-        # Same small/fast default as paid Nvidia; gpt-oss-120b often exceeds free-proxy TTFB.
-        default_model_name="nvidia/nemotron-3-nano-30b-a3b"
+        # Free-tier default; nano 30b is no longer available on Nvidia Free Tier.
+        default_model_name="nvidia/nemotron-3.5-lightning-30b-a3b"
     )
 }
 

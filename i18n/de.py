@@ -385,6 +385,7 @@ class GermanTranslation(BaseTranslation):
             'about_title': 'Über Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stellen Sie Fragen zu calibre-Büchern mit den von Ihnen gewählten KI-Diensten.',
+            'about_latest_update': 'Aktuelles Update (2026.09.02): Der kostenlose KI-Dienst war nicht verfügbar — das ist behoben',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Hinweis: MobileRead ist die Entwicklerseite für Calibre-Plugin-Veröffentlichungen und weitere Versionsupdates.',

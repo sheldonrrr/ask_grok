@@ -21,7 +21,7 @@ class NvidiaFreeModel(NvidiaModel):
     通过 Cloudflare Worker 代理访问 Nvidia API
     支持本地测试环境和生产环境切换
     """
-    DEFAULT_MODEL = "nvidia/nemotron-3-nano-30b-a3b"
+    DEFAULT_MODEL = "nvidia/nemotron-3.5-lightning-30b-a3b"
 
     def __init__(self, config: Dict[str, Any]):
         """
@@ -315,6 +315,7 @@ class NvidiaFreeModel(NvidiaModel):
         获取后备模型列表（当 API 请求失败时使用）
         """
         return [
+            "nvidia/nemotron-3.5-lightning-30b-a3b",
             "nvidia/nemotron-3-nano-30b-a3b",
             "meta/llama-4-maverick-17b-128e-instruct",
             "meta/llama-4-scout-17b-16e-instruct",

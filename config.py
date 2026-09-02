@@ -371,6 +371,7 @@ prefs.defaults['request_timeout'] = 120  # Default timeout in seconds
 prefs.defaults['parallel_ai_count'] = 1  # Number of parallel AI requests (1-4)
 prefs.defaults['cached_models'] = {}  # Cached model lists for each AI provider
 prefs.defaults['nvidia_free_first_use_shown'] = False  # Track if first use reminder has been shown
+prefs.defaults['about_latest_update_seen_version'] = ''  # About unread dot; set when user opens About
 
 # Export settings
 prefs.defaults['enable_default_export_folder'] = False  # Whether to export to default folder
@@ -537,9 +538,11 @@ def get_prefs(force_reload=False):
             prefs['models']['nvidia_free']['proxy_url'] = current_env_url
             prefs['models']['nvidia_free']['api_base_url'] = current_env_url
             prefs.commit()
-        # 免费通道：迁到当前更快默认（nano 30b）
+        # 免费通道：迁到当前 Free Tier 可用默认（lightning 30b）
         nf = prefs['models']['nvidia_free']
         if nf.get('model') in (
+            'nvidia/nemotron-3-nano-30b-a3b',
+            'nvidia/nemotron-nano-3-30b-a3b',
             'openai/gpt-oss-120b',
             'meta/llama-4-scout-17b-16e-instruct',
             'meta/llama-4-maverick-17b-128e-instruct',

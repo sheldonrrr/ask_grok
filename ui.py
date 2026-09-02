@@ -26,7 +26,7 @@ from calibre_plugins.ask_ai_plugin.models.base import (
 from .i18n import get_translation, get_suggestion_template
 from calibre_plugins.ask_ai_plugin.shortcuts_widget import ShortcutsWidget
 from calibre_plugins.ask_ai_plugin.prompts_widget import PromptsWidget
-from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY
+from calibre_plugins.ask_ai_plugin.version import VERSION_DISPLAY, VERSION_STRING
 from calibre_plugins.ask_ai_plugin.widgets import apply_button_style
 from calibre_plugins.ask_ai_plugin.ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
@@ -45,9 +45,21 @@ NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?
 NOWTINY_PLUGIN_SIMPLE_GOAL_URL = 'https://www.mobileread.com/forums/showthread.php?p=4602877'
 ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
 
-# Bump this when promoting a new related plugin so the About unread cue returns.
+# Bump this when promoting a new related plugin so that card is highlighted again.
 ABOUT_RELATED_HIGHLIGHT_ID = 'simple_goal'
 ABOUT_RELATED_HIGHLIGHT_SEEN_KEY = 'about_related_highlight_seen_id'
+ABOUT_LATEST_UPDATE_SEEN_KEY = 'about_latest_update_seen_version'
+
+
+def _about_unread():
+    """Show the About button dot until the user opens About on this version."""
+    prefs = get_prefs()
+    return prefs.get(ABOUT_LATEST_UPDATE_SEEN_KEY) != VERSION_STRING
+
+
+def _mark_about_seen():
+    prefs = get_prefs()
+    prefs[ABOUT_LATEST_UPDATE_SEEN_KEY] = VERSION_STRING
 
 
 def _about_related_unread():
@@ -779,6 +791,10 @@ class AboutWidget(QWidget):
         self.description_label.setWordWrap(True)
         cl.addWidget(self.description_label)
 
+        self.latest_update_label = QLabel()
+        self.latest_update_label.setWordWrap(True)
+        cl.addWidget(self.latest_update_label)
+
         self.mobile_read_link_label = QLabel()
         self.mobile_read_link_label.setWordWrap(True)
         self.mobile_read_link_label.setTextFormat(Qt.RichText)
@@ -959,6 +975,12 @@ class AboutWidget(QWidget):
             self.i18n.get(
                 'about_description',
                 'Ask questions about books in calibre, using the AI providers you choose.',
+            )
+        )
+        self.latest_update_label.setText(
+            self.i18n.get(
+                'about_latest_update',
+                'Latest update (2026.09.02): Fixed the free AI service being unavailable',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -1385,6 +1407,7 @@ class TabDialog(QDialog):
         
         # 创建按钮布局
         button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignVCenter)
         
         # 添加左侧间距
         button_layout.addSpacing(10)
@@ -1396,23 +1419,17 @@ class TabDialog(QDialog):
         self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
-        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.save_button, 0, Qt.AlignVCenter)
 
-        # About 放在保存按钮旁边；未读相关推荐时右上角显示圆点（无文案）
-        self.about_button_host = QWidget()
-        self.about_button_host.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        about_host_layout = QHBoxLayout(self.about_button_host)
-        about_host_layout.setContentsMargins(0, 2, 6, 0)
-        about_host_layout.setSpacing(0)
+        # About 与保存/关闭同级加入底栏，避免外包一层导致 macOS 原生按钮错位
         self.about_button = QPushButton(self.i18n.get('about', 'About'))
         self.about_button.clicked.connect(self.show_about_dialog)
-        about_host_layout.addWidget(self.about_button)
-        self.about_unread_dot = QLabel(self.about_button_host)
+        button_layout.addWidget(self.about_button, 0, Qt.AlignVCenter)
+        self.about_unread_dot = QLabel(self.about_button)
         self.about_unread_dot.setFixedSize(8, 8)
         self.about_unread_dot.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.about_unread_dot.raise_()
-        self.about_button_host.installEventFilter(self)
-        button_layout.addWidget(self.about_button_host)
+        self.about_button.installEventFilter(self)
         self._style_about_unread_dot()
         self._update_about_unread_dot()
         
@@ -1458,7 +1475,7 @@ class TabDialog(QDialog):
         # 添加Close按钮（右侧）
         self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
         self.close_button.clicked.connect(self.reject)
-        button_layout.addWidget(self.close_button)
+        button_layout.addWidget(self.close_button, 0, Qt.AlignVCenter)
         
         # 添加右侧间距
         button_layout.addSpacing(10)
@@ -1485,23 +1502,23 @@ class TabDialog(QDialog):
     def _update_about_unread_dot(self):
         if not hasattr(self, 'about_unread_dot'):
             return
-        show = _about_related_unread()
+        show = _about_unread()
         self.about_unread_dot.setVisible(show)
         if show:
             self._style_about_unread_dot()
             self._position_about_unread_dot()
 
     def _position_about_unread_dot(self):
-        if not hasattr(self, 'about_unread_dot') or not hasattr(self, 'about_button_host'):
+        if not hasattr(self, 'about_unread_dot') or not hasattr(self, 'about_button'):
             return
-        host = self.about_button_host
+        btn = self.about_button
         dot = self.about_unread_dot
-        dot.move(max(0, host.width() - dot.width()), 0)
+        dot.move(max(0, btn.width() - dot.width() - 2), 2)
 
     def eventFilter(self, obj, event):
         if (
-            hasattr(self, 'about_button_host')
-            and obj is self.about_button_host
+            hasattr(self, 'about_button')
+            and obj is self.about_button
             and event.type() in (QEvent.Resize, QEvent.Show, QEvent.PaletteChange)
         ):
             if event.type() == QEvent.PaletteChange:
@@ -1513,6 +1530,7 @@ class TabDialog(QDialog):
         """Open the local About page instead of a remote story URL."""
         highlight_id = ABOUT_RELATED_HIGHLIGHT_ID if _about_related_unread() else None
         _mark_about_related_seen()
+        _mark_about_seen()
         self._update_about_unread_dot()
 
         dialog = QDialog(self)

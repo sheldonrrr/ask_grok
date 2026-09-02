@@ -412,6 +412,7 @@ class SpanishTranslation(BaseTranslation):
             'about_title': 'Acerca de Ask AI Plugin',
             'about_version_label': 'Versión',
             'about_description': 'Haz preguntas sobre libros de calibre con los servicios de IA que elijas.',
+            'about_latest_update': 'Última actualización (2026.09.02): se corrigió que el servicio de IA gratuita no estuviera disponible',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: MobileRead es la página del desarrollador para publicaciones de plugins de calibre y más actualizaciones de versión.',

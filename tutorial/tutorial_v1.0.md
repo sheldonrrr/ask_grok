@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v1.0
-Latest updated: Aug 9, 2026, Ask AI Plugin v1.6.0
+Latest updated: Sep 2, 2026, Ask AI Plugin v1.6.1
 
 ToC of this tutorial:
 - Introduction
@@ -52,7 +52,7 @@ Good news: You don't need to pay. Free options are available below.
 **Default Option: Nvidia AI Free (No Setup Required)**
 - Cost: Completely FREE
 - Setup: None! Works immediately after plugin installation
-- Default model: `nvidia/nemotron-3-nano-30b-a3b` (a small, fast model; you can change it in Configuration)
+- Default model: `nvidia/nemotron-3.5-lightning-30b-a3b` (a small, fast model; you can change it in Configuration)
 - Limit: Shared free tier (may be less stable during peak times)
 - Note: This is a free service maintained by the plugin developer. For better stability and higher limits, consider the options below.
 

@@ -60,8 +60,9 @@ Note: For Perplexity, when the API returns citations/search results, the plugin 
 
 Nvidia offers free API access for many models. Get a free API key from [build.nvidia.com](https://build.nvidia.com/).
 
-Plugin default model (Nvidia AI and Nvidia AI Free):
-- `nvidia/nemotron-3-nano-30b-a3b`
+Plugin default models:
+- Nvidia AI Free: `nvidia/nemotron-3.5-lightning-30b-a3b`
+- Nvidia AI (your own API key): `nvidia/nemotron-3-nano-30b-a3b`
 
 Other models you can select (examples):
 - openai/gpt-oss-120b
