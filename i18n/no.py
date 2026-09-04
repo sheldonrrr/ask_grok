@@ -409,7 +409,7 @@ class NorwegianTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Versjon',
             'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
-            'about_latest_update': 'Siste oppdatering (2026.09.02): Fikset at den gratis AI-tjenesten ikke var tilgjengelig',
+            'about_latest_update': 'Siste oppdatering (2026.09.04): Fikset at boktitler og språk med ikke-latinsk skrift ble vist som spørsmålstegn',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Merk: MobileRead er utviklersiden for calibre-pluginutgivelser og flere versjonsoppdateringer.',

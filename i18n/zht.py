@@ -409,7 +409,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_title': '關於 Ask AI Plugin',
         'about_version_label': '版本',
         'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
-        'about_latest_update': '最新更新（2026.09.02）：修復了免費 AI 服務無法使用的問題',
+        'about_latest_update': '最新更新（2026.09.04）：修復了非拉丁文書名和語言顯示為問號的問題',
         'about_mobileread_link_text': 'MobileRead',
         'about_related_plugins': 'Nowtiny calibre 插件推薦',
         'about_markdown_title': 'Markdown for calibre',
