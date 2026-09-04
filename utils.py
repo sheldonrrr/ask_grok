@@ -8,6 +8,39 @@ import copy
 # 初始化日志
 logger = logging.getLogger(__name__)
 
+_TEXT_ENCODINGS = (
+    'utf-8',
+    'utf-16le',
+    'utf-16be',
+    'gb18030',
+    'big5',
+    'shift_jis',
+    'euc-kr',
+    'windows-1256',
+    'iso-8859-6',
+    'windows-1251',
+    'windows-1252',
+    'iso-8859-8',
+    'windows-1255',
+)
+
+
+def as_unicode_text(value, default=''):
+    """把标题/作者等元数据稳妥转成 Unicode，避免非拉丁文字变成 ?。"""
+    if value is None:
+        return default
+    if isinstance(value, bytes):
+        for encoding in _TEXT_ENCODINGS:
+            try:
+                text = value.decode(encoding)
+            except (UnicodeDecodeError, LookupError):
+                continue
+            if '\ufffd' in text:
+                continue
+            return text.replace('\u2028', '\n').replace('\u2029', '\n')
+        return value.decode('utf-8', 'replace').replace('\u2028', '\n').replace('\u2029', '\n')
+    return str(value).replace('\u2028', '\n').replace('\u2029', '\n')
+
 def mask_api_key(api_key, visible_chars=4, mask_chars=8):
     """
     隐藏API Key，只保留前几位字符，其余全部掩码

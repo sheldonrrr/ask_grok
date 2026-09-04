@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 from datetime import datetime
 from enum import auto
-from .utils import mask_api_key, mask_api_key_in_text, safe_log_config
+from .utils import mask_api_key, mask_api_key_in_text, safe_log_config, as_unicode_text
 from PyQt5.Qt import (Qt, QMenu, QAction, QTextCursor, QApplication, 
                      QKeySequence, QMessageBox, QPixmap, QPainter, QSize, QTimer)
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QTextEdit, QPushButton, 
@@ -980,7 +980,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.09.02): Fixed the free AI service being unavailable',
+                'Latest update (2026.09.04): Fixed book titles and languages in non-Latin scripts showing as question marks',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -2114,6 +2114,61 @@ class AskDialog(QDialog):
         # 粤语
         'yue': '粵語',
         'zh-yue': '粵語',
+
+        # 常见书籍语言（Calibre ISO 639）
+        'ar': 'العربية',
+        'ara': 'العربية',
+        'he': 'עברית',
+        'heb': 'עברית',
+        'fa': 'فارسی',
+        'per': 'فارسی',
+        'ur': 'اردو',
+        'ko': '한국어',
+        'kor': '한국어',
+        'th': 'ไทย',
+        'tha': 'ไทย',
+        'hi': 'हिन्दी',
+        'hin': 'हिन्दी',
+        'hi-in': 'हिन्दी',
+        'bn': 'বাংলা',
+        'ben': 'বাংলা',
+        'ta': 'தமிழ்',
+        'tam': 'தமிழ்',
+        'te': 'తెలుగు',
+        'tel': 'తెలుగు',
+        'ml': 'മലയാളം',
+        'mal': 'മലയാളം',
+        'kn': 'ಕನ್ನಡ',
+        'kan': 'ಕನ್ನಡ',
+        'mr': 'मराठी',
+        'mar': 'मराठी',
+        'gu': 'ગુજરાતી',
+        'guj': 'ગુજરાતી',
+        'pa': 'ਪੰਜਾਬੀ',
+        'pan': 'ਪੰਜਾਬੀ',
+        'or': 'ଓଡ଼ିଆ',
+        'ori': 'ଓଡ଼ିଆ',
+        'as': 'অসমীয়া',
+        'asm': 'অসমীয়া',
+        'sa': 'संस्कृतम्',
+        'san': 'संस्कृतम्',
+        'ne': 'नेपाली',
+        'nep': 'नेपाली',
+        'id': 'Bahasa Indonesia',
+        'ind': 'Bahasa Indonesia',
+        'vi': 'Tiếng Việt',
+        'vie': 'Tiếng Việt',
+        'tr': 'Türkçe',
+        'tur': 'Türkçe',
+        'pl': 'Polski',
+        'pol': 'Polski',
+        'uk': 'Українська',
+        'ukr': 'Українська',
+        'cs': 'Čeština',
+        'ces': 'Čeština',
+        'el': 'Ελληνικά',
+        'ell': 'Ελληνικά',
+        'und': 'Unknown',
     }
     
     def __init__(self, gui, books_info, api, history_uid=None):
@@ -3365,8 +3420,20 @@ Please answer the question based on the above book information.""")
         """将语言代码转换为易读的语言名称"""
         if not lang_code:
             return None
-        lang_code = lang_code.lower().strip()
-        return self.LANGUAGE_MAP.get(lang_code, lang_code)
+        lang_code = as_unicode_text(lang_code).lower().strip()
+        if lang_code in ('und', 'un', 'zxx', 'unknown'):
+            return self.i18n.get('unknown', 'Unknown')
+        mapped = self.LANGUAGE_MAP.get(lang_code)
+        if mapped:
+            return mapped
+        try:
+            from calibre.utils.localization import calibre_langcode_to_name
+            name = calibre_langcode_to_name(lang_code)
+            if name:
+                return name
+        except Exception:
+            pass
+        return lang_code
     
     def _create_response_container(self, count: int, show_panel_ai_switcher=True):
         """根据并行AI数量创建响应容器
@@ -4174,7 +4241,7 @@ Please answer the question based on the above book information.""")
             # 获取输入的问题
             question = self.input_area.toPlainText()
             # 标准化换行符并确保使用 UTF-8 编码
-            question = question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8')
+            question = as_unicode_text(question)
 
             prefs = get_prefs()
             use_library_chat = False
@@ -4244,13 +4311,13 @@ Please answer the question based on the above book information.""")
                 
                 # 准备模板变量
                 template_vars = {
-                    'query': question.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                    'title': getattr(self.book_info, 'title', self.i18n.get('unknown', 'Unknown')).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                    'author': author_str.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                    'publisher': (getattr(self.book_info, 'publisher', '') or '').replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8'),
-                    'pubyear': str(pubyear).replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if pubyear else '',
-                    'language': language_name.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if language_name else '',
-                    'series': series.replace('\u2028', '\n').replace('\u2029', '\n').encode('utf-8').decode('utf-8') if series else ''
+                    'query': as_unicode_text(question),
+                    'title': as_unicode_text(getattr(self.book_info, 'title', None), self.i18n.get('unknown', 'Unknown')),
+                    'author': as_unicode_text(author_str, self.i18n.get('unknown', 'Unknown')),
+                    'publisher': as_unicode_text(getattr(self.book_info, 'publisher', None)),
+                    'pubyear': as_unicode_text(pubyear) if pubyear else '',
+                    'language': as_unicode_text(language_name) if language_name else '',
+                    'series': as_unicode_text(series) if series else ''
                 }
                 
                 # 获取配置的模板
