@@ -412,7 +412,7 @@ class FinnishTranslation(BaseTranslation):
             'about_title': 'Tietoja Ask AI -lisäosasta',
             'about_version_label': 'Versio',
             'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
-            'about_latest_update': 'Viimeisin päivitys (2026.09.04): Korjattu ei-latinalaisten kirjaimien kirjojen nimien ja kielten näkyminen kysymysmerkkeinä',
+            'about_latest_update': 'Viimeisin päivitys (2026.09.10): Pyynnön oletusaikakatkaisu on nyt 120 sekuntia, jotta hitaammat ilmaiset mallit ehtivät vastata',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Huom: MobileRead on kehittäjäsivu calibre-liitännäisten julkaisuille ja lisäversion päivityksille.',
@@ -458,6 +458,14 @@ class FinnishTranslation(BaseTranslation):
             'request_timeout_label': 'Pyynnön aikakatkaisu:',
             'seconds': 'sekuntia',
             'request_timeout_error': 'Pyynnön aikakatkaisu. Nykyinen aikakatkaisu: {timeout} sekuntia',
+            'timeout_too_short_title': 'Pyynnön aikakatkaisu',
+            'timeout_too_short_message': (
+                'Pyyntö epäonnistui, koska aikakatkaisu oli liian lyhyt. Haluatko pidentää nykyisen '
+                'pyynnön aikakatkaisun arvosta "{current_seconds} sekuntia" ({current_minutes} minuuttia) '
+                'arvoon "{new_seconds} sekuntia" ({new_minutes} minuuttia)?'
+            ),
+            'timeout_increase_button': 'Pidennä',
+            'timeout_increased_toast': 'Aikakatkaisu on muutettu {seconds} sekuntiin. Yritä uudelleen.',
             'enable_custom_prompt_limit_label': 'Mukautettu kehotteen pituusraja',
             'enable_custom_prompt_limit_tooltip': (
                 'Oletusrajat ovat 128 000 merkkiä (yksi kirja) ja 256 000 (useita kirjoja). '

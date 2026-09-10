@@ -408,7 +408,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_title': '关于 Ask AI Plugin',
             'about_version_label': '版本',
             'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
-            'about_latest_update': '最新更新（2026.09.04）：修复了非拉丁文书名和语言显示为问号的问题',
+            'about_latest_update': '最新更新（2026.09.10）：将默认请求超时改为 120 秒，以配合较慢的免费模型',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推荐',
             'about_markdown_title': 'Markdown for calibre',
@@ -453,6 +453,13 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'request_timeout_label': '请求超时时间：',
             'seconds': '秒',
             'request_timeout_error': '请求超时，当前超时时间为：{timeout} 秒',
+            'timeout_too_short_title': '请求超时',
+            'timeout_too_short_message': (
+                '当前由于请求时间过短造成了请求失败，是否直接调整当前的请求时间'
+                '“{current_seconds}秒”（{current_minutes}分钟）到“{new_seconds}秒”（{new_minutes}分钟）？'
+            ),
+            'timeout_increase_button': '调大',
+            'timeout_increased_toast': '当前时间已经调大为{seconds}秒，请重试。',
             'enable_custom_prompt_limit_label': '自定义提示词长度限制',
             'enable_custom_prompt_limit_tooltip': (
                 '默认限制为单书 128,000 字符、多书 256,000 字符，大多数用户无需修改。'

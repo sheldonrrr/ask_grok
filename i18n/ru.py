@@ -410,7 +410,7 @@ class RussianTranslation(BaseTranslation):
             'about_title': 'О плагине Ask AI',
             'about_version_label': 'Версия',
             'about_description': 'Задавайте вопросы о книгах calibre с помощью выбранных вами сервисов ИИ.',
-            'about_latest_update': 'Последнее обновление (2026.09.04): исправлено отображение названий и языков с нелатинской письменностью в виде знаков вопроса',
+            'about_latest_update': 'Последнее обновление (2026.09.10): время ожидания запроса по умолчанию увеличено до 120 секунд для более медленных бесплатных моделей',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Примечание: MobileRead — страница разработчика для релизов плагинов calibre и обновлений версий.',
@@ -456,6 +456,14 @@ class RussianTranslation(BaseTranslation):
             'request_timeout_label': 'Таймаут запроса:',
             'seconds': 'секунд',
             'request_timeout_error': 'Таймаут запроса. Текущий таймаут: {timeout} секунд',
+            'timeout_too_short_title': 'Таймаут запроса',
+            'timeout_too_short_message': (
+                'Запрос не выполнен, потому что тайм-аут слишком короткий. Увеличить текущий '
+                'тайм-аут запроса с «{current_seconds} секунд» ({current_minutes} мин.) до '
+                '«{new_seconds} секунд» ({new_minutes} мин.)?'
+            ),
+            'timeout_increase_button': 'Увеличить',
+            'timeout_increased_toast': 'Тайм-аут изменён на {seconds} секунд. Повторите попытку.',
             'enable_custom_prompt_limit_label': 'Пользовательский лимит длины подсказки',
             'enable_custom_prompt_limit_tooltip': (
                 'Лимиты по умолчанию: 128 000 символов (одна книга) и 256 000 (несколько книг). '

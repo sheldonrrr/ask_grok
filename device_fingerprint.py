@@ -133,7 +133,11 @@ class DeviceFingerprint:
         :return: 版本号字符串
         """
         try:
-            from .version import __version__
-            return __version__
+            from .version import VERSION_STRING
+            return VERSION_STRING
         except (ImportError, AttributeError):
-            return 'unknown'
+            try:
+                from .version import __version__
+                return __version__
+            except (ImportError, AttributeError):
+                return 'unknown'

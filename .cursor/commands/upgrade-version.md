@@ -37,7 +37,7 @@ grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py
 ## After version bump
 
 - Do **not** commit/push unless the user also ran `/push` or asked to commit.
-- Do **not** package unless the user also ran `/pack` or asked to package.
+- Do **not** package unless the user also ran `/build` (or `/pack`) or asked to package.
 - Summarize what changed and the new version.
 
 ## Never

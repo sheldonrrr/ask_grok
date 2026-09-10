@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtCore import QObject, QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 import logging
 import os
 import sys
@@ -23,7 +23,12 @@ from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor.bleach.css_sanitizer
 from .history_manager import HistoryManager
 
 # 插件偏好（与 api.py 中 request_timeout 一致）
-from .config import get_prefs
+from .config import (
+    SUGGESTED_REQUEST_TIMEOUT,
+    apply_request_timeout,
+    format_timeout_minutes,
+    get_prefs,
+)
 
 # 导入UI常量
 from .ui_constants import get_reasoning_process_html
@@ -195,6 +200,7 @@ class ResponseHandler(QObject):
         self._pending_html = None  # 节流期间待刷新的HTML
         self._pending_html_timer = None  # 节流重试定时器
         self._force_next_html_update = False  # 下一次 HTML 更新是否强制不节流
+        self._timeout_increase_offer_open = False
     
     def _process_think_tags_for_stream(self, text):
         """处理流式响应中的 think 标签
@@ -626,7 +632,7 @@ class ResponseHandler(QObject):
         if not getattr(self, '_request_start_time', None) or self._request_cancelled:
             return
         elapsed = time.time() - self._request_start_time
-        guard = getattr(self, '_ui_guard_timeout_sec', 60)
+        guard = getattr(self, '_ui_guard_timeout_sec', 120)
         # 允许少量时钟/调度误差，避免已到点却因严格 > 而不提示
         if elapsed + 0.25 < guard:
             return
@@ -824,6 +830,93 @@ class ResponseHandler(QObject):
         
         from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
         self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
+
+        if self._is_user_request_timeout(error_str, error_type):
+            self._schedule_timeout_increase_offer()
+
+    def _dialog_parent_widget(self):
+        parent = self.parent()
+        if parent is not None:
+            return parent
+        if self.response_area is not None:
+            window = self.response_area.window()
+            return window if window is not None else self.response_area
+        return None
+
+    def _current_request_timeout(self):
+        try:
+            return max(1, min(int(get_prefs().get('request_timeout', 120)), 3600))
+        except (TypeError, ValueError):
+            return 120
+
+    def _is_user_request_timeout(self, error_msg, error_type):
+        if error_type not in ('timeout', 'timeout_error'):
+            return False
+        text = str(error_msg or '')
+        stream_msg = ''
+        if self.i18n:
+            stream_msg = self.i18n.get('stream_timeout_error', '')
+        if stream_msg and stream_msg in text:
+            return False
+        return True
+
+    def _schedule_timeout_increase_offer(self):
+        if self._timeout_increase_offer_open:
+            return
+        if self._current_request_timeout() >= SUGGESTED_REQUEST_TIMEOUT:
+            return
+        self._timeout_increase_offer_open = True
+        QTimer.singleShot(0, self._offer_timeout_increase)
+
+    def _offer_timeout_increase(self):
+        try:
+            current = self._current_request_timeout()
+            if current >= SUGGESTED_REQUEST_TIMEOUT:
+                return
+            i18n = self.i18n or {}
+            title = i18n.get('timeout_too_short_title', 'Request timeout')
+            message = i18n.get(
+                'timeout_too_short_message',
+                'The request failed because the timeout was too short. '
+                'Increase the current request timeout from "{current_seconds} seconds" '
+                '({current_minutes} minutes) to "{new_seconds} seconds" ({new_minutes} minutes)?',
+            ).format(
+                current_seconds=current,
+                current_minutes=format_timeout_minutes(current),
+                new_seconds=SUGGESTED_REQUEST_TIMEOUT,
+                new_minutes=format_timeout_minutes(SUGGESTED_REQUEST_TIMEOUT),
+            )
+            increase_label = i18n.get('timeout_increase_button', 'Increase')
+            cancel_label = i18n.get('cancel_button', i18n.get('cancel', 'Cancel'))
+
+            msg_box = QMessageBox(self._dialog_parent_widget())
+            msg_box.setWindowTitle(title)
+            msg_box.setText(message)
+            msg_box.setIcon(QMessageBox.Question)
+            increase_button = msg_box.addButton(increase_label, QMessageBox.YesRole)
+            msg_box.addButton(cancel_label, QMessageBox.NoRole)
+            msg_box.setDefaultButton(increase_button)
+            msg_box.exec_()
+
+            if msg_box.clickedButton() is not increase_button:
+                return
+
+            applied = apply_request_timeout(SUGGESTED_REQUEST_TIMEOUT)
+            if self.api is not None:
+                if hasattr(self.api, 'set_request_timeout'):
+                    self.api.set_request_timeout(applied)
+                elif hasattr(self.api, '_timeout'):
+                    self.api._timeout = applied
+
+            toast = i18n.get(
+                'timeout_increased_toast',
+                'The timeout has been changed to {seconds} seconds. Please retry.',
+            ).format(seconds=applied)
+            QMessageBox.information(self._dialog_parent_widget(), title, toast)
+        except Exception:
+            logger.error('Failed to offer request-timeout increase', exc_info=True)
+        finally:
+            self._timeout_increase_offer_open = False
 
     def set_response(self, text):
         """设置响应文本（兼容旧接口）"""

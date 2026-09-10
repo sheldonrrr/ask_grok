@@ -409,7 +409,7 @@ class NorwegianTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Versjon',
             'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
-            'about_latest_update': 'Siste oppdatering (2026.09.04): Fikset at boktitler og språk med ikke-latinsk skrift ble vist som spørsmålstegn',
+            'about_latest_update': 'Siste oppdatering (2026.09.10): Standard tidsavbrudd for forespørsler er nå 120 sekunder for å bedre støtte tregere gratis modeller',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Merk: MobileRead er utviklersiden for calibre-pluginutgivelser og flere versjonsoppdateringer.',
@@ -455,6 +455,14 @@ class NorwegianTranslation(BaseTranslation):
             'request_timeout_label': 'Forespørsel tidsavbrudd:',
             'seconds': 'sekunder',
             'request_timeout_error': 'Forespørsel tidsavbrutt. Gjeldende tidsavbrudd: {timeout} sekunder',
+            'timeout_too_short_title': 'Forespørsel tidsavbrutt',
+            'timeout_too_short_message': (
+                'Forespørselen mislyktes fordi tidsavbruddet var for kort. Vil du øke gjeldende '
+                'forespørselstidsavbrudd fra "{current_seconds} sekunder" ({current_minutes} minutter) '
+                'til "{new_seconds} sekunder" ({new_minutes} minutter)?'
+            ),
+            'timeout_increase_button': 'Øk',
+            'timeout_increased_toast': 'Tidsavbruddet er endret til {seconds} sekunder. Prøv igjen.',
             'enable_custom_prompt_limit_label': 'Tilpasset promptlengdegrense',
             'enable_custom_prompt_limit_tooltip': (
                 'Standardgrenser er 128.000 tegn (enkelt bok) og 256.000 (flere bøker). '

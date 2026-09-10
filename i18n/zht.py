@@ -409,7 +409,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_title': '關於 Ask AI Plugin',
         'about_version_label': '版本',
         'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
-        'about_latest_update': '最新更新（2026.09.04）：修復了非拉丁文書名和語言顯示為問號的問題',
+        'about_latest_update': '最新更新（2026.09.10）：將預設請求逾時改為 120 秒，以配合較慢的免費模型',
         'about_mobileread_link_text': 'MobileRead',
         'about_related_plugins': 'Nowtiny calibre 插件推薦',
         'about_markdown_title': 'Markdown for calibre',
@@ -454,6 +454,13 @@ class TraditionalChineseTranslation(BaseTranslation):
         'request_timeout_label': '請求超時時間：',
         'seconds': '秒',
         'request_timeout_error': '請求超時，當前超時時間為：{timeout} 秒',
+        'timeout_too_short_title': '請求超時',
+        'timeout_too_short_message': (
+            '目前由於請求時間過短造成了請求失敗，是否直接調整目前的請求時間'
+            '「{current_seconds}秒」（{current_minutes}分鐘）到「{new_seconds}秒」（{new_minutes}分鐘）？'
+        ),
+        'timeout_increase_button': '調大',
+        'timeout_increased_toast': '目前時間已經調大為{seconds}秒，請重試。',
         'max_prompt_length_normalized_title': '提示詞長度已調整',
         'max_prompt_length_normalized': '提示詞長度已規範為 {value} 字元（已移除逗號、空格等分隔符）。',
         'enable_custom_prompt_limit_label': '自訂提示詞長度限制',

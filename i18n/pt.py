@@ -414,7 +414,7 @@ class PortugueseTranslation(BaseTranslation):
             'about_title': 'Sobre o Ask AI Plugin',
             'about_version_label': 'Versão',
             'about_description': 'Faça perguntas sobre livros do calibre com os serviços de IA que você escolher.',
-            'about_latest_update': 'Atualização mais recente (2026.09.04): corrigidos títulos e idiomas em escritas não latinas que apareciam como pontos de interrogação',
+            'about_latest_update': 'Atualização mais recente (2026.09.10): o tempo limite padrão das solicitações agora é de 120 segundos para melhor atender aos modelos gratuitos mais lentos',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: o MobileRead é a página do desenvolvedor para lançamentos de plugins do calibre e mais atualizações de versão.',
@@ -460,6 +460,14 @@ class PortugueseTranslation(BaseTranslation):
             'request_timeout_label': 'Tempo limite da Solicitação:',
             'seconds': 'segundos',
             'request_timeout_error': 'Tempo limite da solicitação. Tempo limite atual: {timeout} segundos',
+            'timeout_too_short_title': 'Tempo limite da solicitação',
+            'timeout_too_short_message': (
+                'A solicitação falhou porque o tempo limite era muito curto. Deseja aumentar o '
+                'tempo limite atual de "{current_seconds} segundos" ({current_minutes} minutos) '
+                'para "{new_seconds} segundos" ({new_minutes} minutos)?'
+            ),
+            'timeout_increase_button': 'Aumentar',
+            'timeout_increased_toast': 'O tempo limite foi alterado para {seconds} segundos. Tente novamente.',
             'max_prompt_length_normalized_title': 'Limite de prompt ajustado',
             'max_prompt_length_normalized': (
                 'O comprimento do prompt foi normalizado para {value} caracteres (separadores como vírgulas '

@@ -413,7 +413,7 @@ class EnglishTranslation(BaseTranslation):
             'about_title': 'About Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
-            'about_latest_update': 'Latest update (2026.09.04): Fixed book titles and languages in non-Latin scripts showing as question marks',
+            'about_latest_update': 'Latest update (2026.09.10): Default request timeout is now 120 seconds to better support slower free models',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre plugin recommendations',
             'about_markdown_title': 'Markdown for calibre',
@@ -459,6 +459,14 @@ class EnglishTranslation(BaseTranslation):
             'request_timeout_label': 'Request Timeout:',
             'seconds': 'seconds',
             'request_timeout_error': 'Request timeout. Current timeout: {timeout} seconds',
+            'timeout_too_short_title': 'Request timeout',
+            'timeout_too_short_message': (
+                'The request failed because the timeout was too short. '
+                'Increase the current request timeout from "{current_seconds} seconds" '
+                '({current_minutes} minutes) to "{new_seconds} seconds" ({new_minutes} minutes)?'
+            ),
+            'timeout_increase_button': 'Increase',
+            'timeout_increased_toast': 'The timeout has been changed to {seconds} seconds. Please retry.',
             'enable_custom_prompt_limit_label': 'Custom prompt length limit',
             'enable_custom_prompt_limit_tooltip': (
                 'Default limits are 128,000 characters (single book) and 256,000 (multi-book). '

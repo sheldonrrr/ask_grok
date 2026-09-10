@@ -296,7 +296,7 @@ class OpenAIModel(BaseAIModel):
                 api_url,
                 headers=headers,
                 json=data,
-                timeout=kwargs.get('timeout', 60),
+                timeout=kwargs.get('timeout', 120),
             )
             response.raise_for_status()
 

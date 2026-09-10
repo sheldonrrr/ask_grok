@@ -87,6 +87,13 @@ class APIClient:
         
         # 加载当前选择的模型
         self._load_current_model()
+
+    def set_request_timeout(self, timeout):
+        """Update the cached HTTP timeout used by subsequent ask() calls."""
+        try:
+            self._timeout = max(1, min(int(timeout), 3600))
+        except (TypeError, ValueError):
+            self._timeout = 120
         
     def _create_session(self, max_retries: int, timeout: float) -> requests.Session:
         """创建带有连接池的 Session 对象"""
@@ -297,7 +304,13 @@ class APIClient:
             # 直接重新抛出 AIAPIError
             raise
         except requests.exceptions.Timeout as e:
-            # 处理超时错误
+            # Stream-idle ReadTimeout is not the user-facing request_timeout setting.
+            err_text = str(e)
+            stream_idle_msg = ''
+            if self.i18n:
+                stream_idle_msg = self.i18n.get('stream_timeout_error', '')
+            if stream_idle_msg and stream_idle_msg in err_text:
+                raise AIAPIError(err_text, error_type="stream_timeout") from e
             error_msg = self.i18n.get('request_timeout_error', 'Request timeout. Current timeout: {timeout} seconds').format(timeout=self._timeout)
             raise AIAPIError(error_msg, error_type="timeout_error") from e
         except Exception as e:

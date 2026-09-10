@@ -980,7 +980,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.09.04): Fixed book titles and languages in non-Latin scripts showing as question marks',
+                'Latest update (2026.09.10): Default request timeout is now 120 seconds to better support slower free models',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
