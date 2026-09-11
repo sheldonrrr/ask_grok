@@ -348,7 +348,10 @@ class NvidiaFreeModel(NvidiaModel):
             if has_proxy:
                 self.logger.info(f"Detected proxy environment, disabling SSL verification for health check")
             
-            response = requests.get(api_url, timeout=10, verify=verify_ssl)
+            headers = self.prepare_headers()
+            response = requests.get(
+                api_url, headers=headers, timeout=10, verify=verify_ssl
+            )
             
             if response.status_code == 200:
                 try:

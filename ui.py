@@ -2602,7 +2602,12 @@ class AskDialog(QDialog):
     def _build_multi_book_prompt(self, question):
         """构建多书提示词（超过阈值时自动使用 compact 格式）"""
         from calibre_plugins.ask_ai_plugin.config import get_prefs
-        from calibre_plugins.ask_ai_plugin.utils import format_books_compact_tsv, split_compact_tsv_lines
+        from calibre_plugins.ask_ai_plugin.utils import (
+            format_books_compact_tsv,
+            split_compact_tsv_lines,
+            is_placeholder_metadata,
+            clean_prompt_metadata_text,
+        )
         from calibre_plugins.ask_ai_plugin.prompt_limits import (
             COMPACT_METADATA_THRESHOLD,
             get_max_prompt_length,
@@ -2650,24 +2655,32 @@ Please answer the question based on the above book information.""")
             books_metadata_text = []
             for idx, book in enumerate(self.books_info, 1):
                 book_text = f"Book {idx}:\n"
-                book_text += f"  {self.i18n.get('metadata_title', 'Title')}: {book.title}\n"
+                book_text += (
+                    f"  {self.i18n.get('metadata_title', 'Title')}: "
+                    f"{clean_prompt_metadata_text(book.title)}\n"
+                )
 
                 if book.authors:
-                    book_text += f"  {self.i18n.get('metadata_authors', 'Author')}: {', '.join(book.authors)}\n"
+                    authors = clean_prompt_metadata_text(', '.join(book.authors))
+                    if not is_placeholder_metadata(authors, 'author'):
+                        book_text += f"  {self.i18n.get('metadata_authors', 'Author')}: {authors}\n"
 
                 if hasattr(book, 'pubdate') and book.pubdate:
                     year = str(book.pubdate.year) if hasattr(book.pubdate, 'year') else str(book.pubdate)
-                    book_text += f"  {self.i18n.get('metadata_pubyear', 'Publication Date')}: {year}\n"
+                    if not is_placeholder_metadata(year, 'pubyear'):
+                        book_text += f"  {self.i18n.get('metadata_pubyear', 'Publication Date')}: {year}\n"
 
                 if hasattr(book, 'series') and book.series:
-                    book_text += f"  {self.i18n.get('metadata_series', 'Series')}: {book.series}\n"
+                    if not is_placeholder_metadata(book.series, 'series'):
+                        book_text += f"  {self.i18n.get('metadata_series', 'Series')}: {book.series}\n"
 
-                if book.publisher:
+                if book.publisher and not is_placeholder_metadata(book.publisher, 'publisher'):
                     book_text += f"  {self.i18n.get('metadata_publisher', 'Publisher')}: {book.publisher}\n"
 
                 if book.language:
                     lang_name = self.get_language_name(book.language)
-                    book_text += f"  {self.i18n.get('metadata_language', 'Language')}: {lang_name}\n"
+                    if not is_placeholder_metadata(lang_name, 'language'):
+                        book_text += f"  {self.i18n.get('metadata_language', 'Language')}: {lang_name}\n"
 
                 books_metadata_text.append(book_text)
 
@@ -4278,9 +4291,9 @@ Please answer the question based on the above book information.""")
                 # 安全地获取书籍的作者或作者列表
                 try:
                     authors = self.book_info.authors if hasattr(self.book_info, 'authors') else []
-                    author_str = ', '.join(authors) if authors else self.i18n.get('unknown', 'Unknown')
+                    author_str = ', '.join(authors) if authors else ''
                 except AttributeError:
-                    author_str = self.i18n.get('unknown', 'Unknown')
+                    author_str = ''
                 
                 # 安全地获取书籍的出版年份
                 try:
@@ -4290,30 +4303,37 @@ Please answer the question based on the above book information.""")
                             pubyear = str(self.book_info.pubdate.year)
                         else:
                             pubyear = str(self.book_info.pubdate)
-                    else:
-                        pubyear = self.i18n.get('unknown', 'Unknown')
                 except Exception as e:
                     logger.error(f"获取出版年份时出错: {str(e)}")
-                    pubyear = self.i18n.get('unknown', 'Unknown')
+                    pubyear = ''
                 
                 # 安全地获取书籍的语言类别
                 try:
                     language = self.book_info.language
-                    language_name = self.get_language_name(language) if language else self.i18n.get('unknown', 'Unknown')
-                except (AttributeError, KeyError) as e:
-                    language_name = self.i18n.get('unknown', 'Unknown')
+                    language_name = self.get_language_name(language) if language else ''
+                except (AttributeError, KeyError):
+                    language_name = ''
                 
                 # 安全地获取书籍的系列名
                 try:
-                    series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else self.i18n.get('unknown', 'Unknown')
+                    series = self.book_info.series if hasattr(self.book_info, 'series') and self.book_info.series else ''
                 except AttributeError:
-                    series = self.i18n.get('unknown', 'Unknown')
+                    series = ''
                 
                 # 准备模板变量
+                from calibre_plugins.ask_ai_plugin.utils import (
+                    omit_placeholder_template_fields,
+                    clean_prompt_metadata_text,
+                )
                 template_vars = {
                     'query': as_unicode_text(question),
-                    'title': as_unicode_text(getattr(self.book_info, 'title', None), self.i18n.get('unknown', 'Unknown')),
-                    'author': as_unicode_text(author_str, self.i18n.get('unknown', 'Unknown')),
+                    'title': clean_prompt_metadata_text(
+                        as_unicode_text(
+                            getattr(self.book_info, 'title', None),
+                            self.i18n.get('unknown', 'Unknown'),
+                        )
+                    ) or self.i18n.get('unknown', 'Unknown'),
+                    'author': clean_prompt_metadata_text(as_unicode_text(author_str)),
                     'publisher': as_unicode_text(getattr(self.book_info, 'publisher', None)),
                     'pubyear': as_unicode_text(pubyear) if pubyear else '',
                     'language': as_unicode_text(language_name) if language_name else '',
@@ -4334,6 +4354,8 @@ Please answer the question based on the above book information.""")
                 if '{query}' not in template and '{question}' in template:
                     logger.info("检测到旧版模板变量 {question}，自动替换为 {query}")
                     template = template.replace('{question}', '{query}')
+                
+                template = omit_placeholder_template_fields(template, template_vars)
                 
                 # 格式化提示词
                 try:

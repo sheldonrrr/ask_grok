@@ -4,13 +4,30 @@ Worker URL: `https://nvidia-proxy.boy-liushaopeng.workers.dev`
 
 ## 1. 健康检查
 
+探活只使用 `GET /api/health`，不要向 `/api/chat` 发送 ping/pong。  
+`version` 与 `X-Plugin-Version` 必须等于当前插件 `VERSION_STRING`（现为 `1.6.3`），禁止写死 `1.0.0`。
+
 ### 请求
 ```bash
 GET /api/health
 ```
 
+#### 请求头（必填，与聊天接口相同）
+```
+X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7
+X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7
+X-Client-Locale: zh_CN
+X-Client-System: Darwin
+X-Plugin-Version: 1.6.3
+```
+
 ```bash
-curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/health
+curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/health \
+  -H "X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7" \
+  -H "X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7" \
+  -H "X-Client-Locale: zh_CN" \
+  -H "X-Client-System: Darwin" \
+  -H "X-Plugin-Version: 1.6.3"
 ```
 
 ### 成功响应 (200)
@@ -19,7 +36,7 @@ curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/health
   "status": "ok",
   "timestamp": "2026-01-06T01:37:35.940Z",
   "service": "nvidia-proxy",
-  "version": "1.0.0"
+  "version": "1.6.3"
 }
 ```
 
@@ -33,7 +50,12 @@ GET /api/models
 ```
 
 ```bash
-curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/models
+curl https://nvidia-proxy.boy-liushaopeng.workers.dev/api/models \
+  -H "X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7" \
+  -H "X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7" \
+  -H "X-Client-Locale: zh_CN" \
+  -H "X-Client-System: Darwin" \
+  -H "X-Plugin-Version: 1.6.3"
 ```
 
 ### 成功响应 (200)
@@ -69,13 +91,13 @@ POST /api/chat
 Content-Type: application/json
 ```
 
-#### 请求头（可选）
+#### 请求头（必填）
 ```
 X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7
 X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7
 X-Client-Locale: zh_CN
 X-Client-System: Darwin
-X-Plugin-Version: 1.0.0
+X-Plugin-Version: 1.6.3
 ```
 
 #### 请求体
@@ -101,6 +123,8 @@ curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
   -H "X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7" \
   -H "X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7" \
   -H "X-Client-Locale: zh_CN" \
+  -H "X-Client-System: Darwin" \
+  -H "X-Plugin-Version: 1.6.3" \
   -d '{
     "model": "meta/llama-4-maverick-17b-128e-instruct",
     "messages": [
@@ -168,6 +192,10 @@ Content-Type: application/json
 curl -X POST https://nvidia-proxy.boy-liushaopeng.workers.dev/api/chat \
   -H "Content-Type: application/json" \
   -H "X-User-UUID: 429e1288-3d7c-4733-8da9-7279c6bf29d7" \
+  -H "X-Device-Fingerprint: dcb2173ba53ca489fe47c23e45175bb7" \
+  -H "X-Client-Locale: zh_CN" \
+  -H "X-Client-System: Darwin" \
+  -H "X-Plugin-Version: 1.6.3" \
   -d '{
     "model": "meta/llama-4-maverick-17b-128e-instruct",
     "messages": [
@@ -283,6 +311,7 @@ data: [DONE]
 
 1. 所有请求必须使用 HTTPS
 2. Content-Type 必须为 `application/json`
-3. 建议添加 `X-User-UUID` 和 `X-Device-Fingerprint` 请求头以获得更好的速率限制体验
+3. `/api/health`、`/api/models`、`/api/chat` 都必须带齐客户端头：`X-User-UUID`、`X-Device-Fingerprint`、`X-Client-Locale`、`X-Client-System`、`X-Plugin-Version`。`X-Plugin-Version` 必须与当前插件版本一致，不能写死 `1.0.0`
 4. 流式响应使用 Server-Sent Events (SSE) 格式
 5. 本地开发时速率限制可能被禁用（KV 未配置）
+6. 服务探活只用 `GET /api/health`，不要用 `/api/chat` 发 `pong` 之类的探测文本

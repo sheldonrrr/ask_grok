@@ -260,5 +260,130 @@ class TestDeepSeekIntegration(unittest.TestCase):
         self.assertIn('300000', err)
 
 
+class TestOmitPlaceholderMetadata(unittest.TestCase):
+    def test_unknown_and_empty_fields_are_placeholders(self):
+        self.assertTrue(utils.is_placeholder_metadata('Unknown', 'author'))
+        self.assertTrue(utils.is_placeholder_metadata('未知', 'language'))
+        self.assertTrue(utils.is_placeholder_metadata('und', 'language'))
+        self.assertTrue(utils.is_placeholder_metadata('', 'series'))
+        self.assertTrue(utils.is_placeholder_metadata('101', 'publisher'))
+        self.assertFalse(utils.is_placeholder_metadata('Springer', 'publisher'))
+        self.assertFalse(utils.is_placeholder_metadata('Mary Shelley', 'author'))
+        self.assertFalse(utils.is_placeholder_metadata('101', 'author'))
+
+    def test_omits_unknown_clauses_from_default_english_template(self):
+        template = (
+            'Context: You are assisting a user of calibre. '
+            'Book Information: Title: "{title}", Author: {author}, Publisher: {publisher}, '
+            'Publication Year: {pubyear}, Language: {language}, Series: {series}. '
+            'User Question: {query}.'
+        )
+        values = {
+            'title': utils.clean_prompt_metadata_text(
+                '[] Advances in Psychiatry Second(BookFi.org)'
+            ),
+            'author': 'Unknown',
+            'publisher': '',
+            'pubyear': '2005',
+            'language': 'Unknown',
+            'series': 'Unknown',
+            'query': 'who wrote this',
+        }
+        filled = utils.omit_placeholder_template_fields(template, values).format(**values)
+        self.assertEqual(values['title'], 'Advances in Psychiatry Second')
+        self.assertIn('Advances in Psychiatry Second', filled)
+        self.assertNotIn('BookFi', filled)
+        self.assertNotIn('[]', filled)
+        self.assertIn('2005', filled)
+        self.assertIn('who wrote this', filled)
+        self.assertNotIn('Unknown', filled)
+        self.assertNotIn('Author:', filled)
+        self.assertNotIn('Publisher:', filled)
+        self.assertNotIn('Language:', filled)
+        self.assertNotIn('Series:', filled)
+        self.assertIn('Publication Year:', filled)
+
+    def test_omits_numeric_publisher_101(self):
+        template = 'Title: "{title}", Publisher: {publisher}, Author: {author}.'
+        values = {'title': 'A Book', 'publisher': '101', 'author': 'Ada Lovelace'}
+        filled = utils.omit_placeholder_template_fields(template, values).format(**values)
+        self.assertIn('Ada Lovelace', filled)
+        self.assertNotIn('101', filled)
+        self.assertNotIn('Publisher:', filled)
+
+    def test_omits_unknown_clauses_from_chinese_template(self):
+        template = (
+            '书籍信息：书名："{title}"，作者：{author}，出版社：{publisher}，'
+            '出版年份：{pubyear}，语言：{language}，系列：{series}。用户问题：{query}。'
+        )
+        values = {
+            'title': '测试书',
+            'author': '未知',
+            'publisher': '101',
+            'pubyear': '2005',
+            'language': '未知',
+            'series': '',
+            'query': '谁写的',
+        }
+        filled = utils.omit_placeholder_template_fields(template, values).format(**values)
+        self.assertIn('测试书', filled)
+        self.assertIn('2005', filled)
+        self.assertIn('谁写的', filled)
+        self.assertNotIn('未知', filled)
+        self.assertNotIn('101', filled)
+        self.assertNotIn('作者：', filled)
+        self.assertNotIn('出版社：', filled)
+        self.assertIn('出版年份：', filled)
+
+    def test_line_template_drops_placeholder_rows(self):
+        template = (
+            'User query: {query}\n'
+            'Book title: {title}\n'
+            'Author: {author}\n'
+            'Publisher: {publisher}\n'
+            'Publication year: {pubyear}\n'
+        )
+        values = {
+            'query': 'hello',
+            'title': 'Frankenstein',
+            'author': 'Unknown',
+            'publisher': '101',
+            'pubyear': '1818',
+        }
+        filled = utils.omit_placeholder_template_fields(template, values).format(**values)
+        self.assertIn('Frankenstein', filled)
+        self.assertIn('1818', filled)
+        self.assertNotIn('Author:', filled)
+        self.assertNotIn('Publisher:', filled)
+
+
+class TestCleanPromptMetadata(unittest.TestCase):
+    def test_strips_empty_brackets_and_bookfi_watermark(self):
+        cleaned = utils.clean_prompt_metadata_text(
+            '[] Advances in Psychiatry Second(BookFi.org)'
+        )
+        self.assertEqual(cleaned, 'Advances in Psychiatry Second')
+
+    def test_strips_other_site_watermarks_and_keeps_edition(self):
+        cleaned = utils.clean_prompt_metadata_text(
+            '[ ] Real Title (2nd edition) (z-lib.org)'
+        )
+        self.assertEqual(cleaned, 'Real Title (2nd edition)')
+
+    def test_keeps_nonempty_brackets(self):
+        self.assertEqual(
+            utils.clean_prompt_metadata_text('[Vol. 1] The History of Rome'),
+            '[Vol. 1] The History of Rome',
+        )
+
+    def test_compact_tsv_cleans_title_watermark(self):
+        tsv = utils.format_books_compact_tsv([{
+            'id': 12,
+            'title': '[] Advances in Psychiatry Second(BookFi.org)',
+            'authors': 'Unknown',
+        }])
+        self.assertEqual(tsv, '12|Advances in Psychiatry Second|Unknown')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
