@@ -1,6 +1,6 @@
 # Ask AI Plugin(old name: Ask Grok)
 
-A simple calibre plugin that allows users to ask questions about books using various AI models including OpenAI, Anthropic Claude, Google Gemini, Grok (SpaceXAI), DeepSeek, Kimi (Moonshot), Mistral, Nvidia AI, Perplexity (Sonar), OpenRouter, Ollama, LM Studio, KoboldCpp, and custom AI providers.
+A calibre plugin for asking questions about books in your library. It works immediately after install with **Nvidia AI (Free)** (no API key). You can also add OpenAI, Anthropic Claude, Google Gemini, Grok (SpaceXAI), DeepSeek, Kimi (Moonshot), Mistral, Nvidia AI with your own key, Perplexity (Sonar), OpenRouter, Ollama, LM Studio, KoboldCpp, or a custom OpenAI-compatible provider.
 
 ## Preview
 
@@ -8,13 +8,11 @@ A simple calibre plugin that allows users to ask questions about books using var
 
 ## Features
 
-- Ask questions about books directly in calibre
-- Automatically includes the current book's metadata, no need to copy-paste or manually enter
-- Single input-output dialog interface
-- Configurable API key
-- Configurable prompt template
-- Automatically display the most recent query history based on a book
-- Supports copying answers, copying questions and answers
+- Ask about one book or several selected books, without copy-pasting metadata
+- Works out of the box with Nvidia AI (Free); add your own providers when you want
+- Search your library in natural language (AI Search)
+- Random questions, prompt templates, and recent history per book
+- Copy answers, or copy the question and answer together
 
 ## Installation
 
@@ -46,52 +44,51 @@ Import the file to calibre custom plugins:
 - **DeepSeek** - https://platform.deepseek.com/
 - **Kimi (Moonshot)** - https://platform.kimi.ai/ (China: https://platform.moonshot.cn/)
 - **Mistral** - https://console.mistral.ai/
-- **Nvidia AI** - https://build.nvidia.com/ (Free tier available)
-- **Perplexity (Sonar)** - https://docs.perplexity.ai/ (Great for research-style answers with citations)
+- **Nvidia AI (Free)** - Default after install. No API key. Maintained by the plugin developer for people who cannot configure their own AI. It can be less stable than using your own key.
+- **Nvidia AI** - https://build.nvidia.com/ — your own Nvidia key (new accounts usually get free credits)
+- **Perplexity (Sonar)** - https://docs.perplexity.ai/ (research-style answers with citations)
 - **OpenRouter** - https://openrouter.ai/
-- **Ollama** - https://ollama.ai/ (Local, OpenAI-compatible `/v1`)
-- **LM Studio** - https://lmstudio.ai/ (Local, OpenAI-compatible `/v1`)
-- **KoboldCpp** - https://github.com/LostRuins/koboldcpp (Local, OpenAI-compatible `/v1`)
-- **Custom (OpenAI Compatible)** - Any OpenAI Chat Completions–compatible API endpoint (`/chat/completions`)
+- **Ollama** - https://ollama.com/ (local, OpenAI-compatible `/v1`)
+- **LM Studio** - https://lmstudio.ai/ (local, OpenAI-compatible `/v1`)
+- **KoboldCpp** - https://github.com/LostRuins/koboldcpp (local, OpenAI-compatible `/v1`)
+- **Custom (OpenAI Compatible)** - Any OpenAI Chat Completions–compatible API (`/chat/completions`)
 
-Note: For Perplexity, when the API returns citations/search results, the plugin appends a plain-text reference section with full URLs at the end of the answer for easy copy/paste.
+When Perplexity returns citations, the plugin appends a plain-text reference list with full URLs.
 
-### Free Nvidia API Key
+### Nvidia AI (Free) vs your own Nvidia key
 
-Nvidia offers free API access for many models. Get a free API key from [build.nvidia.com](https://build.nvidia.com/).
+These are two different providers in the plugin. Do not mix them up.
 
-Plugin default models:
-- Nvidia AI Free: `nvidia/nemotron-3.5-lightning-30b-a3b`
-- Nvidia AI (your own API key): `nvidia/nemotron-3-nano-30b-a3b`
+**Nvidia AI (Free)** is the default. You can ask questions as soon as the plugin is installed. No signup and no API key. It is a shared channel the developer keeps available so less technical users, or people still exploring, can try basic questions. It may be slower or unavailable at busy times. If you care about sending questions only to an account you control, use your own Nvidia key or a local provider instead.
 
-Other models you can select (examples):
-- openai/gpt-oss-120b
-- meta/llama-4-maverick-17b-128e-instruct
-- meta/llama-4-scout-17b-16e-instruct
-- meta/llama-3.3-70b-instruct
-- deepseek-ai/deepseek-r1
+Default model: `nvidia/nemotron-3.5-lightning-30b-a3b` (you can change it in Configuration).
 
-Base URL:
-`https://integrate.api.nvidia.com/v1`
+**Nvidia AI** (your own key) talks to Nvidia directly with a key you create at [build.nvidia.com](https://build.nvidia.com/). New accounts usually get free credits after phone verification; no credit card is required. This is more stable for regular use.
 
-API Key:
-- After logging in and validating through your phone number, you can generate an API Key to use. Now the only limit is the rate limit, just limited to 40 RPM.(If you are using it for personal use, there is almost no limit.)
+- Default model: `nvidia/nemotron-3-nano-30b-a3b`
+- Official API base: `https://integrate.api.nvidia.com/v1`
+- Personal use is usually limited by Nvidia’s rate limit (often around 40 requests per minute)
 
-## Configure API Key
+Other Nvidia models can be chosen in Configuration after you load the model list.
 
-  - Click the Ask AI Plugin dropdown menu in the menu bar, select `Configure`
-  - Select the AI provider you want to use (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Kimi, Mistral, Nvidia, OpenRouter, Ollama, LM Studio, KoboldCpp, or Custom)
-  - Enter the corresponding API Key into the API Key input box
-  - Click the `Save` button
-  - Done
+## Configure an AI (optional)
+
+Nvidia AI (Free) needs no configuration. To add another provider:
+
+1. Open the Ask AI Plugin menu and choose **Configure**
+2. Click **Add AI**, pick a provider, and enter an API key if that provider needs one
+3. Load and select a model, then save
+4. Optionally set it as the default AI
+
+Local providers (Ollama, LM Studio, KoboldCpp) usually do not need a key.
 
 ## Interface Usage
 
 1. Select a book in the calibre library
 2. Click the "Ask AI Plugin" button in the toolbar
 3. Enter your question in the popup dialog
-4. Click "Send" to get an answer from your configured AI provider
-5. Click "Random Question" to request AI-generated questions based on your selected language
+4. Click "Send" to get an answer (Nvidia AI (Free) is used until you pick another default)
+5. Click "Random Question" to request AI-generated questions in your selected language
 
 ## Keyboard Shortcuts
 
@@ -119,7 +116,7 @@ Mainly maintained UI languages (new UI strings are guaranteed to be updated):
 - Simplified Chinese (zh)
 - Traditional Chinese (zht)
 
-Legacy languages (still selectable, but new UI strings might not be updated):
+Also available (may lag slightly on brand-new UI strings):
 - Danish (da)
 - Finnish (fi)
 - Dutch (nl)
@@ -131,31 +128,15 @@ Legacy languages (still selectable, but new UI strings might not be updated):
 
 ## Requirements
 
-- calibre 7.25 or higher
-- External Python modules:
-  - requests
-  - bleach
-  - markdown2
-
-### Built-in Python Modules Used
-
-- PyQt5 (Qt GUI Framework)
-  - QtWidgets: QDialog, QVBoxLayout, QHBoxLayout, QLabel, etc.
-  - QtCore: Qt, QTimer
-  - Qt: QKeySequence, QAction, QMenu
-- Standard Library
-  - os: File and path operations
-  - sys: System-related parameters
-  - json: JSON data processing
-  - logging: Debug and error logs
-  - datetime: Time operations
-  - threading: Thread management
+- calibre 6.0 or higher
+- No extra Python packages to install; runtime libraries ship inside the plugin
 
 ## Privacy Handling
 
-- All AI providers' API Keys are saved as a JSON file locally after input and are not transmitted to any third-party servers
-- When sending requests to AI providers, the plugin will use the book's Metadata information submitted to the selected AI provider
-- The plugin's privacy handling will depend on each AI provider's own privacy policy.
+- API keys you enter are stored in calibre’s local plugin settings. They are not sent to the plugin author.
+- Your question and the selected book’s metadata are sent to the AI provider you are using.
+- **Nvidia AI (Free)** uses a developer-maintained channel, then Nvidia. The developer does not sell user data. Nvidia may still apply its own free-tier policies. If you prefer not to use that channel, add your own Nvidia key or use a local provider such as Ollama.
+- Other providers follow their own privacy policies.
 
 ## Troubleshooting
 
