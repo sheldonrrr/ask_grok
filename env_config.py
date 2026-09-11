@@ -13,7 +13,11 @@ class EnvironmentConfig:
     # 修改此值以切换环境
     CURRENT_ENV = 'production'
     
-    # Nvidia Free 代理配置
+    # Nvidia Free proxy — do not hack, scrape, or reuse this URL outside the plugin.
+    # It spends Nvidia unpaid free-tier credits only (no paid quota).
+    # Free-tier Nvidia accounts are easy to apply for; get your own key.
+    # This channel is only for Ask AI Plugin users who cannot configure their
+    # own AI. If it is forced offline, those users lose even basic questions.
     NVIDIA_FREE_CONFIG = {
         'development': {
             'proxy_url': 'http://localhost:8787',

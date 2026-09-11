@@ -412,7 +412,7 @@ class SpanishTranslation(BaseTranslation):
             'about_title': 'Acerca de Ask AI Plugin',
             'about_version_label': 'Versión',
             'about_description': 'Haz preguntas sobre libros de calibre con los servicios de IA que elijas.',
-            'about_latest_update': 'Última actualización (2026.09.04): se corrigió que títulos e idiomas en escrituras no latinas aparecieran como interrogaciones',
+            'about_latest_update': 'Última actualización (2026.09.11): se han optimizado los datos enviados con cada pregunta',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: MobileRead es la página del desarrollador para publicaciones de plugins de calibre y más actualizaciones de versión.',
@@ -458,6 +458,14 @@ class SpanishTranslation(BaseTranslation):
             'request_timeout_label': 'Tiempo de espera de la solicitud:',
             'seconds': 'segundos',
             'request_timeout_error': 'Tiempo de espera de la solicitud agotado. Tiempo de espera actual: {timeout} segundos',
+            'timeout_too_short_title': 'Tiempo de espera agotado',
+            'timeout_too_short_message': (
+                'La solicitud falló porque el tiempo de espera era demasiado corto. ¿Desea aumentar '
+                'el tiempo de espera actual de "{current_seconds} segundos" ({current_minutes} minutos) '
+                'a "{new_seconds} segundos" ({new_minutes} minutos)?'
+            ),
+            'timeout_increase_button': 'Aumentar',
+            'timeout_increased_toast': 'El tiempo de espera se ha cambiado a {seconds} segundos. Vuelva a intentarlo.',
             'enable_custom_prompt_limit_label': 'Límite de longitud de prompt personalizado',
             'enable_custom_prompt_limit_tooltip': (
                 'Los límites predeterminados son 128.000 caracteres (un libro) y 256.000 (varios libros). '

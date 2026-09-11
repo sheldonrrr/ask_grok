@@ -408,7 +408,7 @@ class DanishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stil spørgsmål om calibre-bøger med de AI-tjenester, du vælger.',
-            'about_latest_update': 'Seneste opdatering (2026.09.04): Rettet at bogtitler og sprog med ikke-latinsk skrift blev vist som spørgsmålstegn',
+            'about_latest_update': 'Seneste opdatering (2026.09.11): Dataene, der sendes med hvert spørgsmål, er blevet optimeret',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Bemærk: MobileRead er udviklersiden for calibre-pluginudgivelser og flere versionsopdateringer.',
@@ -454,6 +454,14 @@ class DanishTranslation(BaseTranslation):
             'request_timeout_label': 'Anmodningstimeout:',
             'seconds': 'sekunder',
             'request_timeout_error': 'Anmodningstimeout. Nuværende timeout: {timeout} sekunder',
+            'timeout_too_short_title': 'Anmodningstimeout',
+            'timeout_too_short_message': (
+                'Anmodningen mislykkedes, fordi timeouten var for kort. Vil du ændre den aktuelle '
+                'anmodningstimeout fra "{current_seconds} sekunder" ({current_minutes} minutter) '
+                'til "{new_seconds} sekunder" ({new_minutes} minutter)?'
+            ),
+            'timeout_increase_button': 'Forøg',
+            'timeout_increased_toast': 'Timeouten er blevet ændret til {seconds} sekunder. Prøv venligst igen.',
             'enable_custom_prompt_limit_label': 'Brugerdefineret promptlængdegrænse',
             'enable_custom_prompt_limit_tooltip': (
                 'Standardgrænser er 128.000 tegn (enkelt bog) og 256.000 (flere bøger). '

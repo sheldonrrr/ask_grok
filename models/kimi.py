@@ -342,7 +342,7 @@ class KimiModel(BaseAIModel):
                 api_url,
                 headers=req_headers,
                 json=req_data,
-                timeout=kwargs.get('timeout', 60),
+                timeout=kwargs.get('timeout', 120),
             )
             response.raise_for_status()
 

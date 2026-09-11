@@ -388,7 +388,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.09.04）：修復咗非拉丁文書名同語言顯示成問號嘅問題',
+            'about_latest_update': '最新更新（2026.09.11）：優化咗每次提問傳送嘅請求資料',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown for calibre',
@@ -434,6 +434,10 @@ class CantoneseTranslation(BaseTranslation):
             'request_timeout_label': '請求逾時：', # Request Timeout:
             'seconds': '秒', # seconds
             'request_timeout_error': '請求逾時。目前逾時時間：{timeout} 秒', # Request timeout. Current timeout: {timeout} seconds
+            'timeout_too_short_title': '請求逾時', # Request timeout
+            'timeout_too_short_message': '而家因為請求時間過短搞到請求失敗，係咪直接將而家嘅請求時間「{current_seconds}秒」（{current_minutes}分鐘）調大到「{new_seconds}秒」（{new_minutes}分鐘）？', # The request failed because the timeout was too short...
+            'timeout_increase_button': '調大', # Increase
+            'timeout_increased_toast': '而家時間已經調大為{seconds}秒，請再試。', # The timeout has been changed to {seconds} seconds. Please retry.
             'enable_custom_prompt_limit_label': '自訂提示詞長度限制',
             'enable_custom_prompt_limit_tooltip': '預設限制係單書 128,000 字、多書 256,000 字，大多數用戶唔使改。書庫級搜尋請用 AI Search。只有模型支援更大上下文而且仍然撞限制時先啟用自訂。',
             'max_prompt_length_label': '最大提示詞長度：',

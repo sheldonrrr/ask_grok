@@ -415,7 +415,7 @@ class JapaneseTranslation(BaseTranslation):
             'about_title': 'Ask AI Pluginについて',
             'about_version_label': 'バージョン',
             'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
-            'about_latest_update': '最新の更新（2026.09.04）：非ラテン文字の書名や言語が「?」になる問題を修正しました',
+            'about_latest_update': '最新の更新（2026.09.11）：質問時に送るデータを最適化しました',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': '注：MobileRead は calibre プラグインの公開とバージョン更新情報のための開発者ページです。',
@@ -461,6 +461,13 @@ class JapaneseTranslation(BaseTranslation):
             'request_timeout_label': 'リクエストタイムアウト:',
             'seconds': '秒',
             'request_timeout_error': 'リクエストがタイムアウトしました。現在のタイムアウト: {timeout}秒',
+            'timeout_too_short_title': 'リクエストがタイムアウトしました',
+            'timeout_too_short_message': (
+                'タイムアウトが短すぎたためリクエストに失敗しました。現在のリクエストタイムアウトを'
+                '「{current_seconds}秒」（{current_minutes}分）から「{new_seconds}秒」（{new_minutes}分）に延長しますか？'
+            ),
+            'timeout_increase_button': '延長する',
+            'timeout_increased_toast': 'タイムアウトを{seconds}秒に変更しました。再試行してください。',
             'max_prompt_length_normalized_title': 'プロンプト制限を調整しました',
             'max_prompt_length_normalized': 'プロンプト長を {value} 文字に正規化しました（カンマやスペースなどの区切り文字を削除しました）。',
             'enable_custom_prompt_limit_label': 'カスタムプロンプト長制限',

@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtGui import QTextCursor
 from .config import get_prefs, ConfigDialog
 from .i18n import get_translation, get_suggestion_template
+from .utils import omit_placeholder_template_fields, clean_prompt_metadata_text
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,9 +40,11 @@ class SuggestionWorker(QThread):
             
             # 准备书籍信息，使用 getattr 安全获取属性
             try:
-                title = str(getattr(self.book_info, 'title', 'Unknown'))
+                title = clean_prompt_metadata_text(str(getattr(self.book_info, 'title', 'Unknown'))) or 'Unknown'
                 authors = getattr(self.book_info, 'authors', [])
-                author_str = ', '.join(map(str, authors)) if authors and isinstance(authors, (list, tuple)) else 'Unknown'
+                author_str = clean_prompt_metadata_text(
+                    ', '.join(map(str, authors)) if authors and isinstance(authors, (list, tuple)) else ''
+                )
                 language = str(getattr(self.book_info, 'language', 'Unknown'))
             except Exception as e:
                 error_msg = f"获取书籍信息时出错: {str(e)}"
@@ -82,6 +85,11 @@ class SuggestionWorker(QThread):
             logger.info(f"使用的问题随机问题模板: {template[:200]}...")
             
             # 格式化提示词，包含完整的书籍信息
+            template = omit_placeholder_template_fields(template, {
+                'title': title,
+                'author': author_str,
+                'language': language,
+            })
             prompt = template.format(
                 title=title,
                 author=author_str,

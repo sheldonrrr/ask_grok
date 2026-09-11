@@ -127,13 +127,23 @@ class DeviceFingerprint:
     
     @staticmethod
     def _get_plugin_version() -> str:
-        """
-        获取插件版本号
-        
-        :return: 版本号字符串
-        """
+        """Return the shipped plugin version (never a hardcoded 1.0.0)."""
+        try:
+            from .version import VERSION_STRING
+            if VERSION_STRING:
+                return VERSION_STRING
+        except (ImportError, AttributeError):
+            pass
         try:
             from .version import __version__
-            return __version__
+            if __version__:
+                return __version__
         except (ImportError, AttributeError):
-            return 'unknown'
+            pass
+        try:
+            from . import VERSION as init_version
+            if init_version:
+                return '.'.join(map(str, init_version))
+        except (ImportError, AttributeError, TypeError):
+            pass
+        return 'unknown'

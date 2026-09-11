@@ -39,7 +39,7 @@ MAJOR = breaking · MINOR = features · PATCH = fixes
 
 Invoke with `/upgrade-version` (optional `X.Y.Z` argument; alias `/version-up`).
 See `.cursor/commands/upgrade-version.md`.
-Related: `/pack` packages via `scripts/package.sh`; `/push` commits and pushes.
+Related: `/build` (alias `/pack`) packages via `scripts/package.sh`; `/push` commits and pushes.
 
 ## Never
 

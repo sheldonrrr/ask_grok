@@ -385,7 +385,7 @@ class GermanTranslation(BaseTranslation):
             'about_title': 'Über Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stellen Sie Fragen zu calibre-Büchern mit den von Ihnen gewählten KI-Diensten.',
-            'about_latest_update': 'Aktuelles Update (2026.09.04): Buchtitel und Sprachen in nicht-lateinischen Schriften wurden nicht mehr als Fragezeichen angezeigt',
+            'about_latest_update': 'Aktuelles Update (2026.09.11): Die mit jeder Frage gesendeten Daten wurden optimiert',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Hinweis: MobileRead ist die Entwicklerseite für Calibre-Plugin-Veröffentlichungen und weitere Versionsupdates.',
@@ -430,6 +430,14 @@ class GermanTranslation(BaseTranslation):
             'request_timeout_label': 'Anfrage-Timeout:',
             'seconds': 'Sekunden',
             'request_timeout_error': 'Anfrage-Timeout. Aktuelles Timeout: {timeout} Sekunden',
+            'timeout_too_short_title': 'Anfrage-Timeout',
+            'timeout_too_short_message': (
+                'Die Anfrage ist fehlgeschlagen, weil das Timeout zu kurz war. Möchten Sie das aktuelle '
+                'Anfrage-Timeout von „{current_seconds} Sekunden“ ({current_minutes} Minuten) auf '
+                '„{new_seconds} Sekunden“ ({new_minutes} Minuten) erhöhen?'
+            ),
+            'timeout_increase_button': 'Erhöhen',
+            'timeout_increased_toast': 'Das Timeout wurde auf {seconds} Sekunden geändert. Bitte erneut versuchen.',
             'max_prompt_length_normalized_title': 'Prompt-Limit angepasst',
             'max_prompt_length_normalized': (
                 'Die Prompt-Länge wurde auf {value} Zeichen normalisiert (Trennzeichen wie Kommas '

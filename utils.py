@@ -41,6 +41,91 @@ def as_unicode_text(value, default=''):
         return value.decode('utf-8', 'replace').replace('\u2028', '\n').replace('\u2029', '\n')
     return str(value).replace('\u2028', '\n').replace('\u2029', '\n')
 
+
+OPTIONAL_PROMPT_FIELDS = ('author', 'publisher', 'pubyear', 'language', 'series')
+_PLACEHOLDER_TOKENS = frozenset({
+    'unknown', 'n/a', 'na', 'none', 'null', 'nil', 'und', 'un', 'zxx',
+    '-', '—', '–', '.',
+    '未知', '不明',
+    'unbekannt', 'inconnu', 'desconocido', 'desconhecido',
+    'неизвестно', 'okänd', 'ukendt', 'ukjent', 'onbekend', 'tuntematon',
+})
+
+
+def is_placeholder_metadata(value, field=None):
+    """True for empty/Unknown-like metadata, or numeric junk publishers such as 101."""
+    if value is None:
+        return True
+    text = str(value).strip()
+    if not text:
+        return True
+    if text.casefold() in _PLACEHOLDER_TOKENS:
+        return True
+    if field == 'publisher' and re.fullmatch(r'\d{1,4}', text):
+        return True
+    return False
+
+
+_WATERMARK_RE = re.compile(
+    r'[\(\[【（]\s*(?:'
+    r'bookfi(?:\.org)?'
+    r'|z-?lib(?:rary)?(?:\.org)?'
+    r'|zlib(?:\.org)?'
+    r'|libgen(?:\.[a-z]+)?'
+    r'|library\s*genesis'
+    r'|pdf[\s.\-]?drive(?:\.com)?'
+    r'|ebook3000'
+    r'|oceanofpdf'
+    r'|b-ok(?:\.[a-z]+)?'
+    r'|1lib(?:\.[a-z]+)?'
+    r'|bookzz'
+    r'|avaxhome'
+    r')\s*[\)\]】）]',
+    re.IGNORECASE,
+)
+_EMPTY_BRACKET_RE = re.compile(
+    r'(?:^|(?<=\s))[\[\(\{【（《<〔｛]\s*[\]\)\}】）》>〕｝](?=\s|$)|'
+    r'[\[\(\{【（《<〔｛]\s*[\]\)\}】）》>〕｝]$'
+)
+
+
+def clean_prompt_metadata_text(value):
+    """Strip empty []/() wrappers and obvious download-site watermarks from prompt text."""
+    if value is None:
+        return ''
+    text = str(value).strip()
+    for _ in range(8):
+        stripped = _WATERMARK_RE.sub('', text)
+        stripped = _EMPTY_BRACKET_RE.sub('', stripped)
+        stripped = re.sub(r'\s{2,}', ' ', stripped).strip(' \t,;')
+        if stripped == text:
+            break
+        text = stripped
+    return text
+
+
+def omit_placeholder_template_fields(template, values):
+    """Remove optional {author}/{publisher}/... clauses when the value is placeholder."""
+    if not template:
+        return template
+    result = template
+    for key in OPTIONAL_PROMPT_FIELDS:
+        if not is_placeholder_metadata(values.get(key), field=key):
+            continue
+        result = re.sub(
+            r'(?:[,，]\s*)?(?:[^,，{}:\n：]+[：:]\s*)?\{' + key + r'\}',
+            '',
+            result,
+        )
+    result = re.sub(r'[,，]\s*[,，]+', ',', result)
+    result = re.sub(r'\s+[,，]', ',', result)
+    result = re.sub(r'[,，]\s*[.。]', '.', result)
+    result = re.sub(r'[ \t]{2,}', ' ', result)
+    result = re.sub(r' +\n', '\n', result)
+    result = re.sub(r'\n{3,}', '\n\n', result)
+    return result.strip()
+
+
 def mask_api_key(api_key, visible_chars=4, mask_chars=8):
     """
     隐藏API Key，只保留前几位字符，其余全部掩码
@@ -110,7 +195,7 @@ def safe_log_config(config, keys_to_mask=None):
 
 def _sanitize_metadata_field(text):
     """Normalize title/author text for compact TSV (cross-platform line endings)."""
-    text = str(text)
+    text = clean_prompt_metadata_text(text)
     text = text.replace('\r\n', ' ').replace('\r', ' ')
     text = text.replace('\u2028', ' ').replace('\u2029', ' ')
     text = text.replace('|', '/').replace('\n', ' ')

@@ -1,6 +1,6 @@
 
 # Ask AI Plugin User Manual v1.0
-Latest updated: Sep 4, 2026, Ask AI Plugin v1.6.2
+Latest updated: Sep 11, 2026, Ask AI Plugin v1.6.4
 
 ToC of this tutorial:
 - Introduction
@@ -55,6 +55,7 @@ Good news: You don't need to pay. Free options are available below.
 - Default model: `nvidia/nemotron-3.5-lightning-30b-a3b` (a small, fast model; you can change it in Configuration)
 - Limit: Shared free tier (may be less stable during peak times)
 - Note: This is a free service maintained by the plugin developer. For better stability and higher limits, consider the options below.
+- Note: Information you submit may be used to analyze plugin stability and availability — use with care. If you care about privacy, avoid this free service. As the developer, I promise not to sell or use any user privacy data for profit. Nvidia's free quota may also be used by Nvidia for data analysis.
 
 Option 1: Nvidia (Recommended for Stability)
 - Cost: Free credits for new accounts (rate-limited)
@@ -251,7 +252,7 @@ General Settings:
 - Language Change
 - Dialog Size: Adjust window size
 - Parallel AI Panels: Set to 2 for side-by-side comparison
-- Request Timeout: How long to wait for an AI response
+- Request Timeout: How long to wait for an AI response (default 120 seconds)
 - Custom Prompt Length: Optional advanced limit (see chapter below)
 
 AI Provider Settings:

@@ -426,7 +426,7 @@ class FrenchTranslation(BaseTranslation):
             'about_title': 'À propos de Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': "Posez des questions sur vos livres calibre avec les services d'IA que vous choisissez.",
-            'about_latest_update': 'Dernière mise à jour (2026.09.04) : les titres et langues en écritures non latines ne s’affichent plus en points d’interrogation',
+            'about_latest_update': 'Dernière mise à jour (2026.09.11) : les données envoyées avec chaque question ont été optimisées',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Remarque : MobileRead est la page développeur pour les publications de plugins calibre et les mises à jour de version.',
@@ -472,6 +472,14 @@ class FrenchTranslation(BaseTranslation):
             'request_timeout_label': 'Délai d\'attente de la requête:',
             'seconds': 'secondes',
             'request_timeout_error': 'Délai d\'attente de la requête dépassé. Délai actuel: {timeout} secondes',
+            'timeout_too_short_title': 'Délai de requête dépassé',
+            'timeout_too_short_message': (
+                'La requête a échoué car le délai d\'attente était trop court. Voulez-vous augmenter '
+                'le délai actuel de « {current_seconds} secondes » ({current_minutes} minutes) à '
+                '« {new_seconds} secondes » ({new_minutes} minutes) ?'
+            ),
+            'timeout_increase_button': 'Augmenter',
+            'timeout_increased_toast': 'Le délai a été modifié à {seconds} secondes. Veuillez réessayer.',
             'max_prompt_length_normalized_title': 'Limite de prompt ajustée',
             'max_prompt_length_normalized': (
                 'La longueur du prompt a été normalisée à {value} caractères (des séparateurs tels que des virgules '

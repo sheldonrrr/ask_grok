@@ -519,6 +519,14 @@ def get_prefs(force_reload=False):
     # 确保 request_timeout 键存在
     if 'request_timeout' not in prefs:
         prefs['request_timeout'] = 120
+    else:
+        # 配置迁移：旧默认 60 秒 → 120 秒（仅替换旧默认，不覆盖用户自定义超时）
+        try:
+            if int(prefs.get('request_timeout')) == 60:
+                prefs['request_timeout'] = 120
+                prefs.commit()
+        except (TypeError, ValueError):
+            pass
     
     # 确保 parallel_ai_count 键存在
     if 'parallel_ai_count' not in prefs:
@@ -719,6 +727,93 @@ def get_prefs(force_reload=False):
     # ========== 迁移结束 ==========
     
     return prefs
+
+
+# Offered after a user-facing request timeout when the current limit is below this.
+SUGGESTED_REQUEST_TIMEOUT = 300
+
+
+def format_timeout_minutes(seconds):
+    """Format seconds as a minutes string for timeout-increase prompts (e.g. 120 → '2')."""
+    try:
+        minutes = float(seconds) / 60.0
+    except (TypeError, ValueError):
+        return '0'
+    if abs(minutes - round(minutes)) < 1e-6:
+        return str(int(round(minutes)))
+    formatted = '%.1f' % minutes
+    return formatted.rstrip('0').rstrip('.') if '.' in formatted else formatted
+
+
+def _apply_timeout_to_api_client(client, seconds):
+    if client is None:
+        return
+    if hasattr(client, 'set_request_timeout'):
+        client.set_request_timeout(seconds)
+    elif hasattr(client, '_timeout'):
+        try:
+            client._timeout = max(1, min(int(seconds), 3600))
+        except (TypeError, ValueError):
+            client._timeout = SUGGESTED_REQUEST_TIMEOUT
+
+
+def sync_request_timeout_clients(seconds):
+    """Update cached APIClient timeouts so the next retry uses the new limit."""
+    try:
+        from .api import api as global_api
+        _apply_timeout_to_api_client(global_api, seconds)
+    except Exception:
+        logger.debug('Could not update global API timeout', exc_info=True)
+
+    try:
+        import calibre_plugins.ask_ai_plugin.ui as ui_mod
+        plugin = getattr(ui_mod, 'plugin_instance', None)
+        if not plugin:
+            return
+        _apply_timeout_to_api_client(getattr(plugin, 'api', None), seconds)
+        ask = getattr(plugin, 'ask_dialog', None)
+        if not ask:
+            return
+        _apply_timeout_to_api_client(getattr(ask, 'api', None), seconds)
+        handler = getattr(ask, 'response_handler', None)
+        if handler:
+            _apply_timeout_to_api_client(getattr(handler, 'api', None), seconds)
+        for panel in getattr(ask, 'response_panels', None) or []:
+            _apply_timeout_to_api_client(getattr(panel, 'api', None), seconds)
+            panel_handler = getattr(panel, 'response_handler', None)
+            if panel_handler:
+                _apply_timeout_to_api_client(getattr(panel_handler, 'api', None), seconds)
+    except Exception:
+        logger.debug('Could not update AskDialog API timeouts', exc_info=True)
+
+
+def sync_request_timeout_settings_widget(seconds):
+    """Keep any already-constructed Settings timeout field in sync with prefs."""
+    app = QApplication.instance()
+    if app is None:
+        return
+    for widget in app.allWidgets():
+        apply_fn = getattr(widget, 'apply_external_timeout', None)
+        if callable(apply_fn):
+            try:
+                apply_fn(seconds)
+            except Exception:
+                logger.debug('Could not update Settings timeout field', exc_info=True)
+
+
+def apply_request_timeout(seconds):
+    """Persist request_timeout and update live Settings UI plus in-memory API clients."""
+    try:
+        value = max(1, min(int(seconds), 3600))
+    except (TypeError, ValueError):
+        value = SUGGESTED_REQUEST_TIMEOUT
+    prefs = get_prefs()
+    prefs['request_timeout'] = value
+    if hasattr(prefs, 'commit'):
+        prefs.commit()
+    sync_request_timeout_settings_widget(value)
+    sync_request_timeout_clients(value)
+    return value
 
 
 class ModelConfigWidget(QWidget):
@@ -3214,6 +3309,19 @@ class ConfigDialog(QWidget):
             index = self.parallel_ai_combo.findData(parallel)
             if index >= 0:
                 self.parallel_ai_combo.setCurrentIndex(index)
+
+    def apply_external_timeout(self, seconds):
+        """Keep the timeout field aligned when prefs change outside Settings (e.g. timeout prompt)."""
+        try:
+            value = int(seconds)
+        except (TypeError, ValueError):
+            return
+        if hasattr(self, 'initial_values') and isinstance(self.initial_values, dict):
+            self.initial_values['request_timeout'] = value
+        if hasattr(self, 'timeout_input') and self.timeout_input is not None:
+            self.timeout_input.blockSignals(True)
+            self.timeout_input.setText(str(value))
+            self.timeout_input.blockSignals(False)
             
     def on_language_changed(self, index):
         """语言改变时的处理函数"""

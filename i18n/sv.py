@@ -411,7 +411,7 @@ class SwedishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ställ frågor om calibre-böcker med de AI-tjänster du väljer.',
-            'about_latest_update': 'Senaste uppdateringen (2026.09.04): Åtgärdade att boktitlar och språk med icke-latinsk skrift visades som frågetecken',
+            'about_latest_update': 'Senaste uppdateringen (2026.09.11): Data som skickas med varje fråga har optimerats',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Obs: MobileRead är utvecklarsidan för calibre-pluginutgåvor och fler versionsuppdateringar.',
@@ -457,6 +457,14 @@ class SwedishTranslation(BaseTranslation):
             'request_timeout_label': 'Begäran tidsinställning:',
             'seconds': 'sekunder',
             'request_timeout_error': 'Begäran tidsinställd. Aktuell tidsinställning: {timeout} sekunder',
+            'timeout_too_short_title': 'Begäran tidsinställd',
+            'timeout_too_short_message': (
+                'Begäran misslyckades eftersom tidsgränsen var för kort. Vill du öka den aktuella '
+                'tidsgränsen från "{current_seconds} sekunder" ({current_minutes} minuter) till '
+                '"{new_seconds} sekunder" ({new_minutes} minuter)?'
+            ),
+            'timeout_increase_button': 'Öka',
+            'timeout_increased_toast': 'Tidsgränsen har ändrats till {seconds} sekunder. Försök igen.',
             'enable_custom_prompt_limit_label': 'Anpassad promptlängdsgräns',
             'enable_custom_prompt_limit_tooltip': (
                 'Standardgränser är 128 000 tecken (en bok) och 256 000 (flera böcker). '

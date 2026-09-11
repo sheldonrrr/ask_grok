@@ -410,7 +410,7 @@ class DutchTranslation(BaseTranslation):
             'about_title': 'Over Ask AI Plugin',
             'about_version_label': 'Versie',
             'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
-            'about_latest_update': 'Laatste update (2026.09.04): Boektitels en talen in niet-Latijnse schriften worden niet meer als vraagtekens getoond',
+            'about_latest_update': 'Laatste update (2026.09.11): de gegevens die bij elke vraag worden meegestuurd zijn geoptimaliseerd',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Let op: MobileRead is de ontwikkelaarspagina voor calibre-pluginreleases en verdere versie-updates.',
@@ -456,6 +456,14 @@ class DutchTranslation(BaseTranslation):
             'request_timeout_label': 'Verzoektime-out:',
             'seconds': 'seconden',
             'request_timeout_error': 'Verzoektime-out. Huidige time-out: {timeout} seconden',
+            'timeout_too_short_title': 'Verzoektime-out',
+            'timeout_too_short_message': (
+                'Het verzoek is mislukt omdat de time-out te kort was. Wilt u de huidige '
+                'verzoektime-out verhogen van "{current_seconds} seconden" ({current_minutes} minuten) '
+                'naar "{new_seconds} seconden" ({new_minutes} minuten)?'
+            ),
+            'timeout_increase_button': 'Verhogen',
+            'timeout_increased_toast': 'De time-out is gewijzigd naar {seconds} seconden. Probeer het opnieuw.',
             'enable_custom_prompt_limit_label': 'Aangepaste promptlengtelimiet',
             'enable_custom_prompt_limit_tooltip': (
                 'Standaardlimieten zijn 128.000 tekens (enkel boek) en 256.000 (meerdere boeken). '
