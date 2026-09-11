@@ -412,7 +412,7 @@ class FinnishTranslation(BaseTranslation):
             'about_title': 'Tietoja Ask AI -lisäosasta',
             'about_version_label': 'Versio',
             'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
-            'about_latest_update': 'Viimeisin päivitys (2026.09.10): Pyynnön oletusaikakatkaisu on nyt 120 sekuntia, jotta hitaammat ilmaiset mallit ehtivät vastata',
+            'about_latest_update': 'Viimeisin päivitys (2026.09.11): Kysymyksen mukana lähetettäviä tietoja on optimoitu',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Huom: MobileRead on kehittäjäsivu calibre-liitännäisten julkaisuille ja lisäversion päivityksille.',

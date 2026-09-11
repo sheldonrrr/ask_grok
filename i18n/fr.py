@@ -426,7 +426,7 @@ class FrenchTranslation(BaseTranslation):
             'about_title': 'À propos de Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': "Posez des questions sur vos livres calibre avec les services d'IA que vous choisissez.",
-            'about_latest_update': 'Dernière mise à jour (2026.09.10) : le délai d’attente par défaut des requêtes est désormais de 120 secondes pour mieux prendre en charge les modèles gratuits plus lents',
+            'about_latest_update': 'Dernière mise à jour (2026.09.11) : les données envoyées avec chaque question ont été optimisées',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Remarque : MobileRead est la page développeur pour les publications de plugins calibre et les mises à jour de version.',

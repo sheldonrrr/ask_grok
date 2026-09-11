@@ -14,8 +14,6 @@ alwaysApply: true
 
 `ui.py` reads `VERSION_DISPLAY` from `version.py` — do not hardcode.
 
-`aiprovider/nvidia_free.md`: `X-Plugin-Version` and `/api/health` JSON `version` must equal `VERSION_STRING`. Never leave `1.0.0`.
-
 Verify: `grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py`
 
 ## Release notes

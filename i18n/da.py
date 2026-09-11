@@ -408,7 +408,7 @@ class DanishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stil spørgsmål om calibre-bøger med de AI-tjenester, du vælger.',
-            'about_latest_update': 'Seneste opdatering (2026.09.10): Standardtimeout for anmodninger er nu 120 sekunder for bedre at understøtte langsommere gratis modeller',
+            'about_latest_update': 'Seneste opdatering (2026.09.11): Dataene, der sendes med hvert spørgsmål, er blevet optimeret',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Bemærk: MobileRead er udviklersiden for calibre-pluginudgivelser og flere versionsopdateringer.',

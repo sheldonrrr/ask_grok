@@ -388,7 +388,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.09.10）：將預設請求逾時改做 120 秒，配合慢啲嘅免費模型',
+            'about_latest_update': '最新更新（2026.09.11）：優化咗每次提問傳送嘅請求資料',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown for calibre',

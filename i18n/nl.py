@@ -410,7 +410,7 @@ class DutchTranslation(BaseTranslation):
             'about_title': 'Over Ask AI Plugin',
             'about_version_label': 'Versie',
             'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
-            'about_latest_update': 'Laatste update (2026.09.10): de standaard time-out voor verzoeken is nu 120 seconden, zodat tragere gratis modellen beter werken',
+            'about_latest_update': 'Laatste update (2026.09.11): de gegevens die bij elke vraag worden meegestuurd zijn geoptimaliseerd',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Let op: MobileRead is de ontwikkelaarspagina voor calibre-pluginreleases en verdere versie-updates.',

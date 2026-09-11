@@ -408,7 +408,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_title': '关于 Ask AI Plugin',
             'about_version_label': '版本',
             'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
-            'about_latest_update': '最新更新（2026.09.10）：将默认请求超时改为 120 秒，以配合较慢的免费模型',
+            'about_latest_update': '最新更新（2026.09.11）：优化了每次提问发送的请求数据',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推荐',
             'about_markdown_title': 'Markdown for calibre',

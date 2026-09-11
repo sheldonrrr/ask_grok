@@ -415,7 +415,7 @@ class JapaneseTranslation(BaseTranslation):
             'about_title': 'Ask AI Pluginについて',
             'about_version_label': 'バージョン',
             'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
-            'about_latest_update': '最新の更新（2026.09.10）：遅い無料モデルに合わせて、デフォルトのリクエストタイムアウトを 120 秒に変更しました',
+            'about_latest_update': '最新の更新（2026.09.11）：質問時に送るデータを最適化しました',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': '注：MobileRead は calibre プラグインの公開とバージョン更新情報のための開発者ページです。',

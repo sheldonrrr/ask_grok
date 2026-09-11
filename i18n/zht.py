@@ -409,7 +409,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_title': '關於 Ask AI Plugin',
         'about_version_label': '版本',
         'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
-        'about_latest_update': '最新更新（2026.09.10）：將預設請求逾時改為 120 秒，以配合較慢的免費模型',
+        'about_latest_update': '最新更新（2026.09.11）：優化了每次提問發送的請求資料',
         'about_mobileread_link_text': 'MobileRead',
         'about_related_plugins': 'Nowtiny calibre 插件推薦',
         'about_markdown_title': 'Markdown for calibre',

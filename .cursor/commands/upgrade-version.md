@@ -22,8 +22,6 @@ Alias: `/version-up` (same workflow).
 
 `ui.py` reads `VERSION_DISPLAY` from `version.py` — do not hardcode a version there.
 
-Also update `aiprovider/nvidia_free.md` so `X-Plugin-Version` and `/api/health` JSON `version` match `X.Y.Z` (never leave `1.0.0`).
-
 Verify with:
 
 ```bash

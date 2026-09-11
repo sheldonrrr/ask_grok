@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Nvidia Free health/chat headers must report the current plugin version."""
+"""Nvidia Free docs stay public-safe; plugin version is not hardcoded 1.0.0."""
 
 from __future__ import annotations
 
-import re
 import sys
 import unittest
 from pathlib import Path
@@ -22,16 +21,16 @@ class TestNvidiaFreeVersionHeaders(unittest.TestCase):
         self.assertNotEqual(version.VERSION_STRING, '1.0.0')
         self.assertRegex(version.VERSION_STRING, r'^\d+\.\d+\.\d+$')
 
-    def test_nvidia_free_docs_use_current_plugin_version(self):
+    def test_nvidia_free_docs_omit_internal_proxy_details(self):
         text = (ROOT / 'aiprovider' / 'nvidia_free.md').read_text(encoding='utf-8')
-        self.assertNotIn('X-Plugin-Version: 1.0.0', text)
-        self.assertIn('X-Plugin-Version: {}'.format(version.VERSION_STRING), text)
-        self.assertRegex(
-            text,
-            r'"version":\s*"' + re.escape(version.VERSION_STRING) + r'"',
-        )
-        self.assertIn('GET /api/health', text)
-        self.assertNotIn('Reply with the single word pong', text)
+        self.assertNotIn('workers.dev', text)
+        self.assertNotIn('X-Plugin-Version', text)
+        self.assertNotIn('X-User-UUID', text)
+        self.assertNotIn('X-Device-Fingerprint', text)
+        self.assertNotIn('/api/health', text)
+        self.assertNotIn('/api/chat', text)
+        self.assertIn('nvidia_free', text)
+        self.assertIn('Do not hack', text)
 
 
 if __name__ == '__main__':

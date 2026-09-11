@@ -409,7 +409,7 @@ class NorwegianTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Versjon',
             'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
-            'about_latest_update': 'Siste oppdatering (2026.09.10): Standard tidsavbrudd for forespørsler er nå 120 sekunder for å bedre støtte tregere gratis modeller',
+            'about_latest_update': 'Siste oppdatering (2026.09.11): Dataene som sendes med hvert spørsmål er optimalisert',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Merk: MobileRead er utviklersiden for calibre-pluginutgivelser og flere versjonsoppdateringer.',

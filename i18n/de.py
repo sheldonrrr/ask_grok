@@ -385,7 +385,7 @@ class GermanTranslation(BaseTranslation):
             'about_title': 'Über Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stellen Sie Fragen zu calibre-Büchern mit den von Ihnen gewählten KI-Diensten.',
-            'about_latest_update': 'Aktuelles Update (2026.09.10): Die Standard-Anfragezeitüberschreitung beträgt jetzt 120 Sekunden, um langsamere kostenlose Modelle besser zu unterstützen',
+            'about_latest_update': 'Aktuelles Update (2026.09.11): Die mit jeder Frage gesendeten Daten wurden optimiert',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Hinweis: MobileRead ist die Entwicklerseite für Calibre-Plugin-Veröffentlichungen und weitere Versionsupdates.',
