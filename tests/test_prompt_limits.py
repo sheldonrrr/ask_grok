@@ -357,6 +357,40 @@ class TestOmitPlaceholderMetadata(unittest.TestCase):
         self.assertNotIn('Publisher:', filled)
 
 
+class TestPromptTemplateLanguage(unittest.TestCase):
+    def test_old_english_default_follows_interface_language(self):
+        old_english = (
+            'About the book "{title}": Author: {author}, Publisher: {publisher}, '
+            'Publication Year: {pubyear}, book in language: {language}, '
+            'Series: {series}, My question is: {query}'
+        )
+        traditional = '背景說明：書名：「{title}」，作者：{author}。用戶問題：{query}。'
+        resolved = utils.resolve_prompt_template(
+            old_english,
+            traditional,
+            [traditional],
+            ('{title}', '{author}', '{query}'),
+        )
+        self.assertEqual(resolved, traditional)
+
+    def test_custom_prompt_is_kept(self):
+        custom = (
+            'Please answer as a historian. Title {title}. Author {author}. '
+            'Question {query}. ' + ('context ' * 80)
+        )
+        traditional = '背景說明：書名：「{title}」作者：{author} 問題：{query}'
+        self.assertEqual(
+            utils.resolve_prompt_template(
+                custom, traditional, [traditional], ('{title}', '{author}', '{query}')
+            ),
+            custom.strip(),
+        )
+
+    def test_unknown_calibre_year_101_is_placeholder(self):
+        self.assertTrue(utils.is_placeholder_metadata('101', 'pubyear'))
+        self.assertFalse(utils.is_placeholder_metadata('2003', 'pubyear'))
+
+
 class TestPersonaLanguage(unittest.TestCase):
     def test_builtin_english_persona_follows_prompt_language(self):
         english = 'As a researcher, I want to research through book data.'

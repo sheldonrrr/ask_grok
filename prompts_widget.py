@@ -847,6 +847,36 @@ class PromptsWidget(QWidget):
                 button.setText(self.i18n.get(i18n_key, fallback))
 
 
+def resolve_request_template(prefs, kind='ask'):
+    """Built-in ask/multi/random prompts follow the plugin language at send time."""
+    from .i18n import (
+        get_all_languages,
+        get_default_template,
+        get_multi_book_template,
+        get_suggestion_template,
+    )
+    from .utils import resolve_prompt_template
+
+    lang_code = prefs.get('language', 'en') or 'en'
+    if kind == 'multi':
+        getter = get_multi_book_template
+        key = 'multi_book_template'
+        placeholders = ('{books_metadata}', '{query}')
+    elif kind == 'random':
+        getter = get_suggestion_template
+        key = 'random_questions'
+        placeholders = ('{title}', '{author}')
+    else:
+        getter = get_default_template
+        key = 'template'
+        placeholders = ('{title}', '{author}', '{query}')
+    localized = getter(lang_code)
+    known = [getter(code) for code in get_all_languages()]
+    return resolve_prompt_template(
+        prefs.get(key, ''), localized, known, placeholders
+    )
+
+
 def _persona_for_request(prefs):
     """Default persona follows the plugin language; a custom sentence is kept."""
     from .i18n import get_all_languages, get_translation

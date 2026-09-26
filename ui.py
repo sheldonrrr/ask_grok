@@ -2617,7 +2617,8 @@ class AskDialog(QDialog):
         book_count = len(self.books_info)
         use_compact = book_count > COMPACT_METADATA_THRESHOLD
 
-        template = prefs.get('multi_book_template', '')
+        from calibre_plugins.ask_ai_plugin.prompts_widget import resolve_request_template
+        template = resolve_request_template(prefs, 'multi')
         if not template:
             template = self.i18n.get('multi_book_default_template',
                 """Here is information about multiple books:
@@ -4342,7 +4343,8 @@ Please answer the question based on the above book information.""")
                 
                 # 获取配置的模板
                 prefs = get_prefs()
-                template = prefs.get('template', '')
+                from calibre_plugins.ask_ai_plugin.prompts_widget import resolve_request_template
+                template = resolve_request_template(prefs, 'ask')
                 
                 # 如果模板为空，使用默认模板
                 if not template:

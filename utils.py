@@ -63,6 +63,9 @@ def is_placeholder_metadata(value, field=None):
         return True
     if field == 'publisher' and re.fullmatch(r'\d{1,4}', text):
         return True
+    # Calibre stores an unknown publication date as year 101.
+    if field == 'pubyear' and text in {'101', '0101'}:
+        return True
     return False
 
 
@@ -102,6 +105,35 @@ def clean_prompt_metadata_text(value):
             break
         text = stripped
     return text
+
+
+def is_legacy_short_prompt(saved, required_placeholders):
+    """True for pre-v1.4.1 built-in prompts: short, and without the calibre context."""
+    text = '' if saved is None else str(saved).strip()
+    if not text or not required_placeholders:
+        return False
+    if not all(token in text for token in required_placeholders):
+        return False
+    if len(text) >= 350:
+        return False
+    lowered = text.lower()
+    if 'calibre' in lowered or 'ask ai' in lowered:
+        return False
+    return True
+
+
+def resolve_prompt_template(saved, localized_default, known_defaults, required_placeholders=()):
+    """Use the interface-language built-in prompt unless the user wrote their own."""
+    localized = '' if localized_default is None else str(localized_default).strip()
+    saved_text = '' if saved is None else str(saved).strip()
+    if not saved_text or is_legacy_short_prompt(saved_text, required_placeholders):
+        return localized
+    known = {str(item).strip() for item in known_defaults if item and str(item).strip()}
+    if localized:
+        known.add(localized)
+    if saved_text in known:
+        return localized
+    return saved_text
 
 
 def resolve_persona_text(saved_persona, localized_default, known_defaults):
