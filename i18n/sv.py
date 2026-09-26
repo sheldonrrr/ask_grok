@@ -411,7 +411,7 @@ class SwedishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ställ frågor om calibre-böcker med de AI-tjänster du väljer.',
-            'about_latest_update': 'Senaste uppdateringen (2026.09.11): Data som skickas med varje fråga har optimerats',
+            'about_latest_update': 'Senaste uppdateringen (2026.09.26): i18n-logiken för standardprompten har optimerats',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Obs: MobileRead är utvecklarsidan för calibre-pluginutgåvor och fler versionsuppdateringar.',

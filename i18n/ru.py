@@ -410,7 +410,7 @@ class RussianTranslation(BaseTranslation):
             'about_title': 'О плагине Ask AI',
             'about_version_label': 'Версия',
             'about_description': 'Задавайте вопросы о книгах calibre с помощью выбранных вами сервисов ИИ.',
-            'about_latest_update': 'Последнее обновление (2026.09.11): данные, отправляемые с каждым вопросом, оптимизированы',
+            'about_latest_update': 'Последнее обновление (2026.09.26): оптимизирована i18n-логика стандартной подсказки',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Примечание: MobileRead — страница разработчика для релизов плагинов calibre и обновлений версий.',

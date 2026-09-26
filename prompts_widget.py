@@ -847,6 +847,24 @@ class PromptsWidget(QWidget):
                 button.setText(self.i18n.get(i18n_key, fallback))
 
 
+def _persona_for_request(prefs):
+    """Default persona follows the plugin language; a custom sentence is kept."""
+    from .i18n import get_all_languages, get_translation
+    from .utils import resolve_persona_text
+
+    lang_code = prefs.get('language', 'en') or 'en'
+    localized = get_translation(lang_code).get(
+        'persona_placeholder',
+        'As a researcher, I want to research through book data.',
+    )
+    known = [
+        get_translation(code).get('persona_placeholder', '')
+        for code in get_all_languages()
+    ]
+    known.append('As a researcher, I want to research through book data.')
+    return resolve_persona_text(prefs.get('persona', ''), localized, known)
+
+
 def apply_prompt_enhancements(base_prompt):
     """应用 persona 和语言指令到提示词（独立函数，直接从配置读取）
     
@@ -862,10 +880,10 @@ def apply_prompt_enhancements(base_prompt):
     prefs = get_prefs()
     result = base_prompt
     
-    # 在开头添加 persona（如果启用）
+    # 在开头添加 persona（如果启用）。未自定义时跟随插件语言，避免英文默认句贴在中文/德文模板前。
     use_persona = prefs.get('use_persona', True)
     if use_persona:
-        persona_text = prefs.get('persona', '').strip()
+        persona_text = _persona_for_request(prefs)
         if persona_text:
             result = persona_text + '\n\n' + result
             logger.info(f"已添加 persona 到提示词开头: {persona_text[:50]}...")

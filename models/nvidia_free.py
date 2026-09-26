@@ -232,6 +232,26 @@ class NvidiaFreeModel(NvidiaModel):
             if status_code == 429:
                 return translations.get('free_tier_rate_limit', 
                     '免费通道请求频率超限。请稍后再试或配置自己的 Nvidia API Key。')
+            elif status_code == 408:
+                try:
+                    error_data = error.response.json()
+                    return (
+                        error_data.get('message')
+                        or error_data.get('error')
+                        or 'Request timed out. The Nvidia model did not respond.'
+                    )
+                except Exception:
+                    return 'Request timed out. The Nvidia model did not respond.'
+            elif status_code == 426:
+                try:
+                    error_data = error.response.json()
+                    return (
+                        error_data.get('message')
+                        or error_data.get('error')
+                        or '请升级到最新版'
+                    )
+                except Exception:
+                    return '请升级到最新版'
             elif status_code == 410:
                 # Proxy/upstream explicitly retired this free chat endpoint (Gone).
                 return translations.get(

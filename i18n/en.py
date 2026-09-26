@@ -413,7 +413,7 @@ class EnglishTranslation(BaseTranslation):
             'about_title': 'About Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
-            'about_latest_update': 'Latest update (2026.09.11): Optimized the data sent with each question',
+            'about_latest_update': 'Latest update (2026.09.26): Optimized the i18n logic of the default prompt',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre plugin recommendations',
             'about_markdown_title': 'Markdown for calibre',

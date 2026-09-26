@@ -381,7 +381,7 @@ prefs.defaults['export_mode'] = 'current'  # Export mode: 'current' or 'history'
 
 # Persona settings
 prefs.defaults['use_persona'] = True  # Whether to use persona in prompts
-prefs.defaults['persona'] = 'As a researcher, I want to research through book data.'  # User's persona text
+prefs.defaults['persona'] = ''  # Empty means the built-in persona for the current plugin language
 
 # Language preference settings (v1.3.9)
 prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond in interface language

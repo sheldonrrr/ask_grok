@@ -104,6 +104,20 @@ def clean_prompt_metadata_text(value):
     return text
 
 
+def resolve_persona_text(saved_persona, localized_default, known_defaults):
+    """Use the interface-language persona unless the user wrote their own."""
+    localized = '' if localized_default is None else str(localized_default).strip()
+    saved = '' if saved_persona is None else str(saved_persona).strip()
+    if not saved:
+        return localized
+    known = {str(item).strip() for item in known_defaults if item and str(item).strip()}
+    if localized:
+        known.add(localized)
+    if saved in known:
+        return localized
+    return saved
+
+
 def omit_placeholder_template_fields(template, values):
     """Remove optional {author}/{publisher}/... clauses when the value is placeholder."""
     if not template:

@@ -357,6 +357,25 @@ class TestOmitPlaceholderMetadata(unittest.TestCase):
         self.assertNotIn('Publisher:', filled)
 
 
+class TestPersonaLanguage(unittest.TestCase):
+    def test_builtin_english_persona_follows_prompt_language(self):
+        english = 'As a researcher, I want to research through book data.'
+        chinese = '作为研究人员，我希望通过书籍数据进行研究。'
+        german = 'Als Forscher möchte ich durch Buchdaten recherchieren。'
+        known = [english, chinese, german]
+        self.assertEqual(utils.resolve_persona_text(english, chinese, known), chinese)
+        self.assertEqual(utils.resolve_persona_text('', german, known), german)
+        self.assertEqual(utils.resolve_persona_text(None, german, known), german)
+
+    def test_custom_persona_is_kept(self):
+        custom = 'I am a historian of the 19th century.'
+        chinese = '作为研究人员，我希望通过书籍数据进行研究。'
+        self.assertEqual(
+            utils.resolve_persona_text(custom, chinese, [chinese]),
+            custom,
+        )
+
+
 class TestCleanPromptMetadata(unittest.TestCase):
     def test_strips_empty_brackets_and_bookfi_watermark(self):
         cleaned = utils.clean_prompt_metadata_text(

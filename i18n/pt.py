@@ -414,7 +414,7 @@ class PortugueseTranslation(BaseTranslation):
             'about_title': 'Sobre o Ask AI Plugin',
             'about_version_label': 'Versão',
             'about_description': 'Faça perguntas sobre livros do calibre com os serviços de IA que você escolher.',
-            'about_latest_update': 'Atualização mais recente (2026.09.11): os dados enviados com cada pergunta foram otimizados',
+            'about_latest_update': 'Atualização mais recente (2026.09.26): lógica i18n do prompt padrão otimizada',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: o MobileRead é a página do desenvolvedor para lançamentos de plugins do calibre e mais atualizações de versão.',
