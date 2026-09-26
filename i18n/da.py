@@ -419,6 +419,8 @@ class DanishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konverter traditionelt og forenklet kinesisk i ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Hold en kort liste over bøger, du læser, se fremskridt og synkroniser fra fremviseren.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Når calibre åbnes, vises kort en markering, du engang har sat.',
             'about_open_mobileread': 'Åbn MobileRead',
             'about_open_nowtiny': 'Åbn Nowtiny',
             'about_nowtiny_note': 'Flere værktøjer og pluginstatus findes på Nowtiny.',

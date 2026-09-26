@@ -422,6 +422,8 @@ class SwedishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konvertera traditionell och förenklad kinesiska i e-böcker.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Håll en kort lista över böcker du läser, se framsteg och synka från visaren.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'När calibre öppnas visas kort en markering du en gång gjort.',
             'about_open_mobileread': 'Öppna MobileRead',
             'about_open_nowtiny': 'Öppna Nowtiny',
             'about_nowtiny_note': 'Fler verktyg och tilläggsstatus finns på Nowtiny.',

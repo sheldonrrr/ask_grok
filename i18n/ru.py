@@ -421,6 +421,8 @@ class RussianTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Преобразуйте традиционный и упрощенный китайский в электронных книгах.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Короткий список книг, которые вы читаете, прогресс и синхронизация из просмотрщика.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'При открытии calibre кратко показывает фрагмент, который вы когда-то выделили.',
             'about_open_mobileread': 'Открыть MobileRead',
             'about_open_nowtiny': 'Открыть Nowtiny',
             'about_nowtiny_note': 'Другие инструменты и статус плагинов доступны на Nowtiny.',

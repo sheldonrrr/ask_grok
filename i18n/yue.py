@@ -397,6 +397,8 @@ class CantoneseTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '維護緊讀緊嘅書單、睇進度，同埋從閱讀器同步。',
+            'about_booktoast_title': 'Booktoast（for calibre）',
+            'about_booktoast_desc': '打開 calibre 時，短暫顯示一條你曾經畫過嘅重點。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '開啟 MobileRead',
             'about_mobileread_note': '注：MobileRead 係 calibre 插件發佈同更多版本更新資訊嘅開發者頁面。',

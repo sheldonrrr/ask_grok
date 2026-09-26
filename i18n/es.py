@@ -423,6 +423,8 @@ class SpanishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Convierte chino tradicional y simplificado en ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Mantén una lista corta de libros que estás leyendo, ve el progreso y sincroniza desde el visor.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Al abrir calibre, muestra brevemente un subrayado que marcaste.',
             'about_open_mobileread': 'Abrir MobileRead',
             'about_open_nowtiny': 'Abrir Nowtiny',
             'about_nowtiny_note': 'Más herramientas y el estado de los plugins están en Nowtiny.',

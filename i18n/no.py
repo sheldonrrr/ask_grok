@@ -420,6 +420,8 @@ class NorwegianTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konverter tradisjonell og forenklet kinesisk i ebøker.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Hold en kort liste over bøker du leser, se fremdrift og synkroniser fra leseren.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Når calibre åpnes, vises kort et utdrag du har markert.',
             'about_open_mobileread': 'Åpne MobileRead',
             'about_open_nowtiny': 'Åpne Nowtiny',
             'about_nowtiny_note': 'Flere verktøy og programtilleggstatus finnes på Nowtiny.',

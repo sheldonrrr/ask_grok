@@ -421,6 +421,8 @@ class DutchTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Converteer traditioneel en vereenvoudigd Chinees in ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Houd een korte lijst bij van boeken die je leest, bekijk de voortgang en synchroniseer vanuit de viewer.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Toont bij het openen van calibre kort een markering die je ooit hebt gezet.',
             'about_open_mobileread': 'MobileRead openen',
             'about_open_nowtiny': 'Nowtiny openen',
             'about_nowtiny_note': 'Meer tools en pluginstatus staan op Nowtiny.',

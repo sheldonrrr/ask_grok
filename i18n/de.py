@@ -396,6 +396,8 @@ class GermanTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konvertieren Sie traditionelles und vereinfachtes Chinesisch in E-Books.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Behalten Sie eine kurze Liste der Bücher, die Sie lesen, sehen Sie den Fortschritt und synchronisieren Sie vom Viewer.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Zeigt beim Öffnen von calibre kurz eine Markierung, die Sie einmal gesetzt haben.',
             'about_open_mobileread': 'MobileRead öffnen',
             'about_open_nowtiny': 'Nowtiny öffnen',
             'about_nowtiny_note': 'Weitere Tools und Plugin-Status finden Sie auf Nowtiny.',

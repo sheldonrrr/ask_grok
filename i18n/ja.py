@@ -426,6 +426,8 @@ class JapaneseTranslation(BaseTranslation):
             'about_tradsimp_desc': '電子書籍内の繁体字中国語と簡体字中国語を変換します。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '読んでいる本の短いリストを管理し、進捗を確認し、ビューアから同期します。',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'calibre を開いたとき、以前マークしたハイライトを短時間表示します。',
             'about_open_mobileread': 'MobileReadを開く',
             'about_open_nowtiny': 'Nowtinyを開く',
             'about_nowtiny_note': 'その他のツールとプラグインの状態はNowtinyで確認できます。',

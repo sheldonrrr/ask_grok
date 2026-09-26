@@ -417,6 +417,8 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_tradsimp_desc': '在电子书中转换简体中文与繁体中文。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '维护正在阅读的书单、查看进度，并从阅读器同步。',
+            'about_booktoast_title': 'Booktoast（for calibre）',
+            'about_booktoast_desc': '打开 calibre 时，短暂显示一条你曾经划过的重点。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '打开 MobileRead',
             'about_mobileread_note': '注：MobileRead 是 calibre 插件发布和更多版本更新信息的开发者页面。',

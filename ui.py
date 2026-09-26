@@ -43,10 +43,13 @@ NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
 NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
 NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?t=373788'
 NOWTINY_PLUGIN_SIMPLE_GOAL_URL = 'https://www.mobileread.com/forums/showthread.php?p=4602877'
+BOOKTOAST_PLUGIN_URL = (
+    'https://www.mobileread.com/forums/showthread.php?p=4610192#post4610192'
+)
 ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
 
 # Bump this when promoting a new related plugin so that card is highlighted again.
-ABOUT_RELATED_HIGHLIGHT_ID = 'simple_goal'
+ABOUT_RELATED_HIGHLIGHT_ID = 'booktoast'
 ABOUT_RELATED_HIGHLIGHT_SEEN_KEY = 'about_related_highlight_seen_id'
 ABOUT_LATEST_UPDATE_SEEN_KEY = 'about_latest_update_seen_version'
 
@@ -832,6 +835,14 @@ class AboutWidget(QWidget):
         )
         cl.addWidget(self.simple_goal_card)
 
+        self.booktoast_card, self.booktoast_title, self.booktoast_desc, self.booktoast_btn = (
+            self._create_recommendation_card(
+                lambda: open_url(QUrl(BOOKTOAST_PLUGIN_URL)),
+                highlighted=(self._highlight_related_id == 'booktoast'),
+            )
+        )
+        cl.addWidget(self.booktoast_card)
+
         self.recommend_note_label = QLabel()
         self.recommend_note_label.setWordWrap(True)
         cl.addWidget(self.recommend_note_label)
@@ -1017,10 +1028,20 @@ class AboutWidget(QWidget):
                 'Keep a short list of books you are reading, see progress, and sync from the viewer.',
             )
         )
+        self.booktoast_title.setText(
+            self.i18n.get('about_booktoast_title', 'Booktoast (for calibre)')
+        )
+        self.booktoast_desc.setText(
+            self.i18n.get(
+                'about_booktoast_desc',
+                'When calibre opens, briefly shows a highlight you once marked.',
+            )
+        )
         open_text = self.i18n.get('about_open_button', 'MobileRead')
         self.markdown_btn.setText(open_text)
         self.tradsimp_btn.setText(open_text)
         self.simple_goal_btn.setText(open_text)
+        self.booktoast_btn.setText(open_text)
         self.recommend_note_label.setText(
             self.i18n.get(
                 'about_mobileread_note',

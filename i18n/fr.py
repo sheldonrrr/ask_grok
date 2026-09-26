@@ -437,6 +437,8 @@ class FrenchTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Convertissez le chinois traditionnel et simplifié dans les ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Gardez une courte liste des livres que vous lisez, voyez la progression et synchronisez depuis le lecteur.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'À l’ouverture de calibre, affiche brièvement un passage que vous aviez surligné.',
             'about_open_mobileread': 'Ouvrir MobileRead',
             'about_open_nowtiny': 'Ouvrir Nowtiny',
             'about_nowtiny_note': "Plus d'outils et l'état des plugins sont sur Nowtiny.",

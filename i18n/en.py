@@ -422,6 +422,8 @@ class EnglishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Convert Traditional and Simplified Chinese in ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Keep a short list of books you are reading, see progress, and sync from the viewer.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'When calibre opens, briefly shows a highlight you once marked.',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': 'Open MobileRead',
             'about_mobileread_note': 'Note: MobileRead is the developer page for calibre plugin releases and more version updates.',

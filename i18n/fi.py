@@ -423,6 +423,8 @@ class FinnishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Muunna perinteistä ja yksinkertaistettua kiinaa e-kirjoissa.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Pidä lyhyt lista lukemistasi kirjoista, näe edistyminen ja synkronoi katselimesta.',
+            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_desc': 'Kun calibre avautuu, se näyttää hetken korostuksen, jonka olet merkinnyt.',
             'about_open_mobileread': 'Avaa MobileRead',
             'about_open_nowtiny': 'Avaa Nowtiny',
             'about_nowtiny_note': 'Lisää työkaluja ja lisäosien tila löytyy Nowtiny-sivustolta.',
