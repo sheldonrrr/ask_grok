@@ -40,12 +40,20 @@ class SuggestionWorker(QThread):
             
             # 准备书籍信息，使用 getattr 安全获取属性
             try:
-                title = clean_prompt_metadata_text(str(getattr(self.book_info, 'title', 'Unknown'))) or 'Unknown'
+                unknown = self.i18n.get('unknown', 'Unknown')
+                title = clean_prompt_metadata_text(
+                    str(getattr(self.book_info, 'title', unknown))
+                ) or unknown
                 authors = getattr(self.book_info, 'authors', [])
                 author_str = clean_prompt_metadata_text(
                     ', '.join(map(str, authors)) if authors and isinstance(authors, (list, tuple)) else ''
                 )
-                language = str(getattr(self.book_info, 'language', 'Unknown'))
+                raw_language = getattr(self.book_info, 'language', None)
+                if raw_language:
+                    from .ui import AskDialog
+                    language = AskDialog.book_language_label(raw_language, unknown) or ''
+                else:
+                    language = ''
             except Exception as e:
                 error_msg = f"获取书籍信息时出错: {str(e)}"
                 logger.error(error_msg)

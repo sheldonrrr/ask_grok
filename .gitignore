@@ -100,7 +100,7 @@ node_modules/
 #   .github/          — GitHub metadata
 #   setup.py requirements.txt AGENTS.md — project/dev metadata
 #   ask_ai_plugin_gif_preview.gif — README preview asset (not needed inside calibre)
-#   tutorial/about.md — author notes (tutorial_v1.0.md IS shipped)
+#   tutorial/about.md — author notes (versioned tutorial_v*.md files ARE shipped: latest + previous)
 #
 # Vendored wheels metadata (lib/**/*.dist-info/) ARE tracked and ARE packed so
 # third-party LICENSE/METADATA ship with the plugin.

@@ -1,6 +1,6 @@
 # Ask AI Plugin(old name: Ask Grok)
 
-A calibre plugin for asking questions about books in your library. It works immediately after install with **Nvidia AI (Free)** (no API key). You can also add OpenAI, Anthropic Claude, Google Gemini, Grok (SpaceXAI), DeepSeek, Kimi (Moonshot), Mistral, Nvidia AI with your own key, Perplexity (Sonar), OpenRouter, Ollama, LM Studio, KoboldCpp, or a custom OpenAI-compatible provider.
+A calibre plugin for asking questions about books in your library. It works immediately after install with **Nvidia AI (Free)** (no API key). You can also add OpenAI, Anthropic Claude, Google Gemini, Grok (SpaceXSI), DeepSeek, Kimi (Moonshot), Mistral, Nvidia AI with your own key, Perplexity (Sonar), OpenRouter, Ollama, LM Studio, KoboldCpp, or a custom OpenAI-compatible provider.
 
 ## Preview
 
@@ -40,7 +40,7 @@ Import the file to calibre custom plugins:
 - **OpenAI** - https://platform.openai.com/
 - **Anthropic (Claude)** - https://console.anthropic.com/
 - **Google Gemini** - https://aistudio.google.com/
-- **Grok (SpaceXAI)** - https://console.x.ai/
+- **Grok (SpaceXSI)** - https://console.x.ai/
 - **DeepSeek** - https://platform.deepseek.com/
 - **Kimi (Moonshot)** - https://platform.kimi.ai/ (China: https://platform.moonshot.cn/)
 - **Mistral** - https://console.mistral.ai/

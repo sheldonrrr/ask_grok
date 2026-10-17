@@ -55,7 +55,7 @@ class JapaneseTranslation(BaseTranslation):
             'ai_providers_subtitle': 'AIプロバイダーを設定し、デフォルトのAIを選択してください',
             'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
             'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
-            'reset_all_data_subtitle': '警告：すべての設定とデータが完全に削除されます',
+            'reset_all_data_subtitle': 'リセット後、すべての設定とデータが完全に削除されます。これには、すべてのAPIキー、AI検索インデックスデータ、言語設定、AIの使用設定、その他のローカルデータが含まれます。',
             
             # プロンプトタブ
             'language_preference_title': '言語設定',
@@ -283,6 +283,7 @@ class JapaneseTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'AI Search を使用',
             'large_selection_continue': '選択した書籍で続行',
+            'multi_book_entry_header': '書籍{idx}:',
             'multi_book_truncation_note': (
                 '注意：プロンプト制限により、選択した {total} 冊のうち最初の {included} 冊のみが'
                 '含まれます。ライブラリ全体を検索するには AI Search を使用するか、'
@@ -364,9 +365,9 @@ class JapaneseTranslation(BaseTranslation):
             'ask_anyway': 'とにかく質問する',
             'later': '後で',
             'reset_all_data': 'すべてのデータをリセット',
-            'reset_all_data_warning': 'これにより、すべてのAPIキー、プロンプトテンプレート、ローカル履歴レコードが削除されます。言語設定は保持されます。慎重に進めてください。',
+            'reset_all_data_warning': 'リセット後、すべての設定とデータが完全に削除されます。これには、すべてのAPIキー、AI検索インデックスデータ、言語設定、AIの使用設定、その他のローカルデータが含まれます。',
             'reset_all_data_confirm_title': 'リセットの確認',
-            'reset_all_data_confirm_message': 'プラグインを初期状態にリセットしてもよろしいですか？\n\nこれにより永久に削除されます：\n• すべてのAPIキー\n• すべてのカスタムプロンプトテンプレート\n• すべての会話履歴\n• すべてのプラグイン設定（言語設定は保持されます）\n\nこの操作は元に戻せません！',
+            'reset_all_data_confirm_message': 'プラグインを初期状態にリセットしてもよろしいですか？\n\nこれにより永久に削除されます：\n• すべてのAPIキー\n• すべてのカスタムプロンプトテンプレート\n• すべての会話履歴\n• すべてのプラグイン設定（言語設定を含む）\n\nこの操作は元に戻せません！',
             'reset_all_data_success': 'すべてのプラグインデータが正常にリセットされました。変更を有効にするためにcalibreを再起動してください。',
             'reset_all_data_failed': 'プラグインデータのリセットに失敗しました: {error}',
             'random_question_error': 'ランダムな質問の生成中にエラーが発生しました',
@@ -415,7 +416,7 @@ class JapaneseTranslation(BaseTranslation):
             'about_title': 'Ask AI Pluginについて',
             'about_version_label': 'バージョン',
             'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
-            'about_latest_update': '最新の更新（2026.09.26）：既定プロンプトのi18n処理を最適化しました',
+            'about_latest_update': '最新の更新（2026.10.16）：最新のモデル名に更新しました',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': '注：MobileRead は calibre プラグインの公開とバージョン更新情報のための開発者ページです。',
@@ -426,14 +427,14 @@ class JapaneseTranslation(BaseTranslation):
             'about_tradsimp_desc': '電子書籍内の繁体字中国語と簡体字中国語を変換します。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '読んでいる本の短いリストを管理し、進捗を確認し、ビューアから同期します。',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'calibre を開いたとき、以前マークしたハイライトを短時間表示します。',
             'about_open_mobileread': 'MobileReadを開く',
             'about_open_nowtiny': 'Nowtinyを開く',
             'about_nowtiny_note': 'その他のツールとプラグインの状態はNowtinyで確認できます。',
             
             # モデル固有の設定
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi（Moonshot）',
@@ -555,6 +556,7 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_data_title': 'ライブラリインデックス',
             'ai_search_data_subtitle': '本の追加・削除後に索引とプロンプトキャッシュを再構築',
             'library_search_system_message': 'あなたは calibre のライブラリ検索アシスタントです。ユーザーが指定した HTML リスト形式でのみ一致する本を返してください。分析・思考過程・前置きは不要です。',
+            'library_output_only_rule': '重要：一致する書籍だけを上のHTML箇条書きとして出力してください。分析、思考過程、リスト以外の文章は不要です。',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             
             'default_ai_mismatch_title': 'デフォルトAIが変更されました',
@@ -567,7 +569,7 @@ class JapaneseTranslation(BaseTranslation):
             'error_404': 'APIエンドポイントが見つかりません。APIベースURLの設定が正しいか確認してください。',
             'error_429': 'リクエストが多すぎます。レート制限に達しました。後でもう一度お試しください。',
             'error_5xx': 'サーバーエラー。後でもう一度お試しいただくか、サービスプロバイダーのステータスを確認してください。',
-            'error_network': 'ネットワーク接続に失敗しました。ネットワーク接続、プロキシ設定、またはファイアウォール設定を確認してください。',
+            'error_network': 'ネットワーク接続に失敗しました。ネットワークが使えること、プロキシ設定が正しいこと、ファイアウォールがアクセスを許可していることを確認してください。APIキーが無効な可能性もあるため、有効なキーに換えて再試行してください。',
             'error_unknown': '不明なエラー。',
             'http_status_detail': 'HTTP {status}、URL: {url}',
             'gemini_geo_restriction': 'Gemini APIはお住まいの地域では利用できません。お試しください：\n1. サポートされている地域からVPNを使用して接続する\n2. 他のAIプロバイダーを使用する（OpenAI、Anthropic、DeepSeekなど）\n3. Google AI Studioで地域の利用可能性を確認する',
@@ -677,6 +679,7 @@ class JapaneseTranslation(BaseTranslation):
             'ai_search_usage_hint': '',
             'ai_search_data_title': 'ライブラリインデックス',
             'ai_search_data_subtitle': '本の追加・削除後に索引とプロンプトキャッシュを再構築',
+            'library_output_only_rule': '重要：一致する書籍だけを上のHTML箇条書きとして出力してください。分析、思考過程、リスト以外の文章は不要です。',
             'library_prompt_template': 'ユーザーの書籍ライブラリにアクセスできます。すべての書籍は次のとおりです：{metadata} ユーザーのクエリ：{query} 現在のライブラリ内で一致する書籍を見つけ、次の形式で返してください（**重要**：HTMLリンク形式を使用して、ユーザーが書籍タイトルをクリックして直接開けるようにしてください）：- <a href="calibre://book/BOOK_ID">書籍タイトル</a> - 著者名 例：- <a href="calibre://book/123">Pythonを学ぶ</a> - Mark Lutz - <a href="calibre://book/456">機械学習実践</a> - Peter Harrington 注意：一部の著者は「unknown」と表示される場合があります。これは正常なデータです。すべての一致する結果を正常に返してください。クエリに一致する書籍のみを返してください。最大5件。',
             'ai_search_privacy_title': 'プライバシーに関するお知らせ',
             'ai_search_privacy_alert': 'AI検索はライブラリの本のメタデータ（タイトルと著者）を使用します。この情報は、検索クエリを処理するために設定されたAIプロバイダーに送信されます。',

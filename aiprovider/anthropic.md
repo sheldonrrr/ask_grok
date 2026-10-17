@@ -15,7 +15,7 @@
   x-api-key: ${apiKey}
   anthropic-version: 2023-06-01
   ```
-- **响应**: `{"data":[{"id":"claude-opus-4-8", ...}]}`
+- **响应**: `{"data":[{"id":"claude-opus-5-5", ...}]}`
 
 ## 发送聊天请求
 
@@ -30,7 +30,7 @@
 - **请求体 (Body)**:
   ```json
   {
-    "model": "claude-opus-4-8",
+    "model": "claude-opus-5-5",
     "max_tokens": 4096,
     "system": "<系统提示词>",
     "messages": [
@@ -46,10 +46,10 @@
 
 1. 系统提示使用顶层 `system`，不要放进 `messages` 的 `role: system`（除非你明确使用 mid-conversation system 能力）。
 2. `max_tokens` 是必填字段。
-3. **Claude Opus 4.7 / 4.8 及更新 Opus**：不要发送 `temperature` / `top_p` / `top_k`，否则会返回 400。插件会自动省略。
+3. **Claude Opus 4.7 / 4.8、Opus 5 及 Fable**：不要发送 `temperature` / `top_p` / `top_k`，否则会返回 400。插件会自动省略。
 4. 流式响应监听 `content_block_delta`（`text_delta`）与 `message_stop`。
 5. 非流式响应从 `content[]` 中拼接所有 `type: "text"` 块。
-6. 默认模型为 `claude-opus-4-8`。
+6. 默认模型为 `claude-opus-5-5`。
 
 ## 总结
 

@@ -882,6 +882,7 @@ class AboutWidget(QWidget):
         text_layout.addWidget(desc_label)
         card_layout.addLayout(text_layout, 1)
 
+        # 卡片里的下划线文字链接，不是设置/工具栏按钮，不套用共享按钮字号和高度。
         action_btn = QPushButton()
         action_btn.setCursor(Qt.PointingHandCursor)
         action_btn.clicked.connect(on_open)
@@ -991,7 +992,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.09.10): Default request timeout is now 120 seconds to better support slower free models',
+                'Latest update (2026.10.16): Updated to the latest model names',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -1029,7 +1030,7 @@ class AboutWidget(QWidget):
             )
         )
         self.booktoast_title.setText(
-            self.i18n.get('about_booktoast_title', 'Booktoast (for calibre)')
+            self.i18n.get('about_booktoast_title', 'Booktoast for calibre')
         )
         self.booktoast_desc.setText(
             self.i18n.get(
@@ -1107,10 +1108,11 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # Prefer current single-file tutorial; keep older names for upgrade mismatches
+            # Prefer the latest versioned tutorial; keep older names for upgrade mismatches
             tutorial_data = None
             matched = None
             for requested in (
+                'tutorial/tutorial_v1.1.md',
                 'tutorial/tutorial_v1.0.md',
                 'tutorial/tutorial_v0.9.md',
                 'tutorial/tutorial_v0.8.md',
@@ -1438,12 +1440,14 @@ class TabDialog(QDialog):
         
         # 创建保存按钮（左侧）
         self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
+        apply_button_style(self.save_button)
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
         button_layout.addWidget(self.save_button, 0, Qt.AlignVCenter)
 
         # About 与保存/关闭同级加入底栏，避免外包一层导致 macOS 原生按钮错位
         self.about_button = QPushButton(self.i18n.get('about', 'About'))
+        apply_button_style(self.about_button)
         self.about_button.clicked.connect(self.show_about_dialog)
         button_layout.addWidget(self.about_button, 0, Qt.AlignVCenter)
         self.about_unread_dot = QLabel(self.about_button)
@@ -1495,6 +1499,7 @@ class TabDialog(QDialog):
         
         # 添加Close按钮（右侧）
         self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        apply_button_style(self.close_button)
         self.close_button.clicked.connect(self.reject)
         button_layout.addWidget(self.close_button, 0, Qt.AlignVCenter)
         
@@ -1563,6 +1568,7 @@ class TabDialog(QDialog):
         ok_button = button_box.button(QDialogButtonBox.Ok)
         if ok_button is not None:
             ok_button.setText(self.i18n.get('close_button', 'Close'))
+            apply_button_style(ok_button)
         button_box.accepted.connect(dialog.accept)
         layout.addWidget(button_box)
         dialog.exec_()
@@ -2073,11 +2079,12 @@ class TabDialog(QDialog):
 from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
 from calibre_plugins.ask_ai_plugin.random_question import SuggestionHandler
 
+
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
-        # 英语（默认语言）
-        'en': 'English (default)',
-        'eng': 'English (default)',
+        # 英语（书籍语言名，不用界面“默认语言”标注，避免拼进请求）
+        'en': 'English',
+        'eng': 'English',
         
         # 丹麦语
         'da': 'Dansk',
@@ -2676,7 +2683,9 @@ Please answer the question based on the above book information.""")
         else:
             books_metadata_text = []
             for idx, book in enumerate(self.books_info, 1):
-                book_text = f"Book {idx}:\n"
+                book_text = self.i18n.get(
+                    'multi_book_entry_header', 'Book {idx}:'
+                ).format(idx=idx) + '\n'
                 book_text += (
                     f"  {self.i18n.get('metadata_title', 'Title')}: "
                     f"{clean_prompt_metadata_text(book.title)}\n"
@@ -2725,7 +2734,7 @@ Please answer the question based on the above book information.""")
         self.history_button = QToolButton()
         self.history_button.setText(self.i18n.get('history', '历史记录'))
         self.history_button.setPopupMode(QToolButton.InstantPopup)  # 点击整个按钮弹出菜单
-        self.history_button.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        self.history_button.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
@@ -3397,9 +3406,12 @@ Please answer the question based on the above book information.""")
     
     def on_resize(self, event):
         """窗口大小变化时的处理函数（包含响应式布局调整）"""
-        prefs = get_prefs()
-        prefs['ask_dialog_width'] = self.width()
-        prefs['ask_dialog_height'] = self.height()
+        try:
+            prefs = get_prefs()
+            prefs['ask_dialog_width'] = self.width()
+            prefs['ask_dialog_height'] = self.height()
+        except Exception:
+            prefs = None
         
         # 响应式布局调整
         height = self.height()
@@ -3451,14 +3463,15 @@ Please answer the question based on the above book information.""")
     # 注意：on_model_switched() 方法已废弃，因为全局模型切换器已被移除
     # 现在每个面板都有自己的AI切换器，切换逻辑在 response_panel.py 中处理
     
-    def get_language_name(self, lang_code):
-        """将语言代码转换为易读的语言名称"""
+    @staticmethod
+    def book_language_label(lang_code, unknown='Unknown'):
+        """Book-language name spliced into prompts. Unknown uses the UI word."""
         if not lang_code:
             return None
         lang_code = as_unicode_text(lang_code).lower().strip()
         if lang_code in ('und', 'un', 'zxx', 'unknown'):
-            return self.i18n.get('unknown', 'Unknown')
-        mapped = self.LANGUAGE_MAP.get(lang_code)
+            return unknown
+        mapped = AskDialog.LANGUAGE_MAP.get(lang_code)
         if mapped:
             return mapped
         try:
@@ -3469,6 +3482,12 @@ Please answer the question based on the above book information.""")
         except Exception:
             pass
         return lang_code
+
+    def get_language_name(self, lang_code):
+        """将语言代码转换为易读的语言名称"""
+        return self.book_language_label(
+            lang_code, self.i18n.get('unknown', 'Unknown')
+        )
     
     def _create_response_container(self, count: int, show_panel_ai_switcher=True):
         """根据并行AI数量创建响应容器
@@ -3556,13 +3575,10 @@ Please answer the question based on the above book information.""")
                 if not has_token:
                     continue
             
-            # 对于 nvidia_free，动态生成当前语言的显示名称
-            if provider_id == 'nvidia_free' or ai_id == 'nvidia_free':
-                free_text = self.i18n.get('free', 'Free')
-                display_name = f"Nvidia AI ({free_text})"
-            else:
-                display_name = config.get('display_name', ai_id)
-            
+            # 与设置页同一套显示名。Grok 等固定名称不读旧配置里的 display_name。
+            from .config import get_provider_display_name
+            display_name = get_provider_display_name(provider_id, config, i18n=self.i18n)
+
             model_name = config.get('model', 'unknown')
             full_display = f"{display_name} - {model_name}"
             configured_ais.append((ai_id, full_display))
@@ -4367,9 +4383,10 @@ Please answer the question based on the above book information.""")
                 from calibre_plugins.ask_ai_plugin.prompts_widget import resolve_request_template
                 template = resolve_request_template(prefs, 'ask')
                 
-                # 如果模板为空，使用默认模板
+                # 如果模板为空，使用当前界面语言的默认模板（字段名也走 i18n）
                 if not template:
-                    template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
+                    from calibre_plugins.ask_ai_plugin.i18n import get_default_template
+                    template = get_default_template(prefs.get('language', 'en') or 'en')
                 
                 logger.info(f"使用的模板: {template}")
                 

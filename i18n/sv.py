@@ -55,7 +55,7 @@ class SwedishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurera AI-leverantörer och välj din standard-AI',
             'prompts_subtitle': 'Anpassa hur frågor skickas till AI',
             'export_settings_subtitle': 'Ställ in standardmapp för export av PDF-filer',
-            'reset_all_data_subtitle': 'Varning: Detta kommer permanent att radera alla dina inställningar och data',
+            'reset_all_data_subtitle': 'Efter återställning raderas alla inställningar och data permanent, inklusive alla API-nycklar, AI Search-indexdata, språkpreferens, AI-användningspreferenser och annan lokal data.',
 
             # Prompts tab
             'language_preference_title': 'Språkpreferens',
@@ -302,6 +302,7 @@ class SwedishTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Använd AI Search',
             'large_selection_continue': 'Fortsätt med valda',
+            'multi_book_entry_header': 'Bok {idx}:',
             'multi_book_truncation_note': (
                 'Obs: Endast de första {included} av {total} valda böcker ingår på grund av promptgränsen. '
                 'Använd AI Search för att söka i hela biblioteket, eller höj den anpassade gränsen '
@@ -341,9 +342,9 @@ class SwedishTranslation(BaseTranslation):
             'ask_anyway': 'Fråga ändå',
             'later': 'Senare',
             'reset_all_data': 'Återställ alla data',
-            'reset_all_data_warning': 'Detta kommer att radera alla API-nycklar, promptmallar och lokala historikposter. Din språkpreferens kommer att bevaras. Fortsätt med försiktighet.',
+            'reset_all_data_warning': 'Efter återställning raderas alla inställningar och data permanent, inklusive alla API-nycklar, AI Search-indexdata, språkpreferens, AI-användningspreferenser och annan lokal data.',
             'reset_all_data_confirm_title': 'Bekräfta återställning',
-            'reset_all_data_confirm_message': 'Är du säker på att du vill återställa pluginet till dess ursprungliga tillstånd?\n\nDetta kommer permanent att radera:\n• Alla API-nycklar\n• Alla anpassade promptmallar\n• All konversationshistorik\n• Alla plugin-inställningar (språkpreferens kommer att bevaras)\n\nDenna åtgärd kan inte ångras!',
+            'reset_all_data_confirm_message': 'Är du säker på att du vill återställa pluginet till dess ursprungliga tillstånd?\n\nDetta kommer permanent att radera:\n• Alla API-nycklar\n• Alla anpassade promptmallar\n• All konversationshistorik\n• Alla plugin-inställningar, inklusive språkpreferens\n\nDenna åtgärd kan inte ångras!',
             'reset_all_data_success': 'Alla plugin-data har återställts framgångsrikt. Vänligen starta om calibre för att ändringarna ska träda i kraft.',
             'reset_all_data_failed': 'Misslyckades med att återställa plugin-data: {error}',
             'random_question_error': 'Fel vid generering av slumpmässig fråga',
@@ -389,7 +390,7 @@ class SwedishTranslation(BaseTranslation):
             'error_404': 'API-slutpunkt hittades inte. Kontrollera om API bas-URL-konfigurationen är korrekt.',
             'error_429': 'För många förfrågningar, frekvensgräns nådd. Vänligen försök igen senare.',
             'error_5xx': 'Serverfel. Vänligen försök igen senare eller kontrollera tjänsteleverantörens status.',
-            'error_network': 'Nätverksanslutningen misslyckades. Vänligen kontrollera nätverksanslutning, proxyinställningar eller brandväggskonfiguration.',
+            'error_network': 'Nätverksanslutningen misslyckades. Kontrollera att nätverket fungerar, att proxyinställningarna stämmer och att brandväggen tillåter åtkomst. API-nyckeln kan också vara ogiltig — försök igen med en nyckel du vet är giltig.',
             'error_unknown': 'Okänt fel.',
             'http_status_detail': 'HTTP {status} för URL: {url}',
             'technical_details': 'Tekniska detaljer',
@@ -411,7 +412,7 @@ class SwedishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ställ frågor om calibre-böcker med de AI-tjänster du väljer.',
-            'about_latest_update': 'Senaste uppdateringen (2026.09.26): i18n-logiken för standardprompten har optimerats',
+            'about_latest_update': 'Senaste uppdateringen (2026.10.16): uppdaterad till de senaste modellnamnen',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Obs: MobileRead är utvecklarsidan för calibre-pluginutgåvor och fler versionsuppdateringar.',
@@ -422,14 +423,14 @@ class SwedishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konvertera traditionell och förenklad kinesiska i e-böcker.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Håll en kort lista över böcker du läser, se framsteg och synka från visaren.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'När calibre öppnas visas kort en markering du en gång gjort.',
             'about_open_mobileread': 'Öppna MobileRead',
             'about_open_nowtiny': 'Öppna Nowtiny',
             'about_nowtiny_note': 'Fler verktyg och tilläggsstatus finns på Nowtiny.',
 
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -635,6 +636,7 @@ class SwedishTranslation(BaseTranslation):
             'ai_search_data_title': 'Biblioteksindex',
             'ai_search_data_subtitle': 'Bygg om index och promptcache efter att böcker lagts till eller tagits bort',
             'library_search_system_message': 'Du är en calibre-bibliotekssökassistent. Svara ENDAST med matchande böcker som en HTML-lista i begärt format. Ingen analys, ingen tankekedja, ingen inledning.',
+            'library_output_only_rule': 'VIKTIGT: Returnera ENDAST de matchande böckerna som HTML-punktlistan ovan. Ingen analys, ingen tankekedja och ingen text utanför listan.',
             'library_prompt_template': 'Du har tillgång till användarens bokbibliotek. Här är alla böcker: {metadata} Användarfråga: {query} Vänligen hitta matchande böcker i det aktuella biblioteket och returnera dem i detta format (**VIKTIGT**: Använd HTML-länkformat så att användare kan klicka på boktitlar för att öppna dem direkt): - <a href="calibre://book/BOOK_ID">Boktitel</a> - Författarnamn Exempel: - <a href="calibre://book/123">Lär dig Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praktiken</a> - Peter Harrington Obs: Vissa författare kan listas som "unknown". Detta är normala data, vänligen returnera alla matchande resultat normalt. Returnera endast böcker som matchar frågan. Maximalt 5 resultat.',
             'ai_search_privacy_title': 'Integritetsmeddelande',
             'ai_search_privacy_alert': 'AI-sökning använder bokmetadata (titlar och författare). Denna information skickas till den AI-leverantör du har konfigurerat för att behandla dina sökningar.',

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Version Update (→ X.Y.Z)
 
-## Code (all four must match)
+## Code and About (all must match)
 
 1. `version.py` → `VERSION = (X, Y, Z)`
 2. `__init__.py` → `VERSION = (X, Y, Z) # 版本号推送触发` 🔴 update-push trigger
@@ -14,13 +14,29 @@ alwaysApply: true
 
 `ui.py` reads `VERSION_DISPLAY` from `version.py` — do not hardcode.
 
+5. About version next to “最新更新” → `vX.Y.Z` via `VERSION_DISPLAY` (not a hardcoded copy in `ui.py`). See below.
+6. `about_latest_update` in every `i18n/*.py` and the `ui.py` fallback. See below.
+
 Verify: `grep -n "VERSION = (\|version.*= (\|version=" version.py __init__.py setup.py`
 
 ## Release notes
 
 - **Must** add `release/CHANGELOG_VX.Y.Z_EN.md` with BBCode (MobileRead) + Markdown (GitHub). User-facing, not technical.
 - Keep only the **latest** changelog; delete older ones.
-- Tutorial: edit the **same** file in place (`tutorial/tutorial_v1.0.md`) — never add `tutorial_v*.md` copies (keeps git diff clean). Update header `Latest updated` + plugin version; change feature text only when needed.
+- Tutorial: when the tutorial content changes, save it as a new file whose name includes the new tutorial version (e.g. `tutorial/tutorial_v1.1.md`). Keep exactly two tutorial markdown files: the latest (`tutorial_vX.Y.md`) and the immediately previous version. Delete any older `tutorial_v*.md` beyond those two so git history stays auditable without a pile of copies. Update the new file’s header (manual version, `Latest updated`, plugin version) and change feature text only when needed. Do not keep editing the old filename after the header version changes. Point current-tutorial links at the latest file.
+
+## About version and “最新更新” / latest update
+
+On every version bump, do both. Skipping either is a failed bump. Same steps as `.cursor/commands/upgrade-version.md`.
+
+**Version number.** The version beside the latest-update block is not inside `about_latest_update`. `ui.py` `AboutWidget.apply_translations` sets `version_label` to `{about_version_label}: {VERSION_DISPLAY}`. `VERSION_DISPLAY` (`vX.Y.Z`) comes from `version.py`. Do not hardcode a version in `ui.py`. After changing `version.py`, confirm that label still reads `VERSION_DISPLAY`, so About shows `vX.Y.Z`. The `about_latest_update` sentence has no version (date + one sentence only). Do not insert one. If a hardcoded `X.Y.Z` or `vX.Y.Z` is present inside `about_latest_update`, change it to the new version in every `i18n/*.py` and in the `ui.py` English fallback.
+
+**Latest-update line.** Update key `about_latest_update` in every `i18n/*.py` and the English fallback in `ui.py` (`i18n.get('about_latest_update', ...)`):
+
+- Date: today, in the existing `YYYY.MM.DD` form (e.g. `2026.10.16`).
+- Sentence: one short user-facing line for the latest change or optimization, translated in each language (match that file’s tone; do not leave non-English files in English).
+- Every language file and the `ui.py` fallback must use the same date and the same meaning.
+- Keys stay in parity with `i18n/en.py`. Verify: `python3 -m unittest tests.test_i18n_parity -v` and `grep -n "VERSION_DISPLAY\|about_latest_update" ui.py version.py i18n/*.py`.
 
 ## Build / ship
 
@@ -33,7 +49,7 @@ Zip excludes `.git/`, `.cursor/`, `release/`, `aiprovider/`, `scripts/`, `tests/
 
 ## Semver
 
-MAJOR = breaking · MINOR = features · PATCH = fixes
+MAJOR (first number) = major release · MINOR (second number) = feature versions · BUILD (third number) = build number only, to distinguish builds between minors
 
 ## Slash command
 
@@ -44,4 +60,8 @@ Related: `/build` (alias `/pack`) packages via `scripts/package.sh`; `/push` com
 ## Never
 
 - Skip `__init__.py` `VERSION` (users get no update push)
+- Skip the About version check (`version_label` must keep `VERSION_DISPLAY` from `version.py`, showing `vX.Y.Z`)
+- Skip `about_latest_update` in any `i18n/*.py` or the `ui.py` fallback
+- Hardcode a version into `ui.py` or into `about_latest_update` (if one is already inside that string, replace it with the new `X.Y.Z` in every language and the fallback)
 - Ship without CHANGELOG or without packaging zip
+- Edit an old `tutorial/tutorial_vX.Y.md` in place after its header version changes, or keep more than the latest tutorial markdown plus the immediately previous file

@@ -55,7 +55,7 @@ class DutchTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configureer AI-aanbieders en selecteer uw standaard-AI',
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
-            'reset_all_data_subtitle': 'Waarschuwing: Dit zal al uw instellingen en gegevens permanent verwijderen',
+            'reset_all_data_subtitle': 'Na het resetten worden alle instellingen en gegevens permanent verwijderd, inclusief alle API-sleutels, AI Search-indexgegevens, taalvoorkeur, AI-gebruiksvoorkeuren en andere lokale gegevens.',
 
             # Prompts tab
             'language_preference_title': 'Taalvoorkeur',
@@ -301,6 +301,7 @@ class DutchTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'AI Search gebruiken',
             'large_selection_continue': 'Doorgaan met selectie',
+            'multi_book_entry_header': 'Boek {idx}:',
             'multi_book_truncation_note': (
                 'Let op: vanwege de promptlimiet zijn alleen de eerste {included} van {total} geselecteerde boeken opgenomen. '
                 'Gebruik AI Search om uw hele bibliotheek te doorzoeken, of verhoog de aangepaste limiet '
@@ -340,9 +341,9 @@ class DutchTranslation(BaseTranslation):
             'ask_anyway': 'Vraag toch',
             'later': 'Later',
             'reset_all_data': 'Reset alle gegevens',
-            'reset_all_data_warning': 'Dit zal alle API-sleutels, promptsjablonen en lokale geschiedenisrecords verwijderen. Uw taalvoorkeur blijft behouden. Ga voorzichtig te werk.',
+            'reset_all_data_warning': 'Na het resetten worden alle instellingen en gegevens permanent verwijderd, inclusief alle API-sleutels, AI Search-indexgegevens, taalvoorkeur, AI-gebruiksvoorkeuren en andere lokale gegevens.',
             'reset_all_data_confirm_title': 'Bevestig reset',
-            'reset_all_data_confirm_message': 'Weet u zeker dat u de plugin wilt herstellen naar de beginstatus?\n\nDit zal permanent verwijderen:\n• Alle API-sleutels\n• Alle aangepaste promptsjablonen\n• Alle conversatiegeschiedenis\n• Alle plugin-instellingen (taalvoorkeur blijft behouden)\n\nDeze actie kan niet ongedaan worden gemaakt!',
+            'reset_all_data_confirm_message': 'Weet u zeker dat u de plugin wilt herstellen naar de beginstatus?\n\nDit zal permanent verwijderen:\n• Alle API-sleutels\n• Alle aangepaste promptsjablonen\n• Alle conversatiegeschiedenis\n• Alle plugin-instellingen, inclusief taalvoorkeur\n\nDeze actie kan niet ongedaan worden gemaakt!',
             'reset_all_data_success': 'Alle plugingegevens zijn succesvol gereset. Herstart calibre om de wijzigingen door te voeren.',
             'reset_all_data_failed': 'Resetten van plugingegevens mislukt: {error}',
             'random_question_error': 'Fout bij genereren van willekeurige vraag',
@@ -388,7 +389,7 @@ class DutchTranslation(BaseTranslation):
             'error_404': 'API-eindpunt niet gevonden. Controleer alstublieft of de configuratie van de API Basis-URL correct is.',
             'error_429': 'Te veel verzoeken, rate-limit bereikt. Probeer het later opnieuw.',
             'error_5xx': 'Serverfout. Probeer het later opnieuw of controleer de status van de serviceprovider.',
-            'error_network': 'Netwerkverbinding mislukt. Controleer alstublieft de netwerkverbinding, proxy-instellingen of firewallconfiguratie.',
+            'error_network': 'Netwerkverbinding mislukt. Controleer of het netwerk werkt, of de proxy-instellingen kloppen en of de firewall toegang toestaat. De API-sleutel kan ook ongeldig zijn. Probeer het opnieuw met een sleutel waarvan u weet dat die geldig is.',
             'error_unknown': 'Onbekende fout.',
             'http_status_detail': 'HTTP {status} voor URL: {url}',
             'technical_details': 'Technische details',
@@ -410,7 +411,7 @@ class DutchTranslation(BaseTranslation):
             'about_title': 'Over Ask AI Plugin',
             'about_version_label': 'Versie',
             'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
-            'about_latest_update': 'Laatste update (2026.09.26): i18n-logica van de standaardprompt geoptimaliseerd',
+            'about_latest_update': 'Laatste update (2026.10.16): bijgewerkt naar de nieuwste modelnamen',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Let op: MobileRead is de ontwikkelaarspagina voor calibre-pluginreleases en verdere versie-updates.',
@@ -421,14 +422,14 @@ class DutchTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Converteer traditioneel en vereenvoudigd Chinees in ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Houd een korte lijst bij van boeken die je leest, bekijk de voortgang en synchroniseer vanuit de viewer.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'Toont bij het openen van calibre kort een markering die je ooit hebt gezet.',
             'about_open_mobileread': 'MobileRead openen',
             'about_open_nowtiny': 'Nowtiny openen',
             'about_nowtiny_note': 'Meer tools en pluginstatus staan op Nowtiny.',
 
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -634,6 +635,7 @@ class DutchTranslation(BaseTranslation):
             'ai_search_data_title': 'Bibliotheekindex',
             'ai_search_data_subtitle': 'Index en promptcache opnieuw opbouwen na toevoegen of verwijderen van boeken',
             'library_search_system_message': 'Je bent een calibre-bibliotheekzoekassistent. Antwoord ALLEEN met overeenkomende boeken als HTML-lijst in het gevraagde formaat. Geen analyse, geen redenering, geen inleiding.',
+            'library_output_only_rule': 'BELANGRIJK: Geef ALLEEN de overeenkomende boeken terug als de HTML-lijst hierboven. Geen analyse, geen redenering en geen tekst buiten die lijst.',
             'library_prompt_template': 'U heeft toegang tot de boekenbibliotheek van de gebruiker. Hier zijn alle boeken: {metadata} Gebruikersvraag: {query} Vind alstublieft overeenkomende boeken in de huidige bibliotheek en retourneer ze in dit formaat (**BELANGRIJK**: Gebruik HTML-linkformaat zodat gebruikers op boektitels kunnen klikken om ze direct te openen): - <a href="calibre://book/BOOK_ID">Boektitel</a> - Auteursnaam Voorbeeld: - <a href="calibre://book/123">Python leren</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in actie</a> - Peter Harrington Opmerking: Sommige auteurs kunnen worden vermeld als "unknown". Dit zijn normale gegevens, retourneer alstublieft alle overeenkomende resultaten normaal. Retourneer alleen boeken die overeenkomen met de vraag. Maximaal 5 resultaten.',
             'ai_search_privacy_title': 'Privacyverklaring',
             'ai_search_privacy_alert': 'AI Zoeken gebruikt metadata van boeken (titels en auteurs). Deze informatie wordt verzonden naar de door u geconfigureerde AI-provider om uw zoekopdrachten te verwerken.',

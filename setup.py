@@ -12,7 +12,7 @@ if sys.version_info < (2, 7):
 
 setup(
     name=package_name,
-    version='1.6.5',
+    version='2.0.0',
     description='Ask AI about your books',
     author='Sheldon',
     author_email='sheldonrrr@gmail.com',
@@ -21,7 +21,7 @@ setup(
     platforms=['windows', 'osx', 'linux'],
     install_requires=['requests'],
     zip_safe=False,
-    keywords='bookAI readingAI SpaceXAI GrokAI GeminiAI',
+    keywords='bookAI readingAI SpaceXSI GrokAI GeminiAI',
     package_data={
         'ask_ai_plugin': ['images/*.png', 'lib/*']
     }

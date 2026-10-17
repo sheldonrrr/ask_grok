@@ -37,9 +37,8 @@ from .widgets import apply_button_style, GripSplitter
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_LARGE,
     PADDING_SMALL, PADDING_MEDIUM, PADDING_LARGE,
-    BUTTON_MIN_WIDTH, BUTTON_HEIGHT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
-    get_standard_button_style, get_list_widget_style,
+    get_list_widget_style,
     TEXT_COLOR_SECONDARY,
 )
 
@@ -257,13 +256,13 @@ class AddAIDialog(QDialog):
         button_layout.setSpacing(SPACING_SMALL)
         button_layout.addStretch()
         
-        # 取消按钮（使用默认样式）
         cancel_button = QPushButton(self.i18n.get('cancel', 'Cancel'))
+        apply_button_style(cancel_button)
         cancel_button.clicked.connect(self.reject)
         button_layout.addWidget(cancel_button)
         
-        # 添加按钮（使用默认样式）
         self.add_button = QPushButton(self.i18n.get('add_ai_button', 'Add'))
+        apply_button_style(self.add_button)
         self.add_button.clicked.connect(self.on_add_clicked)
         self.add_button.setEnabled(False)
         button_layout.addWidget(self.add_button)
@@ -582,18 +581,17 @@ class ManageAIDialog(QDialog):
         
         right_layout.addWidget(self.config_container, 1)
         
-        # 操作按钮（使用默认样式）
         action_layout = QHBoxLayout()
         action_layout.setSpacing(SPACING_SMALL)
         
-        # 保存按钮
         self.save_button = QPushButton(self.i18n.get('save_ai_config', 'Save'))
+        apply_button_style(self.save_button)
         self.save_button.clicked.connect(self.on_save)
         self.save_button.setEnabled(False)
         action_layout.addWidget(self.save_button)
         
-        # 删除按钮
         self.delete_button = QPushButton(self.i18n.get('delete_ai', 'Delete'))
+        apply_button_style(self.delete_button)
         self.delete_button.clicked.connect(self.on_delete)
         self.delete_button.setEnabled(False)
         action_layout.addWidget(self.delete_button)
@@ -616,6 +614,7 @@ class ManageAIDialog(QDialog):
         bottom_layout.addStretch()
         
         close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        apply_button_style(close_button)
         close_button.clicked.connect(self.accept)
         bottom_layout.addWidget(close_button)
         

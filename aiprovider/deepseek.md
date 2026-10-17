@@ -31,7 +31,7 @@ DeepSeek 遵循 OpenAI 的 API 格式，配置相对直接。
 - **请求体 (Body)**:
   ```json
   {
-    "model": "deepseek-v4-flash",
+    "model": "deepseek-flash",
     "messages": [
       {
         "role": "user",

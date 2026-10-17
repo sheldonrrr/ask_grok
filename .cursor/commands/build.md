@@ -26,7 +26,7 @@ dist/Ask_AI_Plugin_vX.Y.Z.zip
 
 - Plugin Python modules at zip root (`__init__.py`, `ui.py`, `models/`, …)
 - `i18n/`, `images/`, `lib/ask_ai_plugin_vendor/` (including `*.dist-info/` LICENSE/METADATA)
-- `tutorial/tutorial_v1.0.md`
+- `tutorial/tutorial_v1.1.md` (current user manual; the immediately previous `tutorial_v*.md` is kept beside it)
 - `LICENSE`, `README.md`
 - `.env.example` (script re-adds it if present)
 

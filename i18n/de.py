@@ -55,7 +55,7 @@ class GermanTranslation(BaseTranslation):
             'ai_providers_subtitle': 'KI-Anbieter konfigurieren und Standard-KI auswählen',
             'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
             'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
-            'reset_all_data_subtitle': 'Warnung: Dies löscht dauerhaft alle Ihre Einstellungen und Daten',
+            'reset_all_data_subtitle': 'Nach dem Zurücksetzen werden alle Einstellungen und Daten dauerhaft gelöscht, einschließlich aller API-Schlüssel, der AI-Search-Indexdaten, der Spracheinstellung, der KI-Nutzungseinstellungen und anderer lokaler Daten.',
             
             # Prompts-Tab
             'language_preference_title': 'Sprachpräferenz',
@@ -288,6 +288,7 @@ class GermanTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'AI Search verwenden',
             'large_selection_continue': 'Mit Auswahl fortfahren',
+            'multi_book_entry_header': 'Buch {idx}:',
             'multi_book_truncation_note': (
                 'Hinweis: Aufgrund des Prompt-Limits sind nur die ersten {included} von {total} '
                 'ausgewählten Büchern enthalten. Verwenden Sie AI Search für die gesamte '
@@ -334,9 +335,9 @@ class GermanTranslation(BaseTranslation):
             'ask_anyway': 'Trotzdem fragen',
             'later': 'Später',
             'reset_all_data': 'Alle Daten zurücksetzen',
-            'reset_all_data_warning': 'Dies löscht alle API-Schlüssel, Prompt-Vorlagen und lokale Verlaufseinträge. Ihre Spracheinstellung wird beibehalten. Bitte vorsichtig vorgehen.',
+            'reset_all_data_warning': 'Nach dem Zurücksetzen werden alle Einstellungen und Daten dauerhaft gelöscht, einschließlich aller API-Schlüssel, der AI-Search-Indexdaten, der Spracheinstellung, der KI-Nutzungseinstellungen und anderer lokaler Daten.',
             'reset_all_data_confirm_title': 'Zurücksetzen bestätigen',
-            'reset_all_data_confirm_message': 'Sind Sie sicher, dass Sie das Plugin auf den Ausgangszustand zurücksetzen möchten?\n\nDies löscht dauerhaft:\n• Alle API-Schlüssel\n• Alle benutzerdefinierten Prompt-Vorlagen\n• Alle Gesprächsverläufe\n• Alle Plugin-Einstellungen (Spracheinstellung wird beibehalten)\n\nDiese Aktion kann nicht rückgängig gemacht werden!',
+            'reset_all_data_confirm_message': 'Sind Sie sicher, dass Sie das Plugin auf den Ausgangszustand zurücksetzen möchten?\n\nDies löscht dauerhaft:\n• Alle API-Schlüssel\n• Alle benutzerdefinierten Prompt-Vorlagen\n• Alle Gesprächsverläufe\n• Alle Plugin-Einstellungen, einschließlich der Spracheinstellung\n\nDiese Aktion kann nicht rückgängig gemacht werden!',
             'reset_all_data_success': 'Alle Plugin-Daten wurden erfolgreich zurückgesetzt. Bitte starten Sie calibre neu, damit die Änderungen wirksam werden.',
             'reset_all_data_failed': 'Fehler beim Zurücksetzen der Plugin-Daten: {error}',
             'random_question_error': 'Fehler beim Generieren einer zufälligen Frage',
@@ -385,7 +386,7 @@ class GermanTranslation(BaseTranslation):
             'about_title': 'Über Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stellen Sie Fragen zu calibre-Büchern mit den von Ihnen gewählten KI-Diensten.',
-            'about_latest_update': 'Aktuelles Update (2026.09.26): i18n-Logik des Standard-Prompts optimiert',
+            'about_latest_update': 'Aktuelles Update (2026.10.16): Auf die neuesten Modellnamen aktualisiert',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Hinweis: MobileRead ist die Entwicklerseite für Calibre-Plugin-Veröffentlichungen und weitere Versionsupdates.',
@@ -396,14 +397,14 @@ class GermanTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konvertieren Sie traditionelles und vereinfachtes Chinesisch in E-Books.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Behalten Sie eine kurze Liste der Bücher, die Sie lesen, sehen Sie den Fortschritt und synchronisieren Sie vom Viewer.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'Zeigt beim Öffnen von calibre kurz eine Markierung, die Sie einmal gesetzt haben.',
             'about_open_mobileread': 'MobileRead öffnen',
             'about_open_nowtiny': 'Nowtiny öffnen',
             'about_nowtiny_note': 'Weitere Tools und Plugin-Status finden Sie auf Nowtiny.',
             
             # Modellspezifische Konfigurationen
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -528,7 +529,7 @@ class GermanTranslation(BaseTranslation):
             'error_404': 'API-Endpunkt nicht gefunden. Bitte prüfen Sie, ob die API-Basis-URL-Konfiguration korrekt ist.',
             'error_429': 'Zu viele Anfragen, Ratenlimit erreicht. Bitte versuchen Sie es später erneut.',
             'error_5xx': 'Serverfehler. Bitte versuchen Sie es später erneut oder prüfen Sie den Status des Dienstanbieters.',
-            'error_network': 'Netzwerkverbindung fehlgeschlagen. Bitte prüfen Sie Netzwerkverbindung, Proxy-Einstellungen oder Firewall-Konfiguration.',
+            'error_network': 'Netzwerkverbindung fehlgeschlagen. Prüfen Sie, ob das Netzwerk verfügbar ist, die Proxy-Einstellungen stimmen und die Firewall den Zugriff erlaubt. Der API-Schlüssel kann auch ungültig sein. Versuchen Sie es mit einem nachweislich gültigen Schlüssel erneut.',
             'error_unknown': 'Unbekannter Fehler.',
             'http_status_detail': 'HTTP {status} für URL: {url}',
             'gemini_geo_restriction': 'Gemini API ist in Ihrer Region nicht verfügbar. Bitte versuchen Sie:\n1. VPN verwenden, um von einer unterstützten Region aus zu verbinden\n2. Andere KI-Anbieter verwenden (OpenAI, Anthropic, DeepSeek usw.)\n3. Google AI Studio für Regionsverfügbarkeit prüfen',
@@ -641,6 +642,7 @@ class GermanTranslation(BaseTranslation):
             'ai_search_data_title': 'Bibliotheksindex',
             'ai_search_data_subtitle': 'Index und Prompt-Cache nach Hinzufügen/Entfernen von Büchern neu aufbauen',
             'library_search_system_message': 'Sie sind ein Calibre-Bibliothekssuchassistent. Antworten Sie NUR mit passenden Büchern als HTML-Liste im angeforderten Format. Keine Analyse, kein Denkprozess, keine Einleitung.',
+            'library_output_only_rule': 'WICHTIG: Geben Sie NUR die passenden Bücher als HTML-Aufzählung oben aus. Keine Analyse, keine Begründung und keinen Text außerhalb dieser Liste.',
             'library_prompt_template': 'Sie haben Zugriff auf die Buchbibliothek des Benutzers. Hier sind alle Bücher: {metadata} Benutzeranfrage: {query} Bitte finden Sie passende Bücher in der aktuellen Bibliothek und geben Sie sie in diesem Format zurück (**WICHTIG**: Verwenden Sie das HTML-Link-Format, damit Benutzer auf Buchtitel klicken können, um sie direkt zu öffnen): - <a href="calibre://book/BOOK_ID">Buchtitel</a> - Autorenname Beispiel: - <a href="calibre://book/123">Python lernen</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Aktion</a> - Peter Harrington Hinweis: Einige Autoren können als "unknown" aufgeführt sein. Dies sind normale Daten, bitte geben Sie alle passenden Ergebnisse normal zurück. Nur Bücher zurückgeben, die der Anfrage entsprechen. Maximal 5 Ergebnisse.',
             'ai_search_privacy_title': 'Datenschutzhinweis',
             'ai_search_privacy_alert': 'Die KI-Suche verwendet Buch-Metadaten (Titel und Autoren) aus Ihrer Bibliothek. Diese Informationen werden an den von Ihnen konfigurierten KI-Anbieter gesendet, um Ihre Suchanfragen zu verarbeiten.',

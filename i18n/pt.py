@@ -55,7 +55,7 @@ class PortugueseTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configure os provedores de IA e selecione sua IA padrão',
             'prompts_subtitle': 'Personalize como as perguntas são enviadas à IA',
             'export_settings_subtitle': 'Defina a pasta padrão para exportar PDFs',
-            'reset_all_data_subtitle': 'Aviso: Isso excluirá permanentemente todas as suas configurações e dados',
+            'reset_all_data_subtitle': 'Após a redefinição, todas as configurações e dados serão excluídos permanentemente, incluindo todas as chaves API, os dados do índice de pesquisa de IA, a preferência de idioma, as preferências de uso da IA e outros dados locais.',
 
             # Prompts tab
             'language_preference_title': 'Preferência de idioma',
@@ -304,6 +304,7 @@ class PortugueseTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Usar AI Search',
             'large_selection_continue': 'Continuar com a seleção',
+            'multi_book_entry_header': 'Livro {idx}:',
             'multi_book_truncation_note': (
                 'Nota: devido ao limite de prompt, apenas os primeiros {included} de {total} livros '
                 'selecionados estão incluídos. Use AI Search para consultar toda a biblioteca ou '
@@ -344,9 +345,9 @@ class PortugueseTranslation(BaseTranslation):
             'ask_anyway': 'Perguntar Mesmo Assim',
             'later': 'Mais Tarde',
             'reset_all_data': 'Redefinir Todos os Dados',
-            'reset_all_data_warning': 'Isso excluirá todas as Chaves API, modelos de prompt e registros de histórico local. Sua preferência de idioma será preservada. Prossiga com cautela.',
+            'reset_all_data_warning': 'Após a redefinição, todas as configurações e dados serão excluídos permanentemente, incluindo todas as chaves API, os dados do índice de pesquisa de IA, a preferência de idioma, as preferências de uso da IA e outros dados locais.',
             'reset_all_data_confirm_title': 'Confirmar Redefinição',
-            'reset_all_data_confirm_message': 'Tem certeza de que deseja redefinir o plugin para o estado inicial?\n\nIsso excluirá permanentemente:\n• Todas as Chaves API\n• Todos os modelos de prompt personalizados\n• Todo o histórico de conversas\n• Todas as configurações do plugin (a preferência de idioma será preservada)\n\nEsta ação não pode ser desfeita!',
+            'reset_all_data_confirm_message': 'Tem certeza de que deseja redefinir o plugin para o estado inicial?\n\nIsso excluirá permanentemente:\n• Todas as Chaves API\n• Todos os modelos de prompt personalizados\n• Todo o histórico de conversas\n• Todas as configurações do plugin, incluindo a preferência de idioma\n\nEsta ação não pode ser desfeita!',
             'reset_all_data_success': 'Todos os dados do plugin foram redefinidos com sucesso. Por favor, reinicie o calibre para que as alterações entrem em vigor.',
             'reset_all_data_failed': 'Falha ao redefinir os dados do plugin: {error}',
             'random_question_error': 'Erro ao gerar pergunta aleatória',
@@ -392,7 +393,7 @@ class PortugueseTranslation(BaseTranslation):
             'error_404': 'Ponto de extremidade da API não encontrado. Por favor, verifique se a configuração da URL Base da API está correta.',
             'error_429': 'Muitas solicitações, limite de taxa atingido. Por favor, tente novamente mais tarde.',
             'error_5xx': 'Erro do servidor. Por favor, tente novamente mais tarde ou verifique o status do provedor de serviço.',
-            'error_network': 'A conexão de rede falhou. Por favor, verifique a conexão de rede, as configurações de proxy ou a configuração do firewall.',
+            'error_network': 'A conexão de rede falhou. Confirme que a rede funciona, que as configurações de proxy estão corretas e que o firewall permite o acesso. A chave API também pode ser inválida: tente novamente com uma chave que você sabe que é válida.',
             'error_unknown': 'Erro desconhecido.',
             'http_status_detail': 'HTTP {status} para URL: {url}',
             'technical_details': 'Detalhes Técnicos',
@@ -414,7 +415,7 @@ class PortugueseTranslation(BaseTranslation):
             'about_title': 'Sobre o Ask AI Plugin',
             'about_version_label': 'Versão',
             'about_description': 'Faça perguntas sobre livros do calibre com os serviços de IA que você escolher.',
-            'about_latest_update': 'Atualização mais recente (2026.09.26): lógica i18n do prompt padrão otimizada',
+            'about_latest_update': 'Atualização mais recente (2026.10.16): atualizado para os nomes de modelo mais recentes',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: o MobileRead é a página do desenvolvedor para lançamentos de plugins do calibre e mais atualizações de versão.',
@@ -425,14 +426,14 @@ class PortugueseTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Converta chinês tradicional e simplificado em ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Mantenha uma lista curta dos livros que está a ler, veja o progresso e sincronize a partir do visualizador.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'Quando o calibre abre, mostra brevemente um destaque que marcou.',
             'about_open_mobileread': 'Abrir MobileRead',
             'about_open_nowtiny': 'Abrir Nowtiny',
             'about_nowtiny_note': 'Mais ferramentas e status dos plugins estão no Nowtiny.',
 
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -639,6 +640,7 @@ class PortugueseTranslation(BaseTranslation):
             'ai_search_data_title': 'Índice da biblioteca',
             'ai_search_data_subtitle': 'Reconstruir o índice e o cache de prompts após adicionar ou remover livros',
             'library_search_system_message': 'Você é um assistente de busca da biblioteca do calibre. Responda APENAS com os livros correspondentes como lista HTML no formato solicitado. Sem análise, sem raciocínio, sem preâmbulo.',
+            'library_output_only_rule': 'IMPORTANTE: Retorne APENAS os livros correspondentes como a lista HTML acima. Sem análise, sem raciocínio e sem texto fora dessa lista.',
             'library_prompt_template': 'Você tem acesso à biblioteca de livros do usuário. Aqui estão todos os livros: {metadata} Consulta do usuário: {query} Por favor, encontre livros correspondentes na biblioteca atual e retorne-os neste formato (**IMPORTANTE**: Use o formato de link HTML para que os usuários possam clicar nos títulos dos livros para abri-los diretamente): - <a href="calibre://book/BOOK_ID">Título do livro</a> - Nome do autor Exemplo: - <a href="calibre://book/123">Aprendendo Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning em ação</a> - Peter Harrington Nota: Alguns autores podem aparecer como "unknown". Estes são dados normais, por favor retorne todos os resultados correspondentes normalmente. Retorne apenas livros que correspondam à consulta. Máximo 5 resultados.',
             'ai_search_privacy_title': 'Aviso de Privacidade',
             'ai_search_privacy_alert': 'A Busca IA utiliza metadados dos livros (títulos e autores). Esta informação será enviada para o fornecedor de IA que configurou para processar as suas pesquisas.',

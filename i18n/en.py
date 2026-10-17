@@ -55,7 +55,7 @@ class EnglishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configure AI providers and select your default AI',
             'prompts_subtitle': 'Customize how questions are sent to AI',
             'export_settings_subtitle': 'Set default folder for exporting PDFs',
-            'reset_all_data_subtitle': 'Warning: This will permanently delete all your settings and data',
+            'reset_all_data_subtitle': 'After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.',
             
             # Prompts tab
             'language_preference_title': 'Language Preference',
@@ -303,6 +303,7 @@ class EnglishTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Use AI Search',
             'large_selection_continue': 'Continue with Selection',
+            'multi_book_entry_header': 'Book {idx}:',
             'multi_book_truncation_note': (
                 'Note: Only the first {included} of {total} selected books are included due to the '
                 'prompt limit. Use AI Search to query your entire library, or raise the custom limit '
@@ -343,9 +344,9 @@ class EnglishTranslation(BaseTranslation):
             'ask_anyway': 'Ask Anyway',
             'later': 'Later',
             'reset_all_data': 'Reset All Data',
-            'reset_all_data_warning': 'This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.',
+            'reset_all_data_warning': 'After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.',
             'reset_all_data_confirm_title': 'Confirm Reset',
-            'reset_all_data_confirm_message': 'Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings (language preference will be preserved)\n\nThis action cannot be undone!',
+            'reset_all_data_confirm_message': 'Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings, including language preference\n\nThis action cannot be undone!',
             'reset_all_data_success': 'All plugin data has been reset successfully. Please restart calibre for changes to take effect.',
             'reset_all_data_failed': 'Failed to reset plugin data: {error}',
             'random_question_error': 'Error generating random question',
@@ -391,7 +392,7 @@ class EnglishTranslation(BaseTranslation):
             'error_404': 'API endpoint not found. Please check if the API Base URL configuration is correct.',
             'error_429': 'Too many requests, rate limit reached. Please try again later.',
             'error_5xx': 'Server error. Please try again later or check the service provider status.',
-            'error_network': 'Network connection failed. Please check network connection, proxy settings, or firewall configuration.',
+            'error_network': 'Network connection failed. Check that the network is available, that proxy settings are correct, and that the firewall allows access. The API key may also be invalid; retry with a key you know is valid.',
             'error_unknown': 'Unknown error.',
             'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Technical Details',
@@ -413,7 +414,7 @@ class EnglishTranslation(BaseTranslation):
             'about_title': 'About Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
-            'about_latest_update': 'Latest update (2026.09.26): Optimized the i18n logic of the default prompt',
+            'about_latest_update': 'Latest update (2026.10.16): Updated to the latest model names',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre plugin recommendations',
             'about_markdown_title': 'Markdown for calibre',
@@ -422,7 +423,7 @@ class EnglishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Convert Traditional and Simplified Chinese in ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Keep a short list of books you are reading, see progress, and sync from the viewer.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'When calibre opens, briefly shows a highlight you once marked.',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': 'Open MobileRead',
@@ -431,7 +432,7 @@ class EnglishTranslation(BaseTranslation):
             'about_nowtiny_note': 'More tools and plugin status are on Nowtiny.',
             
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -639,6 +640,7 @@ class EnglishTranslation(BaseTranslation):
             'ai_search_data_title': 'Library Index',
             'ai_search_data_subtitle': 'Rebuild the index and compact prompt cache after you add or remove books',
             'library_search_system_message': 'You are a calibre library search assistant. Reply with ONLY matching books as an HTML bullet list in the format requested by the user. No analysis, no chain-of-thought, no preamble.',
+            'library_output_only_rule': 'IMPORTANT: Output ONLY the matching books as the HTML bullet list above. Do not write analysis, reasoning, or any text outside that list.',
             'library_prompt_template': 'You have access to the user\'s book library. Here are all the books: {metadata} User query: {query} Find matching books and return them in this format (**IMPORTANT**: Use HTML link format so users can click book titles to open them directly): - <a href="calibre://book/BOOK_ID">Book Title</a> - Author Name Example: - <a href="calibre://book/123">Learning Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning in Action</a> - Peter Harrington Note: Some authors may be listed as "unknown". This is normal data. Only return books that match the query. Maximum 5 results. Output ONLY the bullet list — no analysis, no chain-of-thought, no preamble.',
             'ai_search_privacy_title': 'Privacy Notice',
             'ai_search_privacy_alert': 'AI Search uses book metadata (titles and authors) from your library. This information will be sent to the AI provider you have configured to process your search queries.',

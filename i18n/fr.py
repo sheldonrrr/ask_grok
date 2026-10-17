@@ -55,7 +55,7 @@ class FrenchTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Configurez les fournisseurs d\'IA et sélectionnez votre IA par défaut',
             'prompts_subtitle': 'Personnalisez la façon dont les questions sont envoyées à l\'IA',
             'export_settings_subtitle': 'Définissez le dossier par défaut pour l\'export de PDF',
-            'reset_all_data_subtitle': 'Attention : Cela supprimera définitivement tous vos paramètres et données',
+            'reset_all_data_subtitle': 'Après la réinitialisation, tous les paramètres et données seront définitivement supprimés, y compris toutes les clés API, les données d\'index de recherche IA, la préférence linguistique, les préférences d\'utilisation de l\'IA et les autres données locales.',
             
             # Onglet Prompts
             'language_preference_title': 'Préférence de Langue',
@@ -288,6 +288,7 @@ class FrenchTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Utiliser AI Search',
             'large_selection_continue': 'Continuer avec la sélection',
+            'multi_book_entry_header': 'Livre {idx} :',
             'multi_book_truncation_note': (
                 'Note : en raison de la limite de prompt, seuls les {included} premiers livres '
                 'sur {total} sélectionnés sont inclus. Utilisez AI Search pour interroger toute '
@@ -372,9 +373,9 @@ class FrenchTranslation(BaseTranslation):
             'ask_anyway': 'Demander Quand Même',
             'later': 'Plus Tard',
             'reset_all_data': 'Réinitialiser Toutes les Données',
-            'reset_all_data_warning': 'Cela supprimera toutes les clés API, les modèles de prompt et les enregistrements d\'historique locaux. Votre préférence linguistique sera préservée. Veuillez procéder avec prudence.',
+            'reset_all_data_warning': 'Après la réinitialisation, tous les paramètres et données seront définitivement supprimés, y compris toutes les clés API, les données d\'index de recherche IA, la préférence linguistique, les préférences d\'utilisation de l\'IA et les autres données locales.',
             'reset_all_data_confirm_title': 'Confirmer la Réinitialisation',
-            'reset_all_data_confirm_message': 'Êtes-vous sûr de vouloir réinitialiser le plugin à son état initial?\n\nCela supprimera définitivement:\n• Toutes les clés API\n• Tous les modèles de prompt personnalisés\n• Tout l\'historique des conversations\n• Tous les paramètres du plugin (la préférence linguistique sera préservée)\n\nCette action ne peut pas être annulée!',
+            'reset_all_data_confirm_message': 'Êtes-vous sûr de vouloir réinitialiser le plugin à son état initial?\n\nCela supprimera définitivement:\n• Toutes les clés API\n• Tous les modèles de prompt personnalisés\n• Tout l\'historique des conversations\n• Tous les paramètres du plugin, y compris la préférence linguistique\n\nCette action ne peut pas être annulée!',
             'reset_all_data_success': 'Toutes les données du plugin ont été réinitialisées avec succès. Veuillez redémarrer calibre pour que les modifications prennent effet.',
             'reset_all_data_failed': 'Échec de la réinitialisation des données du plugin: {error}',
             'random_question_error': 'Erreur lors de la génération d\'une question aléatoire',
@@ -426,7 +427,7 @@ class FrenchTranslation(BaseTranslation):
             'about_title': 'À propos de Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': "Posez des questions sur vos livres calibre avec les services d'IA que vous choisissez.",
-            'about_latest_update': 'Dernière mise à jour (2026.09.26) : logique i18n de l’invite par défaut optimisée',
+            'about_latest_update': 'Dernière mise à jour (2026.10.16) : mis à jour vers les derniers noms de modèles',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Remarque : MobileRead est la page développeur pour les publications de plugins calibre et les mises à jour de version.',
@@ -437,14 +438,14 @@ class FrenchTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Convertissez le chinois traditionnel et simplifié dans les ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Gardez une courte liste des livres que vous lisez, voyez la progression et synchronisez depuis le lecteur.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'À l’ouverture de calibre, affiche brièvement un passage que vous aviez surligné.',
             'about_open_mobileread': 'Ouvrir MobileRead',
             'about_open_nowtiny': 'Ouvrir Nowtiny',
             'about_nowtiny_note': "Plus d'outils et l'état des plugins sont sur Nowtiny.",
 
             # Configurations spécifiques au modèle
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -532,7 +533,7 @@ class FrenchTranslation(BaseTranslation):
             'pdf_generated_time': 'Heure de génération',
             'error_429': 'Trop de requêtes, limite de débit atteinte. Veuillez réessayer plus tard.',
             'error_5xx': 'Erreur serveur. Veuillez réessayer plus tard ou vérifier l\'état du fournisseur de services.',
-            'error_network': 'Échec de la connexion réseau. Veuillez vérifier la connexion réseau, les paramètres du proxy ou la configuration du pare-feu.',
+            'error_network': "Échec de la connexion réseau. Vérifiez que le réseau fonctionne, que les paramètres du proxy sont corrects et que le pare-feu autorise l'accès. La clé API peut aussi être invalide : réessayez avec une clé dont vous êtes sûr.",
             'error_unknown': 'Erreur inconnue.',
             'http_status_detail': "HTTP {status} pour l'URL : {url}",
             'gemini_geo_restriction': 'L\'API Gemini n\'est pas disponible dans votre région. Veuillez essayer:\n1. Utiliser un VPN pour se connecter depuis une région prise en charge\n2. Utiliser d\'autres fournisseurs d\'IA (OpenAI, Anthropic, DeepSeek, etc.)\n3. Vérifier Google AI Studio pour la disponibilité régionale',
@@ -644,6 +645,7 @@ class FrenchTranslation(BaseTranslation):
             'ai_search_data_title': 'Index de bibliothèque',
             'ai_search_data_subtitle': "Reconstruire l'index et le cache de prompt après ajout/suppression de livres",
             'library_search_system_message': 'Vous êtes un assistant de recherche de bibliothèque calibre. Répondez UNIQUEMENT avec les livres correspondants sous forme de liste HTML au format demandé. Pas d’analyse, pas de raisonnement, pas de préambule.',
+            'library_output_only_rule': 'IMPORTANT : renvoyez UNIQUEMENT les livres correspondants sous forme de liste à puces HTML ci-dessus. Pas d\'analyse, pas de raisonnement, pas de texte en dehors de cette liste.',
             'library_prompt_template': 'Vous avez accès à la bibliothèque de livres de l\'utilisateur. Voici tous les livres : {metadata} Requête de l\'utilisateur : {query} Veuillez trouver les livres correspondants dans la bibliothèque actuelle et les retourner dans ce format (**IMPORTANT** : Utilisez le format de lien HTML pour que les utilisateurs puissent cliquer sur les titres des livres pour les ouvrir directement) : - <a href="calibre://book/BOOK_ID">Titre du livre</a> - Nom de l\'auteur Exemple : - <a href="calibre://book/123">Apprendre Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning en action</a> - Peter Harrington Remarque : Certains auteurs peuvent être listés comme "unknown". Ce sont des données normales, veuillez retourner tous les résultats correspondants normalement. Ne retournez que les livres correspondant à la requête. Maximum 5 résultats.',
             'ai_search_privacy_title': 'Avis de confidentialité',
             'ai_search_privacy_alert': 'La recherche IA utilise les métadonnées (titres et auteurs) de votre bibliothèque. Ces informations seront envoyées au fournisseur d\'IA configuré pour traiter vos requêtes.',

@@ -193,10 +193,11 @@ def open_tutorial_in_browser():
             logger.error("Plugin not found")
             return False
         
-        # Prefer current single-file tutorial; keep older names for upgrade mismatches
+        # Prefer the latest versioned tutorial; keep older names for upgrade mismatches
         tutorial_data = None
         matched = None
         for candidate in (
+            'tutorial/tutorial_v1.1.md',
             'tutorial/tutorial_v1.0.md',
             'tutorial/tutorial_v0.9.md',
             'tutorial/tutorial_v0.8.md',

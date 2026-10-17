@@ -9,8 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 from calibre_plugins.ask_ai_plugin.ui_constants import (
-    SPACING_SMALL, ASK_TOOLBAR_HEIGHT, ASK_TOOLBAR_INSET_V,
-    ASK_TOOLBAR_BUTTON_MIN_WIDTH, style_ask_toolbar_widget,
+    SPACING_SMALL, ASK_TOOLBAR_INSET_V, style_ask_toolbar_widget,
 )
 
 
@@ -33,22 +32,19 @@ class AskToolbar(QWidget):
         root.addStretch()
 
         self.suggest_button = QPushButton(self.i18n.get('suggest_button', 'Random'))
-        style_ask_toolbar_widget(self.suggest_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)
-        self.suggest_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        style_ask_toolbar_widget(self.suggest_button)
         root.addWidget(self.suggest_button, alignment=Qt.AlignVCenter)
 
         self.stop_button = QPushButton(self.i18n.get('stop_button', 'Stop'))
-        style_ask_toolbar_widget(self.stop_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)
-        self.stop_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        style_ask_toolbar_widget(self.stop_button)
         self.stop_button.setVisible(False)
         root.addWidget(self.stop_button, alignment=Qt.AlignVCenter)
 
         self.send_button = QPushButton(self.i18n.get('send_button', 'Send'))
-        style_ask_toolbar_widget(self.send_button, min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH)
-        self.send_button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        style_ask_toolbar_widget(self.send_button)
         root.addWidget(self.send_button, alignment=Qt.AlignVCenter)
 
-        self.setFixedHeight(ASK_TOOLBAR_HEIGHT)
+        # 行高跟着按钮外高走，不再锁死像素高度。
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
     def add_left_widget(self, widget):

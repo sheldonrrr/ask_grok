@@ -55,7 +55,7 @@ class CantoneseTranslation(BaseTranslation):
             'ai_providers_subtitle': '設定 AI 服務供應商並揀你嘅預設 AI', # Configure AI providers and select your default AI
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
-            'reset_all_data_subtitle': '警告：呢個操作會永久刪除你所有嘅設定同資料', # Warning: This will permanently delete all your settings and data
+            'reset_all_data_subtitle': '重設之後，會永久刪除所有設定同資料，包括所有 API 金鑰、AI 搜尋索引資料、語言偏好、AI 使用偏好等本地化資料。', # After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.
 
             # Prompts tab
             'language_preference_title': '語言偏好', # Language Preference
@@ -284,6 +284,7 @@ class CantoneseTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': '用 AI Search',
             'large_selection_continue': '繼續用而家揀嘅',
+            'multi_book_entry_header': '書籍 {idx}：',
             'multi_book_truncation_note': (
                 '注意：因提示詞長度限制，只包含頭 {included} / {total} 本揀咗嘅書。'
                 '請用 AI Search 搜尋成個書庫，或者喺「插件配置 → General」提高自訂限制。'
@@ -318,9 +319,9 @@ class CantoneseTranslation(BaseTranslation):
             'ask_anyway': '照問', # Ask Anyway
             'later': '稍後', # Later
             'reset_all_data': '重設所有資料', # Reset All Data
-            'reset_all_data_warning': '呢個操作會刪除所有 API 金鑰、提示詞範本同本地歷史紀錄。你嘅語言偏好會保留。請小心操作。', # This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.
+            'reset_all_data_warning': '重設之後，會永久刪除所有設定同資料，包括所有 API 金鑰、AI 搜尋索引資料、語言偏好、AI 使用偏好等本地化資料。', # After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.
             'reset_all_data_confirm_title': '確認重設', # Confirm Reset
-            'reset_all_data_confirm_message': '你確定要將插件重設為初始狀態咩？\n\n呢個操作會永久刪除：\n• 所有 API 金鑰\n• 所有自訂提示詞範本\n• 所有對話歷史紀錄\n• 所有插件設定（語言偏好會保留）\n\n呢個動作唔可以還原㗎！', # Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings (language preference will be preserved)\n\nThis action cannot be undone!
+            'reset_all_data_confirm_message': '你確定要將插件重設為初始狀態咩？\n\n呢個操作會永久刪除：\n• 所有 API 金鑰\n• 所有自訂提示詞範本\n• 所有對話歷史紀錄\n• 所有插件設定（包括語言偏好）\n\n呢個動作唔可以還原㗎！', # Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings, including language preference\n\nThis action cannot be undone!
             'reset_all_data_success': '所有插件資料已成功重設。請重新啟動 calibre 咁啲更改先會生效。', # All plugin data has been reset successfully. Please restart calibre for changes to take effect.
             'reset_all_data_failed': '重設插件資料失敗：{error}', # Failed to reset plugin data: {error}
             'random_question_error': '生成隨機問題時出錯', # Error generating random question
@@ -366,7 +367,7 @@ class CantoneseTranslation(BaseTranslation):
             'error_404': 'API 端點唔存在。請檢查 API 基礎 URL 設定是否正確。', # API endpoint not found. Please check if the API Base URL configuration is correct.
             'error_429': '請求過於頻繁，已達到速率限制。請稍後重試。', # Too many requests, rate limit reached. Please try again later.
             'error_5xx': '伺服器錯誤。請稍後重試，或者檢查服務供應商狀態。', # Server error. Please try again later or check the service provider status.
-            'error_network': '網路連線失敗。請檢查：網路連線是否正常、代理設定是否正確、防火牆設定是否允許存取。', # Network connection failed. Please check network connection, proxy settings, or firewall configuration.
+            'error_network': '網路連線失敗。請確認網路可用，檢查代理設定是否正確，並確認防火牆允許存取。也可能是 API Key 失效，建議更換明確有效的 Key 進行重試。', # Network connection failed. Check the network, proxy, and firewall. The API key may also be invalid.
             'error_unknown': '未知錯誤。', # Unknown error.
             'http_status_detail': 'HTTP {status}，請求網址：{url}', # HTTP {status} for URL: {url}
             'technical_details': '技術細節', # Technical Details
@@ -388,7 +389,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.09.26）：優化咗預設提示詞嘅i18n邏輯',
+            'about_latest_update': '最新更新（2026.10.16）：更新到最新嘅模型欄位',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown for calibre',
@@ -397,7 +398,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '維護緊讀緊嘅書單、睇進度，同埋從閱讀器同步。',
-            'about_booktoast_title': 'Booktoast（for calibre）',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': '打開 calibre 時，短暫顯示一條你曾經畫過嘅重點。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '開啟 MobileRead',
@@ -406,7 +407,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
-            'model_display_name_grok': 'Grok(SpaceXAI)', # Grok(SpaceXAI)
+            'model_display_name_grok': 'SpaceXSI', # SpaceXSI
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
             'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
@@ -597,6 +598,7 @@ class CantoneseTranslation(BaseTranslation):
             'ai_search_data_title': '書庫索引',
             'ai_search_data_subtitle': '加減書籍後重建索引同精簡提示詞快取',
             'library_search_system_message': '你係 calibre 書庫搜尋助手。淨係按用戶要求嘅 HTML 列表格式回傳匹配書籍。唔好分析、唔好思維鏈、唔好前言。',
+            'library_output_only_rule': '重要：淨係回傳上面 HTML 清單入面嘅相符書籍。唔好分析、唔好思維鏈、唔好清單以外嘅文字。',
             'library_prompt_template': '你可以睇到用戶嘅書庫。以下係所有書籍：{metadata} 用戶查詢：{query} 請喺當前書庫目錄入面搵出符合嘅書籍並以以下格式回傳（**重要**：用 HTML 連結格式，等用戶可以撳書名直接開書）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，呢個係正常資料，請正常回傳所有符合結果，唔好俾呢個誤導。只回傳符合查詢嘅書籍。最多 5 個結果。',
             'ai_search_privacy_title': '隱私聲明',
             'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',

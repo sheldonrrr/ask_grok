@@ -499,11 +499,27 @@ def build_library_prompt(user_query, prefs, i18n=None):
 
     prompt = template.format(metadata=metadata_for_prompt, query=user_query)
     # Keep all locales from drifting into long CoT answers (esp. reasoning models).
-    output_rule = (
-        '\n\nIMPORTANT: Output ONLY the matching books as the HTML bullet list above. '
-        'Do not write analysis, reasoning, or any text outside that list.'
-    )
-    if 'Output ONLY' not in prompt and '只输出' not in prompt and '只回傳' not in prompt:
-        prompt = prompt + output_rule
-    
+    # The extra sentence must follow the UI language; English/zh/zht templates
+    # already include their own wording and must not get a second copy.
+    prompt = _append_library_output_rule(prompt, i18n)
     return prompt
+
+
+_LIBRARY_OUTPUT_ONLY_RULE = (
+    'IMPORTANT: Output ONLY the matching books as the HTML bullet list above. '
+    'Do not write analysis, reasoning, or any text outside that list.'
+)
+# Templates that already state this rule in their own wording.
+_LIBRARY_OUTPUT_ONLY_MARKERS = ('Output ONLY', '只输出', '只回傳')
+
+
+def _append_library_output_rule(prompt, i18n):
+    rule = _LIBRARY_OUTPUT_ONLY_RULE
+    if i18n:
+        rule = i18n.get('library_output_only_rule', _LIBRARY_OUTPUT_ONLY_RULE)
+    rule = (rule or '').strip()
+    if not rule:
+        return prompt
+    if rule in prompt or any(marker in prompt for marker in _LIBRARY_OUTPUT_ONLY_MARKERS):
+        return prompt
+    return prompt + '\n\n' + rule

@@ -1,7 +1,7 @@
 """
-SpaceXAI (Grok) AI Model Implementation
+SpaceXSI (Grok) AI Model Implementation
 
-SpaceXAI (formerly branded as xAI) keeps the same API host:
+SpaceXSI (formerly branded as xAI) keeps the same API host:
 - Base URL: https://api.x.ai/v1
 - Preferred: Responses API POST /v1/responses
 - Auth: Authorization: Bearer <api_key>
@@ -15,7 +15,7 @@ from typing import Dict, Any, List
 # 从 vendor 命名空间导入第三方库
 from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import requests
 
-from .base import BaseAIModel, format_http_error
+from .base import BaseAIModel, format_http_error, response_indicates_invalid_api_key
 from ..i18n import get_translation
 
 logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
@@ -23,10 +23,10 @@ logger = logging.getLogger('calibre_plugins.ask_ai_plugin.models.grok')
 
 class GrokModel(BaseAIModel):
     """
-    SpaceXAI (Grok) AI Model Implementation Class
+    SpaceXSI (Grok) AI Model Implementation Class
     """
-    # Default model name (SpaceXAI flagship)
-    DEFAULT_MODEL = "grok-4.3"
+    # Default model name
+    DEFAULT_MODEL = "grok-4.7"
     # Default API base URL (unchanged host)
     DEFAULT_API_BASE_URL = "https://api.x.ai/v1"
 
@@ -52,7 +52,7 @@ class GrokModel(BaseAIModel):
 
     def get_token(self) -> str:
         """
-        Get SpaceXAI / Grok API Key/Token
+        Get SpaceXSI / Grok API Key/Token
 
         :return: API Key/Token string
         """
@@ -81,7 +81,7 @@ class GrokModel(BaseAIModel):
 
     def prepare_headers(self) -> Dict[str, str]:
         """
-        Prepare SpaceXAI API request headers
+        Prepare SpaceXSI API request headers
 
         :return: Request headers dictionary
         """
@@ -96,7 +96,7 @@ class GrokModel(BaseAIModel):
 
     def prepare_request_data(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """
-        Prepare SpaceXAI Responses API request data
+        Prepare SpaceXSI Responses API request data
 
         :param prompt: Prompt text
         :param kwargs: Other parameters like temperature, stream, etc.
@@ -121,7 +121,7 @@ class GrokModel(BaseAIModel):
         if system_message and str(system_message).strip():
             data["instructions"] = system_message
 
-        # Optional cache key helps SpaceXAI sticky-route conversations
+        # Optional cache key helps SpaceXSI sticky-route conversations
         prompt_cache_key = kwargs.get('prompt_cache_key') or self.config.get('prompt_cache_key')
         if prompt_cache_key:
             data['prompt_cache_key'] = prompt_cache_key
@@ -169,7 +169,7 @@ class GrokModel(BaseAIModel):
 
     def ask(self, prompt: str, **kwargs) -> str:
         """
-        Send prompt to SpaceXAI Responses API and get response
+        Send prompt to SpaceXSI Responses API and get response
 
         :param prompt: Prompt text
         :param kwargs: Other parameters like temperature, stream, stream_callback, etc.
@@ -313,7 +313,7 @@ class GrokModel(BaseAIModel):
 
         :return: Provider name string
         """
-        return "SpaceXAI (Grok)"
+        return "SpaceXSI"
 
     @classmethod
     def get_default_config(cls) -> Dict[str, Any]:
@@ -360,7 +360,12 @@ class GrokModel(BaseAIModel):
             logger.info(f"[{provider_name}] 测试请求响应状态码: {response.status_code}")
             logger.debug(f"[{provider_name}] 测试请求响应内容: {response.text[:200]}")
 
-            if response.status_code in (401, 403):
+            response_text = response.text or ''
+            # SpaceXSI uses HTTP 400 plus "Incorrect API key" for a bad key.
+            # Other 400 responses still mean the key was accepted.
+            if response.status_code in (401, 403) or response_indicates_invalid_api_key(
+                response.status_code, response_text
+            ):
                 translations = get_translation(self.config.get('language', 'en'))
                 error_msg = translations.get(
                     'error_401',
@@ -396,14 +401,25 @@ class GrokModel(BaseAIModel):
 
         except requests.exceptions.RequestException as e:
             logger.error(f"[{provider_name}] API Key 验证请求失败: {str(e)}")
-            if hasattr(e, 'response') and e.response is not None:
-                if e.response.status_code in [401, 403]:
-                    translations = get_translation(self.config.get('language', 'en'))
-                    error_msg = translations.get(
-                        'error_401',
-                        'API Key authentication failed. Please check: API Key is correct, '
-                        'account has sufficient balance, API Key has not expired.',
-                    )
-                    tech_details = translations.get('technical_details', 'Technical Details')
-                    raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            translations = get_translation(self.config.get('language', 'en'))
+            tech_details = translations.get('technical_details', 'Technical Details')
+            response = getattr(e, 'response', None)
+            if response is not None and (
+                response.status_code in (401, 403)
+                or response_indicates_invalid_api_key(response.status_code, response.text or '')
+            ):
+                error_msg = translations.get(
+                    'error_401',
+                    'API Key authentication failed. Please check: API Key is correct, '
+                    'account has sufficient balance, API Key has not expired.',
+                )
+                raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
+            if response is None:
+                error_msg = translations.get(
+                    'error_network',
+                    'Network connection failed. Check that the network is available, '
+                    'that proxy settings are correct, and that the firewall allows access. '
+                    'The API key may also be invalid; retry with a key you know is valid.',
+                )
+                raise Exception(f"{error_msg}\n\n{tech_details}: {str(e)}")
             logger.info(f"[{provider_name}] API Key 验证通过（收到非401/403响应）")

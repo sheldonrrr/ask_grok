@@ -55,7 +55,7 @@ class DanishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Konfigurér AI-udbydere, og vælg din standard-AI',
             'prompts_subtitle': 'Tilpas, hvordan spørgsmål sendes til AI',
             'export_settings_subtitle': 'Indstil standardmappe for eksport af PDF\'er',
-            'reset_all_data_subtitle': 'Advarsel: Dette vil permanent slette alle dine indstillinger og data',
+            'reset_all_data_subtitle': 'Efter nulstilling slettes alle indstillinger og data permanent, herunder alle API-nøgler, AI Search-indeksdata, sprogpræference, AI-brugspræferencer og andre lokale data.',
 
             # Prompts tab
             'language_preference_title': 'Sprogpræference',
@@ -300,6 +300,7 @@ class DanishTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Brug AI Search',
             'large_selection_continue': 'Fortsæt med valgte',
+            'multi_book_entry_header': 'Bog {idx}:',
             'multi_book_truncation_note': (
                 'Bemærk: Kun de første {included} af {total} valgte bøger er inkluderet på grund af '
                 'promptgrænsen. Brug AI Search til at søge i hele biblioteket, eller hæv den '
@@ -338,9 +339,9 @@ class DanishTranslation(BaseTranslation):
             'ask_anyway': 'Spørg alligevel',
             'later': 'Senere',
             'reset_all_data': 'Nulstil alle data',
-            'reset_all_data_warning': 'Dette vil slette alle API-nøgler, prompt-skabeloner og lokale historikposter. Din sprogpræference bevares. Fortsæt venligst med forsigtighed.',
+            'reset_all_data_warning': 'Efter nulstilling slettes alle indstillinger og data permanent, herunder alle API-nøgler, AI Search-indeksdata, sprogpræference, AI-brugspræferencer og andre lokale data.',
             'reset_all_data_confirm_title': 'Bekræft nulstilling',
-            'reset_all_data_confirm_message': 'Er du sikker på, at du vil nulstille plugin\'et til dets oprindelige tilstand?\n\nDette vil permanent slette:\n• Alle API-nøgler\n• Alle brugerdefinerede prompt-skabeloner\n• Al samtalelhistorik\n• Alle plugin-indstillinger (sprogpræference bevares)\n\nDenne handling kan ikke fortrydes!',
+            'reset_all_data_confirm_message': 'Er du sikker på, at du vil nulstille plugin\'et til dets oprindelige tilstand?\n\nDette vil permanent slette:\n• Alle API-nøgler\n• Alle brugerdefinerede prompt-skabeloner\n• Al samtalelhistorik\n• Alle plugin-indstillinger, inklusive sprogpræference\n\nDenne handling kan ikke fortrydes!',
             'reset_all_data_success': 'Alle plugin-data er blevet nulstillet. Genstart venligst calibre for at ændringerne træder i kraft.',
             'reset_all_data_failed': 'Kunne ikke nulstille plugin-data: {error}',
             'random_question_error': 'Fejl ved generering af tilfældigt spørgsmål',
@@ -386,7 +387,7 @@ class DanishTranslation(BaseTranslation):
             'error_404': 'API-slutpunkt ikke fundet. Kontroller venligst, om API Basis-URL-konfigurationen er korrekt.',
             'error_429': 'For mange anmodninger, hastighedsgrænse nået. Prøv venligst igen senere.',
             'error_5xx': 'Serverfejl. Prøv venligst igen senere, eller kontroller tjenesteudbyderens status.',
-            'error_network': 'Netværksforbindelse mislykkedes. Kontroller venligst netværksforbindelse, proxyindstillinger eller firewallkonfiguration.',
+            'error_network': 'Netværksforbindelse mislykkedes. Kontroller, at netværket virker, at proxyindstillingerne er korrekte, og at firewallen tillader adgang. API-nøglen kan også være ugyldig — prøv igen med en nøgle, du ved er gyldig.',
             'error_unknown': 'Ukendt fejl.',
             'http_status_detail': 'HTTP {status} for URL: {url}',
             'technical_details': 'Tekniske detaljer',
@@ -408,7 +409,7 @@ class DanishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stil spørgsmål om calibre-bøger med de AI-tjenester, du vælger.',
-            'about_latest_update': 'Seneste opdatering (2026.09.26): i18n-logikken for standardprompten er optimeret',
+            'about_latest_update': 'Seneste opdatering (2026.10.16): opdateret til de nyeste modelnavne',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Bemærk: MobileRead er udviklersiden for calibre-pluginudgivelser og flere versionsopdateringer.',
@@ -419,14 +420,14 @@ class DanishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Konverter traditionelt og forenklet kinesisk i ebooks.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Hold en kort liste over bøger, du læser, se fremskridt og synkroniser fra fremviseren.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'Når calibre åbnes, vises kort en markering, du engang har sat.',
             'about_open_mobileread': 'Åbn MobileRead',
             'about_open_nowtiny': 'Åbn Nowtiny',
             'about_nowtiny_note': 'Flere værktøjer og pluginstatus findes på Nowtiny.',
 
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -632,6 +633,7 @@ class DanishTranslation(BaseTranslation):
             'ai_search_data_title': 'Biblioteksindex',
             'ai_search_data_subtitle': 'Genopbyg indeks og prompt-cache efter tilføjelse eller fjernelse af bøger',
             'library_search_system_message': 'Du er en calibre-bibliotekssøgeassistent. Svar KUN med matchende bøger som en HTML-liste i det ønskede format. Ingen analyse, ingen tankekæde, ingen indledning.',
+            'library_output_only_rule': 'VIGTIGT: Returner KUN de matchende bøger som HTML-punktlisten ovenfor. Ingen analyse, ingen tankekæde og ingen tekst uden for listen.',
             'library_prompt_template': 'Du har adgang til brugerens bogbibliotek. Her er alle bøgerne: {metadata} Brugerforespørgsel: {query} Find venligst matchende bøger i det aktuelle bibliotek og returner dem i dette format (**VIGTIGT**: Brug HTML-linkformat, så brugere kan klikke på bogtitler for at åbne dem direkte): - <a href="calibre://book/BOOK_ID">Bogtitel</a> - Forfatternavn Eksempel: - <a href="calibre://book/123">Lær Python</a> - Mark Lutz - <a href="calibre://book/456">Machine Learning i praksis</a> - Peter Harrington Bemærk: Nogle forfattere kan være angivet som "unknown". Dette er normale data, returner venligst alle matchende resultater normalt. Returner kun bøger, der matcher forespørgslen. Maksimalt 5 resultater.',
             'ai_search_privacy_title': 'Meddelelse om beskyttelse af personlige oplysninger',
             'ai_search_privacy_alert': 'AI Søgning bruger bogmetadata (titler og forfattere) fra dit bibliotek. Disse oplysninger vil blive sendt til den AI-udbyder, du har konfigureret til at behandle dine søgeforespørgsler.',

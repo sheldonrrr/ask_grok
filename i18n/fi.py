@@ -55,7 +55,7 @@ class FinnishTranslation(BaseTranslation):
             'ai_providers_subtitle': 'Määritä tekoälypalveluntarjoajat ja valitse oletustekoäly',
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
-            'reset_all_data_subtitle': 'Varoitus: Tämä poistaa pysyvästi kaikki asetuksesi ja tietosi',
+            'reset_all_data_subtitle': 'Nollauksen jälkeen kaikki asetukset ja tiedot poistetaan pysyvästi, mukaan lukien kaikki API-avaimet, AI Search -indeksitiedot, kieliasetus, tekoälyn käyttöasetukset ja muut paikalliset tiedot.',
             
             # Prompts tab
             'language_preference_title': 'Kieliasetukset',
@@ -303,6 +303,7 @@ class FinnishTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': 'Käytä AI Search',
             'large_selection_continue': 'Jatka valinnalla',
+            'multi_book_entry_header': 'Kirja {idx}:',
             'multi_book_truncation_note': (
                 'Huom: Vain ensimmäiset {included}/{total} valittua kirjaa sisältyvät kehotteen rajan vuoksi. '
                 'Käytä AI Search -hakua koko kirjastoon tai nosta mukautettua rajaa kohdassa '
@@ -342,9 +343,9 @@ class FinnishTranslation(BaseTranslation):
             'ask_anyway': 'Kysy silti',
             'later': 'Myöhemmin',
             'reset_all_data': 'Nollaa kaikki tiedot',
-            'reset_all_data_warning': 'Tämä poistaa kaikki API-avaimet, kehotemallit ja paikalliset historiatietueet. Kieliasetuksesi säilytetään. Ole varovainen.',
+            'reset_all_data_warning': 'Nollauksen jälkeen kaikki asetukset ja tiedot poistetaan pysyvästi, mukaan lukien kaikki API-avaimet, AI Search -indeksitiedot, kieliasetus, tekoälyn käyttöasetukset ja muut paikalliset tiedot.',
             'reset_all_data_confirm_title': 'Vahvista nollaus',
-            'reset_all_data_confirm_message': 'Oletko varma, että haluat nollata lisäosan alkuperäiseen tilaan?\n\nTämä poistaa pysyvästi:\n• Kaikki API-avaimet\n• Kaikki mukautetut kehotemallit\n• Koko keskusteluhistorian\n• Kaikki lisäosan asetukset (kieliasetukset säilytetään)\n\nTätä toimintoa ei voi kumota!',
+            'reset_all_data_confirm_message': 'Oletko varma, että haluat nollata lisäosan alkuperäiseen tilaan?\n\nTämä poistaa pysyvästi:\n• Kaikki API-avaimet\n• Kaikki mukautetut kehotemallit\n• Koko keskusteluhistorian\n• Kaikki lisäosan asetukset, kieliasetus mukaan lukien\n\nTätä toimintoa ei voi kumota!',
             'reset_all_data_success': 'Kaikki lisäosan tiedot on nollattu onnistuneesti. Käynnistä calibre uudelleen, jotta muutokset tulevat voimaan.',
             'reset_all_data_failed': 'Lisäosan tietojen nollaus epäonnistui: {error}',
             'random_question_error': 'Virhe satunnaisen kysymyksen luomisessa',
@@ -390,7 +391,7 @@ class FinnishTranslation(BaseTranslation):
             'error_404': 'API-päätepistettä ei löydy. Tarkista, onko API:n perus-URL-määritys oikein.',
             'error_429': 'Liian monta pyyntöä, nopeusrajoitus saavutettu. Yritä uudelleen myöhemmin.',
             'error_5xx': 'Palvelinvirhe. Yritä uudelleen myöhemmin tai tarkista palveluntarjoajan tila.',
-            'error_network': 'Verkkoyhteys epäonnistui. Tarkista verkkoyhteys, välityspalvelinasetukset tai palomuurikonfiguraatio.',
+            'error_network': 'Verkkoyhteys epäonnistui. Varmista, että verkko toimii, välityspalvelinasetukset ovat oikein ja palomuuri sallii yhteyden. API-avain voi myös olla virheellinen — yritä uudelleen avaimella, jonka tiedät toimivan.',
             'error_unknown': 'Tuntematon virhe.',
             'http_status_detail': 'HTTP {status}, URL: {url}',
             'technical_details': 'Tekniset yksityiskohdat',
@@ -412,7 +413,7 @@ class FinnishTranslation(BaseTranslation):
             'about_title': 'Tietoja Ask AI -lisäosasta',
             'about_version_label': 'Versio',
             'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
-            'about_latest_update': 'Viimeisin päivitys (2026.09.26): oletuskehotteen i18n-logiikkaa on optimoitu',
+            'about_latest_update': 'Viimeisin päivitys (2026.10.16): päivitetty uusimpiin mallien nimiin',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Huom: MobileRead on kehittäjäsivu calibre-liitännäisten julkaisuille ja lisäversion päivityksille.',
@@ -423,14 +424,14 @@ class FinnishTranslation(BaseTranslation):
             'about_tradsimp_desc': 'Muunna perinteistä ja yksinkertaistettua kiinaa e-kirjoissa.',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': 'Pidä lyhyt lista lukemistasi kirjoista, näe edistyminen ja synkronoi katselimesta.',
-            'about_booktoast_title': 'Booktoast (for calibre)',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': 'Kun calibre avautuu, se näyttää hetken korostuksen, jonka olet merkinnyt.',
             'about_open_mobileread': 'Avaa MobileRead',
             'about_open_nowtiny': 'Avaa Nowtiny',
             'about_nowtiny_note': 'Lisää työkaluja ja lisäosien tila löytyy Nowtiny-sivustolta.',
             
             # Model specific configurations
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi (Moonshot)',
@@ -638,6 +639,7 @@ class FinnishTranslation(BaseTranslation):
                 'Rakenna indeksi ja prompt-välimuisti uudelleen kirjojen lisäyksen tai poiston jälkeen'
             ),
             'library_search_system_message': 'Olet calibre-kirjaston hakuavustaja. Vastaa VAIN vastaavilla kirjoilla HTML-luettelona pyydetyssä muodossa. Ei analyysiä, ei ajatteluketjua, ei johdantoa.',
+            'library_output_only_rule': 'TÄRKEÄÄ: Palauta VAIN vastaavat kirjat yllä olevana HTML-luettelona. Ei analyysiä, ei ajatteluketjua eikä tekstiä luettelon ulkopuolella.',
             'library_prompt_template': 'Sinulla on pääsy käyttäjän kirjakirjastoon. Tässä ovat kaikki kirjat: {metadata} Käyttäjän kysely: {query} Etsi vastaavat kirjat nykyisestä kirjastosta ja palauta ne tässä muodossa (**TÄRKEÄÄ**: Käytä HTML-linkkimuotoa, jotta käyttäjät voivat napsauttaa kirjojen nimiä avatakseen ne suoraan): - <a href="calibre://book/BOOK_ID">Kirjan nimi</a> - Kirjailijan nimi Esimerkki: - <a href="calibre://book/123">Opi Python</a> - Mark Lutz - <a href="calibre://book/456">Koneoppiminen käytännössä</a> - Peter Harrington Huomautus: Jotkut kirjailijat voivat olla merkitty "unknown". Tämä on normaalia dataa, palauta kaikki vastaavat tulokset normaalisti. Palauta vain kyselyä vastaavat kirjat. Enintään 5 tulosta.',
             'ai_search_privacy_title': 'Tietosuojailmoitus',
             'ai_search_privacy_alert': 'AI-haku käyttää kirjastosi metatietoja (nimet ja kirjailijat). Nämä tiedot lähetetään määrittämällesi tekoälypalvelun tarjoajalle hakukyselyidesi käsittelemiseksi.',

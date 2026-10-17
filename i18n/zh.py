@@ -55,7 +55,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_providers_subtitle': '配置AI服务商并选择默认AI',
             'prompts_subtitle': '自定义向AI发送问题的方式',
             'export_settings_subtitle': '设置导出PDF的默认文件夹',
-            'reset_all_data_subtitle': '警告：这将永久删除所有设置和数据',
+            'reset_all_data_subtitle': '重置后，将永久删除所有设置和数据，包括所有API密钥、AI搜索索引数据、语言偏好、AI使用偏好等本地化数据。',
             
             # 提示词标签页
             'language_preference_title': '语言偏好',
@@ -297,6 +297,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': '使用 AI Search',
             'large_selection_continue': '继续用当前选中',
+            'multi_book_entry_header': '书籍 {idx}：',
             'multi_book_truncation_note': (
                 '注意：因提示词长度限制，仅包含前 {included} / {total} 本选中书籍。'
                 '请使用 AI Search 搜索整个书库，或在「插件配置 → General」中提高自定义限制。'
@@ -338,9 +339,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ask_anyway': '仍要询问',
             'later': '稍后',
             'reset_all_data': '重置所有数据',
-            'reset_all_data_warning': '这将会删除所有API密钥、提示词模板和本地历史记录。您的语言偏好将被保留。请慎重操作。',
+            'reset_all_data_warning': '重置后，将永久删除所有设置和数据，包括所有API密钥、AI搜索索引数据、语言偏好、AI使用偏好等本地化数据。',
             'reset_all_data_confirm_title': '确认重置',
-            'reset_all_data_confirm_message': '您确定要将插件重置为初始状态吗？\n\n这将永久删除：\n• 所有API密钥\n• 所有自定义提示词模板\n• 所有对话历史记录\n• 所有插件设置（会保留当前选中的语言配置信息）\n\n此操作无法撤销！',
+            'reset_all_data_confirm_message': '您确定要将插件重置为初始状态吗？\n\n这将永久删除：\n• 所有API密钥\n• 所有自定义提示词模板\n• 所有对话历史记录\n• 所有插件设置（包括语言偏好）\n\n此操作无法撤销！',
             'reset_all_data_success': '所有插件数据已成功重置。请重启calibre以使更改生效。',
             'reset_all_data_failed': '重置插件数据失败：{error}',
             'random_question_error': '生成随机问题时出错',
@@ -386,7 +387,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'error_404': 'API 端点不存在。请检查 API Base URL 配置是否正确。',
             'error_429': '请求过于频繁，已达到速率限制。请稍后重试。',
             'error_5xx': '服务器错误。请稍后重试，或检查服务提供商状态。',
-            'error_network': '网络连接失败。请检查：网络连接是否正常、代理设置是否正确、防火墙配置是否允许访问。',
+            'error_network': '网络连接失败。请确认网络可用，检查代理设置是否正确，并确认防火墙允许访问。也可能是 API Key 失效，建议更换明确有效的 Key 进行重试。',
             'error_unknown': '未知错误。',
             'http_status_detail': 'HTTP {status}，请求地址：{url}',
             'technical_details': '技术细节',
@@ -408,7 +409,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_title': '关于 Ask AI Plugin',
             'about_version_label': '版本',
             'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
-            'about_latest_update': '最新更新（2026.09.26）：优化了默认提示词的i18n逻辑',
+            'about_latest_update': '最新更新（2026.10.16）：更新为最新的模型字段',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推荐',
             'about_markdown_title': 'Markdown for calibre',
@@ -417,7 +418,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_tradsimp_desc': '在电子书中转换简体中文与繁体中文。',
             'about_simple_goal_title': 'Simple Goal for calibre',
             'about_simple_goal_desc': '维护正在阅读的书单、查看进度，并从阅读器同步。',
-            'about_booktoast_title': 'Booktoast（for calibre）',
+            'about_booktoast_title': 'Booktoast for calibre',
             'about_booktoast_desc': '打开 calibre 时，短暂显示一条你曾经划过的重点。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '打开 MobileRead',
@@ -426,7 +427,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_nowtiny_note': '更多工具与插件状态可在 Nowtiny 查看。',
             
             # 模型特定配置
-            'model_display_name_grok': 'Grok(SpaceXAI)',
+            'model_display_name_grok': 'SpaceXSI',
             'model_display_name_gemini': 'Gemini(Google)',
             'model_display_name_deepseek': 'Deepseek',
             'model_display_name_kimi': 'Kimi（月之暗面）',
@@ -628,6 +629,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'ai_search_data_title': '书库索引',
             'ai_search_data_subtitle': '增删书籍后重建索引与紧凑提示词缓存',
             'library_search_system_message': '你是 calibre 书库搜索助手。只按用户要求的 HTML 列表格式返回匹配书籍。不要分析、不要思维链、不要前言。',
+            'library_output_only_rule': '重要：只输出上面 HTML 列表中的匹配书籍。不要分析、不要思维链、不要列表以外的文字。',
             'library_prompt_template': '您可以访问用户的图书馆。以下是所有书籍：{metadata} 用户查询：{query} 请在当前书库目录中找到匹配的书籍并以以下格式返回（**重要**：使用HTML链接格式，这样用户可以点击书名直接打开书籍）：- <a href="calibre://book/书籍ID">书名</a> - 作者名 示例：- <a href="calibre://book/123">Python编程</a> - Mark Lutz - <a href="calibre://book/456">机器学习实战</a> - Peter Harrington 注意：部分作者信息可能显示为"unknown"，这是正常数据。只返回匹配查询的书籍。最多5个结果。只输出上述列表，不要分析、不要思维链、不要前言。',
             'ai_search_privacy_title': '隐私提示',
             'ai_search_privacy_alert': 'AI搜索使用您图书馆中的书籍元数据（书名和作者）。这些信息将被发送到您配置的AI服务提供商以处理您的搜索查询。',

@@ -9,6 +9,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFontMetrics
 
 from .i18n import get_default_template, get_suggestion_template, get_multi_book_template
+from .widgets import apply_button_style
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_ASK_COMPACT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
@@ -292,6 +293,7 @@ class PromptsWidget(QWidget):
         
         reset_button = QPushButton(self.i18n.get('reset_prompts', 'Reset Prompts to Default'))
         reset_button.setObjectName('button_reset_prompts')
+        apply_button_style(reset_button)
         reset_button.clicked.connect(self.on_reset_prompts)
         reset_layout.addWidget(reset_button)
         

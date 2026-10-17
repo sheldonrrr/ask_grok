@@ -100,40 +100,44 @@ class NoScrollComboBox(QComboBox):
             event.ignore()
 
 
-def apply_button_style(button, min_width=None, padding=None):
+def apply_button_style(button, min_width=None, padding=None, max_width=None):
     """
-    为按钮应用统一的样式
-    
+    为文字按钮应用统一样式。字号比正文小 2，高度随按钮字体变化。
+
+    默认按文字收缩：短标签不会铺在很宽的底上，长标签宽到 BUTTON_MAX_WIDTH 为止。
+    min_width=0 表示布局要拉伸这个按钮（例如左右各占一半），此时不设宽度上下限。
+
     Args:
         button: QPushButton实例
-        min_width: 最小宽度（可选，单位：像素，默认使用 STANDARD_BUTTON_MIN_WIDTH）
+        min_width: 内容区最小宽度（像素）。None 使用 button_min_width；0 表示交给布局
         padding: 内边距（可选，默认使用 STANDARD_BUTTON_PADDING）
-    
-    功能：
-    - 添加合适的内边距，防止文字过于拥挤
-    - 文字居中对齐
-    - 设置最小宽度
+        max_width: 外宽上限（像素）。None 使用 button_max_width
     """
-    from .ui_constants import get_standard_button_style, STANDARD_BUTTON_MIN_WIDTH
-    
-    # 使用标准样式
+    from .ui_constants import (
+        get_standard_button_style, install_button_font, button_min_width,
+        apply_text_button_width,
+    )
+
+    font = install_button_font(button)
+    stretch = min_width == 0
     if min_width is None:
-        min_width = STANDARD_BUTTON_MIN_WIDTH
-    
-    button.setStyleSheet(get_standard_button_style(min_width))
+        min_width = button_min_width(font)
+
+    button.setStyleSheet(get_standard_button_style(min_width, padding, font))
+    apply_text_button_width(button, font, min_width, max_width, stretch=stretch)
 
 
-def create_styled_button(text, parent=None, min_width=None, padding="5px 12px", tooltip=None):
+def create_styled_button(text, parent=None, min_width=None, padding=None, tooltip=None):
     """
-    创建一个带有统一样式的按钮
-    
+    创建一个带有统一样式的按钮。字号和高度与 apply_button_style 相同。
+
     Args:
         text: 按钮文字
         parent: 父组件
         min_width: 最小宽度（可选）
-        padding: 内边距
+        padding: 内边距（可选，默认 STANDARD_BUTTON_PADDING）
         tooltip: 工具提示（可选）
-    
+
     Returns:
         QPushButton: 配置好的按钮实例
     """

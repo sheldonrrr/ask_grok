@@ -158,6 +158,9 @@ def get_provider_display_name(provider_id, config, i18n=None):
     if provider_id == 'kimi':
         return build_kimi_display_name(config, i18n=i18n)
 
+    if provider_id == 'grok':
+        return (i18n or {}).get('model_display_name_grok', 'SpaceXSI')
+
     provider_name = (config or {}).get('display_name')
     if provider_name and str(provider_name).strip():
         return str(provider_name).strip()
@@ -1225,7 +1228,7 @@ class ModelConfigWidget(QWidget):
             provider = AIProvider.AI_GROK
             # API Key字段名称为auth_token
             config['auth_token'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
-            config['display_name'] = 'SpaceXAI (Grok)'  # 设置固定的显示名称
+            config['display_name'] = 'SpaceXSI'  # 设置固定的显示名称
         elif self.model_id == 'gemini':
             provider = AIProvider.AI_GEMINI
             config['api_key'] = self.api_key_edit.toPlainText().strip() if hasattr(self, 'api_key_edit') else ''
@@ -2720,6 +2723,7 @@ class ConfigDialog(QWidget):
 
         self.add_ai_button = QPushButton(self.i18n.get('add_ai_button', 'Add AI'))
         self.add_ai_button.setObjectName('button_add_ai')
+        apply_button_style(self.add_ai_button)
         self.add_ai_button.clicked.connect(self._on_add_ai_clicked)
         ai_buttons_layout.addWidget(self.add_ai_button)
 
@@ -2727,6 +2731,7 @@ class ConfigDialog(QWidget):
             self.i18n.get('manage_configured_ai_button', 'Manage Configured AI')
         )
         self.manage_ai_button.setObjectName('button_manage_ai')
+        apply_button_style(self.manage_ai_button)
         self.manage_ai_button.clicked.connect(self._on_manage_ai_clicked)
         ai_buttons_layout.addWidget(self.manage_ai_button)
         ai_buttons_layout.addStretch()
@@ -2952,7 +2957,7 @@ class ConfigDialog(QWidget):
         # 浏览按钮
         self.browse_folder_button = QPushButton(self.i18n.get('browse', 'Browse...'))
         self.browse_folder_button.setObjectName('button_browse_folder')
-        apply_button_style(self.browse_folder_button, min_width=100)
+        apply_button_style(self.browse_folder_button)
         self.browse_folder_button.clicked.connect(self._on_browse_export_folder)
         self.browse_folder_button.setEnabled(
             self.initial_values.get('enable_default_export_folder', False)
@@ -2965,12 +2970,12 @@ class ConfigDialog(QWidget):
         export_section.addWidget(export_group)
         
         # 4. 重置所有数据
-        reset_subtitle_style = get_subtitle_style() + " color: #dc3545;"
+        reset_subtitle_style = get_subtitle_style() + f" color: {TEXT_COLOR_SECONDARY_STRONG};"
         reset_section, reset_title, reset_subtitle = add_settings_section(
             content_layout,
             self.i18n.get('reset_all_data', 'Reset All Data'),
             self.i18n.get('reset_all_data_subtitle',
-                'Warning: This will permanently delete all your settings and data'),
+                'After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.'),
             subtitle_style=reset_subtitle_style,
         )
         reset_title.setObjectName('title_reset_all_data')
@@ -2982,9 +2987,9 @@ class ConfigDialog(QWidget):
         reset_layout = QVBoxLayout()
         configure_layout(reset_layout, 'settings_section')
         
-        # 重置按钮（使用默认样式）
         self.reset_button = QPushButton(self.i18n.get('reset_all_data', 'Reset All Data'))
         self.reset_button.setObjectName('button_reset_all_data')
+        apply_button_style(self.reset_button)
         self.reset_button.clicked.connect(self.on_reset_all_data)
         reset_layout.addWidget(self.reset_button)
         
@@ -3504,7 +3509,7 @@ class ConfigDialog(QWidget):
             'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
-            'subtitle_reset_all_data': ('reset_all_data_subtitle', 'Warning: This will permanently delete all your settings and data'),
+            'subtitle_reset_all_data': ('reset_all_data_subtitle', 'After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.'),
             # Other labels
             'label_language': ('language_label', 'Language'),
             'label_current_ai': ('current_ai', 'Current AI'),
@@ -4193,7 +4198,7 @@ class ConfigDialog(QWidget):
             '• All API Keys\n'
             '• All custom prompt templates\n'
             '• All conversation history\n'
-            '• All plugin settings\n\n'
+            '• All plugin settings, including language preference\n\n'
             'This action cannot be undone!'))
         msg_box.setIcon(QMessageBox.Warning)
         msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
@@ -4210,10 +4215,6 @@ class ConfigDialog(QWidget):
         if result == QMessageBox.Yes:
             try:
                 logger.info("开始重置所有插件数据...")
-                
-                # 保存当前的语言设置（重置时不删除语言选择）
-                current_language = get_prefs().get('language', 'en')
-                logger.info(f"保存当前语言设置: {current_language}")
                 
                 # 1. 删除配置文件
                 from calibre.utils.config import JSONConfig, config_dir
@@ -4271,16 +4272,19 @@ class ConfigDialog(QWidget):
                 get_prefs(force_reload=True)
                 logger.info("已强制重新加载配置，使用默认值")
                 
-                # 5. 恢复语言设置（保留用户的语言选择）
+                # 5. 语言偏好回到与全新安装相同的状态：跟随 Calibre 界面语言。
+                # language_user_set=False 表示没有插件内的语言覆盖，下次加载按 Calibre 语言写入 language。
+                # use_interface_language=False 是全新安装默认；先写入该键，避免缺键迁移。
                 prefs = get_prefs()
-                prefs['language'] = current_language
-                # 根据恢复的语言设置，重新加载对应语言的默认模板
-                prefs['template'] = get_default_template(current_language)
-                prefs['multi_book_template'] = get_multi_book_template(current_language)
-                # 随机问题提示词
-                if 'random_questions' not in prefs:
-                    prefs['random_questions'] = {}
-                prefs['random_questions'][current_language] = get_suggestion_template(current_language)
+                prefs['language_user_set'] = False
+                prefs['use_interface_language'] = False
+                for key in ('language', 'template', 'multi_book_template'):
+                    if key in prefs:
+                        del prefs[key]
+                prefs = get_prefs()
+                prefs['language_user_set'] = False
+                prefs['use_interface_language'] = False
+                logger.info(f"语言偏好已重置为跟随 Calibre 界面语言: {prefs.get('language', 'en')}")
                 
                 # 6. 清除 Ask 弹窗的 AI 选择记忆和窗口尺寸记忆
                 # 确保这些键被明确删除，而不是依赖配置文件删除
@@ -4291,7 +4295,7 @@ class ConfigDialog(QWidget):
                         logger.info(f"已清除配置键: {key}")
                 
                 prefs.commit()
-                logger.info(f"已恢复语言设置并加载对应语言的默认模板: {current_language}")
+                logger.info(f"已按 Calibre 默认语言完成重置: {prefs.get('language', 'en')}")
                 
                 # 显示成功消息
                 QMessageBox.information(

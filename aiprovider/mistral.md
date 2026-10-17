@@ -31,7 +31,7 @@ Mistral 遵循 OpenAI 的 API 格式，配置相对直接。
 - **请求体 (Body)**:
   ```json
   {
-    "model": "mistral-large-latest",
+    "model": "mistral-large-4",
     "messages": [
       {
         "role": "user",

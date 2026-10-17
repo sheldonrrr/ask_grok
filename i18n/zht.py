@@ -55,7 +55,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_providers_subtitle': '配置AI服務商並選擇預設AI',
         'prompts_subtitle': '自定義向AI發送問題的方式',
         'export_settings_subtitle': '設定匯出PDF的預設資料夾',
-        'reset_all_data_subtitle': '警告：這將永久刪除所有設定和資料',
+        'reset_all_data_subtitle': '重置後，將永久刪除所有設定和資料，包括所有API密鑰、AI搜尋索引資料、語言偏好、AI使用偏好等本地化資料。',
         
         # Prompts tab
         'language_preference_title': '語言偏好',
@@ -282,6 +282,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         ),
         'large_selection_use_ai_search': '使用 AI Search',
         'large_selection_continue': '繼續用目前選取',
+        'multi_book_entry_header': '書籍 {idx}：',
         'multi_book_truncation_note': (
             '注意：因提示詞長度限制，僅包含前 {included} / {total} 本選取書籍。'
             '請使用 AI Search 搜尋整個書庫，或在「外掛程式配置 → General」中提高自訂限制。'
@@ -358,9 +359,9 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ask_anyway': '仍要詢問',
         'later': '稍後',
         'reset_all_data': '重置所有資料',
-        'reset_all_data_warning': '這將會刪除所有API密鑰、提示詞模板和本地歷史記錄。您的語言偏好將被保留。請慎重操作。',
+        'reset_all_data_warning': '重置後，將永久刪除所有設定和資料，包括所有API密鑰、AI搜尋索引資料、語言偏好、AI使用偏好等本地化資料。',
         'reset_all_data_confirm_title': '確認重置',
-        'reset_all_data_confirm_message': '您確定要將外掛程式重置為初始狀態嗎？\n\n這將永久刪除：\n• 所有API密鑰\n• 所有自定義提示詞模板\n• 所有對話歷史記錄\n• 所有外掛程式設定（語言偏好將被保留）\n\n此操作無法撤銷！',
+        'reset_all_data_confirm_message': '您確定要將外掛程式重置為初始狀態嗎？\n\n這將永久刪除：\n• 所有API密鑰\n• 所有自定義提示詞模板\n• 所有對話歷史記錄\n• 所有外掛程式設定（包括語言偏好）\n\n此操作無法撤銷！',
         'reset_all_data_success': '所有外掛程式資料已成功重置。請重新啟動calibre以使更改生效。',
         'reset_all_data_failed': '重置外掛程式資料失敗：{error}',
         'random_question_error': '生成隨機問題時出錯',
@@ -409,7 +410,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_title': '關於 Ask AI Plugin',
         'about_version_label': '版本',
         'about_description': '在 calibre 中向你選擇的 AI 服務提問，幫助理解書籍內容。',
-        'about_latest_update': '最新更新（2026.09.26）：優化了預設提示詞的i18n邏輯',
+        'about_latest_update': '最新更新（2026.10.16）：更新為最新的模型欄位',
         'about_mobileread_link_text': 'MobileRead',
         'about_related_plugins': 'Nowtiny calibre 插件推薦',
         'about_markdown_title': 'Markdown for calibre',
@@ -418,7 +419,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n在電子書中轉換繁體中文與簡體中文。',
         'about_simple_goal_title': 'Simple Goal for calibre',
         'about_simple_goal_desc': '維護正在閱讀的書單、查看進度，並從閱讀器同步。',
-        'about_booktoast_title': 'Booktoast（for calibre）',
+        'about_booktoast_title': 'Booktoast for calibre',
         'about_booktoast_desc': '開啟 calibre 時，短暫顯示一則你曾經畫過的重點。',
         'about_open_button': 'MobileRead',
         'about_open_mobileread': '開啟 MobileRead',
@@ -427,7 +428,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'about_nowtiny_note': '更多工具與插件狀態可在 Nowtiny 查看。',
         
         # 模型特定配置
-        'model_display_name_grok': 'Grok(SpaceXAI)',
+        'model_display_name_grok': 'SpaceXSI',
         'model_display_name_gemini': 'Gemini(Google)',
         'model_display_name_deepseek': 'Deepseek',
         'model_display_name_kimi': 'Kimi（月之暗面）',
@@ -515,7 +516,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'error_404': '找不到 API 端點。請檢查 API Base URL 設定是否正確。',
         'error_429': '請求過多，已達速率限制。請稍後再試。',
         'error_5xx': '伺服器錯誤。請稍後再試或檢查服務提供者狀態。',
-        'error_network': '網路連線失敗。請檢查網路連線、代理設定或防火牆設定。',
+        'error_network': '網路連線失敗。請確認網路可用，檢查代理設定是否正確，並確認防火牆允許存取。也可能是 API Key 失效，建議更換明確有效的 Key 進行重試。',
         'error_unknown': '未知錯誤。',
         'http_status_detail': 'HTTP {status}，請求網址：{url}',
         'gemini_geo_restriction': 'Gemini API 在您的地區無法使用。請嘗試：\n1. 使用 VPN 從支援的地區連線\n2. 使用其他 AI 提供者（OpenAI、Anthropic、DeepSeek 等）\n3. 檢查 Google AI Studio 的地區可用性',
@@ -628,6 +629,7 @@ class TraditionalChineseTranslation(BaseTranslation):
         'ai_search_data_title': '書庫索引',
         'ai_search_data_subtitle': '增刪書籍後重建索引與緊湊提示詞快取',
         'library_search_system_message': '你是 calibre 書庫搜尋助手。只按使用者要求的 HTML 列表格式回傳匹配書籍。不要分析、不要思維鏈、不要前言。',
+        'library_output_only_rule': '重要：只回傳上面 HTML 清單中的相符書籍。不要分析、不要思維鏈、不要清單以外的文字。',
         'library_prompt_template': '您可以存取使用者的書庫。以下是所有書籍：{metadata} 使用者查詢：{query} 請在當前書庫目錄中找出符合的書籍並以以下格式回傳（**重要**：使用 HTML 連結格式，讓使用者可以點擊書名直接開啟書籍）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，這是正常資料，請正常回傳所有符合結果，不要被此誤導。只回傳符合查詢的書籍。最多 5 個結果。',
         'ai_search_privacy_title': '隱私權聲明',
         'ai_search_privacy_alert': 'AI 搜尋會使用您書庫中的書籍元數據（書名與作者）。這些資訊將傳送至您設定的 AI 供應商，以處理您的搜尋請求。',

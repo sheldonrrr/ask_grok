@@ -28,7 +28,7 @@ class GeminiModel(BaseAIModel):
     Google Gemini 模型实现类
     """
     # 默认模型名称（Google AI Studio / generativelanguage API 格式，不含 google/ 前缀）
-    DEFAULT_MODEL = "gemini-3.5-flash"
+    DEFAULT_MODEL = "gemini-3.8-flash"
     # 默认 API 基础 URL
     DEFAULT_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -107,7 +107,7 @@ class GeminiModel(BaseAIModel):
 
         :param model_name: 原始模型名
         :param default: 为空时的默认值
-        :return: 可用于 URL 的模型名，如 gemini-3.5-flash
+        :return: 可用于 URL 的模型名，如 gemini-3.8-flash
         """
         name = (model_name or '').strip()
         if not name:

@@ -33,7 +33,7 @@ OpenRouter 是一个模型聚合器，它也遵循 OpenAI 的 API 格式，但�
 - **请求体 (Body)**:
   ```json
   {
-    "model": "x-ai/grok-4.3", // 模型名称通常带有提供商前缀，如 x-ai/
+    "model": "x-ai/grok-4.7", // 模型名称通常带有提供商前缀，如 x-ai/
     "messages": [
       {
         "role": "user",

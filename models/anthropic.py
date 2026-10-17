@@ -5,7 +5,7 @@ Uses the Messages API:
 - POST /v1/messages
 - Headers: x-api-key + anthropic-version: 2023-06-01
 - System prompt via top-level `system`
-- Opus 4.7+ reject temperature/top_p/top_k
+- Opus 4.7+ and Opus 5+ reject temperature/top_p/top_k
 """
 import json
 import re
@@ -27,7 +27,7 @@ class AnthropicModel(BaseAIModel):
     Anthropic (Claude) AI Model Implementation Class
     """
     # Default model name
-    DEFAULT_MODEL = "claude-opus-4-8"
+    DEFAULT_MODEL = "claude-opus-5-5"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.anthropic.com/v1"
     # Required Anthropic API version (still current)
@@ -97,16 +97,20 @@ class AnthropicModel(BaseAIModel):
     @staticmethod
     def supports_sampling_params(model_name: str) -> bool:
         """
-        Claude Opus 4.7+ reject temperature/top_p/top_k (400 if set).
+        Claude Opus 4.7+, Opus 5+, and Fable reject temperature/top_p/top_k.
 
         :param model_name: Model id
         :return: True if sampling params are allowed
         """
         name = (model_name or '').lower()
-        match = re.search(r'claude-opus-4(?:\.|-)(\d+)', name)
-        if match and int(match.group(1)) >= 7:
+        if 'fable' in name:
             return False
-        # Also cover aliases like claude-opus-4-7 / claude-opus-4-8 without regex miss
+        match = re.search(r'claude-opus-(\d+)(?:\.|-)(\d+)', name)
+        if match:
+            major = int(match.group(1))
+            minor = int(match.group(2))
+            if major > 4 or (major == 4 and minor >= 7):
+                return False
         if 'opus-4-7' in name or 'opus-4-8' in name or 'opus-4.7' in name or 'opus-4.8' in name:
             return False
         return True
