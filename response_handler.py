@@ -828,8 +828,8 @@ class ResponseHandler(QObject):
         else:
             self.send_button.setText('Send')
         
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
-        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
+        from calibre_plugins.ask_ai_plugin.ui_constants import style_ask_toolbar_widget
+        style_ask_toolbar_widget(self.send_button)
 
         if self._is_user_request_timeout(error_str, error_type):
             self._schedule_timeout_increase_offer()
@@ -1276,8 +1276,8 @@ class ResponseHandler(QObject):
             
         # 处理非响应状态（如加载中）
         self.send_button.setText(text)
-        from calibre_plugins.ask_ai_plugin.ui_constants import get_ask_toolbar_pushbutton_style, ASK_TOOLBAR_BUTTON_MIN_WIDTH
-        self.send_button.setStyleSheet(get_ask_toolbar_pushbutton_style(ASK_TOOLBAR_BUTTON_MIN_WIDTH))
+        from calibre_plugins.ask_ai_plugin.ui_constants import style_ask_toolbar_widget
+        style_ask_toolbar_widget(self.send_button)
         self.send_button.setEnabled(False)
         
         # 根据文本内容判断当前状态

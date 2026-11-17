@@ -55,7 +55,7 @@ class CantoneseTranslation(BaseTranslation):
             'ai_providers_subtitle': '設定 AI 服務供應商並揀你嘅預設 AI', # Configure AI providers and select your default AI
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
-            'reset_all_data_subtitle': '警告：呢個操作會永久刪除你所有嘅設定同資料', # Warning: This will permanently delete all your settings and data
+            'reset_all_data_subtitle': '重設之後，會永久刪除所有設定同資料，包括所有 API 金鑰、AI 搜尋索引資料、語言偏好、AI 使用偏好等本地化資料。', # After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.
 
             # Prompts tab
             'language_preference_title': '語言偏好', # Language Preference
@@ -284,6 +284,7 @@ class CantoneseTranslation(BaseTranslation):
             ),
             'large_selection_use_ai_search': '用 AI Search',
             'large_selection_continue': '繼續用而家揀嘅',
+            'multi_book_entry_header': '書籍 {idx}：',
             'multi_book_truncation_note': (
                 '注意：因提示詞長度限制，只包含頭 {included} / {total} 本揀咗嘅書。'
                 '請用 AI Search 搜尋成個書庫，或者喺「插件配置 → General」提高自訂限制。'
@@ -318,9 +319,9 @@ class CantoneseTranslation(BaseTranslation):
             'ask_anyway': '照問', # Ask Anyway
             'later': '稍後', # Later
             'reset_all_data': '重設所有資料', # Reset All Data
-            'reset_all_data_warning': '呢個操作會刪除所有 API 金鑰、提示詞範本同本地歷史紀錄。你嘅語言偏好會保留。請小心操作。', # This will delete all API Keys, prompt templates, and local history records. Your language preference will be preserved. Please proceed with caution.
+            'reset_all_data_warning': '重設之後，會永久刪除所有設定同資料，包括所有 API 金鑰、AI 搜尋索引資料、語言偏好、AI 使用偏好等本地化資料。', # After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.
             'reset_all_data_confirm_title': '確認重設', # Confirm Reset
-            'reset_all_data_confirm_message': '你確定要將插件重設為初始狀態咩？\n\n呢個操作會永久刪除：\n• 所有 API 金鑰\n• 所有自訂提示詞範本\n• 所有對話歷史紀錄\n• 所有插件設定（語言偏好會保留）\n\n呢個動作唔可以還原㗎！', # Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings (language preference will be preserved)\n\nThis action cannot be undone!
+            'reset_all_data_confirm_message': '你確定要將插件重設為初始狀態咩？\n\n呢個操作會永久刪除：\n• 所有 API 金鑰\n• 所有自訂提示詞範本\n• 所有對話歷史紀錄\n• 所有插件設定（包括語言偏好）\n\n呢個動作唔可以還原㗎！', # Are you sure you want to reset the plugin to its initial state?\n\nThis will permanently delete:\n• All API Keys\n• All custom prompt templates\n• All conversation history\n• All plugin settings, including language preference\n\nThis action cannot be undone!
             'reset_all_data_success': '所有插件資料已成功重設。請重新啟動 calibre 咁啲更改先會生效。', # All plugin data has been reset successfully. Please restart calibre for changes to take effect.
             'reset_all_data_failed': '重設插件資料失敗：{error}', # Failed to reset plugin data: {error}
             'random_question_error': '生成隨機問題時出錯', # Error generating random question
@@ -366,7 +367,7 @@ class CantoneseTranslation(BaseTranslation):
             'error_404': 'API 端點唔存在。請檢查 API 基礎 URL 設定是否正確。', # API endpoint not found. Please check if the API Base URL configuration is correct.
             'error_429': '請求過於頻繁，已達到速率限制。請稍後重試。', # Too many requests, rate limit reached. Please try again later.
             'error_5xx': '伺服器錯誤。請稍後重試，或者檢查服務供應商狀態。', # Server error. Please try again later or check the service provider status.
-            'error_network': '網路連線失敗。請檢查：網路連線是否正常、代理設定是否正確、防火牆設定是否允許存取。', # Network connection failed. Please check network connection, proxy settings, or firewall configuration.
+            'error_network': '網路連線失敗。請確認網路可用，檢查代理設定是否正確，並確認防火牆允許存取。也可能是 API Key 失效，建議更換明確有效的 Key 進行重試。', # Network connection failed. Check the network, proxy, and firewall. The API key may also be invalid.
             'error_unknown': '未知錯誤。', # Unknown error.
             'http_status_detail': 'HTTP {status}，請求網址：{url}', # HTTP {status} for URL: {url}
             'technical_details': '技術細節', # Technical Details
@@ -388,15 +389,19 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.09.11）：優化咗每次提問傳送嘅請求資料',
+            'about_latest_update': '最新更新（2026.11.17）：加咗 EPUB 簡版閱讀器（唔支援圖片），閱讀時可以圈選文字再提問',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
-            'about_markdown_title': 'Markdown for calibre',
+            'about_markdown_title': 'Markdown',
             'about_markdown_desc': 'Calibre 插件 · Python\n將書本匯出做 Markdown 文字檔。',
-            'about_tradsimp_title': 'Chinese Text Conversion for calibre',
+            'about_tradsimp_title': 'Chinese Text Conversion',
             'about_tradsimp_desc': 'Calibre 插件 · Python · 離線\n喺電子書入面轉換繁體同簡體中文。',
-            'about_simple_goal_title': 'Simple Goal for calibre',
+            'about_simple_goal_title': 'Simple Goal',
             'about_simple_goal_desc': '維護緊讀緊嘅書單、睇進度，同埋從閱讀器同步。',
+            'about_booktoast_title': 'Booktoast',
+            'about_booktoast_desc': '打開 calibre 時，短暫顯示一條你曾經畫過嘅重點。',
+            'about_no_updates_title': 'No Updates',
+            'about_no_updates_desc': '一鍵關閉 calibre 嘅新版本更新提醒，唔影響外掛更新通知。',
             'about_open_button': 'MobileRead',
             'about_open_mobileread': '開啟 MobileRead',
             'about_mobileread_note': '注：MobileRead 係 calibre 插件發佈同更多版本更新資訊嘅開發者頁面。',
@@ -404,7 +409,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_nowtiny_note': '更多工具同插件狀態可以喺 Nowtiny 查看。',
 
             # 模型特定配置
-            'model_display_name_grok': 'Grok(SpaceXAI)', # Grok(SpaceXAI)
+            'model_display_name_grok': 'SpaceXSI', # SpaceXSI
             'model_display_name_gemini': 'Gemini(Google)', # Gemini(Google)
             'model_display_name_deepseek': 'Deepseek', # Deepseek
             'model_display_name_kimi': 'Kimi（月之暗面）', # Kimi (Moonshot)
@@ -595,6 +600,7 @@ class CantoneseTranslation(BaseTranslation):
             'ai_search_data_title': '書庫索引',
             'ai_search_data_subtitle': '加減書籍後重建索引同精簡提示詞快取',
             'library_search_system_message': '你係 calibre 書庫搜尋助手。淨係按用戶要求嘅 HTML 列表格式回傳匹配書籍。唔好分析、唔好思維鏈、唔好前言。',
+            'library_output_only_rule': '重要：淨係回傳上面 HTML 清單入面嘅相符書籍。唔好分析、唔好思維鏈、唔好清單以外嘅文字。',
             'library_prompt_template': '你可以睇到用戶嘅書庫。以下係所有書籍：{metadata} 用戶查詢：{query} 請喺當前書庫目錄入面搵出符合嘅書籍並以以下格式回傳（**重要**：用 HTML 連結格式，等用戶可以撳書名直接開書）：- <a href="calibre://book/書籍ID">書名</a> - 作者名 範例：- <a href="calibre://book/123">Python 程式設計</a> - Mark Lutz - <a href="calibre://book/456">機器學習實戰</a> - Peter Harrington 注意：部分作者資訊可能顯示為「unknown」，呢個係正常資料，請正常回傳所有符合結果，唔好俾呢個誤導。只回傳符合查詢嘅書籍。最多 5 個結果。',
             'ai_search_privacy_title': '隱私聲明',
             'ai_search_privacy_alert': 'AI 搜尋會用到你書庫入面嘅書籍元數據（書名同作者）。呢啲資料會傳送去你設定好嘅 AI 供應商度，用嚟處理你嘅搜尋請求。',
@@ -642,5 +648,64 @@ class CantoneseTranslation(BaseTranslation):
             'stat_books_unbelievable': '亞歷山大圖書館',
             
             # 連結 (v1.4.2)
-            'online_tutorial': '線上教程',
+            'tutorial_full_text': '全文',
+            'read_and_ask': '閱讀並提問',
+            'read_and_ask_need_one': '請只揀一本書。',
+            'read_and_ask_need_epub': '呢本書冇 EPUB 檔案。',
+            'read_and_ask_no_model': '請先喺外掛設定入面設定一個 AI 服務，再喺閱讀頁提問。',
+            'read_and_ask_webengine_missing': '而家呢個 calibre 冇內置瀏覽器，用唔到閱讀並提問。',
+            'read_and_ask_parse_failed': '開唔到呢本 EPUB：{error}',
+            'read_window_title': '閱讀並提問 — {title}',
+            'read_prev_chapter': '上一章',
+            'read_next_chapter': '下一章',
+            'read_selected_text': '選取文字',
+            'read_selection_placeholder': '喺左邊頁面圈選文字，文字會出現喺呢度。',
+            'read_note': '補充說明',
+            'read_note_placeholder': '可選。Enter 發送，會同選取文字一齊交俾 AI。',
+            'read_answer_placeholder': '喺書入面圈選文字之後提問，回覆顯示喺呢度。',
+            'read_selection_count': '已選 {n} 字',
+            'read_send': '提問',
+            'read_stop': '停止',
+            'read_answer': '回答',
+            'read_selection_empty': '請先喺書入面圈選一段文字。',
+            'read_no_chapters': '呢本 EPUB 冇可以閱讀嘅章節。',
+            'read_asking': '正在提問…',
+            'read_requesting': '請求緊',
+            'read_image_placeholder': '圖片暫不支援預覽：{name}',
+            'reader_prompt_section_title': '閱讀模式',
+            'reader_prompt_section_subtitle': '揀從閱讀頁提問時要交咩內容。可以分別包含書籍資料、而家章節、圈選文字，同埋圈選前後嘅上下文。',
+            'reader_include_book': '書籍資料',
+            'reader_include_chapter': '而家章節',
+            'reader_include_context': '圈選前後嘅上下文',
+            'reader_include_selection': '圈選文字',
+            'reader_include_note': '補充說明',
+            'reader_prompt_intro': '你喺度幫讀者理解一本書。下面嘅書籍資料、章節同段落只係閱讀上下文，用來講明讀者而家睇緊咩。請結合呢啲上下文，再用你原本識嘅知識回答，唔好淨係限於摘錄入面已經寫咗嘅內容，亦都唔好因為答案冇出現喺摘錄入面就拒絕回答。如果讀者冇另寫問題，就解釋選取嗰段。',
+            'reader_prompt_book': '書籍',
+            'reader_prompt_title': '書名',
+            'reader_prompt_author': '作者',
+            'reader_prompt_publisher': '出版社',
+            'reader_prompt_pubyear': '出版年',
+            'reader_prompt_language': '語言',
+            'reader_prompt_series': '系列',
+            'reader_prompt_chapter': '章節',
+            'reader_prompt_before': '圈選之前',
+            'reader_prompt_selection': '圈選段落',
+            'reader_prompt_after': '圈選之後',
+            'reader_prompt_question': '讀者嘅問題',
+            'reader_prompt_default_question': '請結合章節上下文解釋呢段文字。',
+            'reader_prompt_intro_label': '閱讀任務說明',
+            'reader_prompt_context_chars': '圈選前後字數',
+            'reader_prompt_default_note_label': '補充說明嘅預設文字',
+            'reader_prompt_preview_title': '示例預覽',
+            'reader_prompt_preview_hint': '下面用瑪麗·雪萊《科學怪人》一段文字做示例。剔選或者取消之後，預覽會加或者減對應部分。',
+            'reader_prompt_edit': '編輯',
+            'reader_prompt_done': '完成',
+            'reader_prompt_cancel': '取消',
+            'read_model': '模型',
+            'read_font_size': '字號',
+            'read_line_height': '行高',
+            'read_theme': '樣式',
+            'read_theme_default': '預設',
+            'read_theme_sepia': '護眼',
+            'read_theme_night': '夜間',
         }

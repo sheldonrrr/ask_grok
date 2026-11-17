@@ -28,7 +28,7 @@ ASK_INPUT_HEIGHT_COMPACT = 52
 ASK_COMBO_MIN_WIDTH = 140
 # 历史记录等 QToolButton 右侧为下拉箭头预留的空间
 ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE = 42 if sys.platform == 'darwin' else 36
-ASK_METADATA_COLLAPSED_HEIGHT = 24
+# 折叠摘要行旁的方形按钮边长 = 文字按钮外高（见 button_outer_height）
 ASK_RESPONSE_PANEL_MIN_HEIGHT = 120
 
 
@@ -47,8 +47,30 @@ def reset_application_cursor():
     app = QApplication.instance()
     if app is None:
         return
+    restored = 0
     while app.overrideCursor() is not None:
         app.restoreOverrideCursor()
+        restored += 1
+        if restored >= 30:
+            break
+    # Qt 的光标栈已经空了，但 Fedora 的 Wayland/XWayland 仍会继续播放
+    # 之前的转圈光标。压入再弹出一次箭头，强制显示服务更新指针图像。
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtGui import QCursor
+    app.setOverrideCursor(QCursor(Qt.ArrowCursor))
+    app.restoreOverrideCursor()
+
+
+def _force_widget_cursor(widget, cursor_shape):
+    """先清掉再设置，避免 Qt 认为光标没变而跳过系统光标更新。"""
+    if widget is None:
+        return
+    widget.unsetCursor()
+    widget.setCursor(cursor_shape)
+    viewport = widget.viewport() if hasattr(widget, 'viewport') else None
+    if viewport is not None:
+        viewport.unsetCursor()
+        viewport.setCursor(cursor_shape)
 
 
 def configure_ask_dialog_cursors(dialog):
@@ -58,19 +80,12 @@ def configure_ask_dialog_cursors(dialog):
     reset_application_cursor()
     if dialog is None:
         return
-    dialog.setCursor(Qt.ArrowCursor)
-    for attr in ('ask_toolbar', 'metadata_bar', 'input_area'):
-        widget = getattr(dialog, attr, None)
-        if widget is not None:
-            widget.setCursor(Qt.ArrowCursor)
+    _force_widget_cursor(dialog, Qt.ArrowCursor)
+    for attr in ('ask_toolbar', 'metadata_bar'):
+        _force_widget_cursor(getattr(dialog, attr, None), Qt.ArrowCursor)
+    _force_widget_cursor(getattr(dialog, 'input_area', None), Qt.IBeamCursor)
     for panel in getattr(dialog, 'response_panels', None) or []:
-        area = getattr(panel, 'response_area', None)
-        if area is None:
-            continue
-        area.setCursor(Qt.ArrowCursor)
-        viewport = area.viewport()
-        if viewport is not None:
-            viewport.setCursor(Qt.ArrowCursor)
+        _force_widget_cursor(getattr(panel, 'response_area', None), Qt.ArrowCursor)
 
 
 def get_ask_metadata_collapsed_style():
@@ -83,15 +98,20 @@ def get_ask_metadata_collapsed_style():
     """
 
 
-def get_ask_metadata_toggle_style():
-    """元数据展开/收起按钮样式。"""
+def get_ask_metadata_toggle_style(side, font_css=None):
+    """元数据展开/收起：方形图标按钮，边长与文字按钮外高相同。"""
+    font_decl = f'font-size: {font_css};' if font_css else ''
     return f"""
         QPushButton {{
             border: none;
             background: transparent;
             color: {TEXT_COLOR_PRIMARY};
-            padding: 0 4px;
-            min-width: 20px;
+            {font_decl}
+            padding: 0;
+            min-width: {side}px;
+            max-width: {side}px;
+            min-height: {side}px;
+            max-height: {side}px;
         }}
     """
 
@@ -106,17 +126,20 @@ PADDING_MEDIUM = 12
 PADDING_LARGE = 16
 
 # ============ 尺寸系统 ============
-# 按钮
-BUTTON_MIN_WIDTH = 100
+# 按钮宽度按按钮字号推导。短标签只占文字本身的宽度，长标签在达到上限前尽量多显示字符。
+# BUTTON_MIN_WIDTH = button_min_width(font)：约 3 个 “n” 的内容区宽度。
+# BUTTON_MAX_WIDTH = button_max_width(font)：约 40 个 “n” 的外宽（含水平内边距和边框）。
+BUTTON_MIN_WIDTH_CHARS = 3
+BUTTON_MAX_WIDTH_CHARS = 40
 BUTTON_MEDIUM_WIDTH = 150
 BUTTON_LARGE_WIDTH = 200
-BUTTON_HEIGHT = 32
-# 工具栏行高：控件 32px + 上下留白（容纳边框与焦点环，避免父容器裁切）
+# 外高 = 按钮字体的像素大小 + 上下内边距。样式表 min/max-height 写内容区
+# （外高减去两侧边框），避免和垂直 padding 叠成另一套高度。
+BUTTON_PADDING_V = 4
+BUTTON_PADDING_H = 12
+BUTTON_BORDER_PX = 1
+# 工具栏行在控件外高之外再留一圈，容纳边框与焦点环，避免父容器裁切。
 ASK_TOOLBAR_INSET_V = 2
-ASK_TOOLBAR_HEIGHT = BUTTON_HEIGHT + ASK_TOOLBAR_INSET_V * 2
-ASK_TOOLBAR_BUTTON_MIN_WIDTH = 100
-# 样式表 height 为内容区，1px 边框各占一侧，合计 BUTTON_HEIGHT
-ASK_TOOLBAR_CONTROL_INNER_HEIGHT = BUTTON_HEIGHT - 2
 
 # 输入框
 INPUT_MIN_WIDTH = 200
@@ -154,6 +177,160 @@ FONT_SIZE_SMALL = '0.9em'
 FONT_SIZE_NORMAL = '1em'
 FONT_SIZE_MEDIUM = '1.08em'
 FONT_SIZE_LARGE = '1.15em'
+# 按钮文字比正文小 2 个字号。正文是控件继承的应用字体（点或像素，FONT_SIZE_NORMAL = 1em）。
+BUTTON_FONT_SIZE_DELTA = 2
+
+
+def _font_metrics_width(font, text):
+    from PyQt5.QtGui import QFontMetrics
+
+    metrics = QFontMetrics(font)
+    if hasattr(metrics, 'horizontalAdvance'):
+        return metrics.horizontalAdvance(text)
+    return metrics.width(text)
+
+
+def body_font_size(font):
+    """正文的单位和字号。点数字体减点，像素字体减像素，不另造一套正文大小。"""
+    from PyQt5.QtGui import QFontInfo
+
+    if font is None:
+        return None, 0
+    if font.pixelSize() > 0:
+        return 'px', int(font.pixelSize())
+    if font.pointSize() > 0:
+        return 'pt', int(font.pointSize())
+    info = QFontInfo(font)
+    if info.pointSize() > 0:
+        return 'pt', int(info.pointSize())
+    if info.pixelSize() > 0:
+        return 'px', int(info.pixelSize())
+    return None, 0
+
+
+def button_font_from_body(body_font):
+    """按钮字体：与正文同一单位，小 BUTTON_FONT_SIZE_DELTA 个字号。"""
+    from PyQt5.QtGui import QFont
+
+    font = QFont(body_font)
+    unit, size = body_font_size(body_font)
+    if not size:
+        return font
+    smaller = max(1, int(size) - BUTTON_FONT_SIZE_DELTA)
+    if unit == 'px':
+        font.setPixelSize(smaller)
+    else:
+        font.setPointSize(smaller)
+    return font
+
+
+def button_font_css(font):
+    """样式表 font-size，单位与按钮字体一致。"""
+    unit, size = body_font_size(font)
+    if not size:
+        return None
+    return f'{int(size)}{unit}'
+
+
+def install_button_font(widget):
+    """把控件字体设为正文减 2。重复调用不会再减一次。"""
+    from PyQt5.QtGui import QFont
+
+    key = 'ask_button_body_size'
+    stored = widget.property(key) if widget is not None else None
+    if stored:
+        unit, _, num = str(stored).partition(':')
+        body = QFont(widget.font())
+        if unit == 'px':
+            body.setPixelSize(int(num))
+        else:
+            body.setPointSize(int(num))
+    else:
+        body = QFont(widget.font()) if widget is not None else QFont()
+        unit, size = body_font_size(body)
+        if widget is not None and size:
+            widget.setProperty(key, f'{unit}:{int(size)}')
+    font = button_font_from_body(body)
+    if widget is not None:
+        widget.setFont(font)
+    return font
+
+
+def button_pixel_size(font):
+    """按钮字体对应的像素大小，用来推外高。"""
+    from PyQt5.QtGui import QFontInfo
+
+    px = QFontInfo(font).pixelSize()
+    if px > 0:
+        return int(px)
+    unit, size = body_font_size(font)
+    if unit == 'px':
+        return int(size)
+    if unit == 'pt' and size:
+        return max(1, int(round(size * 96 / 72.0)))
+    return 0
+
+
+def button_outer_height(font):
+    """文字按钮外高：按钮字体像素大小 + 上下内边距。"""
+    return button_pixel_size(font) + BUTTON_PADDING_V * 2
+
+
+def button_content_height(font):
+    """样式表 min-height 的内容区。两侧边框在内容区之外。"""
+    return max(1, button_outer_height(font) - BUTTON_BORDER_PX * 2)
+
+
+def button_min_width(font):
+    """BUTTON_MIN_WIDTH：短标签的内容区下限（像素）。"""
+    return max(1, _font_metrics_width(font, 'n' * BUTTON_MIN_WIDTH_CHARS))
+
+
+def button_max_width(font):
+    """BUTTON_MAX_WIDTH：长标签的外宽上限（像素，含水平内边距和边框）。"""
+    text = _font_metrics_width(font, 'n' * BUTTON_MAX_WIDTH_CHARS)
+    return text + BUTTON_PADDING_H * 2 + BUTTON_BORDER_PX * 2
+
+
+def _button_metric_declarations(font, min_width):
+    """字号、相对高度、最小宽度。不写 max-width，避免纵向布局把短按钮拉到上限。"""
+    rules = []
+    if font is not None:
+        css = button_font_css(font)
+        if css:
+            rules.append(f'font-size: {css};')
+        height = button_content_height(font)
+        rules.append(f'min-height: {height}px;')
+        rules.append(f'max-height: {height}px;')
+    if min_width:
+        rules.append(f'min-width: {int(min_width)}px;')
+    return '\n            '.join(rules)
+
+
+def apply_text_button_width(button, font, min_width, max_width=None, stretch=False):
+    """短按钮按文字收缩；只有文字宽于上限时才封顶。拉伸按钮交给布局。"""
+    from PyQt5.QtWidgets import QSizePolicy, QWIDGETSIZE_MAX
+
+    if stretch or min_width == 0:
+        button.setMinimumWidth(0)
+        button.setMaximumWidth(QWIDGETSIZE_MAX)
+        button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        return
+    button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    button.setMaximumWidth(QWIDGETSIZE_MAX)
+    button.ensurePolished()
+    cap = button_max_width(font) if max_width is None else int(max_width)
+    if cap and button.sizeHint().width() > cap:
+        button.setMaximumWidth(cap)
+
+
+def style_metadata_toggle_button(button):
+    """元数据展开/收起方钮：边长等于文字按钮外高。"""
+    font = install_button_font(button)
+    side = button_outer_height(font)
+    button.setFixedSize(side, side)
+    button.setStyleSheet(get_ask_metadata_toggle_style(side, button_font_css(font)))
+
 
 # 回答区排版
 RESPONSE_FONT_FAMILY = (
@@ -531,51 +708,52 @@ def get_tab_scroll_area_style(object_name="tab_scroll"):
     """
 
 # ============ 标准按钮样式 ============
-STANDARD_BUTTON_MIN_WIDTH = 120  # 标准按钮最小宽度
-STANDARD_BUTTON_PADDING = "5px 12px"  # 标准按钮内边距
+# 只留水平内边距。垂直空间放在 min/max-height 里，避免和内容区高度叠在一起。
+STANDARD_BUTTON_PADDING = f"0 {BUTTON_PADDING_H}px"
 
-def get_standard_button_style(min_width=STANDARD_BUTTON_MIN_WIDTH):
+def get_standard_button_style(min_width=None, padding=None, font=None):
     """
-    获取标准按钮样式
-    
-    注意：不设置 hover 和 pressed 样式，让 Qt 使用系统默认效果。
-    这样可以确保在所有平台（Linux/macOS/Windows）和主题（浅色/深色）下都正常工作。
-    
+    标准文字按钮样式。字号比正文小 2，高度由按钮字体和内边距推出。
+
+    不设置 hover 和 pressed，让 Qt 使用系统默认按压效果，
+    以便在各平台和明暗主题下保持原生观感。
+    不写 max-width：纵向布局会把控件拉到最大宽度，短标签就会铺满一行。
+
     Args:
-        min_width: 最小宽度（默认 120px）
-    
+        min_width: 内容区最小宽度（像素）。None 时由调用方填 button_min_width。
+        padding: 内边距；默认 STANDARD_BUTTON_PADDING（垂直为 0）
+        font: 已经比正文小 2 个字号的按钮字体
+
     Returns:
         str: 按钮的 CSS 样式字符串
     """
+    pad = STANDARD_BUTTON_PADDING if padding is None else padding
+    metrics = _button_metric_declarations(font, min_width)
     return f"""
         QPushButton {{
-            padding: {STANDARD_BUTTON_PADDING};
+            padding: {pad};
             text-align: center;
-            min-width: {min_width}px;
-            min-height: 1.5em;
+            {metrics}
         }}
     """
 
 
-def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
-    """Ask 工具栏 QPushButton（发送/停止/随机）：与历史按钮采用一致的平台策略。"""
+def get_ask_toolbar_pushbutton_style(min_width=None, font=None):
+    """Ask 工具栏 QPushButton（发送/停止/随机）：字号和高度与标准按钮一致。"""
     is_macos = sys.platform == 'darwin'
-    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT if is_macos else BUTTON_HEIGHT
     border_decl = "border: 1px solid palette(mid);" if is_macos else ""
     radius_decl = "border-radius: 4px;" if is_macos else ""
     focus_style = (
         "QPushButton:focus {\n            border: 1px solid palette(highlight);\n        }"
         if is_macos else ""
     )
+    metrics = _button_metric_declarations(font, min_width)
     return f"""
         QPushButton {{
-            min-width: {min_width}px;
-            min-height: {h}px;
-            max-height: {h}px;
-            height: {h}px;
+            {metrics}
             {border_decl}
             {radius_decl}
-            padding: 0 12px;
+            padding: 0 {BUTTON_PADDING_H}px;
             margin: 0;
             text-align: center;
         }}
@@ -583,11 +761,10 @@ def get_ask_toolbar_pushbutton_style(min_width=ASK_TOOLBAR_BUTTON_MIN_WIDTH):
     """
 
 
-def get_ask_toolbar_toolbutton_style(min_width=ASK_COMBO_MIN_WIDTH):
-    """Ask 工具栏 QToolButton（历史记录等）：与 PushButton 同高。"""
+def get_ask_toolbar_toolbutton_style(min_width=None, font=None):
+    """Ask 工具栏 QToolButton（历史记录等）：与 PushButton 同字号、同高。"""
     arrow_reserve = ASK_TOOLBAR_TOOLBUTTON_ARROW_RESERVE
     is_macos = sys.platform == 'darwin'
-    h = ASK_TOOLBAR_CONTROL_INNER_HEIGHT if is_macos else BUTTON_HEIGHT
     border_decl = "border: 1px solid palette(mid);" if is_macos else ""
     radius_decl = "border-radius: 4px;" if is_macos else ""
     focus_style = (
@@ -595,15 +772,13 @@ def get_ask_toolbar_toolbutton_style(min_width=ASK_COMBO_MIN_WIDTH):
         if is_macos else ""
     )
     indicator_right = 12 if is_macos else 10
+    metrics = _button_metric_declarations(font, min_width)
     return f"""
         QToolButton {{
-            min-width: {min_width}px;
-            min-height: {h}px;
-            max-height: {h}px;
-            height: {h}px;
+            {metrics}
             {border_decl}
             {radius_decl}
-            padding: 0 {arrow_reserve}px 0 12px;
+            padding: 0 {arrow_reserve}px 0 {BUTTON_PADDING_H}px;
             margin: 0;
             text-align: left;
         }}
@@ -628,14 +803,12 @@ def elide_ask_toolbar_toolbutton_text(text, font, button_width):
     return QFontMetrics(font).elidedText(text, Qt.ElideRight, max_width)
 
 
-def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH):
-    """Ask 工具栏 QComboBox（AI 切换器）：与按钮同高。"""
+def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH, font=None):
+    """Ask 工具栏 QComboBox（AI 切换器）：与按钮同字号、同高。最小宽度仍按内容。"""
+    metrics = _button_metric_declarations(font, min_width)
     return f"""
         QComboBox {{
-            min-width: {min_width}px;
-            min-height: {BUTTON_HEIGHT}px;
-            max-height: {BUTTON_HEIGHT}px;
-            height: {BUTTON_HEIGHT}px;
+            {metrics}
             padding: 0 8px;
             margin: 0;
             text-align: left;
@@ -647,20 +820,35 @@ def get_ask_toolbar_combo_style(min_width=ASK_COMBO_MIN_WIDTH):
     """
 
 
-def style_ask_toolbar_widget(widget, min_width=None):
-    """为 Ask 工具栏控件应用统一尺寸与样式。"""
-    from PyQt5.QtWidgets import QComboBox, QToolButton, QPushButton
+def _clear_widget_fixed_height(widget):
+    """去掉固定像素高度，改由样式表里的相对高度决定。"""
+    from PyQt5.QtWidgets import QWIDGETSIZE_MAX
 
-    width = min_width or ASK_COMBO_MIN_WIDTH
-    widget.setFixedHeight(BUTTON_HEIGHT)
-    if hasattr(widget, 'setMinimumWidth'):
-        widget.setMinimumWidth(width)
+    widget.setMinimumHeight(0)
+    widget.setMaximumHeight(QWIDGETSIZE_MAX)
+
+
+def style_ask_toolbar_widget(widget, min_width=None, max_width=None):
+    """为 Ask 工具栏控件应用统一字号、相对高度和宽度。"""
+    from PyQt5.QtWidgets import QComboBox, QToolButton, QPushButton, QWIDGETSIZE_MAX
+
+    font = install_button_font(widget)
+    _clear_widget_fixed_height(widget)
     if isinstance(widget, QComboBox):
-        widget.setStyleSheet(get_ask_toolbar_combo_style(width))
+        width = ASK_COMBO_MIN_WIDTH if min_width is None else min_width
+        widget.setMinimumWidth(width)
+        widget.setStyleSheet(get_ask_toolbar_combo_style(width, font))
     elif isinstance(widget, QToolButton):
-        widget.setStyleSheet(get_ask_toolbar_toolbutton_style(width))
+        width = button_min_width(font) if min_width is None else min_width
+        widget.setMinimumWidth(width)
+        widget.setMaximumWidth(QWIDGETSIZE_MAX)
+        widget.setStyleSheet(get_ask_toolbar_toolbutton_style(width, font))
     elif isinstance(widget, QPushButton):
-        widget.setStyleSheet(get_ask_toolbar_pushbutton_style(width))
+        width = button_min_width(font) if min_width is None else min_width
+        widget.setStyleSheet(get_ask_toolbar_pushbutton_style(width, font))
+        apply_text_button_width(
+            widget, font, width, max_width, stretch=(width == 0),
+        )
 
 
 # ============ QListWidget 样式 ============
@@ -719,11 +907,17 @@ def get_toolbutton_menu_style():
     Returns:
         str: QToolButton 的 CSS 样式字符串
     """
-    # 解析标准 padding
+    # 解析标准 padding。高度与文字按钮相同，随按钮字号变化。
+    from PyQt5.QtGui import QFont
+    from PyQt5.QtWidgets import QApplication
+
     padding_parts = STANDARD_BUTTON_PADDING.split()
-    vertical_padding = padding_parts[0] if len(padding_parts) > 0 else "5px"
-    horizontal_padding = padding_parts[1] if len(padding_parts) > 1 else "12px"
-    
+    vertical_padding = padding_parts[0] if len(padding_parts) > 0 else "0px"
+    horizontal_padding = padding_parts[1] if len(padding_parts) > 1 else f"{BUTTON_PADDING_H}px"
+    app = QApplication.instance()
+    font = button_font_from_body(app.font() if app is not None else QFont())
+    metrics = _button_metric_declarations(font, None)
+
     return f"""
         QToolButton {{
             padding-top: {vertical_padding};
@@ -731,6 +925,7 @@ def get_toolbutton_menu_style():
             padding-left: {horizontal_padding};
             padding-right: 30px;
             text-align: left;
+            {metrics}
         }}
         QToolButton::menu-indicator {{
             subcontrol-origin: padding;

@@ -8,7 +8,7 @@ Ask AI Plugin 的 **OpenAI** 提供商使用最新推荐的 **Responses API**（
 
 - **API Key**: 必需。`Authorization: Bearer ${apiKey}`
 - **Base URL**: 必需。例如 `https://api.openai.com/v1`
-- **Model**: 例如 `gpt-5-chat-latest`（较通用的 Chat 别名；具体可用模型以帐号 `/models` 列表为准）
+- **Model**: 例如 `gpt-6.1-sol`（当前兼顾能力与成本的默认；旗舰是 `gpt-6-astra`。具体可用模型以帐号 `/models` 列表为准）
 
 ## 获取模型列表
 
@@ -31,11 +31,10 @@ Ask AI Plugin 的 **OpenAI** 提供商使用最新推荐的 **Responses API**（
 - **请求体 (Body)**:
   ```json
   {
-    "model": "gpt-5-chat-latest",
+    "model": "gpt-6.1-sol",
     "instructions": "<系统提示词>",
     "input": "<用户提示词>",
-    "store": false,
-    "temperature": 0.7
+    "store": false
   }
   ```
 
@@ -47,6 +46,8 @@ Ask AI Plugin 的 **OpenAI** 提供商使用最新推荐的 **Responses API**（
 | `max_tokens` | `max_output_tokens` |
 | `choices[0].message.content` | `output_text` 或 `output[].content[].text` |
 | 默认可能存储 | 插件默认 `store: false` |
+
+`gpt-6.1-sol` 与 `gpt-6-astra` 默认开启推理，请求里不要带 `temperature`。旧模型（如 `gpt-4o`）仍可带。
 
 ## 流式传输
 

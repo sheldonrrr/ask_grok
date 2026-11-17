@@ -4,7 +4,7 @@
 
 - **API Key**: 必需。通过请求头 `x-goog-api-key` 发送（推荐；旧的 `?key=` 查询参数仍可用但不推荐）。
 - **Base URL**: 必需。例如 `https://generativelanguage.googleapis.com/v1beta`。
-- **Model**: 使用 Google AI 原生名称，例如 `gemini-3.5-flash`（不要使用 OpenRouter 风格的 `google/gemini-...`）。
+- **Model**: 使用 Google AI 原生名称，例如 `gemini-3.8-flash`（不要使用 OpenRouter 风格的 `google/gemini-...`）。
 
 ## 获取模型列表
 
@@ -21,7 +21,7 @@
   {
     "models": [
       {
-        "name": "models/gemini-3.5-flash",
+        "name": "models/gemini-3.8-flash",
         "displayName": "Gemini 3.5 Flash",
         "supportedGenerationMethods": ["generateContent", "countTokens"]
       }
@@ -72,16 +72,16 @@
 
 1. **认证**: 优先使用 `x-goog-api-key` 请求头，不要把 Key 放进 URL
 2. **系统提示**: 使用顶层字段 `systemInstruction`，不要再伪装成 `role: user` 的 contents
-3. **模型名**: URL 中使用 `gemini-3.5-flash`，不要带 `models/`；也不要带 `google/`
+3. **模型名**: URL 中使用 `gemini-3.8-flash`，不要带 `models/`；也不要带 `google/`
 4. **流式**: `streamGenerateContent` + `alt=sse`，按 `data: {...}` 解析 `candidates[0].content.parts[].text`
 
 ## 常见问题
 
 ### 404 Not Found
-**原因**: 模型名错误（例如误用 `google/gemini-3.5-flash`）
+**原因**: 模型名错误（例如误用 `google/gemini-3.8-flash`）
 
 **解决方案**:
-- 改成 `gemini-3.5-flash`
+- 改成 `gemini-3.8-flash`
 - 或在设置里刷新模型列表后重新选择
 
 ### 400 Bad Request - 地理位置限制
@@ -105,4 +105,4 @@
 1. Header 认证：`x-goog-api-key`
 2. 系统提示：`systemInstruction`
 3. 对话内容：`contents[].role` + `parts[].text`
-4. 模型名：原生 ID（如 `gemini-3.5-flash`）
+4. 模型名：原生 ID（如 `gemini-3.8-flash`）

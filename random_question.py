@@ -40,12 +40,20 @@ class SuggestionWorker(QThread):
             
             # 准备书籍信息，使用 getattr 安全获取属性
             try:
-                title = clean_prompt_metadata_text(str(getattr(self.book_info, 'title', 'Unknown'))) or 'Unknown'
+                unknown = self.i18n.get('unknown', 'Unknown')
+                title = clean_prompt_metadata_text(
+                    str(getattr(self.book_info, 'title', unknown))
+                ) or unknown
                 authors = getattr(self.book_info, 'authors', [])
                 author_str = clean_prompt_metadata_text(
                     ', '.join(map(str, authors)) if authors and isinstance(authors, (list, tuple)) else ''
                 )
-                language = str(getattr(self.book_info, 'language', 'Unknown'))
+                raw_language = getattr(self.book_info, 'language', None)
+                if raw_language:
+                    from .ui import AskDialog
+                    language = AskDialog.book_language_label(raw_language, unknown) or ''
+                else:
+                    language = ''
             except Exception as e:
                 error_msg = f"获取书籍信息时出错: {str(e)}"
                 logger.error(error_msg)
@@ -74,12 +82,13 @@ class SuggestionWorker(QThread):
                 self.error_occurred.emit(error_msg)
                 return
             
-            # 如果用户没有配置，则使用默认模板
+            from .prompts_widget import resolve_request_template
+            template = resolve_request_template(get_prefs(), 'random')
             if not template:
                 template = get_suggestion_template(lang_code)
                 logger.info("用户未配置随机问题提示词，使用默认模板")
             else:
-                logger.info("使用用户配置的随机问题提示词")
+                logger.info("使用当前语言的随机问题提示词")
             
             # 记录使用的模板
             logger.info(f"使用的问题随机问题模板: {template[:200]}...")

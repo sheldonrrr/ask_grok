@@ -21,7 +21,7 @@ class MistralModel(BaseAIModel):
     Mistral AI Model Implementation Class
     """
     # Default model name
-    DEFAULT_MODEL = "mistral-large-latest"
+    DEFAULT_MODEL = "mistral-large-4"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.mistral.ai/v1"
 

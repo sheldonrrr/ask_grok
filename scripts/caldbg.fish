@@ -52,13 +52,50 @@ function __ask_grok_install_plugin
     return 0
 end
 
+function __ask_grok_calibre_still_running
+    pgrep -x calibre >/dev/null 2>&1
+    or pgrep -x calibre-debug >/dev/null 2>&1
+end
+
+function __ask_grok_bump_build
+    __ask_grok_check_dir; or return 1
+    set -l old (python3 -c 'import pathlib,re,sys; t=pathlib.Path(sys.argv[1]).read_text(); m=re.search(r"^VERSION = \(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)", t, re.M); print("(%s, %s, %s)" % m.groups())' "$ASK_GROK_ROOT/version.py")
+    set -l new (sh "$ASK_GROK_ROOT/scripts/bump-build.sh"); or return 1
+    set -l shown (string replace -a '.' ', ' -- $new)
+    echo "本地测试号: $old -> ($shown)"
+end
+
+function __ask_grok_wait_calibre_quit
+    # calibre-debug -s returns before the app process is gone.
+    # This machine starts the GUI as calibre-debug, not calibre.
+    # Starting again while that process is still alive reuses it,
+    # so the log keeps the plugin version from before this bump.
+    for _i in (seq 1 50)
+        if not __ask_grok_calibre_still_running
+            return 0
+        end
+        sleep 0.2
+    end
+    echo "错误: Calibre 没有退出，已取消启动，避免日志仍是旧版本"
+    return 1
+end
+
 function caldbg
     __ask_grok_install_plugin; or return 1
     calibre-debug --gui
 end
 
 function caldbg-ag
+    # Re-read this file when an already-open terminal still has an older function.
+    # The impl name is separate so this reload does not call itself.
+    source "$ASK_GROK_ROOT/scripts/caldbg.fish" >/dev/null
+    __ask_grok_caldbg_ag_impl
+end
+
+function __ask_grok_caldbg_ag_impl
+    __ask_grok_bump_build; or return 1
     calibre-debug -s
+    __ask_grok_wait_calibre_quit; or return 1
     __ask_grok_install_plugin; or return 1
     calibre-debug --gui
 end
@@ -86,6 +123,6 @@ end
 
 echo "ask_grok — source scripts/caldbg.fish"
 echo "  caldbg      源码安装 + 启动"
-echo "  caldbg-ag   结束旧进程 + 源码安装 + 启动"
+echo "  caldbg-ag   测试号 +1，等旧进程退出，再安装并启动"
 echo "  caldbg-p    打包 dist + 安装 zip + 启动"
 echo "  caldbg-pag  同 caldbg-p，但先结束旧进程"

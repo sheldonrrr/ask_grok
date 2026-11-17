@@ -4,11 +4,16 @@
 import logging
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QPlainTextEdit, 
                             QPushButton, QHBoxLayout, QGroupBox, QScrollArea, 
-                            QSizePolicy, QMessageBox)
+                            QSizePolicy, QMessageBox, QSpinBox)
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QFontMetrics
 
 from .i18n import get_default_template, get_suggestion_template, get_multi_book_template
+from .widgets import apply_button_style
+try:
+    from .epub_reader import READER_PROMPT_INTRO_FALLBACK, stored_reader_intro
+except ImportError:
+    from epub_reader import READER_PROMPT_INTRO_FALLBACK, stored_reader_intro
 from .ui_constants import (
     SPACING_SMALL, SPACING_MEDIUM, SPACING_ASK_COMPACT,
     get_groupbox_style, get_section_title_style, get_subtitle_style,
@@ -17,6 +22,132 @@ from .ui_constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class ReaderEditableField(QWidget):
+    """A setting that stays as plain text until the user finishes an edit."""
+
+    value_committed = pyqtSignal()
+
+    def __init__(self, title, kind='text', parent=None):
+        super().__init__(parent)
+        self.kind = kind
+        self._editing = False
+        self._value = '' if kind == 'text' else 500
+        self._edit_label = 'Edit'
+        self._done_label = 'Done'
+        self._cancel_label = 'Cancel'
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, SPACING_SMALL, 0, 0)
+        layout.setSpacing(SPACING_SMALL)
+
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
+        header.setSpacing(SPACING_SMALL)
+        self.title_label = QLabel(title)
+        self.title_label.setStyleSheet('font-weight: 600;')
+        header.addWidget(self.title_label, 1)
+        self.edit_button = QPushButton(self._edit_label)
+        self.cancel_button = QPushButton(self._cancel_label)
+        self.cancel_button.setVisible(False)
+        self.edit_button.clicked.connect(self._on_primary)
+        self.cancel_button.clicked.connect(self.cancel_edit)
+        header.addWidget(self.edit_button)
+        header.addWidget(self.cancel_button)
+        layout.addLayout(header)
+
+        self.view_label = QLabel('')
+        self.view_label.setWordWrap(True)
+        self.view_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.view_label.setStyleSheet(
+            'color: {0};'.format(TEXT_COLOR_SECONDARY_STRONG)
+        )
+        layout.addWidget(self.view_label)
+
+        if kind == 'number':
+            self.editor = QSpinBox(self)
+            self.editor.setRange(50, 2000)
+            self.editor.setSingleStep(50)
+            self.editor.setMinimumWidth(120)
+        else:
+            self.editor = QPlainTextEdit(self)
+            self.editor.setMinimumHeight(72)
+            self.editor.setMaximumHeight(140)
+        self.editor.setVisible(False)
+        layout.addWidget(self.editor)
+        self._show_view()
+
+    def set_range(self, minimum, maximum):
+        if self.kind == 'number':
+            self.editor.setRange(minimum, maximum)
+
+    def set_action_labels(self, edit, done, cancel):
+        self._edit_label = edit
+        self._done_label = done
+        self._cancel_label = cancel
+        self.cancel_button.setText(cancel)
+        self.edit_button.setText(self._done_label if self._editing else self._edit_label)
+
+    def value(self):
+        return self._value
+
+    def set_value(self, value):
+        if self.kind == 'number':
+            try:
+                self._value = int(value)
+            except (TypeError, ValueError):
+                self._value = 500
+        else:
+            self._value = value.strip() if isinstance(value, str) else str(value or '')
+        if self._editing:
+            self._editing = False
+        self._show_view()
+
+    def commit_if_editing(self):
+        if self._editing:
+            self._finish(True)
+
+    def cancel_edit(self):
+        if self._editing:
+            self._finish(False)
+
+    def _on_primary(self):
+        if self._editing:
+            self._finish(True)
+        else:
+            self._begin()
+
+    def _begin(self):
+        self._editing = True
+        if self.kind == 'number':
+            self.editor.setValue(int(self._value))
+        else:
+            self.editor.setPlainText(self._value)
+        self.view_label.setVisible(False)
+        self.editor.setVisible(True)
+        self.cancel_button.setVisible(True)
+        self.edit_button.setText(self._done_label)
+        self.editor.setFocus()
+
+    def _finish(self, commit):
+        if commit:
+            if self.kind == 'number':
+                self._value = int(self.editor.value())
+            else:
+                self._value = self.editor.toPlainText().strip()
+        self._editing = False
+        self._show_view()
+        if commit:
+            self.value_committed.emit()
+
+    def _show_view(self):
+        self.editor.setVisible(False)
+        self.cancel_button.setVisible(False)
+        self.edit_button.setText(self._edit_label)
+        shown = str(self._value) if self.kind == 'number' else self._value
+        self.view_label.setText(shown)
+        self.view_label.setVisible(True)
 
 
 class PromptsWidget(QWidget):
@@ -57,6 +188,9 @@ class PromptsWidget(QWidget):
         # 添加 Persona 部分
         self.add_persona_section(content_layout)
         
+        # 阅读模式：勾选要提交的内容，和下面的模板编辑分开
+        self.add_reader_prompt_section(content_layout)
+
         # 添加提示词模板部分
         self.add_prompts_section(content_layout)
         
@@ -166,6 +300,104 @@ class PromptsWidget(QWidget):
         self.persona_edit.setEnabled(is_checked)
         self.on_config_changed()
     
+    def add_reader_prompt_section(self, parent_layout):
+        """阅读模式提交哪些内容，用勾选控制，不要求用户写模板字段。"""
+        from PyQt5.QtWidgets import QCheckBox
+        try:
+            from .epub_reader import READER_CONTEXT_CHARS, READER_CONTEXT_CHARS_MAX, READER_CONTEXT_CHARS_MIN
+        except ImportError:
+            from epub_reader import READER_CONTEXT_CHARS, READER_CONTEXT_CHARS_MAX, READER_CONTEXT_CHARS_MIN
+
+        section, title, subtitle = add_settings_section(
+            parent_layout,
+            self.i18n.get('reader_prompt_section_title', 'Reading mode'),
+            self.i18n.get(
+                'reader_prompt_section_subtitle',
+                'Choose what is sent when you ask from the reader. The selected passage, its chapter, and the surrounding text can each be included.',
+            ),
+        )
+        title.setObjectName('title_reader_prompt')
+        subtitle.setObjectName('subtitle_reader_prompt')
+
+        group = QGroupBox()
+        group.setStyleSheet(get_groupbox_style())
+        layout = QVBoxLayout()
+        configure_layout(layout, 'settings_section')
+        self.reader_prompt_checks = {}
+        for key, label_key, fallback in (
+            ('reader_include_book', 'reader_include_book', 'Book information'),
+            ('reader_include_chapter', 'reader_include_chapter', 'Current chapter'),
+            ('reader_include_context', 'reader_include_context', 'Text around the selection'),
+            ('reader_include_selection', 'reader_include_selection', 'Selected text'),
+            ('reader_include_note', 'reader_include_note', 'Your note'),
+        ):
+            box = QCheckBox(self.i18n.get(label_key, fallback))
+            box.setObjectName('checkbox_' + key)
+            box.setChecked(True)
+            box.stateChanged.connect(self._on_reader_section_toggled)
+            self.reader_prompt_checks[key] = box
+            layout.addWidget(box)
+
+        self.reader_intro_field = ReaderEditableField(
+            self.i18n.get('reader_prompt_intro_label', 'Reading task'),
+            'text',
+            self,
+        )
+        self.reader_intro_field.title_label.setObjectName('label_reader_intro')
+        self.reader_intro_field.set_value(self._reader_text_default(
+            'reader_prompt_intro', READER_PROMPT_INTRO_FALLBACK,
+        ))
+        self.reader_intro_field.value_committed.connect(self._on_reader_field_committed)
+
+        self.reader_chars_field = ReaderEditableField(
+            self.i18n.get('reader_prompt_context_chars', 'Characters before and after the selection'),
+            'number',
+            self,
+        )
+        self.reader_chars_field.title_label.setObjectName('label_reader_context_chars')
+        self.reader_chars_field.set_range(READER_CONTEXT_CHARS_MIN, READER_CONTEXT_CHARS_MAX)
+        self.reader_chars_field.set_value(READER_CONTEXT_CHARS)
+        self.reader_chars_field.value_committed.connect(self._on_reader_field_committed)
+
+        self.reader_note_field = ReaderEditableField(
+            self.i18n.get('reader_prompt_default_note_label', 'Default note'),
+            'text',
+            self,
+        )
+        self.reader_note_field.title_label.setObjectName('label_reader_default_note')
+        self.reader_note_field.set_value(self._reader_text_default(
+            'reader_prompt_default_question',
+            'Explain this passage using the chapter context.',
+        ))
+        self.reader_note_field.value_committed.connect(self._on_reader_field_committed)
+        self._apply_reader_action_labels()
+
+        preview_title = QLabel(self.i18n.get('reader_prompt_preview_title', 'Example preview'))
+        preview_title.setObjectName('label_reader_preview_title')
+        preview_title.setStyleSheet('font-weight: 600;')
+        preview_hint = QLabel(self.i18n.get(
+            'reader_prompt_preview_hint',
+            'This preview uses a passage from Frankenstein by Mary Shelley. Checking a box adds or removes that part.',
+        ))
+        preview_hint.setObjectName('label_reader_preview_hint')
+        preview_hint.setWordWrap(True)
+        preview_hint.setStyleSheet('color: {0};'.format(TEXT_COLOR_SECONDARY_STRONG))
+        self.reader_preview = QPlainTextEdit(self)
+        self.reader_preview.setObjectName('reader_prompt_preview')
+        self.reader_preview.setReadOnly(True)
+        self.reader_preview.setMinimumHeight(180)
+        self.reader_preview.setMaximumHeight(320)
+
+        layout.addWidget(self.reader_intro_field)
+        layout.addWidget(self.reader_chars_field)
+        layout.addWidget(self.reader_note_field)
+        layout.addWidget(preview_title)
+        layout.addWidget(preview_hint)
+        layout.addWidget(self.reader_preview)
+        group.setLayout(layout)
+        section.addWidget(group)
+        self._refresh_reader_preview()
+
     def add_prompts_section(self, parent_layout):
         """添加提示词模板部分"""
         prompts_section, prompts_title, prompts_subtitle = add_settings_section(
@@ -292,6 +524,7 @@ class PromptsWidget(QWidget):
         
         reset_button = QPushButton(self.i18n.get('reset_prompts', 'Reset Prompts to Default'))
         reset_button.setObjectName('button_reset_prompts')
+        apply_button_style(reset_button)
         reset_button.clicked.connect(self.on_reset_prompts)
         reset_layout.addWidget(reset_button)
         
@@ -471,6 +704,23 @@ class PromptsWidget(QWidget):
             # 重置语言偏好设置（默认关闭）
             self.use_interface_language_checkbox.setChecked(False)
             self.update_language_instruction_display()
+            for box in getattr(self, 'reader_prompt_checks', {}).values():
+                box.setChecked(True)
+            if hasattr(self, 'reader_intro_field'):
+                self.reader_intro_field.cancel_edit()
+                self.reader_intro_field.set_value(self._reader_text_default(
+                    'reader_prompt_intro', READER_PROMPT_INTRO_FALLBACK,
+                ))
+            if hasattr(self, 'reader_note_field'):
+                self.reader_note_field.cancel_edit()
+                self.reader_note_field.set_value(self._reader_text_default(
+                    'reader_prompt_default_question',
+                    'Explain this passage using the chapter context.',
+                ))
+            if hasattr(self, 'reader_chars_field'):
+                self.reader_chars_field.cancel_edit()
+                self.reader_chars_field.set_value(500)
+            self._refresh_reader_preview()
             
             logger.info("提示词已重置为默认值")
             
@@ -623,6 +873,9 @@ class PromptsWidget(QWidget):
         )
         self.persona_edit.setText(final_persona)
         self.persona_edit.setEnabled(use_persona)
+        self._load_reader_prompt_checks(prefs)
+        self._load_reader_prompt_fields(prefs, lang_code)
+        self._refresh_reader_preview()
         
         # 保存初始值用于变更检测（隐藏提示词系统：直接保存文本框内容）
         self.initial_values = {
@@ -631,9 +884,131 @@ class PromptsWidget(QWidget):
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': use_interface_lang,
             'use_persona': use_persona,
-            'persona': self.persona_edit.text().strip()
+            'persona': self.persona_edit.text().strip(),
+            'reader_prompt': self._reader_prompt_values(),
         }
         
+    def _reader_prompt_values(self):
+        values = {
+            key: box.isChecked()
+            for key, box in getattr(self, 'reader_prompt_checks', {}).items()
+        }
+        if hasattr(self, 'reader_intro_field'):
+            values['reader_prompt_intro'] = self.reader_intro_field.value()
+        if hasattr(self, 'reader_note_field'):
+            values['reader_prompt_default_question'] = self.reader_note_field.value()
+        if hasattr(self, 'reader_chars_field'):
+            values['reader_context_chars'] = self.reader_chars_field.value()
+        return values
+
+    def _load_reader_prompt_checks(self, prefs):
+        for key, box in getattr(self, 'reader_prompt_checks', {}).items():
+            box.blockSignals(True)
+            box.setChecked(bool(prefs.get(key, True)))
+            box.blockSignals(False)
+
+    def _reader_text_default(self, key, fallback):
+        return self.i18n.get(key, fallback)
+
+    def _reader_text_getter(self, key, fallback):
+        def getter(lang):
+            from .i18n import get_translation
+            return get_translation(lang).get(key, fallback)
+        return getter
+
+    def _load_reader_prompt_fields(self, prefs, lang_code):
+        if not hasattr(self, 'reader_intro_field'):
+            return
+        intro_fallback = READER_PROMPT_INTRO_FALLBACK
+        note_fallback = 'Explain this passage using the chapter context.'
+        self.reader_intro_field.set_value(self._load_prompt_with_language_fallback(
+            stored_reader_intro(prefs.get('reader_prompt_intro', '')),
+            self._reader_text_getter('reader_prompt_intro', intro_fallback),
+            lang_code,
+        ))
+        self.reader_note_field.set_value(self._load_prompt_with_language_fallback(
+            prefs.get('reader_prompt_default_question', ''),
+            self._reader_text_getter('reader_prompt_default_question', note_fallback),
+            lang_code,
+        ))
+        try:
+            from .epub_reader import reader_context_chars
+        except ImportError:
+            from epub_reader import reader_context_chars
+        self.reader_chars_field.set_value(reader_context_chars(prefs))
+
+    def _stored_reader_text(self, value, key, fallback, current_lang):
+        default = self._reader_text_getter(key, fallback)(current_lang)
+        if value.strip() == default.strip():
+            return ''
+        return value.strip()
+
+    def _normalize_reader_texts(self):
+        intro_fallback = READER_PROMPT_INTRO_FALLBACK
+        note_fallback = 'Explain this passage using the chapter context.'
+        if hasattr(self, 'reader_intro_field') and not str(self.reader_intro_field.value()).strip():
+            self.reader_intro_field.set_value(self._reader_text_default('reader_prompt_intro', intro_fallback))
+        if hasattr(self, 'reader_note_field') and not str(self.reader_note_field.value()).strip():
+            self.reader_note_field.set_value(self._reader_text_default(
+                'reader_prompt_default_question', note_fallback,
+            ))
+
+    def _reader_preview_prefs(self):
+        prefs = {
+            key: box.isChecked()
+            for key, box in getattr(self, 'reader_prompt_checks', {}).items()
+        }
+        prefs['reader_prompt_intro'] = self.reader_intro_field.value()
+        prefs['reader_prompt_default_question'] = self.reader_note_field.value()
+        prefs['reader_context_chars'] = self.reader_chars_field.value()
+        prefs['use_persona'] = False
+        prefs['use_interface_language'] = False
+        return prefs
+
+    def _refresh_reader_preview(self):
+        if not hasattr(self, 'reader_preview'):
+            return
+        try:
+            from .epub_reader import build_reader_preview
+        except ImportError:
+            from epub_reader import build_reader_preview
+        self.reader_preview.setPlainText(build_reader_preview(
+            self._reader_preview_prefs(),
+            self.i18n,
+        ))
+
+    def _on_reader_section_toggled(self):
+        self._refresh_reader_preview()
+        self.on_config_changed()
+
+    def _on_reader_field_committed(self):
+        self._normalize_reader_texts()
+        self._refresh_reader_preview()
+        self.on_config_changed()
+
+    def _apply_reader_action_labels(self):
+        labels = (
+            self.i18n.get('reader_prompt_edit', 'Edit'),
+            self.i18n.get('reader_prompt_done', 'Done'),
+            self.i18n.get('reader_prompt_cancel', 'Cancel'),
+        )
+        for field in (
+            getattr(self, 'reader_intro_field', None),
+            getattr(self, 'reader_chars_field', None),
+            getattr(self, 'reader_note_field', None),
+        ):
+            if field is not None:
+                field.set_action_labels(*labels)
+
+    def _commit_reader_fields(self):
+        for field in (
+            getattr(self, 'reader_intro_field', None),
+            getattr(self, 'reader_chars_field', None),
+            getattr(self, 'reader_note_field', None),
+        ):
+            if field is not None:
+                field.commit_if_editing()
+
     def save_settings(self):
         """保存设置"""
         from .config import get_prefs
@@ -690,6 +1065,20 @@ class PromptsWidget(QWidget):
             prefs['persona'] = ''
         else:
             prefs['persona'] = current_persona
+
+        self._commit_reader_fields()
+        self._normalize_reader_texts()
+        current_lang = self.parent_dialog.config_widget.config_dialog.lang_combo.currentData()
+        reader_values = self._reader_prompt_values()
+        intro_fallback = READER_PROMPT_INTRO_FALLBACK
+        note_fallback = 'Explain this passage using the chapter context.'
+        for key, checked in reader_values.items():
+            if key == 'reader_prompt_intro':
+                prefs[key] = self._stored_reader_text(checked, key, intro_fallback, current_lang)
+            elif key == 'reader_prompt_default_question':
+                prefs[key] = self._stored_reader_text(checked, key, note_fallback, current_lang)
+            else:
+                prefs[key] = checked
         
         prefs.commit()
         
@@ -700,7 +1089,8 @@ class PromptsWidget(QWidget):
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': self.use_interface_language_checkbox.isChecked(),
             'use_persona': self.use_persona_checkbox.isChecked(),
-            'persona': self.persona_edit.text().strip()
+            'persona': self.persona_edit.text().strip(),
+            'reader_prompt': self._reader_prompt_values(),
         }
         
         logger.info("提示词设置已保存")
@@ -726,8 +1116,9 @@ class PromptsWidget(QWidget):
         current_persona = self.persona_edit.text().strip()
         persona_checkbox_changed = current_use_persona != self.initial_values.get('use_persona', True)
         persona_text_changed = current_persona != self.initial_values.get('persona', '')
+        reader_changed = self._reader_prompt_values() != self.initial_values.get('reader_prompt', {})
         
-        return template_changed or random_changed or multi_changed or lang_pref_changed or persona_checkbox_changed or persona_text_changed
+        return template_changed or random_changed or multi_changed or lang_pref_changed or persona_checkbox_changed or persona_text_changed or reader_changed
         
     def retranslate_ui(self):
         """更新界面语言"""
@@ -739,6 +1130,15 @@ class PromptsWidget(QWidget):
             'title_persona': ('persona_title', 'Persona'),
             'subtitle_persona': ('persona_subtitle', 
                 'Define your research background and goals to help AI provide more relevant responses'),
+            'title_reader_prompt': ('reader_prompt_section_title', 'Reading mode'),
+            'subtitle_reader_prompt': ('reader_prompt_section_subtitle',
+                'Choose what is sent when you ask from the reader. The selected passage, its chapter, and the surrounding text can each be included.'),
+            'label_reader_intro': ('reader_prompt_intro_label', 'Reading task'),
+            'label_reader_context_chars': ('reader_prompt_context_chars', 'Characters before and after the selection'),
+            'label_reader_default_note': ('reader_prompt_default_note_label', 'Default note'),
+            'label_reader_preview_title': ('reader_prompt_preview_title', 'Example preview'),
+            'label_reader_preview_hint': ('reader_prompt_preview_hint',
+                'This preview uses a passage from Frankenstein by Mary Shelley. Checking a box adds or removes that part.'),
             'label_persona_hint': ('persona_hint', 
                 'The more AI knows about your target and background, the better the research or generation.'),
             'title_prompt_templates': ('prompt_templates_title', 'Prompt Templates'),
@@ -779,6 +1179,17 @@ class PromptsWidget(QWidget):
             self.use_persona_checkbox.setText(
                 self.i18n.get('use_persona', 'Use persona')
             )
+        reader_labels = {
+            'reader_include_book': ('reader_include_book', 'Book information'),
+            'reader_include_chapter': ('reader_include_chapter', 'Current chapter'),
+            'reader_include_context': ('reader_include_context', 'Text around the selection'),
+            'reader_include_selection': ('reader_include_selection', 'Selected text'),
+            'reader_include_note': ('reader_include_note', 'Your note'),
+        }
+        for key, box in getattr(self, 'reader_prompt_checks', {}).items():
+            label_key, fallback = reader_labels[key]
+            box.setText(self.i18n.get(label_key, fallback))
+        self._apply_reader_action_labels()
         if hasattr(self, 'persona_edit'):
             self.persona_edit.setPlaceholderText(
                 self.i18n.get('persona_placeholder', 'As a researcher, I want to research through book data.')
@@ -823,6 +1234,28 @@ class PromptsWidget(QWidget):
         
         # 更新 placeholder
         self.persona_edit.setPlaceholderText(get_persona_default(current_lang))
+
+        intro_fallback = READER_PROMPT_INTRO_FALLBACK
+        note_fallback = 'Explain this passage using the chapter context.'
+        if hasattr(self, 'reader_intro_field'):
+            self.reader_intro_field.cancel_edit()
+            if self._is_default_value_from_any_language(
+                self.reader_intro_field.value(),
+                self._reader_text_getter('reader_prompt_intro', intro_fallback),
+            ):
+                self.reader_intro_field.set_value(
+                    self._reader_text_getter('reader_prompt_intro', intro_fallback)(current_lang)
+                )
+        if hasattr(self, 'reader_note_field'):
+            self.reader_note_field.cancel_edit()
+            if self._is_default_value_from_any_language(
+                self.reader_note_field.value(),
+                self._reader_text_getter('reader_prompt_default_question', note_fallback),
+            ):
+                self.reader_note_field.set_value(
+                    self._reader_text_getter('reader_prompt_default_question', note_fallback)(current_lang)
+                )
+        self._refresh_reader_preview()
         
         # 更新初始值，避免误判为有变更
         # 因为切换语言后加载了新语言的默认模板，需要更新 initial_values
@@ -832,7 +1265,8 @@ class PromptsWidget(QWidget):
             'multi_book_template': self.multi_book_template_edit.toPlainText(),
             'use_interface_language': self.use_interface_language_checkbox.isChecked(),
             'use_persona': self.use_persona_checkbox.isChecked(),
-            'persona': self.persona_edit.text().strip()
+            'persona': self.persona_edit.text().strip(),
+            'reader_prompt': self._reader_prompt_values(),
         }
         
         # 更新按钮
@@ -845,6 +1279,54 @@ class PromptsWidget(QWidget):
             if obj_name in button_map:
                 i18n_key, fallback = button_map[obj_name]
                 button.setText(self.i18n.get(i18n_key, fallback))
+
+
+def resolve_request_template(prefs, kind='ask'):
+    """Built-in ask/multi/random prompts follow the plugin language at send time."""
+    from .i18n import (
+        get_all_languages,
+        get_default_template,
+        get_multi_book_template,
+        get_suggestion_template,
+    )
+    from .utils import resolve_prompt_template
+
+    lang_code = prefs.get('language', 'en') or 'en'
+    if kind == 'multi':
+        getter = get_multi_book_template
+        key = 'multi_book_template'
+        placeholders = ('{books_metadata}', '{query}')
+    elif kind == 'random':
+        getter = get_suggestion_template
+        key = 'random_questions'
+        placeholders = ('{title}', '{author}')
+    else:
+        getter = get_default_template
+        key = 'template'
+        placeholders = ('{title}', '{author}', '{query}')
+    localized = getter(lang_code)
+    known = [getter(code) for code in get_all_languages()]
+    return resolve_prompt_template(
+        prefs.get(key, ''), localized, known, placeholders
+    )
+
+
+def _persona_for_request(prefs):
+    """Default persona follows the plugin language; a custom sentence is kept."""
+    from .i18n import get_all_languages, get_translation
+    from .utils import resolve_persona_text
+
+    lang_code = prefs.get('language', 'en') or 'en'
+    localized = get_translation(lang_code).get(
+        'persona_placeholder',
+        'As a researcher, I want to research through book data.',
+    )
+    known = [
+        get_translation(code).get('persona_placeholder', '')
+        for code in get_all_languages()
+    ]
+    known.append('As a researcher, I want to research through book data.')
+    return resolve_persona_text(prefs.get('persona', ''), localized, known)
 
 
 def apply_prompt_enhancements(base_prompt):
@@ -862,10 +1344,10 @@ def apply_prompt_enhancements(base_prompt):
     prefs = get_prefs()
     result = base_prompt
     
-    # 在开头添加 persona（如果启用）
+    # 在开头添加 persona（如果启用）。未自定义时跟随插件语言，避免英文默认句贴在中文/德文模板前。
     use_persona = prefs.get('use_persona', True)
     if use_persona:
-        persona_text = prefs.get('persona', '').strip()
+        persona_text = _persona_for_request(prefs)
         if persona_text:
             result = persona_text + '\n\n' + result
             logger.info(f"已添加 persona 到提示词开头: {persona_text[:50]}...")

@@ -10,7 +10,7 @@ from enum import Enum, auto
 
 class AIProvider(Enum):
     """AI 服务提供商枚举类型"""
-    AI_GROK = auto()      # SpaceXAI (Grok)
+    AI_GROK = auto()      # SpaceXSI (Grok)
     AI_GEMINI = auto()    # Google Gemini
     AI_DEEPSEEK = auto()  # Deepseek
     AI_KIMI = auto()      # Kimi (Moonshot)
@@ -95,24 +95,24 @@ class ModelConfig:
 DEFAULT_MODELS = {
     AIProvider.AI_GROK: ModelConfig(
         provider=AIProvider.AI_GROK,
-        display_name="SpaceXAI (Grok)",
-        api_key_label="SpaceXAI API Key:",
+        display_name="SpaceXSI",
+        api_key_label="SpaceXSI API Key:",
         default_api_base_url="https://api.x.ai/v1",
-        default_model_name="grok-4.3"
+        default_model_name="grok-4.7"
     ),
     AIProvider.AI_GEMINI: ModelConfig(
         provider=AIProvider.AI_GEMINI,
         display_name="Google Gemini",
         api_key_label="API Key:",
         default_api_base_url="https://generativelanguage.googleapis.com/v1beta",
-        default_model_name="gemini-3.5-flash"
+        default_model_name="gemini-3.8-flash"
     ),
     AIProvider.AI_DEEPSEEK: ModelConfig(
         provider=AIProvider.AI_DEEPSEEK,
         display_name="Deepseek",
         api_key_label="API Key:",
         default_api_base_url="https://api.deepseek.com",
-        default_model_name="deepseek-v4-flash"
+        default_model_name="deepseek-flash"
     ),
     AIProvider.AI_KIMI: ModelConfig(
         provider=AIProvider.AI_KIMI,
@@ -126,7 +126,7 @@ DEFAULT_MODELS = {
         display_name="Mistral",
         api_key_label="Mistral API Key:",
         default_api_base_url="https://api.mistral.ai/v1",
-        default_model_name="mistral-large-latest"
+        default_model_name="mistral-large-4"
     ),
     AIProvider.AI_CUSTOM: ModelConfig(
         provider=AIProvider.AI_CUSTOM,
@@ -140,14 +140,14 @@ DEFAULT_MODELS = {
         display_name="OpenAI",
         api_key_label="OpenAI API Key:",
         default_api_base_url="https://api.openai.com/v1",
-        default_model_name="gpt-5-chat-latest"
+        default_model_name="gpt-6.1-sol"
     ),
     AIProvider.AI_ANTHROPIC: ModelConfig(
         provider=AIProvider.AI_ANTHROPIC,
         display_name="Anthropic (Claude)",
         api_key_label="Anthropic API Key:",
         default_api_base_url="https://api.anthropic.com/v1",
-        default_model_name="claude-opus-4-8"
+        default_model_name="claude-opus-5-5"
     ),
     AIProvider.AI_NVIDIA: ModelConfig(
         provider=AIProvider.AI_NVIDIA,
@@ -161,7 +161,7 @@ DEFAULT_MODELS = {
         display_name="OpenRouter",
         api_key_label="OpenRouter API Key:",
         default_api_base_url="https://openrouter.ai/api/v1",
-        default_model_name="x-ai/grok-4.3"
+        default_model_name="x-ai/grok-4.7"
     ),
     AIProvider.AI_PERPLEXITY: ModelConfig(
         provider=AIProvider.AI_PERPLEXITY,
@@ -331,6 +331,21 @@ def extract_api_error_message(response) -> str:
     return ''
 
 
+def response_indicates_invalid_api_key(status_code, response_text: str = '') -> bool:
+    """True when the provider rejected the credential.
+
+    SpaceXSI returns HTTP 400 with "Incorrect API key provided" instead of 401.
+    """
+    if status_code == 401:
+        return True
+    text = (response_text or '').lower()
+    if 'incorrect api key' in text or 'invalid api key' in text or 'invalid_api_key' in text:
+        return True
+    return 'api key' in text and any(
+        word in text for word in ('incorrect', 'invalid', 'unauthorized')
+    )
+
+
 def format_http_error(e: Exception, lang_code: str = 'en') -> str:
     """
     格式化 HTTP 错误信息为用户友好格式
@@ -353,8 +368,23 @@ def format_http_error(e: Exception, lang_code: str = 'en') -> str:
             response_url = getattr(e.response, 'url', '') or ''
             api_message = extract_api_error_message(e.response)
         
+        raw_text = ''
+        if e.response is not None:
+            raw_text = e.response.text or ''
+
         # Status-based fallback only when the provider did not return a message.
         # Example: OpenAI 404 + "Model not found ..." must not become "endpoint not found".
+        if response_indicates_invalid_api_key(status_code, raw_text):
+            user_msg = translations.get('error_401',
+                'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+            technical_label = translations.get('technical_details', 'Technical Details')
+            if status_code is not None:
+                technical_detail = translations.get(
+                    'http_status_detail',
+                    'HTTP {status} for URL: {url}',
+                ).format(status=status_code, url=response_url or '(unknown)')
+            return f"{user_msg}\n\n{technical_label}: {technical_detail}"
+
         if status_code == 401:
             fallback_msg = translations.get('error_401', 
                 'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
@@ -700,6 +730,15 @@ class BaseAIModel(ABC):
                     '3. Check Google AI Studio for region availability')
                 technical_label = translations.get('technical_details', 'Technical Details')
                 error_msg = f"{user_msg}\n\n{technical_label}: User location is not supported for the API use"
+                logger.error(f"Failed to fetch models: {error_msg}")
+                raise Exception(error_msg)
+
+            # SpaceXSI rejects a bad key with HTTP 400, not 401.
+            if response_indicates_invalid_api_key(status_code, response_text):
+                user_msg = translations.get('error_401',
+                    'API Key authentication failed. Please check: API Key is correct, account has sufficient balance, API Key has not expired.')
+                technical_label = translations.get('technical_details', 'Technical Details')
+                error_msg = f"{user_msg}\n\n{technical_label}: {str(e)}"
                 logger.error(f"Failed to fetch models: {error_msg}")
                 raise Exception(error_msg)
             

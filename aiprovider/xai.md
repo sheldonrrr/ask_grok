@@ -1,6 +1,6 @@
-# SpaceXAI (Grok) 配置指南
+# SpaceXSI (Grok) 配置指南
 
-SpaceXAI（原 xAI 品牌）提供 Grok 模型。官方文档现以 SpaceXAI 命名，API 主机仍为 `api.x.ai`。
+SpaceXSI（原 xAI 品牌）提供 Grok 模型。API 主机仍为 `api.x.ai`。
 
 Ask AI Plugin 的 **Grok** 提供商使用推荐的 **Responses API**。
 
@@ -8,7 +8,7 @@ Ask AI Plugin 的 **Grok** 提供商使用推荐的 **Responses API**。
 
 - **API Key**: 必需。`Authorization: Bearer ${apiKey}`（插件配置字段仍为 `auth_token`，兼容旧配置）
 - **Base URL**: 必需。`https://api.x.ai/v1`
-- **Model**: 默认 `grok-4.3`
+- **Model**: 默认 `grok-4.7`
 
 ## 获取模型列表
 
@@ -31,7 +31,7 @@ Ask AI Plugin 的 **Grok** 提供商使用推荐的 **Responses API**。
 - **请求体 (Body)**:
   ```json
   {
-    "model": "grok-4.3",
+    "model": "grok-4.7",
     "instructions": "<系统提示词>",
     "input": "<用户提示词>",
     "store": false
@@ -56,8 +56,8 @@ Ask AI Plugin 的 **Grok** 提供商使用推荐的 **Responses API**。
 ## 兼容说明
 
 - Chat Completions（`/v1/chat/completions`）仍可用，但新接入推荐 Responses API。
-- 新模型如 `grok-4.5` 可手动填写；插件默认保持更稳妥的 `grok-4.3`。
+- 其他模型可在刷新列表后选择，或手动填写。插件默认模型为 `grok-4.7`。
 
 ## 总结
 
-协议主机未变（`https://api.x.ai/v1`），品牌展示更新为 SpaceXAI，请求改为 Responses API，默认模型为 `grok-4.3`。
+协议主机未变（`https://api.x.ai/v1`），品牌展示为 SpaceXSI，请求使用 Responses API，默认模型为 `grok-4.7`。

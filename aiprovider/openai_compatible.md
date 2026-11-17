@@ -3,7 +3,7 @@
 此指南适用于遵循 **Chat Completions** 格式的兼容提供商，包括 **DeepSeek, Qwen, OpenRouter, Nvidia, Custom, Mistral, Kimi**，以及本地的 **Ollama / LM Studio / KoboldCpp**（各自有专用入口）。
 
 > 插件内置的 **OpenAI (ChatGPT)** 提供商已改用 Responses API，请看 [openai.md](./openai.md)。
-> **SpaceXAI (Grok)** 已改为推荐的 **Responses API**（`/v1/responses`），详见 [xai.md](xai.md)，不在下文 Chat Completions 说明范围内。
+> **SpaceXSI (Grok)** 已改为推荐的 **Responses API**（`/v1/responses`），详见 [xai.md](xai.md)，不在下文 Chat Completions 说明范围内。
 
 ## 核心配置
 
@@ -48,4 +48,4 @@
 
 ## 总结
 
-Chat Completions 兼容提供商遵循统一 API 标准，配置相对简单。OpenAI/ChatGPT 请改用 [openai.md](./openai.md)；SpaceXAI Grok 请改用 [xai.md](xai.md)。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。
+Chat Completions 兼容提供商遵循统一 API 标准，配置相对简单。OpenAI/ChatGPT 请改用 [openai.md](./openai.md)；SpaceXSI Grok 请改用 [xai.md](xai.md)。主要挑战在于处理像 Nvidia 这样的特例所带来的 CORS 问题。

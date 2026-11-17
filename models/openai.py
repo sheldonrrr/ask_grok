@@ -30,7 +30,7 @@ class OpenAIModel(BaseAIModel):
     providers in this plugin continue to use /chat/completions.
     """
     # Default model name
-    DEFAULT_MODEL = "gpt-5-chat-latest"
+    DEFAULT_MODEL = "gpt-6.1-sol"
     # Default API base URL
     DEFAULT_API_BASE_URL = "https://api.openai.com/v1"
 
@@ -82,6 +82,12 @@ class OpenAIModel(BaseAIModel):
             )
 
         return True
+
+    @staticmethod
+    def supports_temperature(model_name: str) -> bool:
+        """GPT-6 and GPT-5.6 reject temperature while reasoning is on."""
+        name = (model_name or '').lower()
+        return not (name.startswith('gpt-6') or name.startswith('gpt-5.6'))
 
     def prepare_headers(self) -> Dict[str, str]:
         """
@@ -149,7 +155,8 @@ class OpenAIModel(BaseAIModel):
             data["instructions"] = system_message
 
         temperature = kwargs.get('temperature', 0.7)
-        if temperature is not None:
+        # GPT-6 / GPT-5.6 default to reasoning and reject temperature.
+        if temperature is not None and self.supports_temperature(data["model"]):
             data["temperature"] = temperature
 
         max_tokens = kwargs.get('max_tokens')

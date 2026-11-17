@@ -12,7 +12,7 @@ from PyQt5.QtCore import Qt
 from calibre_plugins.ask_ai_plugin.ui_constants import (
     SPACING_TINY,
     get_ask_metadata_collapsed_style,
-    get_ask_metadata_toggle_style,
+    style_metadata_toggle_button,
 )
 
 
@@ -41,8 +41,7 @@ class AskMetadataBar(QWidget):
         header_row.addWidget(self.summary_label, stretch=1)
 
         self.toggle_btn = QPushButton('▸')
-        self.toggle_btn.setFixedSize(24, 24)
-        self.toggle_btn.setStyleSheet(get_ask_metadata_toggle_style())
+        style_metadata_toggle_button(self.toggle_btn)
         self.toggle_btn.clicked.connect(self._toggle_expanded)
         header_row.addWidget(self.toggle_btn)
 

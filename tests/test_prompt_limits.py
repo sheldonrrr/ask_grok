@@ -190,7 +190,7 @@ class TestPromptLimits(unittest.TestCase):
 class TestDeepSeekIntegration(unittest.TestCase):
     """Live API checks using DEEPSEEK_API_KEY from .env (skipped if missing)."""
 
-    _MODELS = ('deepseek-chat', 'deepseek-v4-flash')
+    _MODELS = ('deepseek-flash', 'deepseek-chat')
 
     @classmethod
     def setUpClass(cls):
@@ -355,6 +355,137 @@ class TestOmitPlaceholderMetadata(unittest.TestCase):
         self.assertIn('1818', filled)
         self.assertNotIn('Author:', filled)
         self.assertNotIn('Publisher:', filled)
+
+
+class TestPromptTemplateLanguage(unittest.TestCase):
+    def test_old_english_default_follows_interface_language(self):
+        old_english = (
+            'About the book "{title}": Author: {author}, Publisher: {publisher}, '
+            'Publication Year: {pubyear}, book in language: {language}, '
+            'Series: {series}, My question is: {query}'
+        )
+        traditional = '背景說明：書名：「{title}」，作者：{author}。用戶問題：{query}。'
+        resolved = utils.resolve_prompt_template(
+            old_english,
+            traditional,
+            [traditional],
+            ('{title}', '{author}', '{query}'),
+        )
+        self.assertEqual(resolved, traditional)
+
+    def test_custom_prompt_is_kept(self):
+        custom = (
+            'Please answer as a historian. Title {title}. Author {author}. '
+            'Question {query}. ' + ('context ' * 80)
+        )
+        traditional = '背景說明：書名：「{title}」作者：{author} 問題：{query}'
+        self.assertEqual(
+            utils.resolve_prompt_template(
+                custom, traditional, [traditional], ('{title}', '{author}', '{query}')
+            ),
+            custom.strip(),
+        )
+
+    def test_unknown_calibre_year_101_is_placeholder(self):
+        self.assertTrue(utils.is_placeholder_metadata('101', 'pubyear'))
+        self.assertFalse(utils.is_placeholder_metadata('2003', 'pubyear'))
+
+
+class TestPersonaLanguage(unittest.TestCase):
+    def test_builtin_english_persona_follows_prompt_language(self):
+        english = 'As a researcher, I want to research through book data.'
+        chinese = '作为研究人员，我希望通过书籍数据进行研究。'
+        german = 'Als Forscher möchte ich durch Buchdaten recherchieren。'
+        known = [english, chinese, german]
+        self.assertEqual(utils.resolve_persona_text(english, chinese, known), chinese)
+        self.assertEqual(utils.resolve_persona_text('', german, known), german)
+        self.assertEqual(utils.resolve_persona_text(None, german, known), german)
+
+    def test_custom_persona_is_kept(self):
+        custom = 'I am a historian of the 19th century.'
+        chinese = '作为研究人员，我希望通过书籍数据进行研究。'
+        self.assertEqual(
+            utils.resolve_persona_text(custom, chinese, [chinese]),
+            custom,
+        )
+
+
+class TestPromptSpliceI18n(unittest.TestCase):
+    def test_non_english_library_prompt_appends_localized_output_rule(self):
+        french_rule = (
+            'IMPORTANT : renvoyez UNIQUEMENT les livres correspondants '
+            'sous forme de liste à puces HTML ci-dessus.'
+        )
+        i18n = {
+            'library_prompt_template': (
+                'Voici les livres : {metadata} Requête de l\'utilisateur : {query}'
+            ),
+            'library_output_only_rule': french_rule,
+        }
+        prefs = {
+            'library_cached_metadata': json.dumps(
+                [{'id': 1, 'title': 'Le Rouge et le Noir', 'authors': 'Stendhal'}],
+                ensure_ascii=False,
+            ),
+        }
+        prompt = utils.build_library_prompt('Qui a écrit ce livre ?', prefs, i18n)
+        self.assertIn('Requête de l\'utilisateur', prompt)
+        self.assertIn(french_rule, prompt)
+        self.assertNotIn('Output ONLY', prompt)
+        self.assertNotIn('Do not write analysis', prompt)
+
+    def test_english_and_chinese_templates_are_not_given_a_second_rule(self):
+        prefs = {
+            'library_cached_metadata': json.dumps(
+                [{'id': 1, 'title': 'Frankenstein', 'authors': 'Mary Shelley'}],
+                ensure_ascii=False,
+            ),
+        }
+        english = {
+            'library_prompt_template': (
+                'Books: {metadata} User query: {query} Output ONLY the bullet list.'
+            ),
+            'library_output_only_rule': (
+                'IMPORTANT: Output ONLY the matching books as the HTML bullet list above.'
+            ),
+        }
+        prompt = utils.build_library_prompt('who wrote it', prefs, english)
+        self.assertEqual(prompt.count('Output ONLY'), 1)
+
+        chinese = {
+            'library_prompt_template': '书籍：{metadata} 用户查询：{query} 只输出上述列表。',
+            'library_output_only_rule': '重要：只输出上面 HTML 列表中的匹配书籍。',
+        }
+        prompt = utils.build_library_prompt('谁写的', prefs, chinese)
+        self.assertEqual(prompt.count('只输出'), 1)
+        self.assertNotIn('Output ONLY', prompt)
+
+    def test_french_metadata_labels_survive_placeholder_omission(self):
+        template = (
+            'Informations sur le livre : Titre : "{title}", Auteur : {author}, '
+            'Éditeur : {publisher}, Année de publication : {pubyear}, '
+            'Langue : {language}, Série : {series}. '
+            'Question de l\'utilisateur : {query}.'
+        )
+        values = {
+            'title': 'Le Rouge et le Noir',
+            'author': 'Stendhal',
+            'publisher': '101',
+            'pubyear': '1830',
+            'language': 'inconnu',
+            'series': '',
+            'query': 'De quoi parle ce livre ?',
+        }
+        filled = utils.omit_placeholder_template_fields(template, values).format(**values)
+        self.assertIn('Titre : "Le Rouge et le Noir"', filled)
+        self.assertIn('Auteur : Stendhal', filled)
+        self.assertIn('Année de publication : 1830', filled)
+        self.assertIn('Question de l\'utilisateur', filled)
+        self.assertNotIn('Author:', filled)
+        self.assertNotIn('Éditeur', filled)
+        self.assertNotIn('Langue', filled)
+        self.assertNotIn('Série', filled)
+        self.assertNotIn('inconnu', filled)
 
 
 class TestCleanPromptMetadata(unittest.TestCase):

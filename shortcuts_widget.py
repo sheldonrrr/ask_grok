@@ -107,6 +107,7 @@ class ShortcutsWidget(QWidget):
         # 定义所有快捷键（部分快捷键在不同平台有所不同）
         shortcuts = [
             (self.i18n.get('menu_ask', 'Ask'), 'Ctrl+K'),
+            (self.i18n.get('read_and_ask', 'Read and ask'), 'Ctrl+Shift+V'),
             (self.i18n.get('config_title', 'Configuration'), 'F2'),
             (self.i18n.get('library_search', 'AI Search'), 'Ctrl+Shift+L'),
             (self.i18n.get('send_button', 'Send'), f'{modifier_display}+{enter_key}'),

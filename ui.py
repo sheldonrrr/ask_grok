@@ -43,10 +43,16 @@ NOWTINY_SITE_URL = 'https://www.nowtiny.xyz/en'
 NOWTINY_PLUGIN_MARKDOWN_URL = 'https://www.mobileread.com/forums/showthread.php?p=4591602'
 NOWTINY_PLUGIN_TRADSIMP_URL = 'https://www.mobileread.com/forums/showthread.php?t=373788'
 NOWTINY_PLUGIN_SIMPLE_GOAL_URL = 'https://www.mobileread.com/forums/showthread.php?p=4602877'
+BOOKTOAST_PLUGIN_URL = (
+    'https://www.mobileread.com/forums/showthread.php?p=4610192#post4610192'
+)
+NO_UPDATES_PLUGIN_URL = (
+    'https://www.mobileread.com/forums/showthread.php?t=376315'
+)
 ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
 
 # Bump this when promoting a new related plugin so that card is highlighted again.
-ABOUT_RELATED_HIGHLIGHT_ID = 'simple_goal'
+ABOUT_RELATED_HIGHLIGHT_ID = 'booktoast'
 ABOUT_RELATED_HIGHLIGHT_SEEN_KEY = 'about_related_highlight_seen_id'
 ABOUT_LATEST_UPDATE_SEEN_KEY = 'about_latest_update_seen_version'
 
@@ -105,6 +111,7 @@ class AskAIPluginUI(InterfaceAction):
         
         # 保存对话框实例的引用
         self.ask_dialog = None
+        self.read_dialog = None
         
         # 保存插件实例到全局变量
         global plugin_instance
@@ -148,7 +155,29 @@ class AskAIPluginUI(InterfaceAction):
         except Exception:
             pass
         self.menu.addAction(self.ask_action)
-        
+        self.menu.addSeparator()
+
+        self.read_action = self.create_menu_action(
+            self.menu,
+            unique_name='open_reader',
+            text=self.i18n.get('read_and_ask', 'Read and ask'),
+            shortcut='Ctrl+Shift+V',
+            description=None,
+            triggered=self.show_read_and_ask,
+            shortcut_name='Ask AI: Read and ask',
+            persist_shortcut=True,
+        )
+        try:
+            from .epub_reader import webengine_available
+            if not webengine_available():
+                self.read_action.setEnabled(False)
+                self.read_action.setToolTip(self.i18n.get(
+                    'read_and_ask_webengine_missing',
+                    'This calibre build has no embedded browser, so Read and ask is unavailable.',
+                ))
+        except Exception:
+            logger.exception('Read and ask could not check the embedded browser')
+
         # 添加分隔符
         self.menu.addSeparator()
 
@@ -210,6 +239,11 @@ class AskAIPluginUI(InterfaceAction):
         self.tutorial_action = QAction(self.i18n.get('tutorial', 'Tutorial'), self)
         self.tutorial_action.triggered.connect(self.show_tutorial)
         self.menu.addAction(self.tutorial_action)
+        self.menu.addSeparator()
+
+        self.about_action = QAction(self.i18n.get('about', 'About'), self)
+        self.about_action.triggered.connect(self.show_about)
+        self.menu.addAction(self.about_action)
 
         # 注册对话框内快捷键（始终出现在 Preferences -> Shortcuts 中）
         # 注意：实际 QAction 会在 AskDialog 创建时通过 replace_action 绑定到对话框 action 上
@@ -304,6 +338,18 @@ class AskAIPluginUI(InterfaceAction):
                 self.ask_action.setText(self.i18n['menu_title'])
         except Exception:
             self.ask_action.setText(self.i18n['menu_title'])
+
+        try:
+            read_shortcuts = self.read_action.shortcuts()
+            if read_shortcuts:
+                shortcut_text = read_shortcuts[0].toString()
+                self.read_action.setText(
+                    f"{self.i18n.get('read_and_ask', 'Read and ask')}\t{shortcut_text}"
+                )
+            else:
+                self.read_action.setText(self.i18n.get('read_and_ask', 'Read and ask'))
+        except Exception:
+            self.read_action.setText(self.i18n.get('read_and_ask', 'Read and ask'))
         
         # 更新 Configuration 菜单项（包含快捷键）
         try:
@@ -328,6 +374,8 @@ class AskAIPluginUI(InterfaceAction):
                 self.library_action.setText(self.i18n.get('library_search', 'AI Search'))
         except Exception:
             self.library_action.setText(self.i18n.get('library_search', 'AI Search'))
+
+        self.about_action.setText(self.i18n.get('about', 'About'))
         
     def initialize_api(self):
         try:
@@ -594,7 +642,147 @@ class AskAIPluginUI(InterfaceAction):
                 self.i18n.get('error', 'Error'),
                 self.i18n.get('error_opening_dialog', 'Error opening dialog:') + f"\n{str(e)}"
             )
-    
+
+    def show_read_and_ask(self):
+        """Open the selected EPUB and ask about highlighted text."""
+        import os
+        import shutil
+        import tempfile
+        from PyQt5.QtWidgets import QMessageBox
+        from .epub_reader import (
+            EpubError,
+            WebEngineMissing,
+            book_prompt_fields,
+            create_epub_ask_dialog,
+            export_epub,
+            language_display_name,
+            list_book_formats,
+            metadata_language_code,
+            parse_epub,
+            reader_book_key,
+            webengine_available,
+        )
+
+        if not webengine_available():
+            QMessageBox.information(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                self.i18n.get(
+                    'read_and_ask_webengine_missing',
+                    'This calibre build has no embedded browser, so Read and ask is unavailable.',
+                ),
+            )
+            return
+
+        self.initialize_api()
+        if not self.api or not getattr(self.api, '_ai_model', None):
+            QMessageBox.information(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                self.i18n.get(
+                    'read_and_ask_no_model',
+                    'Configure an AI service in the plugin settings before asking from the reader.',
+                ),
+            )
+            return
+
+        rows = self.gui.library_view.selectionModel().selectedRows()
+        if not rows or len(rows) != 1:
+            QMessageBox.information(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                self.i18n.get('read_and_ask_need_one', 'Select exactly one book.'),
+            )
+            return
+
+        book_id = self.gui.library_view.model().id(rows[0])
+        db = self.gui.current_db
+        if 'EPUB' not in list_book_formats(db, book_id):
+            QMessageBox.information(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                self.i18n.get('read_and_ask_need_epub', 'This book has no EPUB file.'),
+            )
+            return
+
+        try:
+            mi = db.get_metadata(book_id, index_is_id=True)
+        except Exception as exc:
+            logger.error('Failed to read metadata for reader book_id=%s: %s', book_id, exc)
+            QMessageBox.critical(
+                self.gui,
+                self.i18n.get('error', 'Error'),
+                self.i18n.get('failed_to_read_all_books', 'Failed to read metadata for all selected books.'),
+            )
+            return
+
+        temp_dir = tempfile.mkdtemp(prefix='ask_ai_epub_')
+        try:
+            epub_path = os.path.join(temp_dir, 'book.epub')
+            export_epub(db, book_id, epub_path)
+            parsed = parse_epub(
+                epub_path,
+                os.path.join(temp_dir, 'extracted'),
+                image_placeholder=self.i18n.get(
+                    'read_image_placeholder',
+                    'Image preview is unavailable: {name}',
+                ),
+            )
+            if not parsed.chapters:
+                raise EpubError(self.i18n.get('read_no_chapters', 'This EPUB has no readable chapters.'))
+            language = language_display_name(
+                metadata_language_code(mi),
+                self.i18n.get('unknown', 'Unknown'),
+            )
+            book = book_prompt_fields(mi, language)
+            library_path = getattr(db, 'library_path', '') or ''
+            dialog = create_epub_ask_dialog(
+                self.gui,
+                self.api,
+                book,
+                parsed.chapters,
+                temp_dir,
+                self.i18n,
+                reader_book_key(library_path, book_id),
+                book_id,
+            )
+        except WebEngineMissing:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            QMessageBox.information(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                self.i18n.get(
+                    'read_and_ask_webengine_missing',
+                    'This calibre build has no embedded browser, so Read and ask is unavailable.',
+                ),
+            )
+            return
+        except EpubError as exc:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            message = self.i18n.get('read_and_ask_parse_failed', 'Could not open this EPUB: {error}')
+            QMessageBox.warning(
+                self.gui,
+                self.i18n.get('read_and_ask', 'Read and ask'),
+                message.format(error=str(exc)),
+            )
+            return
+        except Exception as exc:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            logger.error('show_read_and_ask failed: %s', exc, exc_info=True)
+            message = self.i18n.get('read_and_ask_parse_failed', 'Could not open this EPUB: {error}')
+            QMessageBox.critical(
+                self.gui,
+                self.i18n.get('error', 'Error'),
+                message.format(error=str(exc)),
+            )
+            return
+
+        self.read_dialog = dialog
+        dialog.finished.connect(lambda _result: setattr(self, 'read_dialog', None))
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+
     def _show_deprecation_notice(self):
         """显示弃用通知对话框"""
         # 创建消息框
@@ -647,6 +835,25 @@ class AskAIPluginUI(InterfaceAction):
         dlg = TabDialog(self.gui)
         dlg.tab_widget.setCurrentIndex(5)  # Tutorial 标签页（第6个，现在是最后一个）
         dlg.exec_()
+
+    def show_about(self):
+        """从插件菜单打开关于页。"""
+        highlight_id = ABOUT_RELATED_HIGHLIGHT_ID if _about_related_unread() else None
+        _mark_about_related_seen()
+        _mark_about_seen()
+        dialog = QDialog(self.gui)
+        dialog.setWindowTitle(self.i18n.get('about_plugin', self.i18n.get('about', 'About')))
+        dialog.resize(620, 640)
+        layout = QVBoxLayout(dialog)
+        layout.addWidget(AboutWidget(dialog, highlight_related_id=highlight_id))
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        ok_button = button_box.button(QDialogButtonBox.Ok)
+        if ok_button is not None:
+            ok_button.setText(self.i18n.get('close_button', 'Close'))
+            apply_button_style(ok_button)
+        button_box.accepted.connect(dialog.accept)
+        layout.addWidget(button_box)
+        dialog.exec_()
     
     def config_widget(self):
         """
@@ -679,10 +886,12 @@ class AskAIPluginUI(InterfaceAction):
             # 保存原始状态
             original_texts = {
                 'ask': self.ask_action.text(),
+                'read': self.read_action.text(),
                 'config': self.config_action.text(),
                 'shortcuts': self.shortcuts_action.text(),
                 'tutorial': self.tutorial_action.text(),
                 'stat': self.stat_action.text(),
+                'about': self.about_action.text(),
             }
             
             # 如果没有指定语言，从配置中读取
@@ -695,20 +904,24 @@ class AskAIPluginUI(InterfaceAction):
             # 更新文本
             self.i18n = get_translation(language)
             self.ask_action.setText(self.i18n['menu_title'])
+            self.read_action.setText(self.i18n.get('read_and_ask', 'Read and ask'))
             self.config_action.setText(self.i18n['config_title'])
             self.shortcuts_action.setText(self.i18n['shortcuts'])
             self.tutorial_action.setText(self.i18n.get('tutorial', 'Tutorial'))
             self.stat_action.setText(self.i18n.get('stat_tab', 'Stat'))
+            self.about_action.setText(self.i18n.get('about', 'About'))
             self._update_toolbar_text(language)
 
         except Exception as e:
             # 发生错误时恢复原始状态
             logger.error(f"更新菜单文本时出错: {str(e)}")
             self.ask_action.setText(original_texts['ask'])
+            self.read_action.setText(original_texts['read'])
             self.config_action.setText(original_texts['config'])
             self.shortcuts_action.setText(original_texts['shortcuts'])
             self.tutorial_action.setText(original_texts['tutorial'])
             self.stat_action.setText(original_texts['stat'])
+            self.about_action.setText(original_texts['about'])
 
 class AskGrokConfigWidget(QWidget):
     """配置页面组件"""
@@ -832,6 +1045,19 @@ class AboutWidget(QWidget):
         )
         cl.addWidget(self.simple_goal_card)
 
+        self.booktoast_card, self.booktoast_title, self.booktoast_desc, self.booktoast_btn = (
+            self._create_recommendation_card(
+                lambda: open_url(QUrl(BOOKTOAST_PLUGIN_URL)),
+                highlighted=(self._highlight_related_id == 'booktoast'),
+            )
+        )
+        cl.addWidget(self.booktoast_card)
+
+        self.no_updates_card, self.no_updates_title, self.no_updates_desc, self.no_updates_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(NO_UPDATES_PLUGIN_URL)))
+        )
+        cl.addWidget(self.no_updates_card)
+
         self.recommend_note_label = QLabel()
         self.recommend_note_label.setWordWrap(True)
         cl.addWidget(self.recommend_note_label)
@@ -871,6 +1097,7 @@ class AboutWidget(QWidget):
         text_layout.addWidget(desc_label)
         card_layout.addLayout(text_layout, 1)
 
+        # 卡片里的下划线文字链接，不是设置/工具栏按钮，不套用共享按钮字号和高度。
         action_btn = QPushButton()
         action_btn.setCursor(Qt.PointingHandCursor)
         action_btn.clicked.connect(on_open)
@@ -980,7 +1207,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.09.10): Default request timeout is now 120 seconds to better support slower free models',
+                'Latest update (2026.11.17): Added a simple EPUB reader (images are not shown). Select text while reading and ask a question',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -994,13 +1221,13 @@ class AboutWidget(QWidget):
             )
         )
         self.markdown_title.setText(
-            self.i18n.get('about_markdown_title', 'Markdown for calibre')
+            self.i18n.get('about_markdown_title', 'Markdown')
         )
         self.markdown_desc.setText(
             self.i18n.get('about_markdown_desc', 'Export books as Markdown text files.')
         )
         self.tradsimp_title.setText(
-            self.i18n.get('about_tradsimp_title', 'Chinese Text Conversion for calibre')
+            self.i18n.get('about_tradsimp_title', 'Chinese Text Conversion')
         )
         self.tradsimp_desc.setText(
             self.i18n.get(
@@ -1009,7 +1236,7 @@ class AboutWidget(QWidget):
             )
         )
         self.simple_goal_title.setText(
-            self.i18n.get('about_simple_goal_title', 'Simple Goal for calibre')
+            self.i18n.get('about_simple_goal_title', 'Simple Goal')
         )
         self.simple_goal_desc.setText(
             self.i18n.get(
@@ -1017,10 +1244,30 @@ class AboutWidget(QWidget):
                 'Keep a short list of books you are reading, see progress, and sync from the viewer.',
             )
         )
+        self.booktoast_title.setText(
+            self.i18n.get('about_booktoast_title', 'Booktoast')
+        )
+        self.booktoast_desc.setText(
+            self.i18n.get(
+                'about_booktoast_desc',
+                'When calibre opens, briefly shows a highlight you once marked.',
+            )
+        )
         open_text = self.i18n.get('about_open_button', 'MobileRead')
         self.markdown_btn.setText(open_text)
         self.tradsimp_btn.setText(open_text)
         self.simple_goal_btn.setText(open_text)
+        self.booktoast_btn.setText(open_text)
+        self.no_updates_title.setText(
+            self.i18n.get('about_no_updates_title', 'No Updates')
+        )
+        self.no_updates_desc.setText(
+            self.i18n.get(
+                'about_no_updates_desc',
+                "Turn off calibre's new-version reminder in one click. Plugin update notices stay on.",
+            )
+        )
+        self.no_updates_btn.setText(open_text)
         self.recommend_note_label.setText(
             self.i18n.get(
                 'about_mobileread_note',
@@ -1061,6 +1308,12 @@ class TutorialWidget(QWidget):
         from .ui_constants import setup_tab_widget_layout
         layout = setup_tab_widget_layout(self)
         
+        self._tutorial_preamble = []
+        self._tutorial_chapters = []
+        self.chapter_combo = QComboBox()
+        self.chapter_combo.currentIndexChanged.connect(self._show_tutorial_selection)
+        layout.addWidget(self.chapter_combo)
+
         # 创建文本浏览器
         from PyQt5.QtWidgets import QTextBrowser, QFrame
         self.text_browser = QTextBrowser()
@@ -1086,14 +1339,21 @@ class TutorialWidget(QWidget):
                 self.text_browser.setHtml("<h2>Error: Plugin not found</h2>")
                 return
             
-            # Prefer current single-file tutorial; keep older names for upgrade mismatches
-            tutorial_data = None
-            matched = None
-            for requested in (
-                'tutorial/tutorial_v1.0.md',
+            # Language files are display-only. Preferences stay on the English manual name.
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+            names = []
+            if language in ('zh', 'zht', 'ja'):
+                names.append('tutorial/tutorial_v1.2.%s.md' % language)
+            names.extend((
+                'tutorial/tutorial_v1.2.md',
+                'tutorial/tutorial_v1.1.md',
                 'tutorial/tutorial_v0.9.md',
                 'tutorial/tutorial_v0.8.md',
-            ):
+            ))
+            tutorial_data = None
+            matched = None
+            for requested in names:
                 tutorial_data = plugin.get_resources(requested)
                 if tutorial_data:
                     matched = requested
@@ -1104,12 +1364,8 @@ class TutorialWidget(QWidget):
                 return
             
             tutorial_content = tutorial_data.decode('utf-8')
-            
-            # 转换 markdown 到 HTML
-            html_content = self.markdown_to_html(tutorial_content)
-            
-            # 设置 HTML 内容
-            self.text_browser.setHtml(html_content)
+            self._tutorial_preamble, self._tutorial_chapters = self._split_tutorial(tutorial_content)
+            self._fill_tutorial_chapters()
             
             logger.info(f"Tutorial loaded: {len(tutorial_content)} bytes from {matched}")
             
@@ -1125,119 +1381,89 @@ class TutorialWidget(QWidget):
         result = []
         in_ul = False
         in_ol = False
+        in_nested_ul = False
         in_paragraph = False
-        
+
+        def close_nested():
+            nonlocal in_nested_ul
+            if in_nested_ul:
+                result.append('</ul>')
+                in_nested_ul = False
+
+        def close_lists():
+            nonlocal in_ul, in_ol
+            close_nested()
+            if in_ul:
+                result.append('</ul>')
+                in_ul = False
+            if in_ol:
+                result.append('</ol>')
+                in_ol = False
+
+        def close_paragraph():
+            nonlocal in_paragraph
+            if in_paragraph:
+                result.append('</p>')
+                in_paragraph = False
+
         for line in lines:
             stripped = line.strip()
-            
-            # Headers
+
             if stripped.startswith('# '):
-                if in_ul:
-                    result.append('</ul>')
-                    in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-                content = stripped[2:]
-                result.append(f'<h1>{content}</h1>')
+                close_lists()
+                close_paragraph()
+                result.append('<h1>{}</h1>'.format(stripped[2:]))
             elif stripped.startswith('## '):
-                if in_ul:
-                    result.append('</ul>')
-                    in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-                content = stripped[3:]
-                result.append(f'<h2>{content}</h2>')
+                close_lists()
+                close_paragraph()
+                result.append('<h2>{}</h2>'.format(stripped[3:]))
             elif stripped.startswith('### '):
-                if in_ul:
-                    result.append('</ul>')
-                    in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-                content = stripped[4:]
-                result.append(f'<h3>{content}</h3>')
-            # Horizontal rule
+                close_lists()
+                close_paragraph()
+                result.append('<h3>{}</h3>'.format(stripped[4:]))
             elif stripped == '---':
-                if in_ul:
-                    result.append('</ul>')
-                    in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
+                close_lists()
+                close_paragraph()
                 result.append('<hr>')
-            # Unordered list
             elif stripped.startswith('- '):
+                close_paragraph()
                 if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-                if not in_ul:
-                    result.append('<ul>')
-                    in_ul = True
-                content = self._process_inline(stripped[2:])
-                result.append(f'<li>{content}</li>')
-            # Ordered list
+                    if not in_nested_ul:
+                        result.append('<ul>')
+                        in_nested_ul = True
+                else:
+                    if not in_ul:
+                        result.append('<ul>')
+                        in_ul = True
+                result.append('<li>{}</li>'.format(self._process_inline(stripped[2:])))
             elif re.match(r'^\d+\.\s+', stripped):
+                close_nested()
+                close_paragraph()
                 if in_ul:
                     result.append('</ul>')
                     in_ul = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
                 if not in_ol:
                     result.append('<ol>')
                     in_ol = True
                 content = self._process_inline(re.sub(r'^\d+\.\s+', '', stripped))
-                result.append(f'<li>{content}</li>')
-            # Empty line
+                result.append('<li>{}</li>'.format(content))
             elif not stripped:
-                if in_ul:
+                close_nested()
+                close_paragraph()
+                if in_ul and not in_ol:
                     result.append('</ul>')
                     in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
-                if in_paragraph:
-                    result.append('</p>')
-                    in_paragraph = False
-            # Regular text
             else:
-                if in_ul:
-                    result.append('</ul>')
-                    in_ul = False
-                if in_ol:
-                    result.append('</ol>')
-                    in_ol = False
+                close_lists()
                 if not in_paragraph:
                     result.append('<p>')
                     in_paragraph = True
                 else:
                     result.append('<br>')
                 result.append(self._process_inline(stripped))
-        
-        # Close any open tags
-        if in_ul:
-            result.append('</ul>')
-        if in_ol:
-            result.append('</ol>')
-        if in_paragraph:
-            result.append('</p>')
+
+        close_lists()
+        close_paragraph()
         
         html = '\n'.join(result)
         
@@ -1330,7 +1556,83 @@ class TutorialWidget(QWidget):
     
     def update_content(self):
         """更新内容（语言切换时调用）"""
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
         self.load_tutorial()
+
+    @staticmethod
+    def _split_tutorial(markdown_text):
+        """Split the manual into the opening lines and each ## chapter."""
+        preamble = []
+        chapters = []
+        current = None
+        for line in (markdown_text or '').split('\n'):
+            if line.startswith('## '):
+                if current is not None:
+                    chapters.append(current)
+                title = line[3:].strip()
+                current = {
+                    'title': title,
+                    'lines': [line],
+                    'is_new': '(New)' in title or '（新）' in title,
+                }
+            elif current is None:
+                preamble.append(line)
+            else:
+                current['lines'].append(line)
+        if current is not None:
+            chapters.append(current)
+        for number, chapter in enumerate(chapters, 1):
+            chapter['number'] = number
+        return preamble, chapters
+
+    def _numbered_chapter_lines(self, chapter):
+        lines = list(chapter['lines'])
+        if lines and lines[0].startswith('## '):
+            lines[0] = '## %d. %s' % (chapter['number'], chapter['title'])
+        return lines
+
+    def _fill_tutorial_chapters(self):
+        """Full text, then the newest chapter, then the rest. Numbers stay in document order."""
+        prefs = get_prefs()
+        language = prefs.get('language', 'en') if hasattr(prefs, 'get') and callable(prefs.get) else 'en'
+        self.i18n = get_translation(language)
+        newest = [chapter for chapter in self._tutorial_chapters if chapter['is_new']]
+        earlier = [chapter for chapter in self._tutorial_chapters if not chapter['is_new']]
+        ordered = newest + earlier
+        self.chapter_combo.blockSignals(True)
+        self.chapter_combo.clear()
+        self.chapter_combo.addItem(self.i18n.get('tutorial_full_text', 'Full text'), 0)
+        for chapter in ordered:
+            label = '%d. %s' % (chapter['number'], chapter['title'])
+            self.chapter_combo.addItem(label, chapter['number'])
+        default_index = 1 if newest and self.chapter_combo.count() > 1 else 0
+        self.chapter_combo.setCurrentIndex(default_index)
+        self.chapter_combo.blockSignals(False)
+        self._show_tutorial_selection()
+
+    def _show_tutorial_selection(self):
+        if not hasattr(self, 'text_browser'):
+            return
+        number = self.chapter_combo.currentData()
+        try:
+            number = int(number or 0)
+        except (TypeError, ValueError):
+            number = 0
+        if number <= 0 or number > len(self._tutorial_chapters):
+            parts = list(self._tutorial_preamble)
+            for item in self._tutorial_chapters:
+                if parts and parts[-1] != '':
+                    parts.append('')
+                parts.extend(self._numbered_chapter_lines(item))
+            markdown_text = '\n'.join(parts)
+        else:
+            markdown_text = '\n'.join(self._numbered_chapter_lines(self._tutorial_chapters[number - 1]))
+        self.text_browser.setHtml(self.markdown_to_html(markdown_text))
+        scroll_bar = self.text_browser.verticalScrollBar()
+        if scroll_bar is not None:
+            scroll_bar.setValue(0)
 
 
 class TabDialog(QDialog):
@@ -1417,12 +1719,14 @@ class TabDialog(QDialog):
         
         # 创建保存按钮（左侧）
         self.save_button = QPushButton(self.i18n.get('save_button', 'Save'))
+        apply_button_style(self.save_button)
         self.save_button.clicked.connect(self.on_save_clicked)
         self.save_button.setEnabled(False)  # 初始化时禁用保存按钮
         button_layout.addWidget(self.save_button, 0, Qt.AlignVCenter)
 
         # About 与保存/关闭同级加入底栏，避免外包一层导致 macOS 原生按钮错位
         self.about_button = QPushButton(self.i18n.get('about', 'About'))
+        apply_button_style(self.about_button)
         self.about_button.clicked.connect(self.show_about_dialog)
         button_layout.addWidget(self.about_button, 0, Qt.AlignVCenter)
         self.about_unread_dot = QLabel(self.about_button)
@@ -1448,18 +1752,6 @@ class TabDialog(QDialog):
         # 添加弹性空间，使按钮分别位于左右两侧
         button_layout.addStretch()
 
-        # 添加 Online Tutorial 链接
-        self.online_tutorial_link = QLabel()
-        self.online_tutorial_link.setTextFormat(Qt.RichText)
-        self.online_tutorial_link.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        self.online_tutorial_link.setOpenExternalLinks(True)
-        self.online_tutorial_link.setCursor(Qt.PointingHandCursor)
-        self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
-        self.online_tutorial_link.setAlignment(Qt.AlignVCenter)
-        self.online_tutorial_link.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        button_layout.addWidget(self.online_tutorial_link, 0, Qt.AlignVCenter)
-        button_layout.addSpacing(12)
-
         # 添加 Reddit 链接（关闭按钮左侧）
         self.reddit_link = QLabel()
         self.reddit_link.setTextFormat(Qt.RichText)
@@ -1474,6 +1766,7 @@ class TabDialog(QDialog):
         
         # 添加Close按钮（右侧）
         self.close_button = QPushButton(self.i18n.get('close_button', 'Close'))
+        apply_button_style(self.close_button)
         self.close_button.clicked.connect(self.reject)
         button_layout.addWidget(self.close_button, 0, Qt.AlignVCenter)
         
@@ -1542,6 +1835,7 @@ class TabDialog(QDialog):
         ok_button = button_box.button(QDialogButtonBox.Ok)
         if ok_button is not None:
             ok_button.setText(self.i18n.get('close_button', 'Close'))
+            apply_button_style(ok_button)
         button_box.accepted.connect(dialog.accept)
         layout.addWidget(button_box)
         dialog.exec_()
@@ -1567,9 +1861,7 @@ class TabDialog(QDialog):
         self.tab_widget.setTabText(5, self.i18n.get('tutorial', 'Tutorial'))
         logger.debug("已更新标签页标题")
         
-        # 更新底部链接文本
-        if hasattr(self, 'online_tutorial_link'):
-            self.online_tutorial_link.setText(f'<a href="https://ask-ai-blog.pages.dev/en/docs/">{self.i18n.get("online_tutorial", "Online Tutorial")}</a>')
+        # 更新底部按钮文本
         if hasattr(self, 'about_button'):
             self.about_button.setText(self.i18n.get('about', 'About'))
         logger.debug("已更新底部链接文本")
@@ -2052,11 +2344,12 @@ class TabDialog(QDialog):
 from calibre_plugins.ask_ai_plugin.response_handler import ResponseHandler
 from calibre_plugins.ask_ai_plugin.random_question import SuggestionHandler
 
+
 class AskDialog(QDialog):
     LANGUAGE_MAP = {
-        # 英语（默认语言）
-        'en': 'English (default)',
-        'eng': 'English (default)',
+        # 英语（书籍语言名，不用界面“默认语言”标注，避免拼进请求）
+        'en': 'English',
+        'eng': 'English',
         
         # 丹麦语
         'da': 'Dansk',
@@ -2617,7 +2910,8 @@ class AskDialog(QDialog):
         book_count = len(self.books_info)
         use_compact = book_count > COMPACT_METADATA_THRESHOLD
 
-        template = prefs.get('multi_book_template', '')
+        from calibre_plugins.ask_ai_plugin.prompts_widget import resolve_request_template
+        template = resolve_request_template(prefs, 'multi')
         if not template:
             template = self.i18n.get('multi_book_default_template',
                 """Here is information about multiple books:
@@ -2654,7 +2948,9 @@ Please answer the question based on the above book information.""")
         else:
             books_metadata_text = []
             for idx, book in enumerate(self.books_info, 1):
-                book_text = f"Book {idx}:\n"
+                book_text = self.i18n.get(
+                    'multi_book_entry_header', 'Book {idx}:'
+                ).format(idx=idx) + '\n'
                 book_text += (
                     f"  {self.i18n.get('metadata_title', 'Title')}: "
                     f"{clean_prompt_metadata_text(book.title)}\n"
@@ -2703,7 +2999,7 @@ Please answer the question based on the above book information.""")
         self.history_button = QToolButton()
         self.history_button.setText(self.i18n.get('history', '历史记录'))
         self.history_button.setPopupMode(QToolButton.InstantPopup)  # 点击整个按钮弹出菜单
-        self.history_button.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        self.history_button.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
         
         self.history_menu = QMenu()
         self.history_button.setMenu(self.history_menu)
@@ -3375,9 +3671,12 @@ Please answer the question based on the above book information.""")
     
     def on_resize(self, event):
         """窗口大小变化时的处理函数（包含响应式布局调整）"""
-        prefs = get_prefs()
-        prefs['ask_dialog_width'] = self.width()
-        prefs['ask_dialog_height'] = self.height()
+        try:
+            prefs = get_prefs()
+            prefs['ask_dialog_width'] = self.width()
+            prefs['ask_dialog_height'] = self.height()
+        except Exception:
+            prefs = None
         
         # 响应式布局调整
         height = self.height()
@@ -3429,14 +3728,15 @@ Please answer the question based on the above book information.""")
     # 注意：on_model_switched() 方法已废弃，因为全局模型切换器已被移除
     # 现在每个面板都有自己的AI切换器，切换逻辑在 response_panel.py 中处理
     
-    def get_language_name(self, lang_code):
-        """将语言代码转换为易读的语言名称"""
+    @staticmethod
+    def book_language_label(lang_code, unknown='Unknown'):
+        """Book-language name spliced into prompts. Unknown uses the UI word."""
         if not lang_code:
             return None
         lang_code = as_unicode_text(lang_code).lower().strip()
         if lang_code in ('und', 'un', 'zxx', 'unknown'):
-            return self.i18n.get('unknown', 'Unknown')
-        mapped = self.LANGUAGE_MAP.get(lang_code)
+            return unknown
+        mapped = AskDialog.LANGUAGE_MAP.get(lang_code)
         if mapped:
             return mapped
         try:
@@ -3447,6 +3747,12 @@ Please answer the question based on the above book information.""")
         except Exception:
             pass
         return lang_code
+
+    def get_language_name(self, lang_code):
+        """将语言代码转换为易读的语言名称"""
+        return self.book_language_label(
+            lang_code, self.i18n.get('unknown', 'Unknown')
+        )
     
     def _create_response_container(self, count: int, show_panel_ai_switcher=True):
         """根据并行AI数量创建响应容器
@@ -3534,13 +3840,10 @@ Please answer the question based on the above book information.""")
                 if not has_token:
                     continue
             
-            # 对于 nvidia_free，动态生成当前语言的显示名称
-            if provider_id == 'nvidia_free' or ai_id == 'nvidia_free':
-                free_text = self.i18n.get('free', 'Free')
-                display_name = f"Nvidia AI ({free_text})"
-            else:
-                display_name = config.get('display_name', ai_id)
-            
+            # 与设置页同一套显示名。Grok 等固定名称不读旧配置里的 display_name。
+            from .config import get_provider_display_name
+            display_name = get_provider_display_name(provider_id, config, i18n=self.i18n)
+
             model_name = config.get('model', 'unknown')
             full_display = f"{display_name} - {model_name}"
             configured_ais.append((ai_id, full_display))
@@ -4342,11 +4645,13 @@ Please answer the question based on the above book information.""")
                 
                 # 获取配置的模板
                 prefs = get_prefs()
-                template = prefs.get('template', '')
+                from calibre_plugins.ask_ai_plugin.prompts_widget import resolve_request_template
+                template = resolve_request_template(prefs, 'ask')
                 
-                # 如果模板为空，使用默认模板
+                # 如果模板为空，使用当前界面语言的默认模板（字段名也走 i18n）
                 if not template:
-                    template = "User query: {query}\nBook title: {title}\nAuthor: {author}\nPublisher: {publisher}\nPublication year: {pubyear}\nLanguage: {language}\nSeries: {series}"
+                    from calibre_plugins.ask_ai_plugin.i18n import get_default_template
+                    template = get_default_template(prefs.get('language', 'en') or 'en')
                 
                 logger.info(f"使用的模板: {template}")
                 

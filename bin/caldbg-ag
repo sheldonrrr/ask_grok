@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-exec fish -c "source \"$ROOT/scripts/caldbg.fish\"; caldbg-ag"
+exec fish -c "source \"$ROOT/scripts/caldbg.fish\" >/dev/null; __ask_grok_caldbg_ag_impl"
