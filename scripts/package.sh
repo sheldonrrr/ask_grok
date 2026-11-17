@@ -6,6 +6,10 @@
 #
 # This public GitHub repo contains more than the plugin runtime.
 # Keep zip excludes in sync with the "Packaging notes" section in .gitignore.
+#
+# tutorial/about.md is author notes and is excluded.
+# tutorial/tutorial_v*.md is shipped: the current manual, its zh/zht/ja copies,
+# and the previous manual. plugin-import-name-ask_ai_plugin.txt is shipped.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

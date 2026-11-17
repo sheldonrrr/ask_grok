@@ -49,7 +49,14 @@ Zip excludes `.git/`, `.cursor/`, `release/`, `aiprovider/`, `scripts/`, `tests/
 
 ## Semver
 
-MAJOR (first number) = major release · MINOR (second number) = feature versions · BUILD (third number) = build number only, to distinguish builds between minors
+`MAJOR.MINOR.BUILD`
+
+- MAJOR = breaking
+- MINOR = features
+- BUILD = local test count. `scripts/bump-build.sh` adds 1 when `caldbg-ag` runs. That script updates `version.py`, both version tuples in `__init__.py`, and `setup.py` only. About shows the new number through `VERSION_DISPLAY`. It does not change `about_latest_update`, the changelog, or the tutorial. Packaging is `/build` and does not add 1.
+- `/upgrade-version` does not add 1 to BUILD and does not reset it, unless the user typed an explicit `X.Y.Z`.
+
+A local test bump does not change the latest-update sentence or the changelog.
 
 ## Slash command
 

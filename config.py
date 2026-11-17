@@ -389,6 +389,21 @@ prefs.defaults['persona'] = ''  # Empty means the built-in persona for the curre
 # Language preference settings (v1.3.9)
 prefs.defaults['use_interface_language'] = False  # Whether to ask AI to respond in interface language
 
+# Reading-mode prompt sections. Missing keys mean "include".
+prefs.defaults['reader_include_book'] = True
+prefs.defaults['reader_include_chapter'] = True
+prefs.defaults['reader_include_context'] = True
+prefs.defaults['reader_include_selection'] = True
+prefs.defaults['reader_include_note'] = True
+prefs.defaults['reader_prompt_intro'] = ''
+prefs.defaults['reader_prompt_default_question'] = ''
+prefs.defaults['reader_context_chars'] = 500
+prefs.defaults['reader_progress'] = {}
+prefs.defaults['reader_window_width'] = 1180
+prefs.defaults['reader_window_height'] = 760
+prefs.defaults['reader_window_fullscreen'] = False
+prefs.defaults['reader_window_maximized'] = False
+
 # Library Chat settings (v1.4.2 MVP)
 prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature
 prefs.defaults['library_cached_metadata'] = ''  # Cached library metadata (JSON string)

@@ -1,6 +1,6 @@
 
-# Ask AI Plugin User Manual v1.0
-Latest updated: Sep 26, 2026, Ask AI Plugin v1.6.5
+# Ask AI Plugin User Manual v1.2
+Latest updated: Tuesday Nov 17, 2026, Ask AI Plugin v2.1.0
 
 ToC of this tutorial:
 - Introduction
@@ -9,6 +9,7 @@ ToC of this tutorial:
 - Installation
 - First Time Setup an AI Service
 - How to Use
+- Epub Reader (New)
 - AI Search
 - Keyboard Shortcuts
 - Random Questions
@@ -23,10 +24,11 @@ ToC of this tutorial:
 
 ## Introduction
 
-Ask AI Plugin lets you ask questions about books in your calibre library using many AI providers (OpenAI, Anthropic, Gemini, Grok, DeepSeek, Kimi, Nvidia, Perplexity, OpenRouter, Ollama, and more).
+Ask AI Plugin lets you ask questions about books in your calibre library using many AI providers (OpenAI, Anthropic, Gemini, SpaceXSI, DeepSeek, Kimi, Nvidia, Perplexity, OpenRouter, Ollama, and more).
 
 What you can do:
 - Ask about one book or several selected books
+- Read an EPUB in the plugin (Epub Reader) and ask about selected text
 - Search your whole library with natural language (AI Search)
 - Compare answers from two AIs side by side
 - Export conversations to PDF
@@ -102,14 +104,6 @@ Method 2 (Manual):
 
 You can change the default anytime with the **Default AI** dropdown in Configuration.
 
-### Kimi (Moonshot) tip
-
-Kimi has two platforms. Pick the one that matches your API key:
-- **International** — `https://api.moonshot.ai/v1`
-- **China Mainland** — `https://api.moonshot.cn/v1`
-
-Do not mix a key from one platform with the other. Labels follow your plugin language (for example 国际版 / 中国大陆版 in Chinese).
-
 ### Manage configured AIs
 
 Use **Manage Configured AI** to edit, delete, or review AIs you already added. Double-click a row in the configured list to open it.
@@ -130,6 +124,13 @@ The plugin automatically includes book metadata. You don't need to type title or
 Perplexity is useful when you want answers with sources.
 
 When Perplexity returns citations/search results, the plugin appends a plain-text "Citations" / "Search Results" section (with full URLs) at the end of the answer, so you can copy/paste the links.
+
+## Epub Reader (New)
+
+- Ask AI can open an EPUB in its own window, and you can ask while you read.
+- Difference from official calibre: the AI uses the settings you already configured in Ask AI, with a more modern interaction.
+- Why this exists: AI in the official reader is awkward to use, and line spacing in the Viewer is too complicated to change. A change has to go through the GitHub open-source process, which is cumbersome.
+- The built-in EPUB reader (also called Read & Ask) stays small and covers the basic need: select text while reading and ask the AI. Prompt settings and this short guide are included.
 
 ## AI Search
 
@@ -185,6 +186,7 @@ How to customize:
 
 Common shortcuts (defaults):
 - Ask AI: Ask (global): Ctrl+K
+- Ask AI: Epub Reader (Read and ask): Ctrl+Shift+V (Cmd+Shift+V on macOS)
 - Ask AI: Open Configuration: F2
 - Ask AI: AI Search: Ctrl+Shift+L
 - Ask AI: Send (in dialog): Ctrl+Enter (Cmd+Enter on macOS)
@@ -235,6 +237,10 @@ Three customizable templates:
 ### Use Interface Language
 
 When enabled, the plugin adds an instruction asking AI to respond in your current plugin language. Useful if you want responses in a specific language regardless of the book's language.
+
+### Read and ask
+
+Read and ask has its own prompt settings in this tab.
 
 ### Reset to Default
 
@@ -326,7 +332,7 @@ Request Failed:
 API Key Invalid:
 - Copy entire key without spaces
 - Check key hasn't expired
-- For Grok: use key from console.x.ai, not x.com
+- For SpaceXSI: use key from console.x.ai, not x.com
 - For Kimi: make sure Platform matches your key (International vs China Mainland)
 
 Ollama Not Working:

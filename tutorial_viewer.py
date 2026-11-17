@@ -193,15 +193,26 @@ def open_tutorial_in_browser():
             logger.error("Plugin not found")
             return False
         
-        # Prefer the latest versioned tutorial; keep older names for upgrade mismatches
-        tutorial_data = None
-        matched = None
-        for candidate in (
+        # Same display-only language files as the in-plugin tutorial.
+        language = 'en'
+        try:
+            from calibre_plugins.ask_ai_plugin.config import get_prefs
+            prefs = get_prefs()
+            language = prefs.get('language', 'en') if hasattr(prefs, 'get') else 'en'
+        except Exception:
+            pass
+        names = []
+        if language in ('zh', 'zht', 'ja'):
+            names.append('tutorial/tutorial_v1.2.%s.md' % language)
+        names.extend((
+            'tutorial/tutorial_v1.2.md',
             'tutorial/tutorial_v1.1.md',
-            'tutorial/tutorial_v1.0.md',
             'tutorial/tutorial_v0.9.md',
             'tutorial/tutorial_v0.8.md',
-        ):
+        ))
+        tutorial_data = None
+        matched = None
+        for candidate in names:
             tutorial_data = plugin.get_resources(candidate)
             if tutorial_data:
                 matched = candidate

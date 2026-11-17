@@ -4,6 +4,8 @@ Build a **smallest runnable** Calibre plugin zip for local install / publishing.
 
 Alias: `/pack` (same workflow).
 
+Packaging does not add 1 to the third version number. That number moves only when `caldbg-ag` runs.
+
 ## Steps
 
 1. From the repo root, run:
@@ -26,7 +28,9 @@ dist/Ask_AI_Plugin_vX.Y.Z.zip
 
 - Plugin Python modules at zip root (`__init__.py`, `ui.py`, `models/`, …)
 - `i18n/`, `images/`, `lib/ask_ai_plugin_vendor/` (including `*.dist-info/` LICENSE/METADATA)
-- `tutorial/tutorial_v1.1.md` (current user manual; the immediately previous `tutorial_v*.md` is kept beside it)
+- `tutorial/tutorial_v1.2.md`, plus `tutorial_v1.2.zh.md`, `tutorial_v1.2.zht.md`, and `tutorial_v1.2.ja.md`
+- the previous manual, `tutorial/tutorial_v1.1.md`
+- `plugin-import-name-ask_ai_plugin.txt`
 - `LICENSE`, `README.md`
 - `.env.example` (script re-adds it if present)
 

@@ -7,11 +7,12 @@ Alias: `/version-up` (same workflow).
 ## Target version
 
 - If the user wrote a version after the command (e.g. `/upgrade-version 1.5.2`), use that `X.Y.Z`.
-- Otherwise infer the next semver from the current `VERSION` in `version.py` and the nature of uncommitted/recent work:
-  - features → MINOR
-  - fixes only → PATCH
-  - breaking → MAJOR
+- Otherwise infer the next version from `VERSION` in `version.py`:
+  - features → MINOR + 1, keep BUILD
+  - breaking → MAJOR + 1, keep BUILD
+  - The third number is the local test count. Do not add 1 to it here, and do not reset it to 0.
 - State the chosen version before editing; if ambiguous, ask once.
+- Do not run `scripts/bump-build.sh`. `caldbg-ag` already adds 1. Packaging is `/build` and does not add 1.
 
 ## Required updates (all must match)
 

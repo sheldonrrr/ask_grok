@@ -23,7 +23,7 @@ The project ships a fish-based dev loop. Source it or run the bash wrappers:
 - `source scripts/caldbg.fish` then use the functions, or run `bin/caldbg*`
   directly from any shell (they `exec fish -c ...`):
   - `bin/caldbg`      – install plugin from source (`calibre-customize -b .`) + launch GUI
-  - `bin/caldbg-ag`   – shut down a running calibre first, then install + launch (use this to reload after code changes)
+  - `bin/caldbg-ag`   – add 1 to the third version number (`2.1.0` → `2.1.1`), shut down a running calibre and wait until it has exited, then install + launch. Use this to reload after code changes. Packaging (`/build`) does not add 1. A release bump (`/upgrade-version`) keeps the third number.
 - `bin/caldbg-p`    – package `dist/*.zip` via `scripts/package.sh`, install the zip, launch
 - `bin/caldbg-pag`  – same as `caldbg-p` but shuts down a running calibre first
 - Packaging policy (public repo vs plugin zip) lives in `.gitignore` “Packaging notes”
