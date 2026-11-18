@@ -1911,6 +1911,10 @@ class TabDialog(QDialog):
         if hasattr(self, 'statistics_widget'):
             logger.debug("更新统计页面")
             self.statistics_widget.update_language(new_language)
+
+        if hasattr(self, 'tutorial_widget'):
+            logger.debug("更新教程页面")
+            self.tutorial_widget.update_content()
         
         # 通知主界面更新菜单，直接传递新语言参数
         if plugin_instance:
