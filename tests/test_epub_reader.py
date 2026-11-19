@@ -346,7 +346,8 @@ class ReaderChromeTests(unittest.TestCase):
         self.assertIn('font-size: 20px', css)
         self.assertNotIn('line-height: 1.8', css)
         self.assertIn('.response-body', css)
-        self.assertIn('font-size: 32px', css)
+        self.assertIn('h1, h2, h3, h4, h5, h6 { font-size: 20px; }', css)
+        self.assertNotIn('font-size: 32px', css)
         self.assertEqual(epub_reader.reader_answer_line_px(18, 1.4), 25)
         self.assertEqual(epub_reader.reader_answer_line_px(20, 1.8), 36)
 
@@ -396,6 +397,18 @@ class ReadingProgressTests(unittest.TestCase):
         self.assertEqual(epub_reader.reader_window_mode(True, True), 'fullscreen')
         self.assertEqual(epub_reader.reader_window_mode(False, True), 'maximized')
         self.assertEqual(epub_reader.reader_window_mode(False, False), 'normal')
+        fitted = epub_reader.reader_client_geometry_for_frame(
+            (0, 25, 1440, 850),
+            (0, 0, 800, 600),
+            (0, 22, 800, 578),
+        )
+        self.assertEqual(fitted, (0, 47, 1440, 828))
+        self.assertAlmostEqual(epub_reader.reader_split_ratio(720, 420), 720 / 1140.0)
+        self.assertEqual(epub_reader.reader_split_ratio(-1, 0), epub_reader.READER_SPLIT_DEFAULT)
+        self.assertAlmostEqual(epub_reader.reader_split_ratio_value(0.4), 0.4)
+        self.assertEqual(epub_reader.reader_split_ratio_value('nope'), epub_reader.READER_SPLIT_DEFAULT)
+        self.assertEqual(epub_reader.reader_split_sizes(1000, 0.25), [250, 750])
+        self.assertEqual(epub_reader.reader_split_sizes(1000, 0.01), [160, 840])
 
     def test_reader_history_uses_the_note_or_selection(self):
         self.assertEqual(

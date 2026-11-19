@@ -402,8 +402,9 @@ prefs.defaults['reader_context_chars'] = 500
 prefs.defaults['reader_progress'] = {}
 prefs.defaults['reader_window_width'] = 1180
 prefs.defaults['reader_window_height'] = 760
-prefs.defaults['reader_window_fullscreen'] = False
+prefs.defaults['reader_window_fullscreen'] = False  # Fill the usable desktop, not OS fullscreen
 prefs.defaults['reader_window_maximized'] = False
+prefs.defaults['reader_split_ratio'] = 720 / 1140.0
 
 # Library Chat settings (v1.4.2 MVP)
 prefs.defaults['library_chat_enabled'] = False  # Enable library chat feature

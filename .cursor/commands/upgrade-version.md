@@ -12,7 +12,7 @@ Alias: `/version-up` (same workflow).
   - breaking → MAJOR + 1, keep BUILD
   - The third number is the local test count. Do not add 1 to it here, and do not reset it to 0.
 - State the chosen version before editing; if ambiguous, ask once.
-- Do not run `scripts/bump-build.sh`. `caldbg-ag` already adds 1. Packaging is `/build` and does not add 1.
+- Do not run `scripts/bump-build.sh`. Local testing (`caldbg` / `caldbg-ag`) already adds 1. Packaging is `/build` and does not add 1.
 
 ## Required updates (all must match)
 

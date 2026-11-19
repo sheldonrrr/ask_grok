@@ -4,7 +4,7 @@ Build a **smallest runnable** Calibre plugin zip for local install / publishing.
 
 Alias: `/pack` (same workflow).
 
-Packaging does not add 1 to the third version number. That number moves only when `caldbg-ag` runs.
+Packaging does not add 1 to the third version number. That number moves when a local test runs (`caldbg` or `caldbg-ag`).
 
 ## Steps
 

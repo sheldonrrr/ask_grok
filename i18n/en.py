@@ -753,4 +753,6 @@ class EnglishTranslation(BaseTranslation):
             'read_theme_default': 'Default',
             'read_theme_sepia': 'Sepia',
             'read_theme_night': 'Night',
+            'read_fullscreen': 'Full screen',
+            'read_exit_fullscreen': 'Exit full screen',
         }

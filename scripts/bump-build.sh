@@ -1,7 +1,8 @@
 #!/bin/sh
 # Bump the local test number: MAJOR.MINOR.BUILD → BUILD + 1.
 # The first two numbers stay unchanged.
-# Called once each time caldbg-ag runs.
+# Called once each local test, after any running Calibre has quit
+# and before the plugin is installed and started.
 # Packaging uses Cursor /build and does not call this script.
 # Release bumps go through /upgrade-version and keep this number.
 set -eu

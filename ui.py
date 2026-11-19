@@ -920,6 +920,9 @@ class AskAIPluginUI(InterfaceAction):
             self.stat_action.setText(self.i18n.get('stat_tab', 'Stat'))
             self.about_action.setText(self.i18n.get('about', 'About'))
             self._update_toolbar_text(language)
+            read_dialog = getattr(self, 'read_dialog', None)
+            if read_dialog is not None and hasattr(read_dialog, 'apply_language'):
+                read_dialog.apply_language(self.i18n)
 
         except Exception as e:
             # 发生错误时恢复原始状态

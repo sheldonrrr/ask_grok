@@ -742,4 +742,6 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'read_theme_default': '默认',
             'read_theme_sepia': '护眼',
             'read_theme_night': '夜间',
+            'read_fullscreen': '全屏',
+            'read_exit_fullscreen': '退出全屏',
         }

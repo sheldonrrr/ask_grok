@@ -53,8 +53,10 @@ function __ask_grok_install_plugin
 end
 
 function __ask_grok_calibre_still_running
+    # macOS 上图形界面进程名是 calibre；calibre-debug --gui 则是 calibre-debug。
     pgrep -x calibre >/dev/null 2>&1
     or pgrep -x calibre-debug >/dev/null 2>&1
+    or pgrep -f '/calibre.app/Contents/MacOS/calibre($| )' >/dev/null 2>&1
 end
 
 function __ask_grok_bump_build
@@ -67,12 +69,14 @@ end
 
 function __ask_grok_wait_calibre_quit
     # calibre-debug -s returns before the app process is gone.
-    # This machine starts the GUI as calibre-debug, not calibre.
-    # Starting again while that process is still alive reuses it,
-    # so the log keeps the plugin version from before this bump.
-    for _i in (seq 1 50)
+    # A new GUI started while that process is still alive is the old one,
+    # so its terminal log keeps the plugin version from before this bump.
+    for _i in (seq 1 75)
         if not __ask_grok_calibre_still_running
-            return 0
+            sleep 0.3
+            if not __ask_grok_calibre_still_running
+                return 0
+            end
         end
         sleep 0.2
     end
@@ -81,8 +85,10 @@ function __ask_grok_wait_calibre_quit
 end
 
 function caldbg
-    __ask_grok_install_plugin; or return 1
-    calibre-debug --gui
+    # 本地测试：第三位测试号 +1，等旧进程退出，再安装并启动。
+    # 重新读取本文件，避免已经打开的终端还在用旧函数。
+    source "$ASK_GROK_ROOT/scripts/caldbg.fish" >/dev/null
+    __ask_grok_caldbg_ag_impl
 end
 
 function caldbg-ag
@@ -93,10 +99,16 @@ function caldbg-ag
 end
 
 function __ask_grok_caldbg_ag_impl
+    # 先退出已在运行的 Calibre，再递增并安装，最后才启动。
+    # 启动日志读的是已安装插件的版本，所以递增和安装都必须在启动之前。
+    if __ask_grok_calibre_still_running
+        calibre-debug -s
+        __ask_grok_wait_calibre_quit; or return 1
+    end
     __ask_grok_bump_build; or return 1
-    calibre-debug -s
-    __ask_grok_wait_calibre_quit; or return 1
     __ask_grok_install_plugin; or return 1
+    set -l version (python3 -c "import sys; sys.path.insert(0, '$ASK_GROK_ROOT'); from version import VERSION_STRING; print(VERSION_STRING)")
+    echo "启动插件: v$version"
     calibre-debug --gui
 end
 
@@ -122,7 +134,7 @@ function caldbg-pag
 end
 
 echo "ask_grok — source scripts/caldbg.fish"
-echo "  caldbg      源码安装 + 启动"
-echo "  caldbg-ag   测试号 +1，等旧进程退出，再安装并启动"
+echo "  caldbg      测试号 +1，等旧进程退出，再安装并启动"
+echo "  caldbg-ag   同 caldbg"
 echo "  caldbg-p    打包 dist + 安装 zip + 启动"
 echo "  caldbg-pag  同 caldbg-p，但先结束旧进程"

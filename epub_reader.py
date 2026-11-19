@@ -654,16 +654,9 @@ def reader_answer_stylesheet(font_size, line_height):
     except ImportError:
         from ui_constants import get_response_content_stylesheet
     override = (
-        '.response-body, p, li, blockquote, td, th {{ font-size: {size}px; }}'
-        'h1 {{ font-size: {h1}px; }}'
-        'h2 {{ font-size: {h2}px; }}'
-        'h3, h4, h5, h6 {{ font-size: {h3}px; }}'
-    ).format(
-        size=size,
-        h1=int(size * 1.6),
-        h2=int(size * 1.35),
-        h3=int(size * 1.15),
-    )
+        '.response-body, p, li, blockquote, td, th, '
+        'h1, h2, h3, h4, h5, h6 {{ font-size: {size}px; }}'
+    ).format(size=size)
     return get_response_content_stylesheet() + override
 
 
@@ -726,12 +719,79 @@ def reader_window_size(width, height, default=READER_WINDOW_DEFAULT):
 
 
 def reader_window_mode(fullscreen, maximized):
-    """Which window layout to restore. Full screen wins over maximized."""
+    """Which window layout to restore. Filling the desktop wins over maximized."""
     if fullscreen:
         return 'fullscreen'
     if maximized:
         return 'maximized'
     return 'normal'
+
+
+def reader_client_geometry_for_frame(avail, frame, inner):
+    """Client rectangle that places the window frame on the usable desktop.
+
+    ``avail``, ``frame`` and ``inner`` are ``(x, y, width, height)``.
+    The frame includes the title bar; the usable desktop does not include
+    the menu bar or dock.
+    """
+    ax, ay, aw, ah = avail
+    fx, fy, fw, fh = frame
+    ix, iy, iw, ih = inner
+    dx = fx - ix
+    dy = fy - iy
+    return (
+        int(ax - dx),
+        int(ay - dy),
+        max(1, int(aw - (fw - iw))),
+        max(1, int(ah - (fh - ih))),
+    )
+
+
+READER_SPLIT_DEFAULT = 720 / 1140.0
+
+
+def reader_split_ratio(left, right, default=None):
+    """Left pane share of the reader splitter, kept inside a usable range."""
+    if default is None:
+        default = READER_SPLIT_DEFAULT
+    try:
+        left = float(left)
+        right = float(right)
+    except (TypeError, ValueError):
+        return default
+    total = left + right
+    if total <= 0:
+        return default
+    ratio = left / total
+    if ratio != ratio:
+        return default
+    return max(0.15, min(0.85, ratio))
+
+
+def reader_split_ratio_value(value, default=None):
+    """Stored left-pane share. Invalid values fall back to the default split."""
+    if default is None:
+        default = READER_SPLIT_DEFAULT
+    try:
+        ratio = float(value)
+    except (TypeError, ValueError):
+        return default
+    if ratio != ratio:
+        return default
+    return max(0.15, min(0.85, ratio))
+
+
+def reader_split_sizes(total, ratio, minimum=160):
+    """Pixel widths that reproduce a saved left/right share."""
+    try:
+        total = int(total)
+    except (TypeError, ValueError):
+        total = 1140
+    total = max(total, minimum * 2)
+    ratio = reader_split_ratio_value(ratio)
+    left = int(round(total * ratio))
+    left = max(minimum, min(left, total - minimum))
+    return [left, total - left]
 
 
 def reader_book_key(library_path, book_id):
@@ -1295,7 +1355,10 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
     except Exception as exc:
         raise WebEngineMissing(str(exc)) from exc
 
-    from PyQt5.QtCore import QRect, Qt, QEvent, QThread, QTimer, QObject, QUrl, pyqtSignal, pyqtSlot
+    from PyQt5.QtCore import (
+        QEasingCurve, QEvent, QObject, QPropertyAnimation, QRect, QThread, QTimer, Qt, QUrl,
+        pyqtSignal, pyqtSlot,
+    )
     from PyQt5.QtWidgets import (
         QApplication,
         QActionGroup,
@@ -1418,7 +1481,17 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self._window_mode = 'normal'
             self._window_restored = False
             self._window_ready = False
+            self._observed_special = False
+            self._pending_normal_from = None
+            self._applying_window_layout = False
+            self._split_ratio = READER_SPLIT_DEFAULT
+            self._split_restore_pending = True
+            self._answer_home_anim = None
+            self._answer_home_token = 0
+            self._answer_scroll_animating = False
+            self._answer_home_from_tail = False
             self._load_reader_prefs()
+            self._observed_special = self._window_mode in ('fullscreen', 'maximized')
 
             title = book.get('title') or i18n.get('read_and_ask', 'Read and ask')
             self.setWindowTitle(i18n.get('read_window_title', 'Read and ask — {title}').format(title=title))
@@ -1429,6 +1502,9 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self._window_mode_timer = QTimer(self)
             self._window_mode_timer.setSingleShot(True)
             self._window_mode_timer.timeout.connect(self._confirm_normal_window)
+            self._answer_home_timer = QTimer(self)
+            self._answer_home_timer.setSingleShot(True)
+            self._answer_home_timer.timeout.connect(self._animate_answer_home)
 
             self.bridge = SelectionBridge(self)
             self.bridge.selection_changed.connect(self._on_selection)
@@ -1439,6 +1515,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             if orientation is None:
                 orientation = Qt.Orientation.Horizontal
             splitter = QSplitter(orientation, self)
+            splitter.setChildrenCollapsible(False)
+            self.splitter = splitter
             root.addWidget(splitter)
 
             left = QWidget()
@@ -1458,17 +1536,20 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             left_layout.addLayout(nav)
 
             style_row = QHBoxLayout()
-            style_row.addWidget(QLabel(i18n.get('read_font_size', 'Font size')))
+            self.font_size_label = QLabel(i18n.get('read_font_size', 'Font size'))
+            style_row.addWidget(self.font_size_label)
             self.font_size_combo = QComboBox()
             for size in READER_FONT_SIZES:
                 self.font_size_combo.addItem(str(size), size)
             style_row.addWidget(self.font_size_combo)
-            style_row.addWidget(QLabel(i18n.get('read_line_height', 'Line height')))
+            self.line_height_label = QLabel(i18n.get('read_line_height', 'Line height'))
+            style_row.addWidget(self.line_height_label)
             self.line_height_combo = QComboBox()
             for height in READER_LINE_HEIGHTS:
                 self.line_height_combo.addItem('%.1f' % height, height)
             style_row.addWidget(self.line_height_combo)
-            style_row.addWidget(QLabel(i18n.get('read_theme', 'Style')))
+            self.theme_label = QLabel(i18n.get('read_theme', 'Style'))
+            style_row.addWidget(self.theme_label)
             self.theme_combo = QComboBox()
             for theme_id, label_key, fallback in (
                 ('default', 'read_theme_default', 'Default'),
@@ -1477,6 +1558,11 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             ):
                 self.theme_combo.addItem(i18n.get(label_key, fallback), theme_id)
             style_row.addWidget(self.theme_combo)
+            self.fullscreen_btn = QPushButton(i18n.get('read_fullscreen', 'Full screen'))
+            self.fullscreen_btn.setCheckable(True)
+            self.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
+            self._sync_fullscreen_button()
+            style_row.addWidget(self.fullscreen_btn)
             style_row.addStretch(1)
             left_layout.addLayout(style_row)
             self._select_combo_data(self.font_size_combo, self._font_size)
@@ -1515,7 +1601,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             right_layout = QVBoxLayout(right)
             right_layout.setContentsMargins(8, 0, 0, 0)
             model_row = QHBoxLayout()
-            model_row.addWidget(QLabel(i18n.get('read_model', 'Model')))
+            self.model_label = QLabel(i18n.get('read_model', 'Model'))
+            model_row.addWidget(self.model_label)
             self.model_combo = QComboBox()
             self._fill_model_combo()
             self.model_combo.currentIndexChanged.connect(self._on_model_changed)
@@ -1558,6 +1645,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self.answer.setVerticalScrollBarPolicy(scroll_policy)
             self._reserve_answer_scrollbar_lane()
             self.answer.verticalScrollBar().valueChanged.connect(self._on_answer_scroll)
+            self.answer.verticalScrollBar().sliderPressed.connect(self._stop_answer_scroll_animation)
+            self.answer.viewport().installEventFilter(self)
             right_layout.addWidget(self.answer, 1)
 
             self._stream_timer = QTimer(self)
@@ -1592,9 +1681,10 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
 
             splitter.addWidget(left)
             splitter.addWidget(right)
-            splitter.setStretchFactor(0, 3)
-            splitter.setStretchFactor(1, 2)
-            splitter.setSizes([720, 420])
+            splitter.setStretchFactor(0, 1)
+            splitter.setStretchFactor(1, 1)
+            splitter.setSizes(reader_split_sizes(1140, self._split_ratio))
+            splitter.splitterMoved.connect(self._on_splitter_moved)
             self.chapter_combo.currentIndexChanged.connect(self._show_chapter)
             start_index = 0
             start_ratio = None
@@ -1642,6 +1732,9 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 self._window_mode = reader_window_mode(
                     bool(prefs.get('reader_window_fullscreen', False)),
                     bool(prefs.get('reader_window_maximized', False)),
+                )
+                self._split_ratio = reader_split_ratio_value(
+                    prefs.get('reader_split_ratio', READER_SPLIT_DEFAULT),
                 )
 
         def _pref_choice(self, prefs, key, choices, default):
@@ -1927,6 +2020,14 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             return getattr(QEvent.Type, name)
 
         def eventFilter(self, obj, event):
+            answer = getattr(self, 'answer', None)
+            if (
+                answer is not None
+                and obj is answer.viewport()
+                and event.type() == self._event_type('Wheel')
+                and getattr(self, '_answer_scroll_animating', False)
+            ):
+                self._stop_answer_scroll_animation()
             if obj is getattr(self, 'note_edit', None):
                 if event.type() == self._event_type('FocusIn'):
                     self._set_note_expanded(True)
@@ -1977,11 +2078,14 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 self._set_status('')
 
         def _on_answer_scroll(self, value):
+            if getattr(self, '_answer_scroll_animating', False):
+                return
             bar = self.answer.verticalScrollBar()
             if not bar:
                 return
             if value > bar.minimum() + 8:
                 self._answer_pin_start = False
+                self._answer_home_from_tail = False
             self._follow_tail = value >= bar.maximum() - 8
 
         def _reserve_answer_scrollbar_lane(self):
@@ -2009,7 +2113,7 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
         def _on_answer_document_resized(self, *_args):
             if not getattr(self, '_answer_pin_start', False):
                 return
-            self._pin_answer_start()
+            self._schedule_answer_home()
 
         def _move_answer_cursor_home(self):
             from PyQt5.QtGui import QTextCursor
@@ -2022,11 +2126,15 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
 
         def _render_answer(self, text, scroll_to_start=False):
             bar = self.answer.verticalScrollBar()
+            was_following = self._follow_tail
+            self._cancel_answer_home_animation()
             if scroll_to_start:
                 self._answer_pin_start = True
                 self._follow_tail = False
+                self._answer_home_from_tail = was_following
             else:
                 self._answer_pin_start = False
+                self._answer_home_from_tail = False
             follow = self._follow_tail and not scroll_to_start
             old_value = bar.value() if bar else 0
             try:
@@ -2045,35 +2153,114 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 self._watch_answer_document_size()
             if bar:
                 if scroll_to_start:
-                    self._move_answer_cursor_home()
-                    bar.setValue(bar.minimum())
+                    if self._answer_home_from_tail and bar.maximum() > bar.minimum():
+                        bar.setValue(bar.maximum())
                 elif follow:
                     bar.setValue(bar.maximum())
                 else:
                     bar.setValue(min(old_value, bar.maximum()))
                 bar.valueChanged.connect(self._on_answer_scroll)
             if scroll_to_start:
-                QTimer.singleShot(0, self._pin_answer_start)
+                self._schedule_answer_home()
 
-        def _pin_answer_start(self):
+        def _animation_is_running(self, anim):
+            if anim is None:
+                return False
+            running = getattr(QPropertyAnimation, 'Running', None)
+            if running is None:
+                running = getattr(getattr(QPropertyAnimation, 'State', None), 'Running', None)
+            try:
+                return anim.state() == running
+            except Exception:
+                return False
+
+        def _cancel_answer_home_animation(self):
+            self._answer_home_token = getattr(self, '_answer_home_token', 0) + 1
+            timer = getattr(self, '_answer_home_timer', None)
+            if timer is not None:
+                timer.stop()
+            anim = getattr(self, '_answer_home_anim', None)
+            if self._animation_is_running(anim):
+                anim.stop()
+            self._answer_scroll_animating = False
+
+        def _stop_answer_scroll_animation(self):
+            self._cancel_answer_home_animation()
+            self._answer_pin_start = False
+            self._answer_home_from_tail = False
+
+        def _schedule_answer_home(self):
             if self._closing or not getattr(self, '_answer_pin_start', False):
                 return
-            if getattr(self, '_pinning_answer', False):
+            if self._animation_is_running(getattr(self, '_answer_home_anim', None)):
+                return
+            timer = getattr(self, '_answer_home_timer', None)
+            if timer is not None:
+                timer.start(60)
+
+        def _set_answer_scroll(self, value):
+            bar = self.answer.verticalScrollBar()
+            if bar is None:
+                return
+            self._answer_scroll_animating = True
+            try:
+                bar.setValue(value)
+            finally:
+                self._answer_scroll_animating = False
+
+        def _animate_answer_home(self):
+            if self._closing or not getattr(self, '_answer_pin_start', False):
                 return
             bar = self.answer.verticalScrollBar()
-            if not bar:
+            if bar is None:
                 return
-            self._pinning_answer = True
+            end = bar.minimum()
+            start = bar.value()
+            if self._answer_home_from_tail and start <= end + 8 and bar.maximum() > end + 24:
+                start = bar.maximum()
+            self._answer_scroll_animating = True
             try:
-                try:
-                    bar.valueChanged.disconnect(self._on_answer_scroll)
-                except Exception:
-                    pass
                 self._move_answer_cursor_home()
-                bar.setValue(bar.minimum())
-                bar.valueChanged.connect(self._on_answer_scroll)
+                bar.setValue(start)
             finally:
-                self._pinning_answer = False
+                self._answer_scroll_animating = False
+            if start <= end + 2:
+                self._finish_answer_home()
+                return
+            easing = getattr(QEasingCurve, 'OutCubic', None)
+            if easing is None:
+                easing = QEasingCurve.Type.OutCubic
+            self._answer_home_token = getattr(self, '_answer_home_token', 0) + 1
+            token = self._answer_home_token
+            anim = QPropertyAnimation(bar, b'value', self)
+            anim.setDuration(480)
+            anim.setStartValue(start)
+            anim.setEndValue(end)
+            anim.setEasingCurve(QEasingCurve(easing))
+            anim.finished.connect(lambda token=token: self._finish_answer_home(token))
+            self._answer_home_anim = anim
+            self._answer_scroll_animating = True
+            anim.start()
+
+        def _finish_answer_home(self, token=None):
+            if token is not None and token != getattr(self, '_answer_home_token', None):
+                return
+            if self._closing or not getattr(self, '_answer_pin_start', False):
+                self._answer_scroll_animating = False
+                return
+            self._answer_scroll_animating = True
+            try:
+                self._move_answer_cursor_home()
+                bar = self.answer.verticalScrollBar()
+                if bar is not None:
+                    bar.setValue(bar.minimum())
+            finally:
+                self._answer_scroll_animating = False
+            self._answer_pin_start = False
+            self._answer_home_from_tail = False
+
+        def _pin_answer_start(self):
+            self._schedule_answer_home()
 
         def _flush_stream_render(self):
             if self._closing:
@@ -2172,26 +2359,54 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             return 2
 
         def _apply_answer_line_height(self):
-            from PyQt5.QtGui import QTextCursor
+            from PyQt5.QtGui import QTextCursor, QTextFormat
             ratio = 1.6
             try:
                 ratio = float(self._line_height)
             except (TypeError, ValueError):
                 ratio = 1.6
+            try:
+                size = int(self._font_size)
+            except (TypeError, ValueError):
+                size = 18
+            size = max(1, size)
             fixed = self._answer_line_height_type()
+            pixels = reader_answer_line_px(size, ratio)
             document = self.answer.document()
+            keep = getattr(QTextCursor, 'KeepAnchor', None)
+            if keep is None:
+                keep = QTextCursor.MoveMode.KeepAnchor
+            adjustment = getattr(QTextFormat, 'FontSizeAdjustment', None)
+            pending = []
             block = document.begin()
             while block.isValid():
-                font_px = 0
                 fragment = block.begin()
                 while not fragment.atEnd():
-                    pixel = fragment.fragment().charFormat().font().pixelSize()
-                    if pixel > font_px:
-                        font_px = pixel
+                    frag = fragment.fragment()
+                    if frag.length() <= 0:
+                        fragment += 1
+                        continue
+                    fmt = frag.charFormat()
+                    font = fmt.font()
+                    adjusted = False
+                    if adjustment is not None and fmt.hasProperty(adjustment):
+                        adjusted = fmt.intProperty(adjustment) != 0
+                    if font.pixelSize() != size or adjusted:
+                        pending.append((frag.position(), frag.length(), fmt))
                     fragment += 1
-                if font_px <= 0:
-                    font_px = int(self._font_size)
-                pixels = reader_answer_line_px(font_px, ratio)
+                block = block.next()
+            for pos, length, fmt in pending:
+                font = fmt.font()
+                font.setPixelSize(size)
+                fmt.setFont(font)
+                if adjustment is not None:
+                    fmt.setProperty(adjustment, 0)
+                cursor = QTextCursor(document)
+                cursor.setPosition(pos)
+                cursor.setPosition(min(pos + length, document.characterCount()), keep)
+                cursor.setCharFormat(fmt)
+            block = document.begin()
+            while block.isValid():
                 fmt = block.blockFormat()
                 if fmt.lineHeight() != pixels or fmt.lineHeightType() != fixed:
                     fmt.setLineHeight(pixels, fixed)
@@ -2434,15 +2649,25 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 flag = getattr(Qt.WindowState, name)
             return flag
 
+        def _window_states(self):
+            states = self.windowState()
+            handle = self.windowHandle() if hasattr(self, 'windowHandle') else None
+            if handle is not None:
+                try:
+                    states = states | handle.windowState()
+                except Exception:
+                    pass
+            return states
+
         def _is_fullscreen(self):
             try:
-                return bool(self.windowState() & self._window_state_flag('WindowFullScreen'))
+                return bool(self._window_states() & self._window_state_flag('WindowFullScreen'))
             except Exception:
                 return False
 
         def _is_maximized(self):
             try:
-                return bool(self.windowState() & self._window_state_flag('WindowMaximized'))
+                return bool(self._window_states() & self._window_state_flag('WindowMaximized'))
             except Exception:
                 return False
 
@@ -2458,10 +2683,13 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 return
             prefs['reader_window_fullscreen'] = self._window_mode == 'fullscreen'
             prefs['reader_window_maximized'] = self._window_mode == 'maximized'
-            if self._window_ready and self._window_mode == 'normal':
-                width, height = reader_window_size(self.width(), self.height())
-                prefs['reader_window_width'] = width
-                prefs['reader_window_height'] = height
+            prefs['reader_split_ratio'] = self._current_split_ratio()
+            if self._window_ready and self._window_mode == 'normal' and not self._applying_window_layout:
+                self._window_width, self._window_height = reader_window_size(
+                    self.width(), self.height(),
+                )
+            prefs['reader_window_width'] = self._window_width
+            prefs['reader_window_height'] = self._window_height
             try:
                 prefs.commit()
             except Exception:
@@ -2469,9 +2697,226 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
 
         def resizeEvent(self, event):
             super(EpubAskDialog, self).resizeEvent(event)
+            if self._applying_window_layout:
+                return
+            if self._split_restore_pending:
+                self._apply_split_ratio()
             if not self._window_ready or self._is_fullscreen() or self._is_maximized():
                 return
-            self._window_save_timer.start(400)
+            self._leave_desktop_fill_if_moved()
+            if self._window_mode == 'normal':
+                self._window_save_timer.start(400)
+
+        def moveEvent(self, event):
+            super(EpubAskDialog, self).moveEvent(event)
+            if self._applying_window_layout or not self._window_ready:
+                return
+            if self._is_fullscreen() or self._is_maximized():
+                return
+            if self._window_mode != 'fullscreen':
+                return
+            self._leave_desktop_fill_if_moved()
+            if self._window_mode == 'normal':
+                self._window_save_timer.start(400)
+
+        def _current_split_ratio(self):
+            splitter = getattr(self, 'splitter', None)
+            if splitter is None:
+                return self._split_ratio
+            sizes = splitter.sizes()
+            if len(sizes) < 2 or sum(sizes) <= 0:
+                return self._split_ratio
+            return reader_split_ratio(sizes[0], sizes[1], self._split_ratio)
+
+        def _on_splitter_moved(self, *_args):
+            self._split_ratio = self._current_split_ratio()
+            self._split_restore_pending = False
+            if self._window_ready:
+                self._window_save_timer.start(400)
+
+        def _apply_split_ratio(self):
+            splitter = getattr(self, 'splitter', None)
+            if splitter is None or not self._split_restore_pending:
+                return
+            if self._window_mode == 'fullscreen' and not self._geometry_fills_desktop():
+                return
+            if self._window_mode == 'maximized' and not self._is_maximized():
+                return
+            total = sum(splitter.sizes()) or splitter.width()
+            if total <= 0:
+                return
+            splitter.blockSignals(True)
+            splitter.setSizes(reader_split_sizes(total, self._split_ratio))
+            splitter.blockSignals(False)
+            self._split_restore_pending = False
+
+        def apply_language(self, i18n):
+            """Refresh reader chrome after the plugin language changes."""
+            self.i18n = i18n or {}
+            title = as_unicode_text(self.book.get('title')) or self.i18n.get('read_and_ask', 'Read and ask')
+            self.setWindowTitle(self.i18n.get(
+                'read_window_title', 'Read and ask — {title}',
+            ).format(title=title))
+            self.prev_btn.setText(self.i18n.get('read_prev_chapter', 'Previous'))
+            self.next_btn.setText(self.i18n.get('read_next_chapter', 'Next'))
+            self.font_size_label.setText(self.i18n.get('read_font_size', 'Font size'))
+            self.line_height_label.setText(self.i18n.get('read_line_height', 'Line height'))
+            self.theme_label.setText(self.i18n.get('read_theme', 'Style'))
+            theme_labels = (
+                ('default', 'read_theme_default', 'Default'),
+                ('sepia', 'read_theme_sepia', 'Sepia'),
+                ('night', 'read_theme_night', 'Night'),
+            )
+            self.theme_combo.blockSignals(True)
+            for theme_id, label_key, fallback in theme_labels:
+                index = self.theme_combo.findData(theme_id)
+                if index >= 0:
+                    self.theme_combo.setItemText(index, self.i18n.get(label_key, fallback))
+            self.theme_combo.blockSignals(False)
+            self.model_label.setText(self.i18n.get('read_model', 'Model'))
+            self.history_button.setText(self.i18n.get('history', 'History'))
+            self.answer.setPlaceholderText(self.i18n.get(
+                'read_answer_placeholder',
+                'Select text in the book, then ask. The reply shows here.',
+            ))
+            self.note_edit.setPlaceholderText(self.i18n.get(
+                'read_note_placeholder',
+                'Optional note. Enter sends it with the selected text.',
+            ))
+            self.send_btn.setText(self.i18n.get('read_send', 'Ask'))
+            self.stop_btn.setText(self.i18n.get('read_stop', 'Stop'))
+            self._sync_fullscreen_button()
+            if self._selection and not self._busy and not self._stream_text:
+                self._set_status(self.i18n.get(
+                    'read_selection_count', '{n} characters selected',
+                ).format(n=len(self._selection)))
+
+        def _sync_fullscreen_button(self):
+            button = getattr(self, 'fullscreen_btn', None)
+            if button is None:
+                return
+            full = self._window_mode == 'fullscreen'
+            button.blockSignals(True)
+            button.setChecked(full)
+            if full:
+                button.setText(self.i18n.get('read_exit_fullscreen', 'Exit full screen'))
+            else:
+                button.setText(self.i18n.get('read_fullscreen', 'Full screen'))
+            button.blockSignals(False)
+
+        def _reader_screen(self):
+            screen = None
+            if hasattr(self, 'screen'):
+                try:
+                    screen = self.screen()
+                except Exception:
+                    screen = None
+            if screen is None and hasattr(self, 'windowHandle'):
+                handle = self.windowHandle()
+                if handle is not None:
+                    try:
+                        screen = handle.screen()
+                    except Exception:
+                        screen = None
+            if screen is None:
+                app = QApplication.instance()
+                if app is not None and hasattr(app, 'primaryScreen'):
+                    try:
+                        screen = app.primaryScreen()
+                    except Exception:
+                        screen = None
+            return screen
+
+        def _screen_available_geometry(self):
+            screen = self._reader_screen()
+            if screen is None:
+                return None
+            try:
+                return screen.availableGeometry()
+            except Exception:
+                return None
+
+        def _geometry_fills_desktop(self):
+            avail = self._screen_available_geometry()
+            if avail is None:
+                return False
+            frame = self.frameGeometry()
+            return (
+                abs(frame.x() - avail.x()) <= 16
+                and abs(frame.y() - avail.y()) <= 16
+                and abs(frame.width() - avail.width()) <= 24
+                and abs(frame.height() - avail.height()) <= 24
+            )
+
+        def _place_frame(self, avail):
+            frame = self.frameGeometry()
+            inner = self.geometry()
+            x, y, width, height = reader_client_geometry_for_frame(
+                (avail.x(), avail.y(), avail.width(), avail.height()),
+                (frame.x(), frame.y(), frame.width(), frame.height()),
+                (inner.x(), inner.y(), inner.width(), inner.height()),
+            )
+            self.setGeometry(x, y, width, height)
+
+        def _leave_desktop_fill_if_moved(self):
+            if self._window_mode != 'fullscreen' or self._geometry_fills_desktop():
+                return
+            self._window_mode = 'normal'
+            self._window_width, self._window_height = reader_window_size(
+                self.width(), self.height(),
+            )
+            self._sync_fullscreen_button()
+
+        def _fill_available_desktop(self):
+            """Grow the window to the usable desktop. The menu bar and dock stay visible."""
+            avail = self._screen_available_geometry()
+            if avail is None:
+                return
+            self._applying_window_layout = True
+            try:
+                if self._is_fullscreen() or self._is_maximized():
+                    self.showNormal()
+                self._window_mode = 'fullscreen'
+                self._observed_special = False
+                self._place_frame(avail)
+            finally:
+                self._applying_window_layout = False
+            self._apply_split_ratio()
+
+        def _restore_windowed_size(self):
+            self._applying_window_layout = True
+            try:
+                if self._is_fullscreen() or self._is_maximized():
+                    self.showNormal()
+                self._window_mode = 'normal'
+                self._observed_special = False
+                width, height = reader_window_size(self._window_width, self._window_height)
+                avail = self._screen_available_geometry()
+                if avail is None:
+                    self.resize(width, height)
+                    return
+                width = min(width, max(1, avail.width()))
+                height = min(height, max(1, avail.height()))
+                x = avail.x() + max(0, (avail.width() - width) // 2)
+                y = avail.y() + max(0, (avail.height() - height) // 2)
+                self.setGeometry(int(x), int(y), int(width), int(height))
+            finally:
+                self._applying_window_layout = False
+
+        def _toggle_fullscreen(self, checked):
+            self._window_mode_timer.stop()
+            self._pending_normal_from = None
+            self._observed_special = False
+            if checked:
+                if self._window_mode != 'fullscreen':
+                    self._window_width, self._window_height = reader_window_size(
+                        self.width(), self.height(),
+                    )
+                self._fill_available_desktop()
+            else:
+                self._restore_windowed_size()
+            self._sync_fullscreen_button()
+            self._save_reader_window()
 
         def _current_window_mode(self):
             if self._is_fullscreen():
@@ -2484,12 +2929,44 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             """Ignore the brief un-fullscreen that happens while the window is closing."""
             if self._closing or not self.isVisible():
                 return
-            if self._current_window_mode() != 'normal':
+            mode = self._current_window_mode()
+            if mode == 'fullscreen':
+                return
+            if mode == 'maximized':
+                self._window_mode = 'maximized'
+                self._pending_normal_from = None
+                self._sync_fullscreen_button()
+                self._save_reader_window()
+                return
+            if self._window_mode == 'fullscreen' and not self._observed_special:
                 return
             if self._window_mode == 'normal':
                 return
+            self._pending_normal_from = None
             self._window_mode = 'normal'
+            self._sync_fullscreen_button()
             self._save_reader_window()
+
+        def _capture_window_mode(self):
+            if self._closing or not self._window_ready:
+                return
+            mode = self._current_window_mode()
+            if mode in ('fullscreen', 'maximized'):
+                self._window_mode_timer.stop()
+                self._pending_normal_from = None
+                self._observed_special = True
+                if mode != self._window_mode:
+                    self._window_mode = mode
+                    self._sync_fullscreen_button()
+                    self._save_reader_window()
+                else:
+                    self._sync_fullscreen_button()
+                return
+            if self._window_mode == 'fullscreen' and not self._observed_special:
+                return
+            if self._window_mode != 'normal':
+                self._pending_normal_from = self._window_mode
+                self._window_mode_timer.start(1200)
 
         def changeEvent(self, event):
             super(EpubAskDialog, self).changeEvent(event)
@@ -2497,15 +2974,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 return
             if event.type() != self._event_type('WindowStateChange'):
                 return
-            mode = self._current_window_mode()
-            if mode == 'normal':
-                if self._window_mode != 'normal':
-                    self._window_mode_timer.start(500)
-                return
-            self._window_mode_timer.stop()
-            if mode != self._window_mode:
-                self._window_mode = mode
-                self._save_reader_window()
+            QTimer.singleShot(0, self._capture_window_mode)
+            QTimer.singleShot(400, self._capture_window_mode)
 
         def showEvent(self, event):
             super(EpubAskDialog, self).showEvent(event)
@@ -2514,9 +2984,11 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 return
             self._window_restored = True
             if self._window_mode == 'fullscreen':
-                QTimer.singleShot(0, self.showFullScreen)
+                QTimer.singleShot(0, self._fill_available_desktop)
             elif self._window_mode == 'maximized':
                 QTimer.singleShot(0, self.showMaximized)
+            self._sync_fullscreen_button()
+            QTimer.singleShot(0, self._apply_split_ratio)
 
         def closeEvent(self, event):
             self._closing = True
@@ -2528,6 +3000,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             if getattr(self, '_window_save_timer', None) is not None:
                 self._window_save_timer.stop()
             if getattr(self, '_window_mode_timer', None) is not None:
+                if self._window_mode_timer.isActive() and self._pending_normal_from:
+                    self._window_mode = self._pending_normal_from
                 self._window_mode_timer.stop()
             self._save_reader_window()
             app = QApplication.instance()

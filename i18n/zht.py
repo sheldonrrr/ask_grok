@@ -742,4 +742,6 @@ class TraditionalChineseTranslation(BaseTranslation):
         'read_theme_default': '預設',
         'read_theme_sepia': '護眼',
         'read_theme_night': '夜間',
+        'read_fullscreen': '全螢幕',
+        'read_exit_fullscreen': '退出全螢幕',
         }
