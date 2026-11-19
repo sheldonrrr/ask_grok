@@ -5,15 +5,15 @@ This package contains vendored third-party libraries to avoid conflicts with oth
 All external dependencies are isolated in this namespace.
 
 Vendored libraries:
-- requests (2.32.3) - HTTP library for API calls
-- bleach (6.2.0) - HTML sanitization
+- requests (2.34.2) - HTTP library for API calls
+- bleach (6.4.0) - HTML sanitization
 - tinycss2 (1.4.0) - CSS parsing (bleach css_sanitizer dependency; Calibre 未内置)
 - webencodings (0.5.1) - Encoding labels (tinycss2 dependency)
 - markdown2 (2.5.3) - Markdown to HTML conversion
-- urllib3 (2.3.0) - HTTP client (requests dependency)
-- certifi (2025.01.31) - SSL certificates (requests dependency)
+- urllib3 (2.8.0) - HTTP client (requests dependency)
+- certifi (2026.10.23) - SSL certificates (requests dependency)
 - charset_normalizer (3.4.1) - Character encoding detection (requests dependency)
-- idna (3.10) - Internationalized domain names (requests dependency)
+- idna (3.20) - Internationalized domain names (requests dependency)
 """
 
 __version__ = '1.0.0'

@@ -8,7 +8,7 @@
 """
 
 # 版本号元组，用于 Calibre 插件系统
-VERSION = (2, 1, 12)
+VERSION = (2, 3, 19)
 
 # 版本号字符串，用于显示
 VERSION_STRING = '.'.join(map(str, VERSION))

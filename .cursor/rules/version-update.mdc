@@ -53,7 +53,7 @@ Zip excludes `.git/`, `.cursor/`, `release/`, `aiprovider/`, `scripts/`, `tests/
 
 - MAJOR = breaking
 - MINOR = features
-- BUILD = local test count. `scripts/bump-build.sh` adds 1 when `caldbg-ag` runs. That script updates `version.py`, both version tuples in `__init__.py`, and `setup.py` only. About shows the new number through `VERSION_DISPLAY`. It does not change `about_latest_update`, the changelog, or the tutorial. Packaging is `/build` and does not add 1.
+- BUILD = local test count. Every local test (`caldbg` or `caldbg-ag`) quits a running Calibre, then runs `scripts/bump-build.sh` (adds 1), then installs, and only then launches. The startup log shows the incremented version. That script updates `version.py`, both version tuples in `__init__.py`, and `setup.py` only. About shows the new number through `VERSION_DISPLAY`. It does not change `about_latest_update`, the changelog, or the tutorial. Packaging is `/build` and does not add 1. Unit tests (`python3 -m unittest`) do not add 1.
 - `/upgrade-version` does not add 1 to BUILD and does not reset it, unless the user typed an explicit `X.Y.Z`.
 
 A local test bump does not change the latest-update sentence or the changelog.

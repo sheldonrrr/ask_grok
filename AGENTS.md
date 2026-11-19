@@ -22,8 +22,8 @@ not required for the plugin to run inside calibre.
 The project ships a fish-based dev loop. Source it or run the bash wrappers:
 - `source scripts/caldbg.fish` then use the functions, or run `bin/caldbg*`
   directly from any shell (they `exec fish -c ...`):
-  - `bin/caldbg`      – install plugin from source (`calibre-customize -b .`) + launch GUI
-  - `bin/caldbg-ag`   – add 1 to the third version number (`2.1.0` → `2.1.1`), shut down a running calibre and wait until it has exited, then install + launch. Use this to reload after code changes. Packaging (`/build`) does not add 1. A release bump (`/upgrade-version`) keeps the third number.
+  - `bin/caldbg`      – local test. Quit a running calibre first, add 1 to the third version number (`2.2.12` → `2.2.13`), install that build, then launch. The GUI log shows the incremented version because the bump and install both finish before startup. Packaging (`/build`) does not add 1. A release bump (`/upgrade-version`) keeps the third number. Unit tests do not add 1.
+  - `bin/caldbg-ag`   – same as `bin/caldbg`
 - `bin/caldbg-p`    – package `dist/*.zip` via `scripts/package.sh`, install the zip, launch
 - `bin/caldbg-pag`  – same as `caldbg-p` but shuts down a running calibre first
 - Packaging policy (public repo vs plugin zip) lives in `.gitignore` “Packaging notes”

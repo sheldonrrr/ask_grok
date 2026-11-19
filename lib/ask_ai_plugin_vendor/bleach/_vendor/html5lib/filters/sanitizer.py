@@ -128,6 +128,7 @@ allowed_elements = frozenset((
     (namespaces['html'], 'ul'),
     (namespaces['html'], 'var'),
     (namespaces['html'], 'video'),
+    (namespaces['html'], 'wbr'),
     (namespaces['mathml'], 'maction'),
     (namespaces['mathml'], 'math'),
     (namespaces['mathml'], 'merror'),
@@ -533,6 +534,7 @@ attr_val_is_uri = frozenset((
     (None, 'dynsrc'),
     (None, 'lowsrc'),
     (None, 'ping'),
+    (None, 'formaction'),
     (namespaces['xlink'], 'href'),
     (namespaces['xml'], 'base'),
 ))
@@ -695,7 +697,6 @@ allowed_protocols = frozenset((
     'rtsp',
     'afs',
     'data',
-    'calibre',
 ))
 
 allowed_content_types = frozenset((
