@@ -52,6 +52,9 @@ class CantoneseTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': '語言', # Language
             'language_subtitle': '揀你鍾意嘅介面語言', # Choose your preferred interface language
+            'menu_click_settings': '撳選單',
+            'menu_click_subtitle': '揀撳外掛掣時打開邊樣',
+            'menu_click_label': '打開',
             'ai_providers_subtitle': '設定 AI 服務供應商並揀你嘅預設 AI', # Configure AI providers and select your default AI
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
@@ -389,7 +392,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.11.17）：加咗 EPUB 簡版閱讀器（唔支援圖片），閱讀時可以圈選文字再提問',
+            'about_latest_update': '最新更新（2026.11.18）：修好咗轉語言嘅問題。',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown',

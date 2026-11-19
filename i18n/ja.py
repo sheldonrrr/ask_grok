@@ -52,6 +52,9 @@ class JapaneseTranslation(BaseTranslation):
             # セクションサブタイトル
             'language_settings': '言語',
             'language_subtitle': 'お好みのインターフェース言語を選択してください',
+            'menu_click_settings': 'メニューのクリック',
+            'menu_click_subtitle': 'プラグインボタンをクリックしたときに開く機能を選びます',
+            'menu_click_label': '開く',
             'ai_providers_subtitle': 'AIプロバイダーを設定し、デフォルトのAIを選択してください',
             'prompts_subtitle': 'AIへの質問の送信方法をカスタマイズ',
             'export_settings_subtitle': 'PDF出力のデフォルトフォルダを設定',
@@ -416,7 +419,7 @@ class JapaneseTranslation(BaseTranslation):
             'about_title': 'Ask AI Pluginについて',
             'about_version_label': 'バージョン',
             'about_description': '選択したAIサービスを使って、calibreの本について質問できます。',
-            'about_latest_update': '最新の更新（2026.11.17）：簡易EPUBリーダーを追加しました（画像には対応していません）。読書中に文字を選択して質問できます',
+            'about_latest_update': '最新の更新（2026.11.18）：言語切り替えの問題を修正しました。',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': '注：MobileRead は calibre プラグインの公開とバージョン更新情報のための開発者ページです。',

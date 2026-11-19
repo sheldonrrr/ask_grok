@@ -52,6 +52,9 @@ class DutchTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Taal',
             'language_subtitle': 'Kies uw voorkeurstaal voor de interface',
+            'menu_click_settings': 'Menuklik',
+            'menu_click_subtitle': 'Kies wat opent als u op de plug-inknop klikt',
+            'menu_click_label': 'Openen',
             'ai_providers_subtitle': 'Configureer AI-aanbieders en selecteer uw standaard-AI',
             'prompts_subtitle': 'Pas aan hoe vragen naar AI worden verzonden',
             'export_settings_subtitle': 'Stel de standaardmap in voor het exporteren van PDF\'s',
@@ -411,7 +414,7 @@ class DutchTranslation(BaseTranslation):
             'about_title': 'Over Ask AI Plugin',
             'about_version_label': 'Versie',
             'about_description': 'Stel vragen over calibre-boeken met de AI-diensten die u kiest.',
-            'about_latest_update': 'Laatste update (2026.11.17): eenvoudige EPUB-lezer toegevoegd (afbeeldingen worden niet getoond). Selecteer tekst tijdens het lezen en stel een vraag',
+            'about_latest_update': 'Laatste update (2026.11.18): probleem bij het wisselen van taal opgelost.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Let op: MobileRead is de ontwikkelaarspagina voor calibre-pluginreleases en verdere versie-updates.',

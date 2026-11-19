@@ -13,6 +13,7 @@ import os
 import posixpath
 import re
 import shutil
+import sys
 import zipfile
 from xml.etree import ElementTree
 
@@ -664,6 +665,33 @@ def reader_answer_stylesheet(font_size, line_height):
         h3=int(size * 1.15),
     )
     return get_response_content_stylesheet() + override
+
+
+READER_ANSWER_SCROLLBAR_GUTTER = 16
+
+
+def reader_answer_reserves_scrollbar_lane(platform=None):
+    """macOS draws the reader scrollbar over the reply, so that lane is reserved."""
+    if platform is None:
+        platform = sys.platform
+    return platform == 'darwin'
+
+
+def reader_answer_margins(base_margin, gutter=0):
+    """Left, top, right, bottom. A positive gutter keeps the scrollbar off the text."""
+    try:
+        base = float(base_margin)
+    except (TypeError, ValueError):
+        base = 4
+    if base < 0:
+        base = 0
+    try:
+        extra = float(gutter)
+    except (TypeError, ValueError):
+        extra = 0
+    if extra < 0:
+        extra = 0
+    return (base, base, base + extra, base)
 
 
 def reader_answer_line_px(font_size, line_height):
@@ -1368,6 +1396,8 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self._selection = ''
             self._stream_text = ''
             self._follow_tail = True
+            self._answer_pin_start = False
+            self._pinning_answer = False
             self._pending_note = ''
             self._note_expanded = False
             self._loading = False
@@ -1526,6 +1556,7 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             if scroll_policy is None:
                 scroll_policy = Qt.ScrollBarPolicy.ScrollBarAsNeeded
             self.answer.setVerticalScrollBarPolicy(scroll_policy)
+            self._reserve_answer_scrollbar_lane()
             self.answer.verticalScrollBar().valueChanged.connect(self._on_answer_scroll)
             right_layout.addWidget(self.answer, 1)
 
@@ -1949,10 +1980,53 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             bar = self.answer.verticalScrollBar()
             if not bar:
                 return
+            if value > bar.minimum() + 8:
+                self._answer_pin_start = False
             self._follow_tail = value >= bar.maximum() - 8
+
+        def _reserve_answer_scrollbar_lane(self):
+            document = self.answer.document()
+            gutter = READER_ANSWER_SCROLLBAR_GUTTER if reader_answer_reserves_scrollbar_lane() else 0
+            left, top, right, bottom = reader_answer_margins(document.documentMargin(), gutter)
+            root = document.rootFrame()
+            fmt = root.frameFormat()
+            fmt.setLeftMargin(left)
+            fmt.setTopMargin(top)
+            fmt.setRightMargin(right)
+            fmt.setBottomMargin(bottom)
+            root.setFrameFormat(fmt)
+
+        def _watch_answer_document_size(self):
+            layout = self.answer.document().documentLayout()
+            if layout is None:
+                return
+            try:
+                layout.documentSizeChanged.disconnect(self._on_answer_document_resized)
+            except Exception:
+                pass
+            layout.documentSizeChanged.connect(self._on_answer_document_resized)
+
+        def _on_answer_document_resized(self, *_args):
+            if not getattr(self, '_answer_pin_start', False):
+                return
+            self._pin_answer_start()
+
+        def _move_answer_cursor_home(self):
+            from PyQt5.QtGui import QTextCursor
+            cursor = self.answer.textCursor()
+            start = getattr(QTextCursor, 'Start', None)
+            if start is None:
+                start = QTextCursor.MoveOperation.Start
+            cursor.movePosition(start)
+            self.answer.setTextCursor(cursor)
 
         def _render_answer(self, text, scroll_to_start=False):
             bar = self.answer.verticalScrollBar()
+            if scroll_to_start:
+                self._answer_pin_start = True
+                self._follow_tail = False
+            else:
+                self._answer_pin_start = False
             follow = self._follow_tail and not scroll_to_start
             old_value = bar.value() if bar else 0
             try:
@@ -1966,10 +2040,13 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 logger.exception('Failed to render reader answer as markdown')
                 self.answer.setPlainText(text or '')
             self._apply_answer_line_height()
+            self._reserve_answer_scrollbar_lane()
+            if scroll_to_start:
+                self._watch_answer_document_size()
             if bar:
                 if scroll_to_start:
-                    self._follow_tail = False
-                    bar.setValue(0)
+                    self._move_answer_cursor_home()
+                    bar.setValue(bar.minimum())
                 elif follow:
                     bar.setValue(bar.maximum())
                 else:
@@ -1979,17 +2056,24 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 QTimer.singleShot(0, self._pin_answer_start)
 
         def _pin_answer_start(self):
-            if self._closing or self._follow_tail:
+            if self._closing or not getattr(self, '_answer_pin_start', False):
+                return
+            if getattr(self, '_pinning_answer', False):
                 return
             bar = self.answer.verticalScrollBar()
             if not bar:
                 return
+            self._pinning_answer = True
             try:
-                bar.valueChanged.disconnect(self._on_answer_scroll)
-            except Exception:
-                pass
-            bar.setValue(0)
-            bar.valueChanged.connect(self._on_answer_scroll)
+                try:
+                    bar.valueChanged.disconnect(self._on_answer_scroll)
+                except Exception:
+                    pass
+                self._move_answer_cursor_home()
+                bar.setValue(bar.minimum())
+                bar.valueChanged.connect(self._on_answer_scroll)
+            finally:
+                self._pinning_answer = False
 
         def _flush_stream_render(self):
             if self._closing:
@@ -2126,6 +2210,7 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             dots = '.' * ((self._loading_step % 3) + 1)
             self.answer.setPlainText(base + dots)
             self._apply_answer_line_height()
+            self._reserve_answer_scrollbar_lane()
 
         def _advance_loading(self):
             if self._closing or not self._loading or self._stream_text:
@@ -2166,9 +2251,12 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 if not self._stream_text.strip():
                     self.answer.setPlainText(self.i18n.get('empty_answer', 'Empty answer'))
                     self._apply_answer_line_height()
+                    self._reserve_answer_scrollbar_lane()
+                else:
+                    self._render_answer(self._stream_text, scroll_to_start=True)
                 return
             self._stream_text = text
-            self._render_answer(text)
+            self._render_answer(text, scroll_to_start=True)
             self._save_reader_history(text)
 
         def _on_fail(self, token, message):

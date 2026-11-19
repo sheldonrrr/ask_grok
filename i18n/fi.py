@@ -52,6 +52,9 @@ class FinnishTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Kieli',
             'language_subtitle': 'Valitse haluamasi käyttöliittymän kieli',
+            'menu_click_settings': 'Valikon napsautus',
+            'menu_click_subtitle': 'Valitse, mitä avautuu, kun napsautat lisäosan painiketta',
+            'menu_click_label': 'Avaa',
             'ai_providers_subtitle': 'Määritä tekoälypalveluntarjoajat ja valitse oletustekoäly',
             'prompts_subtitle': 'Mukauta, miten kysymykset lähetetään tekoälylle',
             'export_settings_subtitle': 'Aseta oletuskansio PDF-tiedostojen viemiseen',
@@ -413,7 +416,7 @@ class FinnishTranslation(BaseTranslation):
             'about_title': 'Tietoja Ask AI -lisäosasta',
             'about_version_label': 'Versio',
             'about_description': 'Kysy calibre-kirjoista valitsemillasi tekoälypalveluilla.',
-            'about_latest_update': 'Viimeisin päivitys (2026.11.17): yksinkertainen EPUB-lukija lisätty (kuvia ei näytetä). Valitse tekstiä lukiessa ja esitä kysymys',
+            'about_latest_update': 'Viimeisin päivitys (2026.11.18): kielen vaihdon ongelma on korjattu.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Huom: MobileRead on kehittäjäsivu calibre-liitännäisten julkaisuille ja lisäversion päivityksille.',

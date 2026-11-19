@@ -363,6 +363,7 @@ prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['multi_book_template'] = get_multi_book_template('en')
 prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
+prefs.defaults['menu_click_target'] = 'ask'  # Toolbar click: ask or read
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['add_ai_dialog_width'] = 920
@@ -2681,6 +2682,32 @@ class ConfigDialog(QWidget):
         lang_group.setLayout(lang_layout)
         lang_section.addWidget(lang_group)
 
+        click_section, click_title, click_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('menu_click_settings', 'Menu click'),
+            self.i18n.get(
+                'menu_click_subtitle',
+                'Choose what opens when you click the plugin button',
+            ),
+        )
+        click_title.setObjectName('title_menu_click')
+        click_subtitle.setObjectName('subtitle_menu_click')
+        click_group = QGroupBox()
+        click_group.setObjectName('groupbox_menu_click')
+        click_group.setStyleSheet(get_groupbox_style())
+        click_layout = QVBoxLayout()
+        configure_layout(click_layout, 'settings_section')
+        menu_click_label = QLabel(self.i18n.get('menu_click_label', 'Open'))
+        menu_click_label.setObjectName('label_menu_click')
+        click_layout.addWidget(menu_click_label)
+        self.menu_click_combo = NoScrollComboBox(self)
+        self.menu_click_combo.setObjectName('combo_menu_click')
+        self._fill_menu_click_combo(get_prefs().get('menu_click_target', 'ask'))
+        self.menu_click_combo.currentIndexChanged.connect(self.on_config_changed)
+        click_layout.addWidget(self.menu_click_combo)
+        click_group.setLayout(click_layout)
+        click_section.addWidget(click_group)
+
         # 2. AI 模型
         ai_section, ai_title, ai_subtitle = add_settings_section(
             content_layout,
@@ -3262,6 +3289,7 @@ class ConfigDialog(QWidget):
             'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
+            'menu_click_target': prefs.get('menu_click_target', 'ask'),
         }
         
         # 调试日志
@@ -3329,6 +3357,23 @@ class ConfigDialog(QWidget):
             index = self.parallel_ai_combo.findData(parallel)
             if index >= 0:
                 self.parallel_ai_combo.setCurrentIndex(index)
+
+        if hasattr(self, 'menu_click_combo'):
+            self._fill_menu_click_combo(self.initial_values.get('menu_click_target', 'ask'))
+
+    def _fill_menu_click_combo(self, selected='ask'):
+        """Rebuild the toolbar-click choices in the current language."""
+        if not hasattr(self, 'menu_click_combo'):
+            return
+        if selected not in ('ask', 'read'):
+            selected = 'ask'
+        self.menu_click_combo.blockSignals(True)
+        self.menu_click_combo.clear()
+        self.menu_click_combo.addItem(self.i18n.get('menu_title', 'Ask'), 'ask')
+        self.menu_click_combo.addItem(self.i18n.get('read_and_ask', 'Read and ask'), 'read')
+        index = self.menu_click_combo.findData(selected)
+        self.menu_click_combo.setCurrentIndex(index if index >= 0 else 0)
+        self.menu_click_combo.blockSignals(False)
 
     def apply_external_timeout(self, seconds):
         """Keep the timeout field aligned when prefs change outside Settings (e.g. timeout prompt)."""
@@ -3515,18 +3560,21 @@ class ConfigDialog(QWidget):
         label_map = {
             # Section titles
             'title_language': ('language_settings', 'Language'),
+            'title_menu_click': ('menu_click_settings', 'Menu click'),
             'title_ai_providers': ('ai_models', 'AI Providers'),
             'title_prompts': ('prompt_template', 'Prompts'),
             'title_export_settings': ('export_settings', 'Export Settings'),
             'title_reset_all_data': ('reset_all_data', 'Reset All Data'),
             # Section subtitles
             'subtitle_language': ('language_subtitle', 'Choose your preferred interface language'),
+            'subtitle_menu_click': ('menu_click_subtitle', 'Choose what opens when you click the plugin button'),
             'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
             'subtitle_reset_all_data': ('reset_all_data_subtitle', 'After reset, all settings and data will be permanently deleted, including all API keys, AI search index data, language preference, AI usage preferences, and other local data.'),
             # Other labels
             'label_language': ('language_label', 'Language'),
+            'label_menu_click': ('menu_click_label', 'Open'),
             'label_current_ai': ('current_ai', 'Current AI'),
             'label_request_timeout': ('request_timeout_label', 'Request Timeout'),
             'label_timeout_unit': ('seconds', 'seconds'),
@@ -3581,6 +3629,9 @@ class ConfigDialog(QWidget):
                 label.setToolTip(self.i18n.get('parallel_ai_count_tooltip',
                     'Number of AIs to query simultaneously (1-4). Only applies to question requests, not random questions.'))
         
+        if hasattr(self, 'menu_click_combo'):
+            self._fill_menu_click_combo(self.menu_click_combo.currentData() or 'ask')
+
         # 更新所有按钮文本（使用ObjectName映射，避免硬编码文本检测）
         button_map = {
             'button_browse_folder': ('browse_folder', 'Browse...'),
@@ -3858,6 +3909,10 @@ class ConfigDialog(QWidget):
         
         # 保存语言设置
         prefs['language'] = self.lang_combo.currentData()
+        if hasattr(self, 'menu_click_combo'):
+            click_target = self.menu_click_combo.currentData()
+            if click_target in ('ask', 'read'):
+                prefs['menu_click_target'] = click_target
         
         # 注意：提示词模板现在在 Prompts Tab 中管理，不在 General Tab 中保存
         
@@ -3975,6 +4030,7 @@ class ConfigDialog(QWidget):
             'max_prompt_length': prefs.get('max_prompt_length', DEFAULT_CUSTOM_LIMIT),
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
+            'menu_click_target': prefs.get('menu_click_target', 'ask'),
         }
         
         # 注意：提示词模板的原始文本值现在在 Prompts Tab 中管理
@@ -4031,6 +4087,11 @@ class ConfigDialog(QWidget):
             general_changed = True
             logger.debug(f"语言设置已更改: {current_lang} != {self.initial_values['language']}")
         
+        menu_click_changed = False
+        if hasattr(self, 'menu_click_combo'):
+            if self.menu_click_combo.currentData() != self.initial_values.get('menu_click_target', 'ask'):
+                menu_click_changed = True
+
         # 检查模型选择是否更改
         if hasattr(self, 'model_combo') and self.model_combo.currentData() != self.initial_values['selected_model']:
             general_changed = True
@@ -4094,7 +4155,7 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed
+        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed or menu_click_changed
     
     def _on_custom_prompt_limit_toggled(self, checked):
         """启用/禁用自定义提示词长度输入框"""
@@ -4149,6 +4210,9 @@ class ConfigDialog(QWidget):
             index = self.parallel_ai_combo.findData(parallel)
             if index >= 0:
                 self.parallel_ai_combo.setCurrentIndex(index)
+
+        if hasattr(self, 'menu_click_combo'):
+            self._fill_menu_click_combo(self.initial_values.get('menu_click_target', 'ask'))
         
         # 更新模型名称显示（会调用 refresh_ai_list）
         self.update_model_name_display()

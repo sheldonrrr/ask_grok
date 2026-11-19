@@ -52,6 +52,9 @@ class GermanTranslation(BaseTranslation):
             # Abschnittsuntertitel
             'language_settings': 'Sprache',
             'language_subtitle': 'Wählen Sie Ihre bevorzugte Oberflächensprache',
+            'menu_click_settings': 'Menüklick',
+            'menu_click_subtitle': 'Wählen Sie, was sich beim Klick auf die Plugin-Schaltfläche öffnet',
+            'menu_click_label': 'Öffnen',
             'ai_providers_subtitle': 'KI-Anbieter konfigurieren und Standard-KI auswählen',
             'prompts_subtitle': 'Anpassen, wie Fragen an die KI gesendet werden',
             'export_settings_subtitle': 'Standardordner für PDF-Export festlegen',
@@ -386,7 +389,7 @@ class GermanTranslation(BaseTranslation):
             'about_title': 'Über Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Stellen Sie Fragen zu calibre-Büchern mit den von Ihnen gewählten KI-Diensten.',
-            'about_latest_update': 'Aktuelles Update (2026.11.17): Einfacher EPUB-Leser hinzugefügt (Bilder werden nicht angezeigt). Beim Lesen Text markieren und eine Frage stellen',
+            'about_latest_update': 'Aktuelles Update (2026.11.18): Problem beim Sprachwechsel behoben.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Hinweis: MobileRead ist die Entwicklerseite für Calibre-Plugin-Veröffentlichungen und weitere Versionsupdates.',

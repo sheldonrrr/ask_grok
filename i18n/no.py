@@ -52,6 +52,9 @@ class NorwegianTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Språk',
             'language_subtitle': 'Velg foretrukket grensesnittspråk',
+            'menu_click_settings': 'Menyklikk',
+            'menu_click_subtitle': 'Velg hva som åpnes når du klikker på programtilleggsknappen',
+            'menu_click_label': 'Åpne',
             'ai_providers_subtitle': 'Konfigurer AI-leverandører og velg din standard-AI',
             'prompts_subtitle': 'Tilpass hvordan spørsmål sendes til AI',
             'export_settings_subtitle': 'Angi standardmappe for eksport av PDF-filer',
@@ -410,7 +413,7 @@ class NorwegianTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Versjon',
             'about_description': 'Still spørsmål om calibre-bøker med AI-tjenestene du velger.',
-            'about_latest_update': 'Siste oppdatering (2026.11.17): enkel EPUB-leser lagt til (bilder vises ikke). Marker tekst mens du leser og still et spørsmål',
+            'about_latest_update': 'Siste oppdatering (2026.11.18): problemet med språkbytte er rettet.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Merk: MobileRead er utviklersiden for calibre-pluginutgivelser og flere versjonsoppdateringer.',

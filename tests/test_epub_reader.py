@@ -350,6 +350,15 @@ class ReaderChromeTests(unittest.TestCase):
         self.assertEqual(epub_reader.reader_answer_line_px(18, 1.4), 25)
         self.assertEqual(epub_reader.reader_answer_line_px(20, 1.8), 36)
 
+    def test_reader_answer_keeps_a_scrollbar_lane_on_macos(self):
+        self.assertTrue(epub_reader.reader_answer_reserves_scrollbar_lane('darwin'))
+        self.assertFalse(epub_reader.reader_answer_reserves_scrollbar_lane('win32'))
+        self.assertEqual(epub_reader.reader_answer_margins(4, 0), (4, 4, 4, 4))
+        self.assertEqual(
+            epub_reader.reader_answer_margins(4, epub_reader.READER_ANSWER_SCROLLBAR_GUTTER),
+            (4, 4, 20, 4),
+        )
+
 
 class ReadingProgressTests(unittest.TestCase):
     def test_progress_restores_the_saved_chapter_and_ratio(self):

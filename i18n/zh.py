@@ -52,6 +52,9 @@ class SimplifiedChineseTranslation(BaseTranslation):
             # 区域说明文字
             'language_settings': '语言',
             'language_subtitle': '选择你偏好的界面语言',
+            'menu_click_settings': '点击菜单',
+            'menu_click_subtitle': '选择点击插件按钮时打开的功能',
+            'menu_click_label': '打开',
             'ai_providers_subtitle': '配置AI服务商并选择默认AI',
             'prompts_subtitle': '自定义向AI发送问题的方式',
             'export_settings_subtitle': '设置导出PDF的默认文件夹',
@@ -409,7 +412,7 @@ class SimplifiedChineseTranslation(BaseTranslation):
             'about_title': '关于 Ask AI Plugin',
             'about_version_label': '版本',
             'about_description': '在 calibre 中向你选择的 AI 服务提问，帮助理解书籍内容。',
-            'about_latest_update': '最新更新（2026.11.17）：增加 EPUB 简版阅读器（不支持图片），支持阅读时圈选文字后提问',
+            'about_latest_update': '最新更新（2026.11.18）：修复切换语言问题。',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推荐',
             'about_markdown_title': 'Markdown',

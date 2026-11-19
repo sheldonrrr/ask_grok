@@ -52,6 +52,9 @@ class PortugueseTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Idioma',
             'language_subtitle': 'Escolha seu idioma de interface preferido',
+            'menu_click_settings': 'Clique no menu',
+            'menu_click_subtitle': 'Escolha o que abre ao clicar no botão do plugin',
+            'menu_click_label': 'Abrir',
             'ai_providers_subtitle': 'Configure os provedores de IA e selecione sua IA padrão',
             'prompts_subtitle': 'Personalize como as perguntas são enviadas à IA',
             'export_settings_subtitle': 'Defina a pasta padrão para exportar PDFs',
@@ -415,7 +418,7 @@ class PortugueseTranslation(BaseTranslation):
             'about_title': 'Sobre o Ask AI Plugin',
             'about_version_label': 'Versão',
             'about_description': 'Faça perguntas sobre livros do calibre com os serviços de IA que você escolher.',
-            'about_latest_update': 'Atualização mais recente (2026.11.17): leitor EPUB simples adicionado (sem imagens). Selecione texto durante a leitura e faça uma pergunta',
+            'about_latest_update': 'Atualização mais recente (2026.11.18): corrigido o problema ao mudar de idioma.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Nota: o MobileRead é a página do desenvolvedor para lançamentos de plugins do calibre e mais atualizações de versão.',

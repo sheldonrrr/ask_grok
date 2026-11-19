@@ -52,6 +52,9 @@ class SwedishTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Språk',
             'language_subtitle': 'Välj ditt föredragna gränssnittsspråk',
+            'menu_click_settings': 'Menyklick',
+            'menu_click_subtitle': 'Välj vad som öppnas när du klickar på tilläggsknappen',
+            'menu_click_label': 'Öppna',
             'ai_providers_subtitle': 'Konfigurera AI-leverantörer och välj din standard-AI',
             'prompts_subtitle': 'Anpassa hur frågor skickas till AI',
             'export_settings_subtitle': 'Ställ in standardmapp för export av PDF-filer',
@@ -412,7 +415,7 @@ class SwedishTranslation(BaseTranslation):
             'about_title': 'Om Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ställ frågor om calibre-böcker med de AI-tjänster du väljer.',
-            'about_latest_update': 'Senaste uppdateringen (2026.11.17): enkel EPUB-läsare tillagd (bilder visas inte). Markera text medan du läser och ställ en fråga',
+            'about_latest_update': 'Senaste uppdateringen (2026.11.18): problemet med språkbyte är åtgärdat.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Obs: MobileRead är utvecklarsidan för calibre-pluginutgåvor och fler versionsuppdateringar.',

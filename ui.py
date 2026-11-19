@@ -306,10 +306,19 @@ class AskAIPluginUI(InterfaceAction):
         # 设置菜单更新事件
         self.menu.aboutToShow.connect(self.about_to_show_menu)
         
-        # 设置主图标点击和菜单
-        self.qaction.triggered.connect(self.show_dialog)
+        # 设置主图标点击和菜单。点按钮打开哪一项由 General 里的设置决定。
+        self.qaction.triggered.connect(self.on_plugin_button_clicked)
         self.qaction.setMenu(self.menu)
         self._update_toolbar_text()
+
+    def on_plugin_button_clicked(self):
+        """Open Ask or Read and ask, following the General menu-click setting."""
+        prefs = get_prefs()
+        target = prefs.get('menu_click_target', 'ask') if hasattr(prefs, 'get') else 'ask'
+        if target == 'read':
+            self.show_read_and_ask()
+            return
+        self.show_dialog()
 
     def _update_toolbar_text(self, language=None):
         """更新工具栏主按钮显示名称（action_spec[0] 保持英文供内部标识）。"""
@@ -1207,7 +1216,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.11.17): Added a simple EPUB reader (images are not shown). Select text while reading and ask a question',
+                'Latest update (2026.11.18): Fixed the language switching issue.',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')

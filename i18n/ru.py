@@ -52,6 +52,9 @@ class RussianTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Язык',
             'language_subtitle': 'Выберите предпочитаемый язык интерфейса',
+            'menu_click_settings': 'Щелчок по меню',
+            'menu_click_subtitle': 'Выберите, что открывается при нажатии кнопки плагина',
+            'menu_click_label': 'Открыть',
             'ai_providers_subtitle': 'Настройте провайдеров ИИ и выберите ИИ по умолчанию',
             'prompts_subtitle': 'Настройте способ отправки вопросов в ИИ',
             'export_settings_subtitle': 'Установите папку по умолчанию для экспорта PDF',
@@ -411,7 +414,7 @@ class RussianTranslation(BaseTranslation):
             'about_title': 'О плагине Ask AI',
             'about_version_label': 'Версия',
             'about_description': 'Задавайте вопросы о книгах calibre с помощью выбранных вами сервисов ИИ.',
-            'about_latest_update': 'Последнее обновление (2026.11.17): добавлен простой читатель EPUB (изображения не поддерживаются). Выделите текст при чтении и задайте вопрос',
+            'about_latest_update': 'Последнее обновление (2026.11.18): исправлена проблема переключения языка.',
             'about_mobileread_link_text': 'MobileRead',
             'about_open_button': 'MobileRead',
             'about_mobileread_note': 'Примечание: MobileRead — страница разработчика для релизов плагинов calibre и обновлений версий.',

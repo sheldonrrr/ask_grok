@@ -52,6 +52,9 @@ class EnglishTranslation(BaseTranslation):
             # Section subtitles
             'language_settings': 'Language',
             'language_subtitle': 'Choose your preferred interface language',
+            'menu_click_settings': 'Menu click',
+            'menu_click_subtitle': 'Choose what opens when you click the plugin button',
+            'menu_click_label': 'Open',
             'ai_providers_subtitle': 'Configure AI providers and select your default AI',
             'prompts_subtitle': 'Customize how questions are sent to AI',
             'export_settings_subtitle': 'Set default folder for exporting PDFs',
@@ -414,7 +417,7 @@ class EnglishTranslation(BaseTranslation):
             'about_title': 'About Ask AI Plugin',
             'about_version_label': 'Version',
             'about_description': 'Ask questions about books in calibre, using the AI providers you choose.',
-            'about_latest_update': 'Latest update (2026.11.17): Added a simple EPUB reader (images are not shown). Select text while reading and ask a question',
+            'about_latest_update': 'Latest update (2026.11.18): Fixed the language switching issue.',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre plugin recommendations',
             'about_markdown_title': 'Markdown',
