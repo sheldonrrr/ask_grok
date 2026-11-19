@@ -1,0 +1,10 @@
+---
+description: Live HTTP checks must use a real public site, never example.com
+alwaysApply: true
+---
+
+# Live test hosts
+
+Do not send test or smoke-check requests to `https://example.com` or other `example.com` hostnames. That name is a registered site.
+
+Use a real public site such as `https://www.bing.com` when a live HTTP check is needed.

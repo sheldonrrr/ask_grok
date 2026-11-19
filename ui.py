@@ -49,10 +49,22 @@ BOOKTOAST_PLUGIN_URL = (
 NO_UPDATES_PLUGIN_URL = (
     'https://www.mobileread.com/forums/showthread.php?t=376315'
 )
+KATSU_CHROME_URL = (
+    'https://chromewebstore.google.com/detail/katsu/jhfaoljhhlkcmkkffhekaojgclblpgli'
+)
+TRADSIMP_IOS_URL = (
+    'https://apps.apple.com/us/app/trad-simp-chinese-conversion/id6801521061'
+)
+LOVELETTER_IOS_URL = (
+    'https://apps.apple.com/us/app/loveletter-ai-%E7%AC%94%E5%8F%8B-%E5%BB%B6%E8%BF%9F%E7%AD%89%E5%BE%85%E7%9A%84%E6%83%8A%E5%96%9C/id6761346980'
+)
+STICKER_CAL_IOS_URL = (
+    'https://apps.apple.com/us/app/sticker-cal/id6819140989'
+)
 ASK_AI_RELEASE_URL = 'https://www.mobileread.com/forums/showthread.php?p=4547077'
 
 # Bump this when promoting a new related plugin so that card is highlighted again.
-ABOUT_RELATED_HIGHLIGHT_ID = 'booktoast'
+ABOUT_RELATED_HIGHLIGHT_ID = 'no_update'
 ABOUT_RELATED_HIGHLIGHT_SEEN_KEY = 'about_related_highlight_seen_id'
 ABOUT_LATEST_UPDATE_SEEN_KEY = 'about_latest_update_seen_version'
 
@@ -76,10 +88,6 @@ def _about_related_unread():
 def _mark_about_related_seen():
     prefs = get_prefs()
     prefs[ABOUT_RELATED_HIGHLIGHT_SEEN_KEY] = ABOUT_RELATED_HIGHLIGHT_ID
-
-# 从 vendor 命名空间导入第三方库
-from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import markdown2
-from calibre_plugins.ask_ai_plugin.lib.ask_ai_plugin_vendor import bleach
 
 # 存储插件实例的全局变量
 # 注意：不要在这里导入自己，会导致循环导入
@@ -312,11 +320,14 @@ class AskAIPluginUI(InterfaceAction):
         self._update_toolbar_text()
 
     def on_plugin_button_clicked(self):
-        """Open Ask or Read and ask, following the General menu-click setting."""
+        """Open Ask, Read and ask, or AI Search, following the General menu-click setting."""
         prefs = get_prefs()
         target = prefs.get('menu_click_target', 'ask') if hasattr(prefs, 'get') else 'ask'
         if target == 'read':
             self.show_read_and_ask()
+            return
+        if target == 'search':
+            self.show_library()
             return
         self.show_dialog()
 
@@ -1066,9 +1077,29 @@ class AboutWidget(QWidget):
         cl.addWidget(self.booktoast_card)
 
         self.no_updates_card, self.no_updates_title, self.no_updates_desc, self.no_updates_btn = (
-            self._create_recommendation_card(lambda: open_url(QUrl(NO_UPDATES_PLUGIN_URL)))
+            self._create_recommendation_card(
+                lambda: open_url(QUrl(NO_UPDATES_PLUGIN_URL)),
+                highlighted=(self._highlight_related_id == 'no_update'),
+            )
         )
         cl.addWidget(self.no_updates_card)
+
+        self.katsu_card, self.katsu_title, self.katsu_desc, self.katsu_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(KATSU_CHROME_URL)))
+        )
+        cl.addWidget(self.katsu_card)
+        self.tradsimp_ios_card, self.tradsimp_ios_title, self.tradsimp_ios_desc, self.tradsimp_ios_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(TRADSIMP_IOS_URL)))
+        )
+        cl.addWidget(self.tradsimp_ios_card)
+        self.loveletter_card, self.loveletter_title, self.loveletter_desc, self.loveletter_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(LOVELETTER_IOS_URL)))
+        )
+        cl.addWidget(self.loveletter_card)
+        self.sticker_cal_card, self.sticker_cal_title, self.sticker_cal_desc, self.sticker_cal_btn = (
+            self._create_recommendation_card(lambda: open_url(QUrl(STICKER_CAL_IOS_URL)))
+        )
+        cl.addWidget(self.sticker_cal_card)
 
         self.recommend_note_label = QLabel()
         self.recommend_note_label.setWordWrap(True)
@@ -1219,7 +1250,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.11.18): Fixed the language switching issue.',
+                'Latest update (2026.11.18): The reader now follows the plugin language.',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
@@ -1271,7 +1302,7 @@ class AboutWidget(QWidget):
         self.simple_goal_btn.setText(open_text)
         self.booktoast_btn.setText(open_text)
         self.no_updates_title.setText(
-            self.i18n.get('about_no_updates_title', 'No Updates')
+            self.i18n.get('about_no_updates_title', 'No Update')
         )
         self.no_updates_desc.setText(
             self.i18n.get(
@@ -1280,6 +1311,45 @@ class AboutWidget(QWidget):
             )
         )
         self.no_updates_btn.setText(open_text)
+        self.katsu_title.setText(
+            self.i18n.get('about_katsu_title', 'Katsu (Chrome extension)')
+        )
+        self.katsu_desc.setText(
+            self.i18n.get(
+                'about_katsu_desc',
+                'A new tab shows one line from a Buddhist text, the Bible, or a language-model comment.',
+            )
+        )
+        self.tradsimp_ios_title.setText(
+            self.i18n.get('about_tradsimp_ios_title', 'Trad&Simp Chinese Conversion (iOS)')
+        )
+        self.tradsimp_ios_desc.setText(
+            self.i18n.get(
+                'about_tradsimp_ios_desc',
+                'Convert Chinese ebook layout, glyphs, and symbols on iPhone or iPad, fully offline, without changing the original, using the same OpenCC dictionaries as the calibre plugin.',
+            )
+        )
+        self.loveletter_title.setText(
+            self.i18n.get('about_loveletter_title', 'LoveLetter (iOS)')
+        )
+        self.loveletter_desc.setText(
+            self.i18n.get('about_loveletter_desc', 'Write letters to an AI pen pal.')
+        )
+        self.sticker_cal_title.setText(
+            self.i18n.get('about_sticker_cal_title', 'Sticker Cal (iOS)')
+        )
+        self.sticker_cal_desc.setText(
+            self.i18n.get(
+                'about_sticker_cal_desc',
+                'A sticker calendar. Photos turn into stickers automatically.',
+            )
+        )
+        chrome_text = self.i18n.get('about_open_chrome', 'Chrome Web Store')
+        app_store_text = self.i18n.get('about_open_app_store', 'App Store')
+        self.katsu_btn.setText(chrome_text)
+        self.tradsimp_ios_btn.setText(app_store_text)
+        self.loveletter_btn.setText(app_store_text)
+        self.sticker_cal_btn.setText(app_store_text)
         self.recommend_note_label.setText(
             self.i18n.get(
                 'about_mobileread_note',

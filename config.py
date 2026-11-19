@@ -363,7 +363,7 @@ prefs.defaults['template'] = get_default_template('en')
 prefs.defaults['multi_book_template'] = get_multi_book_template('en')
 prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
-prefs.defaults['menu_click_target'] = 'ask'  # Toolbar click: ask or read
+prefs.defaults['menu_click_target'] = 'ask'  # Toolbar click: ask, read, or search
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['add_ai_dialog_width'] = 920
@@ -3372,6 +3372,7 @@ class ConfigDialog(QWidget):
         self.menu_click_combo.clear()
         self.menu_click_combo.addItem(self.i18n.get('menu_title', 'Ask'), 'ask')
         self.menu_click_combo.addItem(self.i18n.get('read_and_ask', 'Read and ask'), 'read')
+        self.menu_click_combo.addItem(self.i18n.get('library_search', 'AI Search'), 'search')
         index = self.menu_click_combo.findData(selected)
         self.menu_click_combo.setCurrentIndex(index if index >= 0 else 0)
         self.menu_click_combo.blockSignals(False)
