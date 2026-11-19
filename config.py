@@ -364,6 +364,7 @@ prefs.defaults['multi_book_template'] = get_multi_book_template('en')
 prefs.defaults['language'] = 'en'
 prefs.defaults['language_user_set'] = False
 prefs.defaults['menu_click_target'] = 'ask'  # Toolbar click: ask, read, or search
+prefs.defaults['sync_reader_progress_to_calibre'] = True
 prefs.defaults['ask_dialog_width'] = 800
 prefs.defaults['ask_dialog_height'] = 600
 prefs.defaults['add_ai_dialog_width'] = 920
@@ -2709,6 +2710,33 @@ class ConfigDialog(QWidget):
         click_group.setLayout(click_layout)
         click_section.addWidget(click_group)
 
+        progress_section, progress_title, progress_subtitle = add_settings_section(
+            content_layout,
+            self.i18n.get('sync_calibre_progress', 'Sync reading progress to calibre'),
+            self.i18n.get(
+                'sync_calibre_progress_subtitle',
+                'While reading here, update calibre\'s reading position so other tools can follow it.',
+            ),
+        )
+        progress_title.setObjectName('title_sync_calibre_progress')
+        progress_subtitle.setObjectName('subtitle_sync_calibre_progress')
+        progress_group = QGroupBox()
+        progress_group.setObjectName('groupbox_sync_calibre_progress')
+        progress_group.setStyleSheet(get_groupbox_style())
+        progress_layout = QVBoxLayout()
+        configure_layout(progress_layout, 'settings_section')
+        self.sync_calibre_progress_checkbox = QCheckBox(
+            self.i18n.get('sync_calibre_progress', 'Sync reading progress to calibre'),
+        )
+        self.sync_calibre_progress_checkbox.setObjectName('checkbox_sync_calibre_progress')
+        self.sync_calibre_progress_checkbox.setChecked(
+            get_prefs().get('sync_reader_progress_to_calibre', True),
+        )
+        self.sync_calibre_progress_checkbox.stateChanged.connect(self.on_config_changed)
+        progress_layout.addWidget(self.sync_calibre_progress_checkbox)
+        progress_group.setLayout(progress_layout)
+        progress_section.addWidget(progress_group)
+
         # 2. AI 模型
         ai_section, ai_title, ai_subtitle = add_settings_section(
             content_layout,
@@ -3291,6 +3319,7 @@ class ConfigDialog(QWidget):
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
             'menu_click_target': prefs.get('menu_click_target', 'ask'),
+            'sync_reader_progress_to_calibre': prefs.get('sync_reader_progress_to_calibre', True),
         }
         
         # 调试日志
@@ -3361,12 +3390,16 @@ class ConfigDialog(QWidget):
 
         if hasattr(self, 'menu_click_combo'):
             self._fill_menu_click_combo(self.initial_values.get('menu_click_target', 'ask'))
+        if hasattr(self, 'sync_calibre_progress_checkbox'):
+            self.sync_calibre_progress_checkbox.setChecked(
+                self.initial_values.get('sync_reader_progress_to_calibre', True),
+            )
 
     def _fill_menu_click_combo(self, selected='ask'):
         """Rebuild the toolbar-click choices in the current language."""
         if not hasattr(self, 'menu_click_combo'):
             return
-        if selected not in ('ask', 'read'):
+        if selected not in ('ask', 'read', 'search'):
             selected = 'ask'
         self.menu_click_combo.blockSignals(True)
         self.menu_click_combo.clear()
@@ -3563,6 +3596,7 @@ class ConfigDialog(QWidget):
             # Section titles
             'title_language': ('language_settings', 'Language'),
             'title_menu_click': ('menu_click_settings', 'Menu click'),
+            'title_sync_calibre_progress': ('sync_calibre_progress', 'Sync reading progress to calibre'),
             'title_ai_providers': ('ai_models', 'AI Providers'),
             'title_prompts': ('prompt_template', 'Prompts'),
             'title_export_settings': ('export_settings', 'Export Settings'),
@@ -3570,6 +3604,10 @@ class ConfigDialog(QWidget):
             # Section subtitles
             'subtitle_language': ('language_subtitle', 'Choose your preferred interface language'),
             'subtitle_menu_click': ('menu_click_subtitle', 'Choose what opens when you click the plugin button'),
+            'subtitle_sync_calibre_progress': (
+                'sync_calibre_progress_subtitle',
+                'While reading here, update calibre\'s reading position so other tools can follow it.',
+            ),
             'subtitle_ai_providers': ('ai_providers_subtitle', 'Configure AI providers and select your default AI'),
             'subtitle_prompts': ('prompts_subtitle', 'Customize how questions are sent to AI'),
             'subtitle_export_settings': ('export_settings_subtitle', 'Set default folder for exporting PDFs'),
@@ -3633,6 +3671,10 @@ class ConfigDialog(QWidget):
         
         if hasattr(self, 'menu_click_combo'):
             self._fill_menu_click_combo(self.menu_click_combo.currentData() or 'ask')
+        if hasattr(self, 'sync_calibre_progress_checkbox'):
+            self.sync_calibre_progress_checkbox.setText(
+                self.i18n.get('sync_calibre_progress', 'Sync reading progress to calibre'),
+            )
 
         # 更新所有按钮文本（使用ObjectName映射，避免硬编码文本检测）
         button_map = {
@@ -3913,8 +3955,10 @@ class ConfigDialog(QWidget):
         prefs['language'] = self.lang_combo.currentData()
         if hasattr(self, 'menu_click_combo'):
             click_target = self.menu_click_combo.currentData()
-            if click_target in ('ask', 'read'):
+            if click_target in ('ask', 'read', 'search'):
                 prefs['menu_click_target'] = click_target
+        if hasattr(self, 'sync_calibre_progress_checkbox'):
+            prefs['sync_reader_progress_to_calibre'] = self.sync_calibre_progress_checkbox.isChecked()
         
         # 注意：提示词模板现在在 Prompts Tab 中管理，不在 General Tab 中保存
         
@@ -4033,6 +4077,7 @@ class ConfigDialog(QWidget):
             'enable_default_export_folder': prefs.get('enable_default_export_folder', False),
             'default_export_folder': prefs.get('default_export_folder', ''),
             'menu_click_target': prefs.get('menu_click_target', 'ask'),
+            'sync_reader_progress_to_calibre': prefs.get('sync_reader_progress_to_calibre', True),
         }
         
         # 注意：提示词模板的原始文本值现在在 Prompts Tab 中管理
@@ -4093,6 +4138,12 @@ class ConfigDialog(QWidget):
         if hasattr(self, 'menu_click_combo'):
             if self.menu_click_combo.currentData() != self.initial_values.get('menu_click_target', 'ask'):
                 menu_click_changed = True
+
+        sync_progress_changed = False
+        if hasattr(self, 'sync_calibre_progress_checkbox'):
+            current_sync = self.sync_calibre_progress_checkbox.isChecked()
+            if current_sync != self.initial_values.get('sync_reader_progress_to_calibre', True):
+                sync_progress_changed = True
 
         # 检查模型选择是否更改
         if hasattr(self, 'model_combo') and self.model_combo.currentData() != self.initial_values['selected_model']:
@@ -4157,7 +4208,7 @@ class ConfigDialog(QWidget):
                 logger.error(f"检查模型配置时出错: {str(e)}")
         
         # 返回是否有变更
-        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed or menu_click_changed
+        return general_changed or models_changed or timeout_changed or parallel_ai_changed or prompt_limit_changed or menu_click_changed or sync_progress_changed
     
     def _on_custom_prompt_limit_toggled(self, checked):
         """启用/禁用自定义提示词长度输入框"""
@@ -4215,6 +4266,10 @@ class ConfigDialog(QWidget):
 
         if hasattr(self, 'menu_click_combo'):
             self._fill_menu_click_combo(self.initial_values.get('menu_click_target', 'ask'))
+        if hasattr(self, 'sync_calibre_progress_checkbox'):
+            self.sync_calibre_progress_checkbox.setChecked(
+                self.initial_values.get('sync_reader_progress_to_calibre', True),
+            )
         
         # 更新模型名称显示（会调用 refresh_ai_list）
         self.update_model_name_display()

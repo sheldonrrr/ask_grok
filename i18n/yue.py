@@ -55,6 +55,8 @@ class CantoneseTranslation(BaseTranslation):
             'menu_click_settings': '撳選單',
             'menu_click_subtitle': '揀撳外掛掣時打開邊樣',
             'menu_click_label': '打開',
+            'sync_calibre_progress': '同步閱讀進度去 calibre',
+            'sync_calibre_progress_subtitle': '喺呢個插件度睇書時，將而家嘅位置寫入 calibre 嘅閱讀進度，方便其他工具即時統計。',
             'ai_providers_subtitle': '設定 AI 服務供應商並揀你嘅預設 AI', # Configure AI providers and select your default AI
             'prompts_subtitle': '自訂點樣將問題傳送俾 AI', # Customize how questions are sent to AI
             'export_settings_subtitle': '設定導出 PDF 嘅預設資料夾', # Set default folder for exporting PDFs
@@ -392,7 +394,7 @@ class CantoneseTranslation(BaseTranslation):
             'about_title': '關於 Ask AI 插件',
             'about_version_label': '版本',
             'about_description': '喺 calibre 入面向你揀嘅 AI 服務提問，幫你理解書本內容。',
-            'about_latest_update': '最新更新（2026.11.18）：閱讀器會跟住插件語言顯示。',
+            'about_latest_update': '最新更新（2026.11.18）：閱讀進度而家可以同步去 calibre。',
             'about_mobileread_link_text': 'MobileRead',
             'about_related_plugins': 'Nowtiny calibre 插件推薦',
             'about_markdown_title': 'Markdown',

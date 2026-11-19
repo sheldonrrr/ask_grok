@@ -390,6 +390,69 @@ class ReadingProgressTests(unittest.TestCase):
             )
         self.assertEqual(list(prefs['reader_progress']), ['book-1', 'book-2'])
 
+    def test_calibre_progress_uses_the_spine_step_and_keeps_highlights(self):
+        import json
+        self.assertEqual(epub_reader.calibre_progress_cfi(0, 0), 'epubcfi(/2/2/4/2/1:0)')
+        self.assertEqual(epub_reader.calibre_progress_cfi(1, 0.5), 'epubcfi(/4/2/4/2/1:500)')
+        self.assertEqual(epub_reader.calibre_progress_cfi(-3, 4), 'epubcfi(/2/2/4/2/1:1000)')
+        cfi = epub_reader.calibre_progress_cfi(5, 0.2)
+        first = int(cfi.split('/')[1])
+        self.assertEqual((first // 2) - 1, 5)
+        directory = tempfile.mkdtemp()
+        try:
+            ebook = '/libraries/main/Frankenstein - Mary Shelley.epub'
+            path = epub_reader.calibre_annot_path(ebook, directory)
+            with open(path, 'w', encoding='utf-8') as handle:
+                json.dump([
+                    {'type': 'highlight', 'pos': 'epubcfi(/4/2/4/2/1:1)', 'text': 'kept'},
+                    {'type': 'last-read', 'pos': 'epubcfi(/2/2/4/2/1:0)', 'pos_type': 'epubcfi'},
+                ], handle)
+            written = epub_reader.write_calibre_last_read(
+                ebook, cfi, directory, timestamp='2026-11-18T00:00:00+00:00',
+                progress_ratio=0.2,
+            )
+            with open(written, 'r', encoding='utf-8') as handle:
+                saved = json.load(handle)
+            highlights = [item for item in saved if item.get('type') == 'highlight']
+            last_read = [item for item in saved if item.get('type') == 'last-read']
+            self.assertEqual(highlights[0]['text'], 'kept')
+            self.assertEqual(len(last_read), 1)
+            self.assertEqual(last_read[0]['pos'], cfi)
+            self.assertEqual(last_read[0]['progress_ratio'], 0.2)
+            self.assertEqual(last_read[0]['timestamp'], '2026-11-18T00:00:00+00:00')
+            self.assertIsNone(epub_reader.write_calibre_last_read('', cfi, directory))
+        finally:
+            shutil.rmtree(directory, ignore_errors=True)
+        self.assertAlmostEqual(epub_reader.reading_pos_frac(7, 0.5, 60), 7.5 / 60.0)
+        self.assertEqual(epub_reader.reading_pos_frac(0, 0, 0), 0.0)
+        self.assertEqual(epub_reader.reading_pos_frac(3, 2, 4), 1.0)
+
+        class _Api(object):
+            def __init__(self):
+                self.saved = None
+
+            def set_last_read_position(self, book_id, fmt, user, device, cfi, epoch, pos_frac):
+                self.saved = (book_id, fmt, user, device, cfi, pos_frac)
+
+        class _Db(object):
+            def __init__(self):
+                self.new_api = _Api()
+
+        database = _Db()
+        self.assertTrue(epub_reader.save_calibre_reading_position(
+            database, 76, 'epubcfi(/16/2/4/2/1:500)', 0.125,
+        ))
+        self.assertEqual(database.new_api.saved[0], 76)
+        self.assertEqual(database.new_api.saved[1], 'EPUB')
+        self.assertEqual(database.new_api.saved[3], 'calibre-desktop-viewer')
+        self.assertAlmostEqual(database.new_api.saved[5], 0.125)
+        self.assertFalse(epub_reader.save_calibre_reading_position(object(), 76, 'epubcfi(/2)', 0.1))
+        self.assertEqual(epub_reader.reader_external_url('https://www.bing.com/search'), 'https://www.bing.com/search')
+        self.assertEqual(epub_reader.reader_external_url('mailto:reader@example.org'), 'mailto:reader@example.org')
+        self.assertEqual(epub_reader.reader_external_url('javascript:alert(1)'), '')
+        self.assertEqual(epub_reader.reader_external_url('#chapter'), '')
+        self.assertEqual(epub_reader.reader_external_url('file:///tmp/chapter.html'), '')
+
     def test_reader_window_size_stays_in_range(self):
         self.assertEqual(epub_reader.reader_window_size(900, 700), (900, 700))
         self.assertEqual(epub_reader.reader_window_size(10, 10), (640, 480))

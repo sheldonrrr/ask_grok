@@ -176,17 +176,19 @@ class WebEngineMissing(EpubError):
 
 
 class Chapter(object):
-    def __init__(self, title, rel_path, abs_path):
+    def __init__(self, title, rel_path, abs_path, spine_index=None):
         self.title = title
         self.rel_path = rel_path
         self.abs_path = abs_path
+        self.spine_index = spine_index
 
 
 class ParsedEpub(object):
-    def __init__(self, title, chapters, root):
+    def __init__(self, title, chapters, root, spine_count=0):
         self.title = title
         self.chapters = chapters
         self.root = root
+        self.spine_count = spine_count
 
 
 def _local(tag):
@@ -485,9 +487,10 @@ def parse_epub(epub_path, extract_dir, image_placeholder='Image preview is unava
         raise EpubError('OPF file is missing')
     opf_dir = posixpath.dirname(opf_rel)
     title, manifest, spine = _manifest_and_spine(opf_abs)
+    spine_count = len(spine)
     toc = _toc_map(extract_dir, opf_dir, manifest)
 
-    def chapter_from(item_id, index, keep_image_only):
+    def chapter_from(item_id, spine_index, display_index, keep_image_only):
         item = manifest.get(item_id)
         if not item or item['media_type'] not in _DOC_TYPES:
             return None
@@ -497,28 +500,30 @@ def parse_epub(epub_path, extract_dir, image_placeholder='Image preview is unava
             return None
         if not _prepare_chapter_html(abs_path, image_placeholder, keep_image_only):
             return None
-        label = toc.get(rel) or _heading_title(abs_path) or 'Chapter {n}'.format(n=index)
-        return Chapter(label, rel, abs_path)
+        label = toc.get(rel) or _heading_title(abs_path) or 'Chapter {n}'.format(n=display_index)
+        return Chapter(label, rel, abs_path, spine_index)
 
-    def collect(item_ids, keep_image_only):
+    def collect(entries, keep_image_only):
         found = []
-        for item_id in item_ids:
-            chapter = chapter_from(item_id, len(found) + 1, keep_image_only)
+        for spine_index, item_id in entries:
+            chapter = chapter_from(item_id, spine_index, len(found) + 1, keep_image_only)
             if chapter is not None:
                 found.append(chapter)
         return found
 
-    chosen = [item_id for item_id, linear in spine if linear]
+    chosen = [(index, item_id) for index, (item_id, linear) in enumerate(spine) if linear]
     if not chosen:
-        chosen = [item_id for item_id, _linear in spine]
+        chosen = [(index, item_id) for index, (item_id, _linear) in enumerate(spine)]
     chapters = collect(chosen, keep_image_only=False)
     if not chapters:
         # Every spine document was a picture. Keep them and show a text stand-in.
         chapters = collect(chosen, keep_image_only=True)
     if not chapters:
-        manifest_ids = list(manifest.keys())
-        chapters = collect(manifest_ids, keep_image_only=False) or collect(manifest_ids, keep_image_only=True)
-    return ParsedEpub(title or '', chapters, extract_dir)
+        manifest_entries = list(enumerate(manifest.keys()))
+        chapters = collect(manifest_entries, keep_image_only=False) or collect(
+            manifest_entries, keep_image_only=True,
+        )
+    return ParsedEpub(title or '', chapters, extract_dir, spine_count)
 
 
 READER_FONT_SIZES = (14, 16, 18, 20, 22, 24)
@@ -841,6 +846,169 @@ def reader_progress_entry(prefs, book_key):
     if ratio > 1:
         ratio = 1.0
     return {'href': href, 'ratio': ratio}
+
+
+def calibre_progress_cfi(spine_index, ratio=0.0):
+    """CFI whose first step is the spine item, matching calibre viewer files.
+
+    simple_goal reads that first step as ``(step // 2) - 1``.
+    """
+    try:
+        index = int(spine_index)
+    except (TypeError, ValueError):
+        index = 0
+    if index < 0:
+        index = 0
+    try:
+        ratio = float(ratio)
+    except (TypeError, ValueError):
+        ratio = 0.0
+    if ratio < 0:
+        ratio = 0.0
+    if ratio > 1:
+        ratio = 1.0
+    step = 2 * (index + 1)
+    offset = int(round(ratio * 1000))
+    return 'epubcfi(/%d/2/4/2/1:%d)' % (step, offset)
+
+
+def reading_pos_frac(spine_index, ratio, spine_count):
+    """Fraction of the book, using the same 0–1 scale as calibre's pos_frac."""
+    try:
+        index = int(spine_index)
+    except (TypeError, ValueError):
+        index = 0
+    if index < 0:
+        index = 0
+    try:
+        ratio = float(ratio)
+    except (TypeError, ValueError):
+        ratio = 0.0
+    if ratio < 0:
+        ratio = 0.0
+    if ratio > 1:
+        ratio = 1.0
+    try:
+        count = int(spine_count)
+    except (TypeError, ValueError):
+        count = 0
+    if count <= 0:
+        count = index + 1
+    frac = (index + ratio) / float(count)
+    if frac < 0:
+        frac = 0.0
+    if frac > 1:
+        frac = 1.0
+    return frac
+
+
+def save_calibre_reading_position(db, book_id, cfi, pos_frac):
+    """Write the library reading position calibre and simple_goal both read."""
+    if db is None or book_id is None:
+        return False
+    cfi = as_unicode_text(cfi).strip()
+    if not cfi:
+        return False
+    api = getattr(db, 'new_api', None) or db
+    setter = getattr(api, 'set_last_read_position', None)
+    if setter is None:
+        return False
+    try:
+        pos_frac = float(pos_frac)
+    except (TypeError, ValueError):
+        pos_frac = 0.0
+    if pos_frac < 0:
+        pos_frac = 0.0
+    if pos_frac > 1:
+        pos_frac = 1.0
+    setter(
+        int(book_id),
+        'EPUB',
+        'local',
+        'calibre-desktop-viewer',
+        cfi,
+        None,
+        pos_frac,
+    )
+    return True
+
+
+def calibre_annot_path(ebook_path, annot_dir):
+    key = hashlib.sha256(as_unicode_text(ebook_path).encode('utf-8')).hexdigest()
+    return os.path.join(annot_dir, key + '.json')
+
+
+def write_calibre_last_read(ebook_path, cfi, annot_dir, timestamp=None, progress_ratio=None):
+    """Replace the last-read mark and keep highlights already in the file."""
+    ebook_path = as_unicode_text(ebook_path).strip()
+    cfi = as_unicode_text(cfi).strip()
+    if not ebook_path or not cfi or not annot_dir:
+        return None
+    os.makedirs(annot_dir, exist_ok=True)
+    path = calibre_annot_path(ebook_path, annot_dir)
+    existing = []
+    if os.path.isfile(path):
+        try:
+            import json
+            with open(path, 'r', encoding='utf-8') as handle:
+                loaded = json.load(handle)
+            if isinstance(loaded, list):
+                existing = loaded
+        except Exception:
+            existing = []
+    if timestamp is None:
+        from datetime import datetime, timezone
+        timestamp = datetime.now(timezone.utc).isoformat()
+    entry = {
+        'type': 'last-read',
+        'pos_type': 'epubcfi',
+        'pos': cfi,
+        'timestamp': timestamp,
+    }
+    if progress_ratio is not None:
+        try:
+            progress_ratio = float(progress_ratio)
+        except (TypeError, ValueError):
+            progress_ratio = None
+    if progress_ratio is not None:
+        if progress_ratio < 0:
+            progress_ratio = 0.0
+        if progress_ratio > 1:
+            progress_ratio = 1.0
+        entry['progress_ratio'] = progress_ratio
+    kept = [item for item in existing if not (isinstance(item, dict) and item.get('type') == 'last-read')]
+    kept.append(entry)
+    import json
+    temporary = path + '.tmp'
+    with open(temporary, 'w', encoding='utf-8') as handle:
+        json.dump(kept, handle, ensure_ascii=False)
+    os.replace(temporary, path)
+    return path
+
+
+def library_epub_path(db, book_id):
+    """Absolute library EPUB path, the same file calibre's viewer progress uses."""
+    if db is None or book_id is None:
+        return ''
+    api = getattr(db, 'new_api', None) or db
+    for owner in (api, db):
+        getter = getattr(owner, 'format_abspath', None)
+        if getter is None:
+            continue
+        path = None
+        try:
+            path = getter(book_id, 'EPUB')
+        except TypeError:
+            try:
+                path = getter(book_id, 'EPUB', index_is_id=True)
+            except Exception:
+                path = None
+        except Exception:
+            path = None
+        path = as_unicode_text(path).strip()
+        if path:
+            return path
+    return ''
 
 
 def store_reader_progress(prefs, book_key, href, ratio, limit=READER_PROGRESS_LIMIT):
@@ -1325,6 +1493,19 @@ def _import_webengine():
     }
 
 
+def reader_external_url(url_text):
+    """http(s) and mailto links open outside the reader. Other schemes stay inside."""
+    text = as_unicode_text(url_text).strip()
+    if not text or text.startswith('#') or text.lower().startswith('javascript:'):
+        return ''
+    scheme, sep, _rest = text.partition(':')
+    if not sep:
+        return ''
+    if scheme.lower() in ('http', 'https', 'mailto'):
+        return text
+    return ''
+
+
 def _enum_member(owner, group_name, name):
     group = getattr(owner, group_name, None)
     if group is not None and hasattr(group, name):
@@ -1346,7 +1527,7 @@ def markdown_to_html(text):
     })
 
 
-def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key='', book_id=None):
+def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key='', book_id=None, calibre_epub_path='', spine_count=0, calibre_db=None):
     """Build the reader dialog. Imports Qt only when the window is opened."""
     if not chapters:
         raise EpubError('no chapters')
@@ -1431,16 +1612,49 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 self.failed.emit(str(exc))
 
     class ReaderPage(QWebEnginePage):
-        link_activated = pyqtSignal(object)
+        link_activated = pyqtSignal(str)
 
         def acceptNavigationRequest(self, url, nav_type, is_main_frame):
             link_type = _enum_member(
                 QWebEnginePage, 'NavigationType', 'NavigationTypeLinkClicked',
             )
             if is_main_frame and nav_type == link_type:
-                self.link_activated.emit(url)
+                # Loading a new page before this call returns aborts WebEngine
+                # and takes calibre down with it. Hand the address off and finish.
+                try:
+                    text = url.toString()
+                except Exception:
+                    text = ''
+                if text:
+                    self.link_activated.emit(text)
                 return False
-            return super(ReaderPage, self).acceptNavigationRequest(url, nav_type, is_main_frame)
+            try:
+                return super(ReaderPage, self).acceptNavigationRequest(url, nav_type, is_main_frame)
+            except Exception:
+                return False
+
+        def createWindow(self, _window_type):
+            # A real second browser window crashes calibre. Catch the address
+            # on a hidden page and open it in this reader instead.
+            popup = QWebEnginePage(self)
+            popup.urlChanged.connect(self._capture_popup)
+            return popup
+
+        def _capture_popup(self, url):
+            try:
+                text = url.toString()
+            except Exception:
+                return
+            if not text or text == 'about:blank':
+                return
+            page = self.sender()
+            if page is not None and page is not self:
+                try:
+                    page.urlChanged.disconnect(self._capture_popup)
+                except Exception:
+                    pass
+                page.deleteLater()
+            self.link_activated.emit(text)
 
     class EpubAskDialog(QDialog):
         def __init__(self):
@@ -1466,6 +1680,9 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self._loading = False
             self._loading_step = 0
             self._book_key = book_key or ''
+            self._calibre_epub_path = as_unicode_text(calibre_epub_path).strip()
+            self._spine_count = spine_count or 0
+            self._calibre_db = calibre_db
             self._book_id = book_id
             self._history_uid = None
             self._asked_note = ''
@@ -1575,7 +1792,11 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
             self.view = QWebEngineView(left)
             page = ReaderPage(self.view)
             self.view.setPage(page)
-            page.link_activated.connect(self._on_link)
+            queued = _enum_member(Qt, 'ConnectionType', 'QueuedConnection')
+            try:
+                page.link_activated.connect(self._on_link, queued)
+            except TypeError:
+                page.link_activated.connect(self._on_link)
             page.loadFinished.connect(self._apply_reader_style)
             self._install_selection_script(page)
             channel = QWebChannel(page)
@@ -1919,12 +2140,40 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 except ImportError:
                     from config import get_prefs
                 prefs = get_prefs()
+                chapter = self.chapters[self._index]
                 store_reader_progress(
                     prefs,
                     self._book_key,
-                    self.chapters[self._index].rel_path,
+                    chapter.rel_path,
                     self._scroll_ratio,
                 )
+                if prefs.get('sync_reader_progress_to_calibre', True):
+                    spine_index = getattr(chapter, 'spine_index', None)
+                    if spine_index is None:
+                        spine_index = self._index
+                    spine_count = self._spine_count
+                    if not spine_count:
+                        spine_count = len(self.chapters)
+                    pos_frac = reading_pos_frac(spine_index, self._scroll_ratio, spine_count)
+                    cfi = calibre_progress_cfi(spine_index, self._scroll_ratio)
+                    try:
+                        save_calibre_reading_position(
+                            self._calibre_db, self._book_id, cfi, pos_frac,
+                        )
+                    except Exception:
+                        logger.info('Calibre reading position was not updated')
+                    if self._calibre_epub_path:
+                        try:
+                            from calibre.utils.config import config_dir
+                            annot_dir = os.path.join(config_dir, 'viewer', 'annots')
+                            write_calibre_last_read(
+                                self._calibre_epub_path,
+                                cfi,
+                                annot_dir,
+                                progress_ratio=self._scroll_ratio,
+                            )
+                        except Exception:
+                            logger.info('Calibre viewer mark was not updated')
                 if hasattr(prefs, 'commit'):
                     prefs.commit()
             except Exception:
@@ -1962,7 +2211,27 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
         def _next(self):
             self._show_chapter(self._index + 1)
 
-        def _on_link(self, url):
+        def _on_link(self, target):
+            if self._closing:
+                return
+            text = target if isinstance(target, str) else ''
+            if not text:
+                try:
+                    text = target.toString()
+                except Exception:
+                    text = ''
+            external = reader_external_url(text)
+            if external:
+                try:
+                    try:
+                        from qt.core import QDesktopServices
+                    except ImportError:
+                        from PyQt5.QtGui import QDesktopServices
+                    QDesktopServices.openUrl(QUrl(external))
+                except Exception:
+                    logger.info('Could not open link')
+                return
+            url = target if isinstance(target, QUrl) else QUrl(text)
             path = ''
             try:
                 path = url.toLocalFile()
@@ -1970,13 +2239,13 @@ def create_epub_ask_dialog(parent, api, book, chapters, temp_dir, i18n, book_key
                 path = ''
             if not path:
                 return
-            target = os.path.abspath(path)
+            target_path = os.path.abspath(path)
             for index, chapter in enumerate(self.chapters):
-                if os.path.abspath(chapter.abs_path) == target:
+                if os.path.abspath(chapter.abs_path) == target_path:
                     self._show_chapter(index, url)
                     return
             extract_root = os.path.abspath(self.temp_dir)
-            if target.startswith(extract_root + os.sep):
+            if target_path.startswith(extract_root + os.sep):
                 self.view.load(url)
 
         def _qt_flag(self, group, name):

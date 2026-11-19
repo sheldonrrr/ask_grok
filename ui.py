@@ -679,6 +679,7 @@ class AskAIPluginUI(InterfaceAction):
             list_book_formats,
             metadata_language_code,
             parse_epub,
+            library_epub_path,
             reader_book_key,
             webengine_available,
         )
@@ -765,6 +766,9 @@ class AskAIPluginUI(InterfaceAction):
                 self.i18n,
                 reader_book_key(library_path, book_id),
                 book_id,
+                library_epub_path(db, book_id),
+                parsed.spine_count,
+                db,
             )
         except WebEngineMissing:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -1250,7 +1254,7 @@ class AboutWidget(QWidget):
         self.latest_update_label.setText(
             self.i18n.get(
                 'about_latest_update',
-                'Latest update (2026.11.18): The reader now follows the plugin language.',
+                'Latest update (2026.11.18): Reading progress can now sync to calibre.',
             )
         )
         link_text = self.i18n.get('about_mobileread_link_text', 'MobileRead')
